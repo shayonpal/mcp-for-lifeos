@@ -37,13 +37,13 @@ cat > raycast-config.json << 'EOF'
   "name": "lifeos-mcp",
   "type": "stdio", 
   "command": "node",
-  "args": ["/Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js"],
+  "args": ["/Users/yourusername/DevProjects/mcp-for-lifeos/dist/index.js"],
   "env": {}
 }
 EOF
 
 # Encode and create deep link (replace with your actual path)
-# raycast://mcp/install?%7B%22name%22%3A%22lifeos-mcp%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22/Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js%22%5D%2C%22env%22%3A%7B%7D%7D
+# raycast://mcp/install?%7B%22name%22%3A%22lifeos-mcp%22%2C%22type%22%3A%22stdio%22%2C%22command%22%3A%22node%22%2C%22args%22%3A%5B%22/Users/yourusername/DevProjects/mcp-for-lifeos/dist/index.js%22%5D%2C%22env%22%3A%7B%7D%7D
 ```
 
 ## Configuration

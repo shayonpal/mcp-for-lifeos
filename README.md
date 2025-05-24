@@ -28,7 +28,8 @@ npm run build
 
 ```typescript
 export const LIFEOS_CONFIG: LifeOSConfig = {
-  vaultPath: '/path/to/your/vault/LifeOS (iCloud)',
+  vaultPath: '/path/to/your/obsidian/vault',
+  templatesPath: '/path/to/your/obsidian/vault/Templates',
   // ... other paths
 };
 ```
@@ -145,8 +146,8 @@ All search results and note references include **clickable links** that open not
 
 ### URL Scheme Examples
 ```
-obsidian://open?vault=LifeOS%20(iCloud)&file=path/to/note.md
-obsidian://search?vault=LifeOS%20(iCloud)&query=search+terms
+obsidian://open?vault=YourVaultName&file=path/to/note.md
+obsidian://search?vault=YourVaultName&query=search+terms
 ```
 
 This allows seamless integration between Claude Desktop conversations and your Obsidian vault - simply click any note link to jump directly to that note in Obsidian.
@@ -161,11 +162,11 @@ The LifeOS MCP server includes intelligent template integration that automatical
 |----------|---------------|--------------|-------------|
 | **restaurant** | `30 - Resources/Restaurants` | Reference | Restaurant notes with cuisine, location, and ratings |
 | **article** | `30 - Resources/Reading` | Article | Article notes with source and author |
-| **person** | `20 - Areas/22 - Relationships` | MOC | Person/contact notes with relationships |
-| **daily** | `20 - Areas/21 - Myself/Journals/Daily` | Daily Note | Daily journal entries |
+| **person** | `20 - Areas/Relationships` | MOC | Person/contact notes with relationships |
+| **daily** | `20 - Areas/Personal/Journals/Daily` | Daily Note | Daily journal entries |
 | **reference** | `30 - Resources` | Reference | General reference notes |
-| **medicine** | `20 - Areas/23 - Health` | Medical | Medicine/medication notes |
-| **application** | `30 - Resources/Tools & Systems` | Reference | Application/software reviews |
+| **medicine** | `20 - Areas/Health` | Medical | Medicine/medication notes |
+| **application** | `30 - Resources/Tools` | Reference | Application/software reviews |
 | **book** | `30 - Resources/Reading` | Reference | Book notes and reviews |
 | **place** | `10 - Projects` | Planning | Travel and places to visit |
 | **fleeting** | `05 - Fleeting Notes` | Fleeting | Quick capture and temporary thoughts |
@@ -183,10 +184,10 @@ The LifeOS MCP server includes intelligent template integration that automatical
 
 ```bash
 # Create a restaurant note with template
-create_note_from_template title: "Maple Leaf Tavern" template: "restaurant"
+create_note_from_template title: "Example Restaurant" template: "restaurant"
 
 # Create any note with auto-template detection
-create_note title: "New Coffee Shop Downtown" template: "restaurant"
+create_note title: "New Coffee Shop" template: "restaurant"
 
 # List all available templates
 list_templates
@@ -253,7 +254,7 @@ npm run typecheck
 
 The server automatically enforces LifeOS YAML rules:
 - Uses `source` field for URLs (not `url` or `URL`)
-- Maintains location format: `Canada [CA]` or `India [IN]`
+- Maintains location format: `Country [CODE]` (e.g., `Canada [CA]`, `India [IN]`)
 - Never edits auto-managed fields (`date created`, `date modified`)
 - Follows exact content type and category mappings
 - Handles special people tagging conventions

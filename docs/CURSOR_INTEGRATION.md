@@ -47,7 +47,7 @@ Create the appropriate `mcp.json` file:
   "mcpServers": {
     "lifeos-mcp": {
       "command": "node",
-      "args": ["/Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js"],
+      "args": ["/Users/yourusername/DevProjects/mcp-for-lifeos/dist/index.js"],
       "env": {}
     }
   }
@@ -60,7 +60,7 @@ Create the appropriate `mcp.json` file:
   "mcpServers": {
     "lifeos-mcp": {
       "command": "node", 
-      "args": ["/Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js"],
+      "args": ["/Users/yourusername/DevProjects/mcp-for-lifeos/dist/index.js"],
       "env": {}
     }
   }
