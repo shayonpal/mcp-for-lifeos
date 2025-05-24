@@ -202,7 +202,7 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "lifeos": {
       "command": "node",
-      "args": ["/Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js"]
+      "args": ["/path/to/your/mcp-for-lifeos/dist/index.js"]
     }
   }
 }
