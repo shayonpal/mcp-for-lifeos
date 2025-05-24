@@ -21,9 +21,15 @@ npm run build
 
 ## Configuration
 
-The server is pre-configured for Shayon's LifeOS vault at:
-```
-/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)
+1. Copy `src/config.example.ts` to `src/config.ts`
+2. Update the vault paths to match your Obsidian vault location
+3. Customize the PEOPLE_MAPPINGS for your specific contacts
+
+```typescript
+export const LIFEOS_CONFIG: LifeOSConfig = {
+  vaultPath: '/path/to/your/vault/LifeOS (iCloud)',
+  // ... other paths
+};
 ```
 
 ## Available Tools

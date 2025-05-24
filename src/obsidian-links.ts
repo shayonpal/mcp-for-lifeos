@@ -7,8 +7,8 @@ export class ObsidianLinks {
    * Format: obsidian://open?vault=VaultName&file=path/to/note
    */
   static generateNoteUrl(filePath: string): string {
-    // Extract vault name from path - "LifeOS (iCloud)"
-    const vaultName = 'LifeOS%20(iCloud)'; // URL encoded
+    // Extract vault name from config path
+    const vaultName = this.getVaultNameFromPath(LIFEOS_CONFIG.vaultPath);
     
     // Get relative path from vault root
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
@@ -34,9 +34,19 @@ export class ObsidianLinks {
    * Format: obsidian://search?vault=VaultName&query=search+terms
    */
   static generateSearchUrl(query: string): string {
-    const vaultName = 'LifeOS%20(iCloud)';
+    const vaultName = this.getVaultNameFromPath(LIFEOS_CONFIG.vaultPath);
     const encodedQuery = encodeURIComponent(query);
     return `obsidian://search?vault=${vaultName}&query=${encodedQuery}`;
+  }
+
+  /**
+   * Extract vault name from vault path and URL encode it
+   */
+  private static getVaultNameFromPath(vaultPath: string): string {
+    // Extract the last part of the path (vault name)
+    const parts = vaultPath.split('/');
+    const vaultName = parts[parts.length - 1];
+    return encodeURIComponent(vaultName);
   }
 
   /**

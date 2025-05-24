@@ -38,6 +38,9 @@ logs
 # TypeScript
 *.tsbuildinfo
 
+# Local configuration
+src/config.ts
+
 # Coverage directory used by tools like istanbul
 coverage/
 
