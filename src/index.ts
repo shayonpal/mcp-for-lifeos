@@ -10,7 +10,7 @@ import {
 import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
-import { TemplateEngine } from './template-engine.js';
+import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 
@@ -246,7 +246,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         // Check if template is specified
         if (args.template) {
           try {
-            const templateResult = TemplateEngine.createNoteFromTemplate(
+            const templateResult = DynamicTemplateEngine.createNoteFromTemplate(
               args.template as string,
               title,
               (args.customData as Record<string, any>) || {}
@@ -290,7 +290,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Title and template are required');
         }
 
-        const templateResult = TemplateEngine.createNoteFromTemplate(
+        const templateResult = DynamicTemplateEngine.createNoteFromTemplate(
           template,
           title,
           (args.customData as Record<string, any>) || {}
@@ -305,7 +305,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         );
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
-        const templateInfo = TemplateEngine.getTemplate(template);
+        const templateInfo = DynamicTemplateEngine.getTemplate(template);
 
         return {
           content: [{
@@ -690,10 +690,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'list_templates': {
-        const templates = TemplateEngine.getAllTemplates();
+        const templates = DynamicTemplateEngine.getAllTemplates();
         
         const templateList = templates.map((template, index) => {
-          return `**${index + 1}. ${template.name}** (\`${template.name.toLowerCase().replace(/\s+/g, '')}\`)\n` +
+          return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
                  `   ${template.description}\n` +
                  `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
                  `   📄 Content Type: ${template.contentType || 'Varies'}`;

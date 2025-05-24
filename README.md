@@ -209,10 +209,26 @@ Add to your Claude Desktop configuration:
 ```
 
 ### Raycast
-Integration instructions for Raycast MCP extension coming soon.
+The LifeOS MCP server integrates seamlessly with Raycast for AI-powered vault interactions.
 
-### Cursor IDE
-Integration instructions for Cursor IDE coming soon.
+**[📖 Complete Raycast Integration Guide](docs/RAYCAST_INTEGRATION.md)**
+
+Key features:
+- Use `@lifeos-mcp` to mention the server in AI chats and commands
+- Quick vault search from Raycast's root search
+- Create notes and manage daily entries through AI commands
+- Clickable Obsidian links for seamless vault navigation
+
+### Cursor IDE  
+Enhance your development workflow with AI-powered access to your knowledge vault.
+
+**[📖 Complete Cursor Integration Guide](docs/CURSOR_INTEGRATION.md)**
+
+Key features:
+- Access vault context directly in Agent Mode
+- Research existing knowledge while coding
+- Create development notes and link to project planning
+- Integrate learning materials with your coding workflow
 
 ## Development
 
