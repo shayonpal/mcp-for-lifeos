@@ -10,6 +10,7 @@ import {
 import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
+import { TemplateEngine } from './template-engine.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 
@@ -35,15 +36,34 @@ const tools: Tool[] = [
       properties: {
         title: { type: 'string', description: 'Note title' },
         content: { type: 'string', description: 'Note content (markdown)' },
+        template: { type: 'string', description: 'Template to use (restaurant, article, person, etc.)' },
         contentType: { type: 'string', description: 'Content type (Article, Daily Note, Recipe, etc.)' },
         category: { type: 'string', description: 'Category' },
         subCategory: { type: 'string', description: 'Sub-category' },
         tags: { type: 'array', items: { type: 'string' }, description: 'Tags array' },
         targetFolder: { type: 'string', description: 'Target folder path (optional)' },
         source: { type: 'string', description: 'Source URL for articles' },
-        people: { type: 'array', items: { type: 'string' }, description: 'People mentioned' }
+        people: { type: 'array', items: { type: 'string' }, description: 'People mentioned' },
+        customData: { type: 'object', description: 'Custom data for template processing' }
       },
       required: ['title']
+    }
+  },
+  {
+    name: 'create_note_from_template',
+    description: 'Create a note using a specific LifeOS template with auto-filled metadata',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Note title' },
+        template: { type: 'string', description: 'Template key (restaurant, article, person, daily, etc.)' },
+        customData: { 
+          type: 'object', 
+          description: 'Template-specific data (e.g., cuisine, location for restaurants)',
+          additionalProperties: true
+        }
+      },
+      required: ['title', 'template']
     }
   },
   {
@@ -177,6 +197,25 @@ const tools: Tool[] = [
         maxResults: { type: 'number', description: 'Maximum results (default: 20)' }
       }
     }
+  },
+  {
+    name: 'diagnose_vault',
+    description: 'Diagnose vault issues and check for problematic files',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        checkYaml: { type: 'boolean', description: 'Check for YAML parsing errors (default: true)' },
+        maxFiles: { type: 'number', description: 'Maximum files to check (default: 100)' }
+      }
+    }
+  },
+  {
+    name: 'list_templates',
+    description: 'List all available note templates in the LifeOS vault',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
   }
 ];
 
@@ -200,8 +239,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Title is required');
         }
 
-        const frontmatter: any = { title };
+        let frontmatter: any = { title };
+        let content = (args.content as string) || '';
+        let targetFolder = args.targetFolder as string | undefined;
 
+        // Check if template is specified
+        if (args.template) {
+          try {
+            const templateResult = TemplateEngine.createNoteFromTemplate(
+              args.template as string,
+              title,
+              (args.customData as Record<string, any>) || {}
+            );
+            
+            frontmatter = { ...templateResult.frontmatter };
+            content = templateResult.content + (content ? `\n\n${content}` : '');
+            targetFolder = targetFolder || templateResult.targetFolder;
+          } catch (error) {
+            console.error('Template processing failed:', error);
+            // Continue with manual frontmatter
+          }
+        }
+
+        // Override with manually specified values
         if (args.contentType) frontmatter['content type'] = args.contentType as string;
         if (args.category) frontmatter.category = args.category as string;
         if (args.subCategory) frontmatter['sub-category'] = args.subCategory as string;
@@ -210,17 +270,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.people) frontmatter.people = args.people as string[];
 
         const fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-');
-        const note = VaultUtils.createNote(
-          fileName,
-          frontmatter,
-          (args.content as string) || '',
-          args.targetFolder as string | undefined
-        );
+        const note = VaultUtils.createNote(fileName, frontmatter, content, targetFolder);
+
+        const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
 
         return {
           content: [{
             type: 'text',
-            text: `Created note: ${note.path}`
+            text: `✅ Created note: **${title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\``
+          }]
+        };
+      }
+
+      case 'create_note_from_template': {
+        const title = args.title as string;
+        const template = args.template as string;
+        
+        if (!title || !template) {
+          throw new Error('Title and template are required');
+        }
+
+        const templateResult = TemplateEngine.createNoteFromTemplate(
+          template,
+          title,
+          (args.customData as Record<string, any>) || {}
+        );
+
+        const fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-');
+        const note = VaultUtils.createNote(
+          fileName, 
+          templateResult.frontmatter, 
+          templateResult.content, 
+          templateResult.targetFolder
+        );
+
+        const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
+        const templateInfo = TemplateEngine.getTemplate(template);
+
+        return {
+          content: [{
+            type: 'text',
+            text: `✅ Created **${title}** using **${templateInfo?.name || template}** template\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📋 Template: ${templateInfo?.description || 'Custom template'}`
           }]
         };
       }
@@ -363,8 +453,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'advanced_search': {
         const searchOptions: AdvancedSearchOptions = {};
         
-        // Text queries
-        if (args.query) searchOptions.query = args.query as string;
+        // Text queries - handle OR operations
+        if (args.query) {
+          const query = args.query as string;
+          // Convert OR operations to regex for better handling
+          if (query.toLowerCase().includes(' or ')) {
+            const orTerms = query.split(/\s+or\s+/i).map(term => term.trim().replace(/"/g, ''));
+            searchOptions.query = orTerms.join('|');
+            searchOptions.useRegex = true;
+          } else {
+            searchOptions.query = query;
+          }
+        }
         if (args.contentQuery) searchOptions.contentQuery = args.contentQuery as string;
         if (args.titleQuery) searchOptions.titleQuery = args.titleQuery as string;
         
@@ -519,6 +619,94 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: 'text',
             text: `Found ${results.length} notes modified in the last ${days} days:\n\n${resultText}`
+          }]
+        };
+      }
+
+      case 'diagnose_vault': {
+        const checkYaml = (args.checkYaml as boolean) !== false; // Default true
+        const maxFiles = (args.maxFiles as number) || 100;
+        
+        const files = await VaultUtils.findNotes('**/*.md');
+        const filesToCheck = files.slice(0, maxFiles);
+        
+        let totalFiles = filesToCheck.length;
+        let successfulFiles = 0;
+        let problematicFiles: string[] = [];
+        let yamlErrors: { file: string, error: string }[] = [];
+        
+        for (const file of filesToCheck) {
+          try {
+            const note = VaultUtils.readNote(file);
+            successfulFiles++;
+            
+            // Check for common YAML issues
+            if (checkYaml && note.frontmatter) {
+              const frontmatterStr = JSON.stringify(note.frontmatter);
+              if (frontmatterStr.includes('undefined') || frontmatterStr.includes('null')) {
+                yamlErrors.push({ file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), error: 'Contains undefined/null values' });
+              }
+            }
+          } catch (error) {
+            problematicFiles.push(file.replace(LIFEOS_CONFIG.vaultPath + '/', ''));
+            yamlErrors.push({ 
+              file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), 
+              error: error instanceof Error ? error.message : String(error) 
+            });
+          }
+        }
+        
+        let diagnosticText = `# Vault Diagnostic Report\n\n`;
+        diagnosticText += `**Files Checked:** ${totalFiles}\n`;
+        diagnosticText += `**Successfully Parsed:** ${successfulFiles}\n`;
+        diagnosticText += `**Problematic Files:** ${problematicFiles.length}\n\n`;
+        
+        if (problematicFiles.length > 0) {
+          diagnosticText += `## Problematic Files\n\n`;
+          yamlErrors.slice(0, 10).forEach((error, index) => {
+            diagnosticText += `${index + 1}. **${error.file}**\n   Error: ${error.error}\n\n`;
+          });
+          
+          if (yamlErrors.length > 10) {
+            diagnosticText += `... and ${yamlErrors.length - 10} more files with issues.\n\n`;
+          }
+        }
+        
+        diagnosticText += `## Recommendations\n\n`;
+        if (problematicFiles.length > 0) {
+          diagnosticText += `- Fix YAML frontmatter in problematic files\n`;
+          diagnosticText += `- Check for unescaped special characters in YAML\n`;
+          diagnosticText += `- Ensure proper indentation and syntax\n`;
+        } else {
+          diagnosticText += `✅ All checked files are parsing correctly!\n`;
+        }
+        
+        return {
+          content: [{
+            type: 'text',
+            text: diagnosticText
+          }]
+        };
+      }
+
+      case 'list_templates': {
+        const templates = TemplateEngine.getAllTemplates();
+        
+        const templateList = templates.map((template, index) => {
+          return `**${index + 1}. ${template.name}** (\`${template.name.toLowerCase().replace(/\s+/g, '')}\`)\n` +
+                 `   ${template.description}\n` +
+                 `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
+                 `   📄 Content Type: ${template.contentType || 'Varies'}`;
+        }).join('\n\n');
+
+        return {
+          content: [{
+            type: 'text',
+            text: `# Available Templates\n\n${templateList}\n\n## Usage Examples\n\n` +
+                  `• \`create_note_from_template\` with template: "restaurant"\n` +
+                  `• \`create_note\` with template: "article"\n` +
+                  `• \`create_note_from_template\` with template: "person"\n\n` +
+                  `**Pro tip:** I can auto-detect the right template based on your note title and content!`
           }]
         };
       }

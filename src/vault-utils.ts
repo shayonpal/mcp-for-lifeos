@@ -22,17 +22,32 @@ export class VaultUtils {
       throw new Error(`Note not found: ${normalizedPath}`);
     }
 
-    const content = readFileSync(normalizedPath, 'utf-8');
-    const parsed = matter(content);
-    const stats = statSync(normalizedPath);
+    try {
+      const content = readFileSync(normalizedPath, 'utf-8');
+      const parsed = matter(content);
+      const stats = statSync(normalizedPath);
 
-    return {
-      path: normalizedPath,
-      frontmatter: parsed.data as YAMLFrontmatter,
-      content: parsed.content,
-      created: stats.birthtime,
-      modified: stats.mtime
-    };
+      return {
+        path: normalizedPath,
+        frontmatter: parsed.data as YAMLFrontmatter,
+        content: parsed.content,
+        created: stats.birthtime,
+        modified: stats.mtime
+      };
+    } catch (error) {
+      console.error(`Error parsing note ${normalizedPath}:`, error);
+      // Return note with empty frontmatter if parsing fails
+      const content = readFileSync(normalizedPath, 'utf-8');
+      const stats = statSync(normalizedPath);
+      
+      return {
+        path: normalizedPath,
+        frontmatter: { title: basename(normalizedPath, '.md') },
+        content: content,
+        created: stats.birthtime,
+        modified: stats.mtime
+      };
+    }
   }
 
   static writeNote(note: LifeOSNote): void {

@@ -130,10 +130,16 @@ export class SearchEngine {
     if (options.category && fm.category !== options.category) return false;
     if (options.subCategory && fm['sub-category'] !== options.subCategory) return false;
 
-    // Tags filter
+    // Tags filter - handle OR operations
     if (options.tags && options.tags.length > 0) {
       if (!fm.tags || !Array.isArray(fm.tags)) return false;
-      if (!options.tags.some(tag => fm.tags!.includes(tag))) return false;
+      // Check if any of the specified tags match any of the note's tags
+      const hasMatchingTag = options.tags.some(tag => 
+        fm.tags!.some(noteTag => 
+          noteTag.toLowerCase().includes(tag.toLowerCase())
+        )
+      );
+      if (!hasMatchingTag) return false;
     }
 
     // Author filter
@@ -338,7 +344,19 @@ export class SearchEngine {
 
   private static async getAllNotes(): Promise<LifeOSNote[]> {
     const files = await VaultUtils.findNotes('**/*.md');
-    return files.map(file => VaultUtils.readNote(file));
+    const notes: LifeOSNote[] = [];
+    
+    for (const file of files) {
+      try {
+        const note = VaultUtils.readNote(file);
+        notes.push(note);
+      } catch (error) {
+        console.error(`Skipping file ${file} due to error:`, error);
+        // Continue with other files
+      }
+    }
+    
+    return notes;
   }
 
   // Utility method for quick text search
