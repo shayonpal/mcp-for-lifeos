@@ -8,6 +8,8 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { VaultUtils } from './vault-utils.js';
+import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
+import { ObsidianLinks } from './obsidian-links.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 
@@ -100,6 +102,81 @@ const tools: Tool[] = [
       },
       required: ['pattern']
     }
+  },
+  {
+    name: 'list_daily_notes',
+    description: 'List all daily notes with their full paths for debugging',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Limit number of results (optional, default 10)' }
+      }
+    }
+  },
+  {
+    name: 'advanced_search',
+    description: 'Advanced search with full-text search, metadata filters, and relevance scoring',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'General search query (searches title, content, and frontmatter)' },
+        contentQuery: { type: 'string', description: 'Search only in note content' },
+        titleQuery: { type: 'string', description: 'Search only in note titles' },
+        contentType: { type: 'string', description: 'Filter by content type' },
+        category: { type: 'string', description: 'Filter by category' },
+        subCategory: { type: 'string', description: 'Filter by sub-category' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags (any match)' },
+        author: { type: 'array', items: { type: 'string' }, description: 'Filter by author' },
+        people: { type: 'array', items: { type: 'string' }, description: 'Filter by people mentioned' },
+        folder: { type: 'string', description: 'Filter by folder path' },
+        excludeFolders: { type: 'array', items: { type: 'string' }, description: 'Exclude folders' },
+        createdAfter: { type: 'string', description: 'Filter notes created after date (YYYY-MM-DD)' },
+        createdBefore: { type: 'string', description: 'Filter notes created before date (YYYY-MM-DD)' },
+        modifiedAfter: { type: 'string', description: 'Filter notes modified after date (YYYY-MM-DD)' },
+        modifiedBefore: { type: 'string', description: 'Filter notes modified before date (YYYY-MM-DD)' },
+        caseSensitive: { type: 'boolean', description: 'Case sensitive search (default: false)' },
+        useRegex: { type: 'boolean', description: 'Use regex for search queries (default: false)' },
+        includeContent: { type: 'boolean', description: 'Include content in search (default: true)' },
+        maxResults: { type: 'number', description: 'Maximum number of results (default: 20)' },
+        sortBy: { type: 'string', enum: ['relevance', 'created', 'modified', 'title'], description: 'Sort results by (default: relevance)' },
+        sortOrder: { type: 'string', enum: ['asc', 'desc'], description: 'Sort order (default: desc for relevance, asc for others)' }
+      }
+    }
+  },
+  {
+    name: 'quick_search',
+    description: 'Quick text search across all notes with relevance ranking',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        maxResults: { type: 'number', description: 'Maximum results (default: 10)' }
+      },
+      required: ['query']
+    }
+  },
+  {
+    name: 'search_by_content_type',
+    description: 'Find all notes of a specific content type',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        contentType: { type: 'string', description: 'Content type to search for' },
+        maxResults: { type: 'number', description: 'Maximum results (optional)' }
+      },
+      required: ['contentType']
+    }
+  },
+  {
+    name: 'search_recent',
+    description: 'Find recently modified notes',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        days: { type: 'number', description: 'Number of days back to search (default: 7)' },
+        maxResults: { type: 'number', description: 'Maximum results (default: 20)' }
+      }
+    }
   }
 ];
 
@@ -153,11 +230,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!path) {
           throw new Error('Path is required');
         }
-        const note = VaultUtils.readNote(path);
+        
+        // Normalize path - handle escaped spaces and resolve relative paths
+        let normalizedPath = path.replace(/\\ /g, ' ');
+        if (!normalizedPath.startsWith('/')) {
+          normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
+        }
+        
+        console.error(`Attempting to read note at: ${normalizedPath}`);
+        const note = VaultUtils.readNote(normalizedPath);
+        const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
+        
         return {
           content: [{
             type: 'text',
-            text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${note.frontmatter.tags?.join(', ') || 'None'}\n\n---\n\n${note.content}`
+            text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${note.frontmatter.tags?.join(', ') || 'None'}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
         };
       }
@@ -196,10 +283,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           note = VaultUtils.createDailyNote(date);
         }
 
+        const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
+        
         return {
           content: [{
             type: 'text',
-            text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n---\n\n${note.content}`
+            text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
         };
       }
@@ -236,6 +325,200 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: 'text',
             text: `Found ${files.length} files matching "${args.pattern}":\n\n${fileList}`
+          }]
+        };
+      }
+
+      case 'list_daily_notes': {
+        const limit = (args.limit as number) || 10;
+        const { readdirSync } = await import('fs');
+        
+        try {
+          const files = readdirSync(LIFEOS_CONFIG.dailyNotesPath)
+            .filter(file => file.endsWith('.md'))
+            .sort()
+            .slice(-limit)
+            .map(file => {
+              const fullPath = `${LIFEOS_CONFIG.dailyNotesPath}/${file}`;
+              return `**${file}**\n\`${fullPath}\``;
+            });
+
+          return {
+            content: [{
+              type: 'text',
+              text: `Latest ${files.length} daily notes:\n\n${files.join('\n\n')}`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error accessing daily notes directory: ${error}`
+            }],
+            isError: true
+          };
+        }
+      }
+
+      case 'advanced_search': {
+        const searchOptions: AdvancedSearchOptions = {};
+        
+        // Text queries
+        if (args.query) searchOptions.query = args.query as string;
+        if (args.contentQuery) searchOptions.contentQuery = args.contentQuery as string;
+        if (args.titleQuery) searchOptions.titleQuery = args.titleQuery as string;
+        
+        // Metadata filters
+        if (args.contentType) searchOptions.contentType = args.contentType as string;
+        if (args.category) searchOptions.category = args.category as string;
+        if (args.subCategory) searchOptions.subCategory = args.subCategory as string;
+        if (args.tags) searchOptions.tags = args.tags as string[];
+        if (args.author) searchOptions.author = args.author as string[];
+        if (args.people) searchOptions.people = args.people as string[];
+        
+        // Location filters
+        if (args.folder) searchOptions.folder = args.folder as string;
+        if (args.excludeFolders) searchOptions.excludeFolders = args.excludeFolders as string[];
+        
+        // Date filters
+        if (args.createdAfter) searchOptions.createdAfter = new Date(args.createdAfter as string);
+        if (args.createdBefore) searchOptions.createdBefore = new Date(args.createdBefore as string);
+        if (args.modifiedAfter) searchOptions.modifiedAfter = new Date(args.modifiedAfter as string);
+        if (args.modifiedBefore) searchOptions.modifiedBefore = new Date(args.modifiedBefore as string);
+        
+        // Search options
+        if (args.caseSensitive) searchOptions.caseSensitive = args.caseSensitive as boolean;
+        if (args.useRegex) searchOptions.useRegex = args.useRegex as boolean;
+        if (args.includeContent !== undefined) searchOptions.includeContent = args.includeContent as boolean;
+        if (args.maxResults) searchOptions.maxResults = args.maxResults as number;
+        if (args.sortBy) searchOptions.sortBy = args.sortBy as any;
+        if (args.sortOrder) searchOptions.sortOrder = args.sortOrder as any;
+
+        const results = await SearchEngine.search(searchOptions);
+        
+        const resultText = results.map((result, index) => {
+          const note = result.note;
+          const score = result.score.toFixed(1);
+          const matchCount = result.matches.length;
+          const title = note.frontmatter.title || 'Untitled';
+          
+          let output = ObsidianLinks.formatSearchResult(
+            index + 1,
+            title,
+            note.path,
+            note.frontmatter['content type'] || 'Unknown',
+            result.score,
+            `${matchCount} matches`
+          );
+          
+          // Show top 3 matches with context
+          const topMatches = result.matches.slice(0, 3);
+          if (topMatches.length > 0) {
+            output += '\n\n**Matches:**\n';
+            topMatches.forEach(match => {
+              const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
+              output += `- *${type}*: "${match.context}"\n`;
+            });
+          }
+          
+          return output;
+        }).join('\n\n---\n\n');
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Found ${results.length} results:\n\n${resultText}`
+          }]
+        };
+      }
+
+      case 'quick_search': {
+        const query = args.query as string;
+        const maxResults = (args.maxResults as number) || 10;
+        
+        const results = await SearchEngine.quickSearch(query, maxResults);
+        
+        const resultText = results.map((result, index) => {
+          const note = result.note;
+          const topMatch = result.matches[0];
+          const title = note.frontmatter.title || 'Untitled';
+          
+          let output = ObsidianLinks.formatSearchResult(
+            index + 1,
+            title,
+            note.path,
+            note.frontmatter['content type'] || 'Unknown'
+          );
+          
+          if (topMatch) {
+            output += `\n\n**Preview:** "${topMatch.context}"`;
+          }
+          
+          return output;
+        }).join('\n\n---\n\n');
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Quick search results for "${query}":\n\n${resultText}`
+          }]
+        };
+      }
+
+      case 'search_by_content_type': {
+        const contentType = args.contentType as string;
+        const maxResults = args.maxResults as number | undefined;
+        
+        const results = await SearchEngine.searchByContentType(contentType, maxResults);
+        
+        const resultText = results.map((result, index) => {
+          const note = result.note;
+          const modifiedDate = format(note.modified, 'MMM dd, yyyy');
+          const title = note.frontmatter.title || 'Untitled';
+          
+          return ObsidianLinks.formatSearchResult(
+            index + 1,
+            title,
+            note.path,
+            note.frontmatter['content type'] || 'Unknown',
+            undefined,
+            `Modified: ${modifiedDate}`
+          );
+        }).join('\n\n---\n\n');
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Found ${results.length} notes with content type "${contentType}":\n\n${resultText}`
+          }]
+        };
+      }
+
+      case 'search_recent': {
+        const days = (args.days as number) || 7;
+        const maxResults = (args.maxResults as number) || 20;
+        
+        const results = await SearchEngine.searchRecent(days, maxResults);
+        
+        const resultText = results.map((result, index) => {
+          const note = result.note;
+          const modifiedDate = format(note.modified, 'MMM dd, yyyy HH:mm');
+          const title = note.frontmatter.title || 'Untitled';
+          
+          return ObsidianLinks.formatSearchResult(
+            index + 1,
+            title,
+            note.path,
+            note.frontmatter['content type'] || 'Unknown',
+            undefined,
+            `Modified: ${modifiedDate}`
+          );
+        }).join('\n\n---\n\n');
+
+        return {
+          content: [{
+            type: 'text',
+            text: `Found ${results.length} notes modified in the last ${days} days:\n\n${resultText}`
           }]
         };
       }

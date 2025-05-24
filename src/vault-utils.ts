@@ -15,16 +15,19 @@ export class VaultUtils {
   }
 
   static readNote(filePath: string): LifeOSNote {
-    if (!existsSync(filePath)) {
-      throw new Error(`Note not found: ${filePath}`);
+    // Normalize the path to handle spaces and special characters
+    const normalizedPath = filePath.replace(/\\ /g, ' ');
+    
+    if (!existsSync(normalizedPath)) {
+      throw new Error(`Note not found: ${normalizedPath}`);
     }
 
-    const content = readFileSync(filePath, 'utf-8');
+    const content = readFileSync(normalizedPath, 'utf-8');
     const parsed = matter(content);
-    const stats = statSync(filePath);
+    const stats = statSync(normalizedPath);
 
     return {
-      path: filePath,
+      path: normalizedPath,
       frontmatter: parsed.data as YAMLFrontmatter,
       content: parsed.content,
       created: stats.birthtime,
@@ -131,8 +134,20 @@ export class VaultUtils {
     const fileName = `${dateStr}.md`;
     const filePath = join(LIFEOS_CONFIG.dailyNotesPath, fileName);
     
+    console.error(`Looking for daily note at: ${filePath}`);
+    
     if (existsSync(filePath)) {
+      console.error(`Found daily note at: ${filePath}`);
       return this.readNote(filePath);
+    } else {
+      console.error(`Daily note not found at: ${filePath}`);
+      // Try to list files in the directory for debugging
+      try {
+        const files = readdirSync(LIFEOS_CONFIG.dailyNotesPath);
+        console.error(`Files in daily notes directory: ${files.filter(f => f.includes(dateStr)).join(', ')}`);
+      } catch (e) {
+        console.error(`Error reading daily notes directory: ${e}`);
+      }
     }
     
     return null;
