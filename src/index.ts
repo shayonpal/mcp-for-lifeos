@@ -269,7 +269,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.source) frontmatter.source = args.source as string;
         if (args.people) frontmatter.people = args.people as string[];
 
-        const fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-');
+        // Generate filename, preserving dashes for date formats
+        const fileName = title
+          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
+          .replace(/\s+/g, '-') // Replace spaces with dashes
+          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
         const note = VaultUtils.createNote(fileName, frontmatter, content, targetFolder);
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
@@ -296,7 +300,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.customData as Record<string, any>) || {}
         );
 
-        const fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-');
+        // Generate filename, preserving dashes for date formats
+        const fileName = title
+          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
+          .replace(/\s+/g, '-') // Replace spaces with dashes
+          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
         const note = VaultUtils.createNote(
           fileName, 
           templateResult.frontmatter, 
