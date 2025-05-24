@@ -6,10 +6,11 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 
 - **YAML-Compliant Note Creation**: Automatically follows LifeOS YAML rules
 - **PARA Method Organization**: Respects Projects/Areas/Resources/Archives structure
-- **Template Integration**: Uses existing vault templates for consistent formatting
+- **Intelligent Template System**: Full integration with 11+ LifeOS templates (restaurant, article, person, etc.)
 - **Advanced Search Engine**: Full-text search with relevance scoring and context extraction
 - **Obsidian Integration**: Clickable links that open notes directly in Obsidian
 - **Daily Notes Management**: Create and manage daily journal entries
+- **Robust Error Handling**: Graceful YAML parsing with diagnostic tools
 - **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
 
 ## Installation
@@ -37,15 +38,23 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 ### Core Operations
 
 #### `create_note`
-Create a new note with proper YAML frontmatter
+Create a new note with proper YAML frontmatter and optional template integration
 - **title** (required): Note title
 - **content**: Markdown content
+- **template**: Template to use (restaurant, article, person, etc.)
 - **contentType**: Content type (Article, Daily Note, Recipe, etc.)
 - **category**: Category classification
 - **tags**: Array of tags
 - **targetFolder**: Optional target folder
 - **source**: Source URL for articles
 - **people**: People mentioned in the note
+- **customData**: Custom data for template processing
+
+#### `create_note_from_template`
+Create a note using a specific LifeOS template with auto-filled metadata
+- **title** (required): Note title
+- **template** (required): Template key (restaurant, article, person, daily, etc.)
+- **customData**: Template-specific data (e.g., cuisine, location for restaurants)
 
 #### `read_note`
 Read an existing note
@@ -68,6 +77,15 @@ Find notes using glob patterns
 #### `list_daily_notes`
 List recent daily notes with full paths (debugging tool)
 - **limit**: Number of results (optional, default 10)
+
+#### `list_templates`
+List all available note templates in the LifeOS vault
+- Shows template descriptions, target folders, and usage examples
+
+#### `diagnose_vault`
+Diagnose vault issues and check for problematic files
+- **checkYaml**: Check for YAML parsing errors (default: true)
+- **maxFiles**: Maximum files to check (default: 100)
 
 ### Advanced Search Tools
 
@@ -133,6 +151,47 @@ obsidian://search?vault=LifeOS%20(iCloud)&query=search+terms
 
 This allows seamless integration between Claude Desktop conversations and your Obsidian vault - simply click any note link to jump directly to that note in Obsidian.
 
+## Template System
+
+The LifeOS MCP server includes intelligent template integration that automatically uses your existing Obsidian templates.
+
+### Available Templates
+
+| Template | Target Folder | Content Type | Description |
+|----------|---------------|--------------|-------------|
+| **restaurant** | `30 - Resources/Restaurants` | Reference | Restaurant notes with cuisine, location, and ratings |
+| **article** | `30 - Resources/Reading` | Article | Article notes with source and author |
+| **person** | `20 - Areas/22 - Relationships` | MOC | Person/contact notes with relationships |
+| **daily** | `20 - Areas/21 - Myself/Journals/Daily` | Daily Note | Daily journal entries |
+| **reference** | `30 - Resources` | Reference | General reference notes |
+| **medicine** | `20 - Areas/23 - Health` | Medical | Medicine/medication notes |
+| **application** | `30 - Resources/Tools & Systems` | Reference | Application/software reviews |
+| **book** | `30 - Resources/Reading` | Reference | Book notes and reviews |
+| **place** | `10 - Projects` | Planning | Travel and places to visit |
+| **fleeting** | `05 - Fleeting Notes` | Fleeting | Quick capture and temporary thoughts |
+| **moc** | `00 - Meta/MOCs` | MOC | Maps of Content for organizing notes |
+
+### Template Features
+
+- **Automatic Templater Processing**: Converts `<% tp.file.title %>`, date functions, etc.
+- **Smart Folder Placement**: Templates automatically target the correct PARA folders
+- **Custom Data Injection**: Pass template-specific data (cuisine, location, etc.)
+- **Fallback Handling**: Graceful degradation if templates are missing
+- **Auto-Detection**: Infers appropriate template from note title and context
+
+### Usage Examples
+
+```bash
+# Create a restaurant note with template
+create_note_from_template title: "Maple Leaf Tavern" template: "restaurant"
+
+# Create any note with auto-template detection
+create_note title: "New Coffee Shop Downtown" template: "restaurant"
+
+# List all available templates
+list_templates
+```
+
 ## Client Integration
 
 ### Claude Desktop
@@ -182,6 +241,8 @@ The server automatically enforces LifeOS YAML rules:
 - Never edits auto-managed fields (`date created`, `date modified`)
 - Follows exact content type and category mappings
 - Handles special people tagging conventions
+- Processes Templater variables automatically
+- Validates YAML syntax and provides error reporting
 
 ## Folder Structure Awareness
 
@@ -195,7 +256,24 @@ The server understands and respects the PARA method organization:
 
 ## Template System
 
-The server integrates with existing vault templates and handles Templater plugin code conversion for consistent note creation.
+The server provides full integration with your existing LifeOS templates:
+
+- **Template Discovery**: Automatically maps to your `/00 - Meta/Templates/` folder
+- **Templater Compatibility**: Processes `tp.file.title`, `moment()`, and other Templater functions
+- **Intelligent Routing**: Routes notes to appropriate PARA folders based on template
+- **Custom Data Support**: Inject template-specific data (restaurant cuisine, article author, etc.)
+- **Error Recovery**: Falls back gracefully if templates are unavailable
+
+### Template Processing
+
+The server converts Templater syntax to static content:
+```yaml
+# Template: <% tp.file.title %>
+# Becomes: "Restaurant Name"
+
+# Template: <% moment().format('YYYY-MM-DD') %>
+# Becomes: "2025-05-24"
+```
 
 ## License
 
