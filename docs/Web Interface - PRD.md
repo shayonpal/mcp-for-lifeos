@@ -4,8 +4,9 @@
 
 This document outlines the requirements for building a web interface for the MCP-for-LifeOS system, with a focus on integrating multiple Large Language Model (LLM) providers. The interface will allow users to interact with various LLM providers through a unified chat interface.
 
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2023-05-26
+**Last Updated:** 2024-05-26
 
 ## Goals
 
@@ -113,6 +114,44 @@ Basic dashboard for monitoring API usage across different providers.
 - Offline indicators when connectivity is lost
 - Recovery mechanisms for interrupted sessions
 
+## Implementation Phases
+
+### Phase 1: MVP (Anthropic-Only)
+
+The MVP will focus on creating a functional web interface with the following features:
+
+- **Single Provider Support**: Anthropic Claude integration only
+  - Support for Claude-3-Sonnet and Claude-3.5-Sonnet models
+  - Streaming response capability
+
+- **Progressive Web App (PWA)**
+  - Installable on iOS devices (iPad, iPhone)
+  - Offline capability with service workers
+  - Home screen installation
+
+- **Core Chat Interface**
+  - Clean, minimalist design
+  - Session-based message history
+  - Markdown rendering for responses
+  - Loading indicators
+
+- **API Key Management**
+  - Simple client-side storage via localStorage
+  - Key validation on first use
+
+- **Local Network Access**
+  - Available on Mac Mini at http://10.0.0.140:9000
+  - Optional mDNS support for easier discovery
+
+### Phase 2: Full Implementation
+
+After the MVP is established, the full implementation will add:
+
+- **Multi-Provider Support**: All planned LLM providers
+- **Advanced API Key Management**: Secure server-side storage
+- **Model Configuration**: Parameter customization and presets
+- **Usage Monitoring**: Basic analytics dashboard
+
 ## Future Considerations (Not in Initial Scope)
 
 - Persistent chat history with searchable archives
@@ -123,10 +162,11 @@ Basic dashboard for monitoring API usage across different providers.
 
 ## Technical Constraints
 
-- Must operate on the local network
+- Must operate on the local network (Mac Mini static IP: 10.0.0.140)
 - Should integrate with the existing MCP-for-LifeOS codebase
 - Minimize external dependencies to reduce complexity
 - Prioritize lightweight, efficient implementations
+- Web interface will run on port 9000 to avoid conflicts with other services
 
 ## Success Metrics
 
