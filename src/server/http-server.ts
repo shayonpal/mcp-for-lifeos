@@ -9,6 +9,7 @@ import fastifyCors from '@fastify/cors';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,11 +21,24 @@ export interface ServerConfig {
     staticPath: string;
 }
 
+export interface MCPToolRequest {
+    tool: string;
+    arguments: Record<string, any>;
+}
+
+export interface MCPToolResponse {
+    success: boolean;
+    content?: any[];
+    error?: string;
+    metadata?: Record<string, any>;
+}
+
 export class MCPHttpServer {
     private fastify: FastifyInstance;
     private config: ServerConfig;
+    private mcpServer?: Server;
 
-    constructor(config: Partial<ServerConfig> = {}) {
+    constructor(config: Partial<ServerConfig> = {}, mcpServer?: Server) {
         this.config = {
             host: '0.0.0.0',
             port: 9000,
@@ -32,6 +46,8 @@ export class MCPHttpServer {
             staticPath: join(__dirname, '../../public'),
             ...config
         };
+        
+        this.mcpServer = mcpServer;
 
         this.fastify = Fastify({
             logger: {
@@ -47,7 +63,6 @@ export class MCPHttpServer {
             }
         });
 
-        this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
     }
@@ -83,33 +98,143 @@ export class MCPHttpServer {
     }
 
     private setupRoutes(): void {
+        // Register plugins first
+        this.fastify.register(async (fastify) => {
+            // CORS configuration for local network access
+            if (this.config.enableCors) {
+                await fastify.register(fastifyCors, {
+                    origin: true, // Allow all origins for local development
+                    credentials: true,
+                    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+                });
+            }
+
+            // Static file serving
+            await fastify.register(fastifyStatic, {
+                root: this.config.staticPath,
+                prefix: '/', // Optional: default '/'
+            });
+
+            // Request logging and timing
+            fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+                (request as any).startTime = Date.now();
+                request.log.info(`${request.method} ${request.url}`);
+            });
+
+            // Response time header
+            fastify.addHook('onSend', async (request: FastifyRequest, reply: FastifyReply, payload) => {
+                const startTime = (request as any).startTime || Date.now();
+                reply.header('X-Response-Time', `${Date.now() - startTime}ms`);
+                return payload;
+            });
+        });
+
         // Health check endpoint
         this.fastify.get('/api/health', async (request: FastifyRequest, reply: FastifyReply) => {
             return {
                 status: 'ok',
                 timestamp: new Date().toISOString(),
                 version: '1.0.0',
-                uptime: process.uptime()
+                uptime: process.uptime(),
+                mcpServer: this.mcpServer ? 'connected' : 'not available'
             };
         });
 
         // API endpoints will be added here
         this.setupApiRoutes();
 
-        // Catch-all route for SPA (serve index.html for all non-API routes)
-        this.fastify.get('/*', async (request: FastifyRequest, reply: FastifyReply) => {
-            // Don't interfere with API routes
-            if (request.url.startsWith('/api/')) {
-                reply.code(404);
-                return { error: 'API endpoint not found' };
-            }
-
-            // Serve index.html for all other routes (SPA routing)
-            return reply.sendFile('index.html');
-        });
+        // Note: No catch-all route needed - handled by setNotFoundHandler below
     }
 
     private setupApiRoutes(): void {
+        // MCP Tool execution endpoint
+        this.fastify.post('/api/mcp/tool', async (request: FastifyRequest, reply: FastifyReply) => {
+            if (!this.mcpServer) {
+                reply.code(503);
+                return { 
+                    success: false, 
+                    error: 'MCP server not available' 
+                };
+            }
+            
+            const { tool, arguments: args } = request.body as MCPToolRequest;
+            
+            if (!tool) {
+                reply.code(400);
+                return { 
+                    success: false, 
+                    error: 'Tool name is required' 
+                };
+            }
+            
+            try {
+                // Create proper MCP request structure
+                const mcpRequest = {
+                    method: 'tools/call',
+                    params: {
+                        name: tool,
+                        arguments: args || {}
+                    }
+                };
+                
+                // Access the MCP server's internal request handlers
+                const callToolHandler = (this.mcpServer as any)._requestHandlers?.get('tools/call');
+                if (!callToolHandler) {
+                    reply.code(500);
+                    return { 
+                        success: false, 
+                        error: 'MCP tool handler not found' 
+                    };
+                }
+                
+                const result = await callToolHandler(mcpRequest);
+                
+                return {
+                    success: true,
+                    content: result.content,
+                    metadata: result.metadata
+                } as MCPToolResponse;
+            } catch (error) {
+                request.log.error('MCP tool execution error:', error);
+                reply.code(500);
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                } as MCPToolResponse;
+            }
+        });
+        
+        // List available MCP tools
+        this.fastify.get('/api/mcp/tools', async (request: FastifyRequest, reply: FastifyReply) => {
+            if (!this.mcpServer) {
+                reply.code(503);
+                return { error: 'MCP server not available' };
+            }
+            
+            try {
+                // Create proper MCP request structure
+                const mcpRequest = {
+                    method: 'tools/list',
+                    params: {}
+                };
+                
+                const listToolsHandler = (this.mcpServer as any)._requestHandlers?.get('tools/list');
+                if (!listToolsHandler) {
+                    reply.code(500);
+                    return { error: 'MCP tools list handler not found' };
+                }
+                
+                const result = await listToolsHandler(mcpRequest);
+                return result;
+            } catch (error) {
+                request.log.error('Error listing MCP tools:', error);
+                reply.code(500);
+                return {
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                };
+            }
+        });
+        
         // Models endpoint
         this.fastify.get('/api/models', async (request: FastifyRequest, reply: FastifyReply) => {
             return {
@@ -126,7 +251,13 @@ export class MCPHttpServer {
                         description: 'Claude 3.7 Sonnet with advanced reasoning',
                         provider: 'anthropic'
                     }
-                ]
+                ],
+                features: {
+                    streaming: false,
+                    fileUpload: false,
+                    webSearch: false,
+                    mcpTools: this.mcpServer ? true : false
+                }
             };
         });
 
@@ -245,6 +376,13 @@ export class MCPHttpServer {
             console.log('  GET  /api/models    - Available models');
             console.log('  POST /api/chat      - Send chat message');
             console.log('  GET  /api/chat/stream - Streaming chat');
+            if (this.mcpServer) {
+                console.log('  GET  /api/mcp/tools - List MCP tools');
+                console.log('  POST /api/mcp/tool  - Execute MCP tool');
+                console.log('\n🔗 MCP Integration: ENABLED');
+            } else {
+                console.log('\n🔗 MCP Integration: DISABLED (server not provided)');
+            }
 
         } catch (error) {
             this.fastify.log.error('Failed to start server:', error);
@@ -258,6 +396,10 @@ export class MCPHttpServer {
 
     getFastifyInstance(): FastifyInstance {
         return this.fastify;
+    }
+    
+    setMCPServer(server: Server): void {
+        this.mcpServer = server;
     }
 }
 
