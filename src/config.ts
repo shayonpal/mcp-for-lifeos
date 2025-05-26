@@ -31,11 +31,11 @@ export const YAML_RULES = {
     'Writing': ['Writing']
   },
   
-  // Special people tags
+  // Special people tags - customize for your vault
   PEOPLE_MAPPINGS: {
-    'Sugar': { people: ['[[Sugar]]'], tags: ['sugar'] },
-    'Mishti': { people: ['[[Mishti]]'], tags: ['mishti'] },
-    'Sakshi': { people: ['[[Sakshi Chopra|Sakshi]]'], tags: ['sakshi'] },
-    'Vidushi': { people: ['[[Vidushi Soni|Vidushi]]'], tags: ['vidushi'] }
+    'Person1': { people: ['[[Person1]]'], tags: ['person1'] },
+    'Person2': { people: ['[[Person2]]'], tags: ['person2'] },
+    'Person3': { people: ['[[Person3]]'], tags: ['person3'] },
+    'Person4': { people: ['[[Person4]]'], tags: ['person4'] }
   }
 };

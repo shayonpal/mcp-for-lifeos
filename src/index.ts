@@ -14,10 +14,13 @@ import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 
+// Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
+export const SERVER_VERSION = '1.0.0';
+
 const server = new Server(
   {
     name: 'lifeos-mcp',
-    version: '1.0.0',
+    version: SERVER_VERSION,
   },
   {
     capabilities: {
@@ -28,6 +31,16 @@ const server = new Server(
 
 // Define available tools
 const tools: Tool[] = [
+  {
+    name: 'get_server_version',
+    description: 'Get the current server version and capabilities information',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        includeTools: { type: 'boolean', description: 'Include full list of available tools in the response' }
+      }
+    }
+  },
   {
     name: 'create_note',
     description: 'Create a new note in the LifeOS vault with proper YAML frontmatter',
@@ -231,8 +244,52 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error('Missing arguments');
   }
 
+  // Add version metadata to all responses
+  const addVersionMetadata = (response: any) => {
+    if (!response.metadata) {
+      response.metadata = {};
+    }
+    response.metadata.version = SERVER_VERSION;
+    response.metadata.serverName = 'lifeos-mcp';
+    return response;
+  };
+  
   try {
+
     switch (name) {
+      case 'get_server_version': {
+        const includeTools = args.includeTools as boolean;
+        const templateCount = DynamicTemplateEngine.getAllTemplates().length;
+        
+        let response = {
+          content: [{
+            type: 'text',
+            text: `# LifeOS MCP Server v${SERVER_VERSION}\n\n` +
+                  `## Server Information\n` +
+                  `- **Version:** ${SERVER_VERSION}\n` +
+                  `- **Templates Available:** ${templateCount}\n` +
+                  `- **Vault Path:** ${LIFEOS_CONFIG.vaultPath.replace(/^.*[\\\/]/, '')}\n\n` +
+                  `## Capabilities\n` +
+                  `- **Template System:** Dynamic with Templater syntax support\n` +
+                  `- **Search:** Advanced full-text with metadata filtering\n` +
+                  `- **Daily Notes:** Supported with auto-creation\n` +
+                  `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
+                  `- **Obsidian Integration:** Direct vault linking\n\n` +
+                  `## Version History\n` +
+                  `- **1.0.0:** Initial release with core functionality`
+          }]
+        };
+        
+        if (includeTools) {
+          const toolsList = tools.map(tool => 
+            `- **${tool.name}:** ${tool.description}`
+          ).join('\n');
+          
+          response.content[0].text += `\n\n## Available Tools\n${toolsList}`;
+        }
+        
+        return addVersionMetadata(response);
+      }
       case 'create_note': {
         const title = args.title as string;
         if (!title) {
@@ -278,12 +335,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `✅ Created note: **${title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\``
           }]
-        };
+        });
       }
 
       case 'create_note_from_template': {
@@ -315,12 +372,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
         const templateInfo = DynamicTemplateEngine.getTemplate(template);
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `✅ Created **${title}** using **${templateInfo?.name || template}** template\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📋 Template: ${templateInfo?.description || 'Custom template'}`
           }]
-        };
+        });
       }
 
       case 'read_note': {
@@ -339,12 +396,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const note = VaultUtils.readNote(normalizedPath);
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
         
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${note.frontmatter.tags?.join(', ') || 'None'}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
-        };
+        });
       }
 
       case 'search_notes': {
@@ -365,12 +422,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           `**${note.frontmatter.title || 'Untitled'}** (${note.frontmatter['content type']})\n${note.path}`
         ).join('\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Found ${results.length} notes:\n\n${resultText}`
           }]
-        };
+        });
       }
 
       case 'get_daily_note': {
@@ -383,12 +440,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
         
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
-        };
+        });
       }
 
       case 'list_folders': {
@@ -403,12 +460,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           .map(item => `📁 ${item}`)
           .join('\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Folders in ${basePath || 'vault root'}:\n\n${items}`
           }]
-        };
+        });
       }
 
       case 'find_notes_by_pattern': {
@@ -419,12 +476,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const files = await VaultUtils.findNotes(pattern);
         const fileList = files.map(file => file.replace(LIFEOS_CONFIG.vaultPath + '/', '')).join('\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Found ${files.length} files matching "${args.pattern}":\n\n${fileList}`
           }]
-        };
+        });
       }
 
       case 'list_daily_notes': {
@@ -441,20 +498,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               return `**${file}**\n\`${fullPath}\``;
             });
 
-          return {
+          return addVersionMetadata({
             content: [{
               type: 'text',
               text: `Latest ${files.length} daily notes:\n\n${files.join('\n\n')}`
             }]
-          };
+          });
         } catch (error) {
-          return {
+          return addVersionMetadata({
             content: [{
               type: 'text',
               text: `Error accessing daily notes directory: ${error}`
             }],
             isError: true
-          };
+          });
         }
       }
 
@@ -532,12 +589,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return output;
         }).join('\n\n---\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Found ${results.length} results:\n\n${resultText}`
           }]
-        };
+        });
       }
 
       case 'quick_search': {
@@ -565,12 +622,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           return output;
         }).join('\n\n---\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Quick search results for "${query}":\n\n${resultText}`
           }]
-        };
+        });
       }
 
       case 'search_by_content_type': {
@@ -594,12 +651,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           );
         }).join('\n\n---\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Found ${results.length} notes with content type "${contentType}":\n\n${resultText}`
           }]
-        };
+        });
       }
 
       case 'search_recent': {
@@ -623,12 +680,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           );
         }).join('\n\n---\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `Found ${results.length} notes modified in the last ${days} days:\n\n${resultText}`
           }]
-        };
+        });
       }
 
       case 'diagnose_vault': {
@@ -689,12 +746,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           diagnosticText += `✅ All checked files are parsing correctly!\n`;
         }
         
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: diagnosticText
           }]
-        };
+        });
       }
 
       case 'list_templates': {
@@ -707,7 +764,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                  `   📄 Content Type: ${template.contentType || 'Varies'}`;
         }).join('\n\n');
 
-        return {
+        return addVersionMetadata({
           content: [{
             type: 'text',
             text: `# Available Templates\n\n${templateList}\n\n## Usage Examples\n\n` +
@@ -716,20 +773,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `• \`create_note_from_template\` with template: "person"\n\n` +
                   `**Pro tip:** I can auto-detect the right template based on your note title and content!`
           }]
-        };
+        });
       }
 
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
   } catch (error) {
-    return {
+    return addVersionMetadata({
       content: [{
         type: 'text',
         text: `Error: ${error instanceof Error ? error.message : String(error)}`
       }],
       isError: true
-    };
+    });
   }
 });
 
