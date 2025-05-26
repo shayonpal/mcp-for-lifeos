@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LifeOS MCP Web Interface - Chat with your Obsidian vault">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="LifeOS MCP">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.svg">
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.svg">
+    
+    <!-- Standard Icons -->
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/icons/favicon-16x16.svg">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/styles.css">
+    
+    <title>LifeOS MCP - Chat Interface</title>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <h1 class="app-title">LifeOS MCP</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator offline" id="statusIndicator"></span>
+                <span class="status-text" id="statusText">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Configuration Panel -->
+        <section class="config-panel" id="configPanel">
+            <div class="config-group">
+                <label for="apiKey">Anthropic API Key:</label>
+                <div class="api-key-input">
+                    <input type="password" id="apiKey" placeholder="sk-ant-..." aria-describedby="apiKeyHelp">
+                    <button type="button" id="toggleApiKey" class="toggle-btn" aria-label="Toggle API key visibility">👁️</button>
+                    <button type="button" id="testConnection" class="test-btn" disabled>Test</button>
+                </div>
+                <small id="apiKeyHelp" class="help-text">
+                    Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener">Anthropic Console</a>
+                </small>
+            </div>
+
+            <div class="config-group">
+                <label for="modelSelect">Model:</label>
+                <select id="modelSelect" disabled>
+                    <option value="claude-sonnet-4-20250514">Claude Sonnet 4 (Latest)</option>
+                    <option value="claude-3-7-sonnet-latest">Claude 3.7 Sonnet</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Chat Interface -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <h2>Welcome to LifeOS MCP</h2>
+                    <p>Configure your API key above to start chatting with your Obsidian vault.</p>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <form id="chatForm" class="chat-form">
+                    <div class="input-group">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Ask about your notes..." 
+                            rows="1"
+                            disabled
+                            aria-label="Message input"
+                        ></textarea>
+                        <button type="submit" id="sendButton" disabled aria-label="Send message">
+                            <span class="send-icon">➤</span>
+                        </button>
+                    </div>
+                </form>
+                <div class="chat-actions">
+                    <button type="button" id="clearChat" class="action-btn" disabled>Clear Chat</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <span class="loading-text">Thinking...</span>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast hidden">
+        <span class="error-message" id="errorMessage"></span>
+        <button type="button" id="closeError" class="close-btn">&times;</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ import { ObsidianLinks } from './obsidian-links.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
+import { MCPHttpServer } from './server/http-server.js';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
 export const SERVER_VERSION = '1.0.0';
@@ -795,6 +796,21 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('LifeOS MCP Server running on stdio');
+  
+  // Start HTTP server if web interface is enabled
+  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE !== 'false';
+  if (enableWebInterface) {
+    try {
+      const httpServer = new MCPHttpServer({
+        host: process.env.WEB_HOST || '0.0.0.0',
+        port: parseInt(process.env.WEB_PORT || '9000'),
+      });
+      await httpServer.start();
+    } catch (error) {
+      console.error('Failed to start web interface:', error);
+      console.error('MCP server will continue running without web interface');
+    }
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
