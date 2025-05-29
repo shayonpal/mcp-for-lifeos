@@ -357,6 +357,18 @@ The server automatically enforces LifeOS YAML rules:
 - Validates YAML syntax and provides error reporting
 - Supports flexible tag formats: string (`tags: mytag`), array (`tags: [tag1, tag2]`), or YAML list
 
+## File Naming Convention
+
+Notes created through the MCP server use a natural file naming convention:
+- **Preserves spaces**: "My Note Title" creates "My Note Title.md" (not "My-Note-Title.md")
+- **Allows special characters**: Most punctuation and symbols are preserved
+- **Obsidian restrictions**: Only removes square brackets `[]`, colons `:`, and semicolons `;`
+- **Examples**:
+  - "Book Review - The 48 Laws of Power" → "Book Review - The 48 Laws of Power.md"
+  - "Meeting Notes (Q1 2024)" → "Meeting Notes (Q1 2024).md"
+  - "What's Next? Planning for 2025!" → "What's Next? Planning for 2025!.md"
+  - "Project [Alpha]: Status Update" → "Project Alpha Status Update.md"
+
 ## Folder Structure Awareness
 
 The server understands and respects the PARA method organization:
