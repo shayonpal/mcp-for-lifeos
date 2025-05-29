@@ -17,7 +17,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.1.0';
+export const SERVER_VERSION = '1.1.1';
 
 const server = new Server(
   {
@@ -263,7 +263,7 @@ const tools: Tool[] = [
   },
   {
     name: 'move_items',
-    description: 'Move notes and/or folders to a different location in the vault',
+    description: 'Move notes and/or folders to a different location in the vault. Use either "item" for single moves or "items" for batch operations.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -277,11 +277,11 @@ const tools: Tool[] = [
             },
             required: ['path']
           },
-          description: 'Array of items to move'
+          description: 'Array of items to move (use this OR item, not both)'
         },
         item: {
           type: 'string',
-          description: 'Single item path to move (alternative to items)'
+          description: 'Single item path to move (use this OR items, not both)'
         },
         destination: { 
           type: 'string', 
@@ -300,11 +300,7 @@ const tools: Tool[] = [
           description: 'When moving folders, merge with existing folder of same name (default: false)'
         }
       },
-      required: ['destination'],
-      oneOf: [
-        { required: ['item'] },
-        { required: ['items'] }
-      ]
+      required: ['destination']
     }
   }
 ];
@@ -353,6 +349,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
                   `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
                   `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
                   `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
