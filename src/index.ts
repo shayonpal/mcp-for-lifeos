@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.0.1';
+export const SERVER_VERSION = '1.0.2';
 
 const server = new Server(
   {
@@ -277,6 +277,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
                   `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
                   `- **1.0.0:** Initial release with core functionality`
           }]

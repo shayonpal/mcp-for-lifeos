@@ -1,6 +1,6 @@
 {
   "name": "lifeos-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Model Context Protocol server for LifeOS Obsidian vault management",
   "type": "module",
   "main": "dist/index.js",

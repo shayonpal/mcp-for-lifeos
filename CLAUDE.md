@@ -108,3 +108,12 @@ For MAJOR and MINOR updates, also suggest:
 git tag vX.Y.Z
 git push origin master --tags
 ```
+
+## Git Commit Messages
+
+**IMPORTANT**: Never include the following in commit messages:
+- 🤖 Generated with [Claude Code](https://claude.ai/code)
+- Co-Authored-By: Claude <noreply@anthropic.com>
+- Any references to AI assistance or Claude
+
+Keep commit messages professional and focused on the changes made.

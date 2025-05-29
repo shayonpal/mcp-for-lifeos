@@ -7,6 +7,34 @@ import { LifeOSNote, YAMLFrontmatter, SearchOptions, NoteTemplate } from './type
 import { LIFEOS_CONFIG, YAML_RULES } from './config.js';
 
 export class VaultUtils {
+  /**
+   * Get the current local date at midnight (start of day).
+   * This ensures consistent date handling regardless of timezone.
+   */
+  static getLocalDate(dateInput?: Date | string): Date {
+    let date: Date;
+    
+    if (!dateInput) {
+      // If no date provided, use current local date
+      date = new Date();
+    } else if (typeof dateInput === 'string') {
+      // If string provided (like "2024-05-28"), parse it as local date
+      // Add time component to ensure it's interpreted as local midnight
+      if (dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        date = new Date(dateInput + 'T00:00:00');
+      } else {
+        date = new Date(dateInput);
+      }
+    } else {
+      date = dateInput;
+    }
+    
+    // Reset to start of day in local timezone
+    const localDate = new Date(date);
+    localDate.setHours(0, 0, 0, 0);
+    return localDate;
+  }
+
   static async findNotes(pattern: string = '**/*.md'): Promise<string[]> {
     const searchPath = join(LIFEOS_CONFIG.vaultPath, pattern);
     return await glob(searchPath, { 
@@ -145,11 +173,14 @@ export class VaultUtils {
   }
 
   static async getDailyNote(date: Date): Promise<LifeOSNote | null> {
-    const dateStr = format(date, 'yyyy-MM-dd');
+    // Ensure we're working with local date at start of day
+    const localDate = this.getLocalDate(date);
+    const dateStr = format(localDate, 'yyyy-MM-dd');
     const fileName = `${dateStr}.md`;
     const filePath = join(LIFEOS_CONFIG.dailyNotesPath, fileName);
     
     console.error(`Looking for daily note at: ${filePath}`);
+    console.error(`Input date: ${date.toISOString()}, Local date: ${localDate.toISOString()}, Formatted: ${dateStr}`);
     
     if (existsSync(filePath)) {
       console.error(`Found daily note at: ${filePath}`);
@@ -169,8 +200,10 @@ export class VaultUtils {
   }
 
   static createDailyNote(date: Date): LifeOSNote {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const dateDisplay = format(date, 'MMMM dd, yyyy');
+    // Ensure we're working with local date at start of day
+    const localDate = this.getLocalDate(date);
+    const dateStr = format(localDate, 'yyyy-MM-dd');
+    const dateDisplay = format(localDate, 'MMMM dd, yyyy');
     
     const frontmatter: YAMLFrontmatter = {
       aliases: [dateDisplay],
