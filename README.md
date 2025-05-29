@@ -90,6 +90,10 @@ Diagnose vault issues and check for problematic files
 
 ### Advanced Search Tools
 
+#### `get_server_version`
+Get the current server version and capabilities information
+- **includeTools**: Include full list of available tools in the response (optional)
+
 #### `advanced_search`
 Comprehensive search with full-text search, metadata filters, and relevance scoring
 - **query**: General search query (searches title, content, and frontmatter)
@@ -230,6 +234,41 @@ Key features:
 - Research existing knowledge while coding
 - Create development notes and link to project planning
 - Integrate learning materials with your coding workflow
+
+## Versioning
+
+The LifeOS MCP server follows semantic versioning (MAJOR.MINOR.PATCH):
+
+- **MAJOR**: Incremented when making incompatible API changes
+- **MINOR**: Incremented when adding functionality in a backward compatible manner
+- **PATCH**: Incremented when making backward compatible bug fixes
+
+### Version Information
+
+All API responses include version metadata to help clients check compatibility:
+
+```json
+{
+  "content": [{ "type": "text", "text": "..." }],
+  "metadata": {
+    "version": "1.0.0",
+    "serverName": "lifeos-mcp"
+  }
+}
+```
+
+### Checking Server Version
+
+Use the `get_server_version` tool to get detailed information about the server:
+
+```
+get_server_version
+```
+
+Optional parameters:
+- **includeTools**: Set to `true` to include a list of all available tools
+
+This returns comprehensive information about the server version, capabilities, and available tools.
 
 ## Development
 
