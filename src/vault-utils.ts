@@ -160,28 +160,47 @@ export class VaultUtils {
     // Update frontmatter
     if (updates.frontmatter) {
       if (updates.mode === 'replace') {
-        // Replace mode: completely replace frontmatter (but preserve date created)
-        const dateCreated = existingNote.frontmatter['date created'];
+        // Replace mode: completely replace frontmatter (but preserve auto-managed fields)
+        const preservedFields: any = {};
+        YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+          if (existingNote.frontmatter[field]) {
+            preservedFields[field] = existingNote.frontmatter[field];
+          }
+        });
+        
         updatedNote.frontmatter = {
           ...this.sanitizeFrontmatter(updates.frontmatter),
-          'date created': dateCreated
+          ...preservedFields
         };
       } else {
         // Merge mode (default): merge with existing frontmatter
+        // First, validate only the new fields being added
+        this.validateYAML(updates.frontmatter);
+        
         updatedNote.frontmatter = {
           ...existingNote.frontmatter,
           ...updates.frontmatter
         };
         
         // Ensure we never modify auto-managed fields
-        if (existingNote.frontmatter['date created']) {
-          updatedNote.frontmatter['date created'] = existingNote.frontmatter['date created'];
-        }
+        YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+          if (existingNote.frontmatter[field]) {
+            updatedNote.frontmatter[field] = existingNote.frontmatter[field];
+          }
+        });
       }
     }
 
-    // Validate and write the updated note
-    this.writeNote(updatedNote);
+    // Write without re-validating (since we've already validated the changes)
+    const frontmatterToWrite = { ...updatedNote.frontmatter };
+    
+    // Remove auto-managed fields before writing (they'll be preserved by the linter)
+    YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+      delete frontmatterToWrite[field];
+    });
+
+    const fileContent = matter.stringify(updatedNote.content, frontmatterToWrite);
+    writeFileSync(updatedNote.path, fileContent, 'utf-8');
     
     return updatedNote;
   }
@@ -235,21 +254,13 @@ export class VaultUtils {
     const fileName = `${dateStr}.md`;
     const filePath = join(LIFEOS_CONFIG.dailyNotesPath, fileName);
     
-    console.error(`Looking for daily note at: ${filePath}`);
-    console.error(`Input date: ${date.toISOString()}, Local date: ${localDate.toISOString()}, Formatted: ${dateStr}`);
+    // Looking for daily note
     
     if (existsSync(filePath)) {
-      console.error(`Found daily note at: ${filePath}`);
+      // Found daily note
       return this.readNote(filePath);
     } else {
-      console.error(`Daily note not found at: ${filePath}`);
-      // Try to list files in the directory for debugging
-      try {
-        const files = readdirSync(LIFEOS_CONFIG.dailyNotesPath);
-        console.error(`Files in daily notes directory: ${files.filter(f => f.includes(dateStr)).join(', ')}`);
-      } catch (e) {
-        console.error(`Error reading daily notes directory: ${e}`);
-      }
+      // Daily note not found - this is normal, return null
     }
     
     return null;
