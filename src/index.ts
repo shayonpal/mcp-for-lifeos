@@ -14,9 +14,10 @@ import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
+import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.0.2';
+export const SERVER_VERSION = '1.1.0';
 
 const server = new Server(
   {
@@ -259,6 +260,52 @@ const tools: Tool[] = [
       type: 'object',
       properties: {}
     }
+  },
+  {
+    name: 'move_items',
+    description: 'Move notes and/or folders to a different location in the vault',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        items: { 
+          type: 'array', 
+          items: { 
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Path to note or folder' },
+              type: { type: 'string', enum: ['note', 'folder'], description: 'Item type (auto-detected if not specified)' }
+            },
+            required: ['path']
+          },
+          description: 'Array of items to move'
+        },
+        item: {
+          type: 'string',
+          description: 'Single item path to move (alternative to items)'
+        },
+        destination: { 
+          type: 'string', 
+          description: 'Target folder path (relative to vault root)'
+        },
+        createDestination: {
+          type: 'boolean',
+          description: 'Create destination folder if it doesn\'t exist (default: false)'
+        },
+        overwrite: {
+          type: 'boolean',
+          description: 'Overwrite existing files in destination (default: false)'
+        },
+        mergeFolders: {
+          type: 'boolean',
+          description: 'When moving folders, merge with existing folder of same name (default: false)'
+        }
+      },
+      required: ['destination'],
+      oneOf: [
+        { required: ['item'] },
+        { required: ['items'] }
+      ]
+    }
   }
 ];
 
@@ -306,6 +353,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
                   `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
                   `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
                   `- **1.0.0:** Initial release with core functionality`
@@ -874,6 +922,101 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `• \`create_note\` with template: "article"\n` +
                   `• \`create_note_from_template\` with template: "person"\n\n` +
                   `**Pro tip:** I can auto-detect the right template based on your note title and content!`
+          }]
+        });
+      }
+
+      case 'move_items': {
+        const destination = args.destination as string;
+        if (!destination) {
+          throw new Error('Destination is required');
+        }
+
+        // Collect items to move
+        const itemsToMove: Array<{ path: string; type?: string }> = [];
+        
+        if (args.item) {
+          itemsToMove.push({ path: args.item as string });
+        } else if (args.items && Array.isArray(args.items)) {
+          itemsToMove.push(...(args.items as Array<{ path: string; type?: string }>));
+        } else {
+          throw new Error('Either item or items must be provided');
+        }
+
+        if (itemsToMove.length === 0) {
+          throw new Error('No items specified to move');
+        }
+
+        const options = {
+          createDestination: args.createDestination as boolean || false,
+          overwrite: args.overwrite as boolean || false,
+          mergeFolders: args.mergeFolders as boolean || false
+        };
+
+        const results = {
+          moved: { notes: [] as string[], folders: [] as string[] },
+          failed: [] as Array<{ path: string; type: string; reason: string }>
+        };
+
+        for (const item of itemsToMove) {
+          const result = VaultUtils.moveItem(item.path, destination, options);
+          
+          if (result.success) {
+            const relativePath = result.newPath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
+            
+            try {
+              const isDirectory = statSync(result.newPath).isDirectory();
+              if (isDirectory) {
+                results.moved.folders.push(relativePath);
+              } else {
+                results.moved.notes.push(relativePath);
+              }
+            } catch (error) {
+              // If we can't stat the file, assume it's a note
+              results.moved.notes.push(relativePath);
+            }
+          } else {
+            results.failed.push({
+              path: item.path,
+              type: item.type || 'unknown',
+              reason: result.error || 'Unknown error'
+            });
+          }
+        }
+
+        // Generate response
+        let response = `# Move Operation Results\n\n`;
+        
+        if (results.moved.notes.length > 0 || results.moved.folders.length > 0) {
+          response += `## ✅ Successfully Moved\n\n`;
+          
+          if (results.moved.folders.length > 0) {
+            response += `**Folders (${results.moved.folders.length}):**\n`;
+            results.moved.folders.forEach(f => response += `- 📁 ${f}\n`);
+            response += '\n';
+          }
+          
+          if (results.moved.notes.length > 0) {
+            response += `**Notes (${results.moved.notes.length}):**\n`;
+            results.moved.notes.forEach(n => response += `- 📄 ${n}\n`);
+            response += '\n';
+          }
+        }
+        
+        if (results.failed.length > 0) {
+          response += `## ❌ Failed Moves\n\n`;
+          results.failed.forEach(f => {
+            response += `- **${f.path}**: ${f.reason}\n`;
+          });
+          response += '\n';
+        }
+        
+        response += `**Destination:** \`${destination}\``;
+
+        return addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: response
           }]
         });
       }

@@ -118,6 +118,52 @@ git push origin master --tags
 
 Keep commit messages professional and focused on the changes made.
 
+## Post-Implementation Workflow
+
+When a GitHub issue has been implemented and successfully tested, follow these steps before committing:
+
+### 1. Documentation Updates
+Update relevant documentation files as appropriate:
+- **CHANGELOG.md**: Add entry for new features, fixes, or changes
+- **README.md**: Update tool documentation, feature lists, or usage examples
+- **CLAUDE.md**: Add any new development guidelines or patterns discovered
+
+### 2. GitHub Issue Management
+Act on the implemented issue appropriately:
+- **Comment**: Add implementation details, test results, or relevant notes
+- **Close**: Close the issue if fully implemented (use "fixes #X" in commit message)
+- **Update Labels**: Add "completed" or remove "in-progress" labels
+- **Link PR**: If creating a pull request, link it to the issue
+- **Mark Duplicate**: If the issue duplicates another, mark and reference
+- **Reopen**: If implementation revealed the issue wasn't fully resolved
+
+### 3. Commit and Push
+Only after completing documentation and issue management:
+```bash
+git add .
+git commit -m "Implement feature: brief description (fixes #X)"
+git push origin branch-name
+```
+
+### Example Workflow
+```bash
+# 1. Update documentation
+# Edit CHANGELOG.md to add new feature entry
+# Update README.md if new tools were added
+# Update CLAUDE.md if new patterns were established
+
+# 2. Comment on the issue
+gh issue comment 26 --body "Implemented move_items tool with full test coverage. Supports single/batch operations, folder merging, and comprehensive error handling."
+
+# 3. Commit with issue reference
+git add .
+git commit -m "Add move_items tool for moving notes and folders (fixes #26)"
+git push origin master
+
+# 4. Close the issue (if not using "fixes" keyword)
+gh issue close 26
+```
+
 ## MCP Server Stdio Communication
 
 **IMPORTANT**: MCP servers communicate via stdio (standard input/output) using JSON-RPC protocol. Any output to stderr (console.error) or stdout (console.log) that is not JSON-RPC will interfere with the protocol and cause connection failures.

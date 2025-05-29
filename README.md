@@ -91,6 +91,29 @@ edit_note title: "My Article" mode: "replace" frontmatter: {contentType: "Articl
 Get or create a daily note
 - **date**: Date in YYYY-MM-DD format (optional, defaults to today)
 
+#### `move_items`
+Move notes and/or folders to a different location in the vault
+- **item**: Single item path to move (alternative to items)
+- **items**: Array of items to move, each with:
+  - `path`: Path to note or folder
+  - `type`: Item type - 'note' or 'folder' (auto-detected if not specified)
+- **destination** (required): Target folder path (relative to vault root)
+- **createDestination**: Create destination folder if it doesn't exist (default: false)
+- **overwrite**: Overwrite existing files in destination (default: false)
+- **mergeFolders**: When moving folders, merge with existing folder of same name (default: false)
+
+Example usage:
+```bash
+# Move a single note
+move_items item: "10 - Projects/old-note.md" destination: "40 - Archives/2024"
+
+# Move multiple items
+move_items items: [{path: "10 - Projects/Completed"}, {path: "planning-doc.md"}] destination: "40 - Archives/2024" createDestination: true
+
+# Merge folders
+move_items item: "20 - Areas/Old Resources" destination: "30 - Resources" mergeFolders: true
+```
+
 ### Navigation Tools
 
 #### `list_folders`

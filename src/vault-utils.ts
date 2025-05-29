@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, renameSync, mkdirSync, rmSync } from 'fs';
 import { join, dirname, basename, extname } from 'path';
 import matter from 'gray-matter';
 import { glob } from 'glob';
@@ -377,6 +377,109 @@ export class VaultUtils {
         return join(LIFEOS_CONFIG.vaultPath, '10 - Projects');
       default:
         return join(LIFEOS_CONFIG.vaultPath, '05 - Fleeting Notes');
+    }
+  }
+
+  static moveItem(sourcePath: string, destinationFolder: string, options: {
+    createDestination?: boolean;
+    overwrite?: boolean;
+    mergeFolders?: boolean;
+  } = {}): { success: boolean; newPath: string; error?: string } {
+    // Normalize paths
+    const normalizedSource = sourcePath.startsWith(LIFEOS_CONFIG.vaultPath) 
+      ? sourcePath 
+      : join(LIFEOS_CONFIG.vaultPath, sourcePath);
+    const normalizedDest = destinationFolder.startsWith(LIFEOS_CONFIG.vaultPath)
+      ? destinationFolder
+      : join(LIFEOS_CONFIG.vaultPath, destinationFolder);
+
+    // Validate source exists
+    if (!existsSync(normalizedSource)) {
+      return { success: false, newPath: '', error: 'Source item not found' };
+    }
+
+    // Check if source is file or folder
+    const isDirectory = statSync(normalizedSource).isDirectory();
+    
+    // Prevent moving folder into itself or its subdirectories
+    if (isDirectory && normalizedDest.startsWith(normalizedSource)) {
+      return { success: false, newPath: '', error: 'Cannot move folder into itself or its subdirectories' };
+    }
+
+    // Create destination if needed
+    if (!existsSync(normalizedDest)) {
+      if (options.createDestination) {
+        mkdirSync(normalizedDest, { recursive: true });
+      } else {
+        return { success: false, newPath: '', error: 'Destination folder does not exist' };
+      }
+    }
+
+    // Ensure destination is a directory
+    if (!statSync(normalizedDest).isDirectory()) {
+      return { success: false, newPath: '', error: 'Destination must be a folder' };
+    }
+
+    const itemName = basename(normalizedSource);
+    const newPath = join(normalizedDest, itemName);
+
+    // Handle existing items
+    if (existsSync(newPath)) {
+      if (isDirectory && options.mergeFolders) {
+        // Merge folder contents
+        return this.mergeFolders(normalizedSource, newPath);
+      } else if (!options.overwrite) {
+        return { success: false, newPath: '', error: 'Item already exists in destination' };
+      } else if (!isDirectory) {
+        // For files with overwrite=true, remove the existing file first
+        rmSync(newPath);
+      } else {
+        // For directories with overwrite=true but mergeFolders=false, remove existing directory
+        rmSync(newPath, { recursive: true });
+      }
+    }
+
+    try {
+      renameSync(normalizedSource, newPath);
+      return { success: true, newPath };
+    } catch (error) {
+      return { success: false, newPath: '', error: String(error) };
+    }
+  }
+
+  private static mergeFolders(source: string, destination: string): { success: boolean; newPath: string; error?: string } {
+    try {
+      const items = readdirSync(source, { withFileTypes: true });
+      
+      for (const item of items) {
+        const sourcePath = join(source, item.name);
+        const destPath = join(destination, item.name);
+        
+        if (item.isDirectory()) {
+          if (existsSync(destPath)) {
+            // Recursively merge subdirectories
+            const result = this.mergeFolders(sourcePath, destPath);
+            if (!result.success) {
+              return result;
+            }
+          } else {
+            // Move the subdirectory
+            renameSync(sourcePath, destPath);
+          }
+        } else {
+          // Move the file (overwriting if exists)
+          if (existsSync(destPath)) {
+            rmSync(destPath);
+          }
+          renameSync(sourcePath, destPath);
+        }
+      }
+      
+      // Remove the now-empty source directory
+      rmSync(source, { recursive: true });
+      return { success: true, newPath: destination };
+    } catch (error) {
+      return { success: false, newPath: '', error: `Failed to merge folders: ${String(error)}` };
     }
   }
 }
