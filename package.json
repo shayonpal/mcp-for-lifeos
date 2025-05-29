@@ -20,8 +20,16 @@
     "knowledge-management",
     "pkm"
   ],
-  "author": "Your Name",
-  "license": "MIT",
+  "author": "Shayon Pal <https://agilecode.studio>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shayonpal/mcp-for-lifeos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shayonpal/mcp-for-lifeos/issues"
+  },
+  "homepage": "https://github.com/shayonpal/mcp-for-lifeos#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
     "@fastify/cors": "^11.0.1",

@@ -14,12 +14,24 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **Robust Error Handling**: Graceful YAML parsing with diagnostic tools
 - **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
 
-## Installation
+## Quick Start
 
+### Automated Setup (Recommended)
+```bash
+# Clone and run automated setup
+git clone https://github.com/shayonpal/mcp-for-lifeos.git
+cd mcp-for-lifeos
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+
+### Manual Installation
 ```bash
 npm install
 npm run build
 ```
+
+📖 **For detailed deployment instructions, see [DEPLOYMENT.md](docs/DEPLOYMENT.md)**
 
 ## Configuration
 
@@ -358,6 +370,13 @@ ENABLE_WEB_INTERFACE=true WEB_PORT=8080 node dist/index.js
 - Ensure the port is not already in use before enabling
 - This feature is experimental and primarily for development/testing
 
+## Documentation
+
+- **[📖 Deployment Guide](docs/DEPLOYMENT.md)** - Complete setup and deployment instructions
+- **[🔧 Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[📱 Raycast Integration](docs/RAYCAST_INTEGRATION.md)** - Setup guide for Raycast
+- **[💻 Cursor Integration](docs/CURSOR_INTEGRATION.md)** - Setup guide for Cursor IDE
+
 ## Development
 
 ```bash
@@ -375,6 +394,12 @@ npm run lint
 
 # Type checking
 npm run typecheck
+```
+
+### Quick Setup for Development
+```bash
+# Use automated setup script
+./scripts/setup.sh --skip-deps  # Skip npm install if already done
 ```
 
 ## YAML Compliance
@@ -432,6 +457,16 @@ The server converts Templater syntax to static content:
 # Becomes: "2025-05-24"
 ```
 
+## Support and Contributing
+
+- **🐛 Issues**: Report bugs and request features via [GitHub Issues](https://github.com/shayonpal/mcp-for-lifeos/issues)
+- **💬 Discussions**: Join community discussions in the repository
+- **📖 Documentation**: Check [docs/](docs/) for comprehensive guides
+- **🔧 Troubleshooting**: See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues
+
 ## License
 
-MIT
+This project is licensed under the GNU General Public License v3.0. See [LICENSE.md](LICENSE.md) for details.
+
+**Copyright (C) 2025 Shayon Pal**  
+**AgileCode Studio** - [https://agilecode.studio](https://agilecode.studio)
