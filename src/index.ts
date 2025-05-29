@@ -438,7 +438,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'get_daily_note': {
-        const date = args.date ? new Date(args.date as string) : new Date();
+        // Use VaultUtils.getLocalDate to ensure proper timezone handling
+        const date = VaultUtils.getLocalDate(args.date as string | undefined);
         let note = await VaultUtils.getDailyNote(date);
         
         if (!note) {
@@ -810,7 +811,7 @@ async function main() {
     try {
       const httpServer = new MCPHttpServer({
         host: process.env.WEB_HOST || '0.0.0.0',
-        port: parseInt(process.env.WEB_PORT || '9000'),
+        port: parseInt(process.env.WEB_PORT || '19831'),
       }, server); // Pass the MCP server instance
       console.error('HTTP server created, starting...');
       await httpServer.start();

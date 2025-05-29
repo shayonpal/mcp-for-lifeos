@@ -15,7 +15,7 @@ Set up the foundational HTML structure for the web interface with PWA capabiliti
 - Create `public/manifest.json` with PWA configuration for iOS compatibility
 - Include meta tags for viewport, PWA display modes, and iOS-specific settings
 - Add basic favicon and app icons (16x16, 32x32, 192x192, 512x512)
-- Ensure HTML validates and loads correctly at http://localhost:9000
+- Ensure HTML validates and loads correctly at http://localhost:19831
 
 **Files to Create**:
 - `public/index.html`
@@ -162,7 +162,7 @@ Create the foundational HTTP server infrastructure to serve the web interface an
 - Install Fastify and necessary dependencies in `package.json`
 - Create `src/server/http-server.js` with basic Fastify setup
 - Serve static files from `public/` directory
-- Configure server to run on port 9000, host 0.0.0.0
+- Configure server to run on port 19831, host 0.0.0.0
 - Add basic CORS configuration for local network access
 - Include proper error handling and logging
 - Test server starts correctly and serves static files

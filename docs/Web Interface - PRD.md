@@ -140,7 +140,7 @@ The MVP will focus on creating a functional web interface with the following fea
   - Key validation on first use
 
 - **Local Network Access**
-  - Available on Mac Mini at http://10.0.0.140:9000
+  - Available on Mac Mini at http://10.0.0.140:19831
   - Optional mDNS support for easier discovery
 
 ### Phase 2: Full Implementation
@@ -166,7 +166,7 @@ After the MVP is established, the full implementation will add:
 - Should integrate with the existing MCP-for-LifeOS codebase
 - Minimize external dependencies to reduce complexity
 - Prioritize lightweight, efficient implementations
-- Web interface will run on port 9000 to avoid conflicts with other services
+- Web interface will run on port 19831 to avoid conflicts with other services
 
 ## MVP Implementation Status
 
@@ -183,7 +183,7 @@ The MVP has been successfully implemented and tested with the following features
 - **✅ API Key Management**: Secure client-side storage with validation and connection testing
 - **✅ Model Selection**: Dropdown selection between Claude models with persistence
 - **✅ HTTP Server**: Fastify-based server serving static files and API endpoints
-- **✅ Network Access**: Available on local network at http://10.0.0.140:9000
+- **✅ Network Access**: Available on local network at http://10.0.0.140:19831
 - **✅ Error Handling**: Graceful fallbacks and user-friendly error messages
 
 #### Technical Implementation:
@@ -212,7 +212,7 @@ The HTTP transport layer has been successfully implemented, providing a bridge b
 - **✅ API Endpoints**: `/api/mcp/tools` (list tools) and `/api/mcp/tool` (execute tools)
 - **✅ Request Handling**: Proper MCP request/response format with method and params
 - **✅ Error Management**: Comprehensive error handling and HTTP status codes
-- **✅ Network Binding**: Available on both localhost and network interface (10.0.0.140:9000)
+- **✅ Network Binding**: Available on both localhost and network interface (10.0.0.140:19831)
 - **✅ Performance**: Fast response times (24ms average) with request logging
 
 #### Technical Implementation:
@@ -245,7 +245,7 @@ The HTTP transport layer is now complete. Ready for:
   - `/api/mcp/tools` endpoint for listing available tools
   - `/api/mcp/tool` endpoint for executing tools with arguments
   - Proper MCP protocol request/response handling
-  - Multi-network binding (localhost + 10.0.0.140:9000)
+  - Multi-network binding (localhost + 10.0.0.140:19831)
 - **Testing**: Manual curl testing and automated integration testing completed
 - **Performance**: 24ms average response time with comprehensive logging
 - **Status**: HTTP transport layer fully operational and ready for API integrations

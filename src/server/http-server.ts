@@ -41,7 +41,7 @@ export class MCPHttpServer {
     constructor(config: Partial<ServerConfig> = {}, mcpServer?: Server) {
         this.config = {
             host: '0.0.0.0',
-            port: 9000,
+            port: 19831,
             enableCors: true,
             staticPath: join(__dirname, '../../public'),
             ...config
