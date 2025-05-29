@@ -17,12 +17,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports any document format (markdown, YAML, text) for maximum flexibility
   - Gracefully handles missing or unconfigured rules files
 
+- **Comprehensive Deployment Documentation** (#15)
+  - Added `docs/DEPLOYMENT.md` - Complete deployment guide with system requirements, installation methods, and client configuration
+  - Added `docs/TROUBLESHOOTING.md` - Extensive troubleshooting guide covering common issues and solutions
+  - Added automated setup script `scripts/setup.sh` with interactive configuration and validation
+  - Auto-generation of client configurations for Claude Desktop, Raycast, and Cursor IDE
+  - Command-line options for setup script (--skip-deps, --skip-config, --silent, --help)
+
+- **Professional Project Structure**
+  - Moved utility scripts to `scripts/` directory for better organization
+  - Added `tests/` directory structure with unit, integration, and fixtures subdirectories
+  - Added comprehensive `tests/README.md` with testing guidelines
+  - Added GPL v3.0 license (`LICENSE.md`)
+  - Updated `package.json` with repository metadata and proper licensing
+
 ### Fixed
 - **Template Discovery**: Fixed YAML parsing errors for templates with Templater syntax (#17)
   - Added preprocessing to handle Templater expressions before YAML parsing
   - Removed all console output for MCP protocol compatibility
   - All 12 templates now parse successfully without errors
   - Added silent error tracking for debugging template issues
+
+### Changed
+- **Project Organization**: Reorganized file structure for better maintainability
+  - Scripts consolidated in `scripts/` directory
+  - Removed redundant `setup.md` (superseded by comprehensive `docs/DEPLOYMENT.md`)
+  - Updated `.gitignore` for new structure and generated files
+  - Updated documentation references to reflect new script locations
 
 ## [1.1.1] - 2025-01-29
 
