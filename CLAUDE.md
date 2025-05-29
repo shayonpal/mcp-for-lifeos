@@ -21,7 +21,7 @@ When feature specifications change during development:
    - Adjust acceptance criteria as needed
    - Update priority or dependencies if required
 
-3. **Change Log Format**: Use this format in the PRD:
+3. **Change Log Format**: Use this format in the PRD. Run the `date` command to get current timestamp:
    ```
    ## Change Log
    
@@ -117,3 +117,94 @@ git push origin master --tags
 - Any references to AI assistance or Claude
 
 Keep commit messages professional and focused on the changes made.
+
+## Post-Implementation Workflow
+
+When a GitHub issue has been implemented and successfully tested, follow these steps before committing:
+
+### 1. Documentation Updates
+Update relevant documentation files as appropriate:
+- **CHANGELOG.md**: Add entry for new features, fixes, or changes
+- **README.md**: Update tool documentation, feature lists, or usage examples
+- **CLAUDE.md**: Add any new development guidelines or patterns discovered
+
+### 2. Acceptance Criteria Testing
+Before marking an issue as complete, test against the acceptance criteria:
+- **Review Acceptance Criteria**: Check if the GitHub issue contains acceptance criteria
+- **Test Each Criterion**: Systematically test each acceptance criterion listed in the issue
+- **Document Test Results**: Record which criteria pass/fail during testing
+- **Update Issue Description**: Mark completed acceptance criteria as done using checkboxes (- [x])
+- **Address Failures**: If any criteria fail, implement fixes before closing the issue
+
+### 3. GitHub Issue Management
+Act on the implemented issue appropriately:
+- **Comment**: Add implementation details, test results, or relevant notes
+- **Close**: Close the issue if fully implemented (use "fixes #X" in commit message)
+- **Update Labels**: Add "completed" or remove "in-progress" labels
+- **Link PR**: If creating a pull request, link it to the issue
+- **Mark Duplicate**: If the issue duplicates another, mark and reference
+- **Reopen**: If implementation revealed the issue wasn't fully resolved
+
+### 4. Commit and Push
+Only after completing documentation and issue management:
+```bash
+git add .
+git commit -m "Implement feature: brief description (fixes #X)"
+git push origin branch-name
+```
+
+### Example Workflow
+```bash
+# 1. Update documentation
+# Edit CHANGELOG.md to add new feature entry
+# Update README.md if new tools were added
+# Update CLAUDE.md if new patterns were established
+
+# 2. Test acceptance criteria (if present in issue)
+# Check issue #26 for acceptance criteria
+# Test each criterion systematically
+# Update issue description to mark completed criteria as [x]
+
+# 3. Comment on the issue with test results
+gh issue comment 26 --body "Implemented move_items tool with full test coverage. All acceptance criteria verified: ✅ Single item moves ✅ Batch operations ✅ Folder merging ✅ Error handling"
+
+# 4. Commit with issue reference
+git add .
+git commit -m "Add move_items tool for moving notes and folders (fixes #26)"
+git push origin master
+
+# 5. Close the issue (if not using "fixes" keyword)
+gh issue close 26
+```
+
+## MCP Server Stdio Communication
+
+**IMPORTANT**: MCP servers communicate via stdio (standard input/output) using JSON-RPC protocol. Any output to stderr (console.error) or stdout (console.log) that is not JSON-RPC will interfere with the protocol and cause connection failures.
+
+### Key Rules for MCP Servers:
+
+1. **Never use console.log or console.error** in production MCP server code
+2. **All debug output must be suppressed** when running as an MCP server
+3. **Only JSON-RPC messages should be sent to stdout**
+4. **Error handling should be silent** - catch errors and handle them without logging
+
+### Common Connection Issues:
+
+- "Connection closed" error: Usually caused by non-JSON output to stdout/stderr
+- "MCP error -32000": Often indicates protocol violation from debug logging
+- Server fails to connect: Check for any console output during startup
+
+### Debugging Tips:
+
+- Use environment variables to conditionally enable debug logging
+- Write debug logs to files instead of console when needed
+- Test the server with `node dist/index.js` to see any console output that would break MCP
+
+### Web Interface
+
+The HTTP web interface is disabled by default to ensure MCP compatibility. To enable it:
+- Set environment variable: `ENABLE_WEB_INTERFACE=true`
+- Ensure port 19831 is not already in use
+- Run the server with: `ENABLE_WEB_INTERFACE=true node dist/index.js`
+
+**Note**: The web interface should only be enabled for testing/development, not when running as an MCP server.
