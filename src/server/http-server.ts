@@ -57,6 +57,7 @@ export class MCPHttpServer {
                     options: {
                         colorize: true,
                         translateTime: 'HH:MM:ss Z',
+                        destination: 2, // stderr
                         ignore: 'pid,hostname'
                     }
                 }
@@ -344,10 +345,10 @@ export class MCPHttpServer {
 
         // Graceful shutdown
         const gracefulShutdown = async (signal: string) => {
-            console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+            console.error(`\nReceived ${signal}. Shutting down gracefully...`);
             try {
                 await this.fastify.close();
-                console.log('Server closed successfully.');
+                console.error('Server closed successfully.');
                 process.exit(0);
             } catch (error) {
                 console.error('Error during shutdown:', error);
@@ -366,22 +367,22 @@ export class MCPHttpServer {
                 port: this.config.port
             });
 
-            console.log('\n🚀 LifeOS MCP Web Interface started!');
-            console.log(`📍 Local: http://localhost:${this.config.port}`);
-            console.log(`🌐 Network: http://${this.config.host}:${this.config.port}`);
-            console.log(`📁 Static files: ${this.config.staticPath}`);
-            console.log('\n💡 Available endpoints:');
-            console.log('  GET  /              - Web interface');
-            console.log('  GET  /api/health    - Health check');
-            console.log('  GET  /api/models    - Available models');
-            console.log('  POST /api/chat      - Send chat message');
-            console.log('  GET  /api/chat/stream - Streaming chat');
+            console.error('\n🚀 LifeOS MCP Web Interface started!');
+            console.error(`📍 Local: http://localhost:${this.config.port}`);
+            console.error(`🌐 Network: http://${this.config.host}:${this.config.port}`);
+            console.error(`📁 Static files: ${this.config.staticPath}`);
+            console.error('\n💡 Available endpoints:');
+            console.error('  GET  /              - Web interface');
+            console.error('  GET  /api/health    - Health check');
+            console.error('  GET  /api/models    - Available models');
+            console.error('  POST /api/chat      - Send chat message');
+            console.error('  GET  /api/chat/stream - Streaming chat');
             if (this.mcpServer) {
-                console.log('  GET  /api/mcp/tools - List MCP tools');
-                console.log('  POST /api/mcp/tool  - Execute MCP tool');
-                console.log('\n🔗 MCP Integration: ENABLED');
+                console.error('  GET  /api/mcp/tools - List MCP tools');
+                console.error('  POST /api/mcp/tool  - Execute MCP tool');
+                console.error('\n🔗 MCP Integration: ENABLED');
             } else {
-                console.log('\n🔗 MCP Integration: DISABLED (server not provided)');
+                console.error('\n🔗 MCP Integration: DISABLED (server not provided)');
             }
 
         } catch (error) {
