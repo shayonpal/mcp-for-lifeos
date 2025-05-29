@@ -81,6 +81,35 @@ const tools: Tool[] = [
     }
   },
   {
+    name: 'edit_note',
+    description: 'Edit an existing note in the LifeOS vault',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
+        title: { type: 'string', description: 'Note title (alternative to path)' },
+        content: { type: 'string', description: 'New content (optional - preserves existing if not provided)' },
+        frontmatter: { 
+          type: 'object', 
+          description: 'Frontmatter fields to update (merged with existing)',
+          properties: {
+            contentType: { type: 'string', description: 'Content type' },
+            category: { type: 'string', description: 'Category' },
+            subCategory: { type: 'string', description: 'Sub-category' },
+            tags: { type: 'array', items: { type: 'string' }, description: 'Tags array' },
+            source: { type: 'string', description: 'Source URL' },
+            people: { type: 'array', items: { type: 'string' }, description: 'People mentioned' }
+          }
+        },
+        mode: { 
+          type: 'string', 
+          enum: ['merge', 'replace'], 
+          description: 'Update mode: merge (default) or replace frontmatter' 
+        }
+      }
+    }
+  },
+  {
     name: 'read_note',
     description: 'Read a note from the vault',
     inputSchema: {
@@ -395,7 +424,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
         }
         
-        console.error(`Attempting to read note at: ${normalizedPath}`);
+        // Debug logging removed for MCP compatibility
         const note = VaultUtils.readNote(normalizedPath);
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
         
@@ -407,6 +436,71 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: 'text',
             text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
+          }]
+        });
+      }
+
+      case 'edit_note': {
+        // Get note path - either from direct path or by searching for title
+        let notePath: string;
+        
+        if (args.path) {
+          notePath = args.path as string;
+          // Normalize path - handle escaped spaces and resolve relative paths
+          notePath = notePath.replace(/\\ /g, ' ');
+          if (!notePath.startsWith('/')) {
+            notePath = `${LIFEOS_CONFIG.vaultPath}/${notePath}`;
+          }
+        } else if (args.title) {
+          // Search for note by title
+          const searchResults = await SearchEngine.quickSearch(args.title as string, 1);
+          
+          if (searchResults.length === 0) {
+            throw new Error(`No note found with title: ${args.title}`);
+          }
+          
+          notePath = searchResults[0].note.path;
+        } else {
+          throw new Error('Either path or title is required');
+        }
+
+        // Prepare update object
+        const updates: any = {
+          mode: args.mode as 'merge' | 'replace' || 'merge'
+        };
+
+        if (args.content !== undefined) {
+          updates.content = args.content as string;
+        }
+
+        if (args.frontmatter) {
+          const fm = args.frontmatter as any;
+          updates.frontmatter = {};
+          
+          // Map from API field names to YAML field names
+          if (fm.contentType) updates.frontmatter['content type'] = fm.contentType;
+          if (fm.category) updates.frontmatter.category = fm.category;
+          if (fm.subCategory) updates.frontmatter['sub-category'] = fm.subCategory;
+          if (fm.tags) updates.frontmatter.tags = fm.tags;
+          if (fm.source) updates.frontmatter.source = fm.source;
+          if (fm.people) updates.frontmatter.people = fm.people;
+          
+          // Allow any other custom fields
+          Object.keys(fm).forEach(key => {
+            if (!['contentType', 'category', 'subCategory', 'tags', 'source', 'people'].includes(key)) {
+              updates.frontmatter[key] = fm[key];
+            }
+          });
+        }
+
+        // Update the note
+        const updatedNote = VaultUtils.updateNote(notePath, updates);
+        const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
+        
+        return addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: `✅ Updated note: **${updatedNote.frontmatter.title || 'Untitled'}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
           }]
         });
       }

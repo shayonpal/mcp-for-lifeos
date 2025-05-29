@@ -130,6 +130,62 @@ export class VaultUtils {
     return note;
   }
 
+  static updateNote(
+    filePath: string,
+    updates: {
+      frontmatter?: Partial<YAMLFrontmatter>;
+      content?: string;
+      mode?: 'replace' | 'merge';
+    }
+  ): LifeOSNote {
+    // Check if note exists
+    if (!existsSync(filePath)) {
+      throw new Error(`Note not found: ${filePath}`);
+    }
+
+    // Read existing note
+    const existingNote = this.readNote(filePath);
+    
+    // Prepare updated note
+    const updatedNote: LifeOSNote = {
+      ...existingNote,
+      modified: new Date()
+    };
+
+    // Update content if provided
+    if (updates.content !== undefined) {
+      updatedNote.content = updates.content;
+    }
+
+    // Update frontmatter
+    if (updates.frontmatter) {
+      if (updates.mode === 'replace') {
+        // Replace mode: completely replace frontmatter (but preserve date created)
+        const dateCreated = existingNote.frontmatter['date created'];
+        updatedNote.frontmatter = {
+          ...this.sanitizeFrontmatter(updates.frontmatter),
+          'date created': dateCreated
+        };
+      } else {
+        // Merge mode (default): merge with existing frontmatter
+        updatedNote.frontmatter = {
+          ...existingNote.frontmatter,
+          ...updates.frontmatter
+        };
+        
+        // Ensure we never modify auto-managed fields
+        if (existingNote.frontmatter['date created']) {
+          updatedNote.frontmatter['date created'] = existingNote.frontmatter['date created'];
+        }
+      }
+    }
+
+    // Validate and write the updated note
+    this.writeNote(updatedNote);
+    
+    return updatedNote;
+  }
+
   static searchNotes(options: SearchOptions): LifeOSNote[] {
     const allNotes = this.getAllNotes();
     

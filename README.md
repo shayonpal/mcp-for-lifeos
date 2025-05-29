@@ -61,6 +61,32 @@ Create a note using a specific LifeOS template with auto-filled metadata
 Read an existing note
 - **path** (required): Full path to the note
 
+#### `edit_note`
+Edit an existing note in the vault
+- **path**: Path to the note file (absolute or relative to vault)
+- **title**: Note title (alternative to path - will search for the note)
+- **content**: New content (optional - preserves existing if not provided)
+- **frontmatter**: Frontmatter fields to update (merged with existing)
+  - `contentType`: Content type
+  - `category`: Category
+  - `subCategory`: Sub-category
+  - `tags`: Tags array
+  - `source`: Source URL
+  - `people`: People mentioned
+- **mode**: Update mode - 'merge' (default) or 'replace' frontmatter
+
+Example usage:
+```bash
+# Edit by path
+edit_note path: "Articles/My Article.md" content: "Updated content"
+
+# Edit by title
+edit_note title: "My Article" frontmatter: {tags: ["updated", "important"]}
+
+# Replace entire frontmatter (preserves date created)
+edit_note title: "My Article" mode: "replace" frontmatter: {contentType: "Article", tags: ["new"]}
+```
+
 #### `get_daily_note`
 Get or create a daily note
 - **date**: Date in YYYY-MM-DD format (optional, defaults to today)
