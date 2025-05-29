@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Template Discovery**: Fixed YAML parsing errors for templates with Templater syntax (#17)
+  - Added preprocessing to handle Templater expressions before YAML parsing
+  - Removed all console output for MCP protocol compatibility
+  - All 12 templates now parse successfully without errors
+  - Added silent error tracking for debugging template issues
+
 ## [1.1.1] - 2025-01-29
 
 ### Fixed

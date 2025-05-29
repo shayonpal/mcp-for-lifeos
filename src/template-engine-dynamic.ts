@@ -18,6 +18,7 @@ export class DynamicTemplateEngine {
   private static templateCache: Map<string, TemplateInfo> = new Map();
   private static lastScanTime: number = 0;
   private static CACHE_TTL = 30000; // 30 seconds cache
+  private static failedTemplates: Map<string, string> = new Map(); // Track templates that failed to parse
 
   /**
    * Scan the templates directory and discover all available templates
@@ -30,7 +31,7 @@ export class DynamicTemplateEngine {
       return this.templateCache;
     }
 
-    console.log('Scanning templates directory for changes...');
+    // Silent operation for MCP compatibility - no console output
     this.templateCache.clear();
 
     try {
@@ -45,15 +46,17 @@ export class DynamicTemplateEngine {
             this.templateCache.set(templateInfo.key, templateInfo);
           }
         } catch (error) {
-          console.error(`Error analyzing template ${file}:`, error);
+          // Store error for debugging without console output (MCP compatibility)
+          this.failedTemplates.set(file, error instanceof Error ? error.message : String(error));
           // Continue with other templates
         }
       }
 
       this.lastScanTime = now;
-      console.log(`Discovered ${this.templateCache.size} templates`);
+      // Silent operation for MCP compatibility
     } catch (error) {
-      console.error('Error scanning templates directory:', error);
+      // Silent error handling for MCP compatibility
+      this.failedTemplates.set('_directory_scan', error instanceof Error ? error.message : String(error));
     }
 
     return this.templateCache;
@@ -67,7 +70,11 @@ export class DynamicTemplateEngine {
     
     try {
       const content = readFileSync(filePath, 'utf-8');
-      const parsed = matter(content);
+      
+      // Pre-process content to handle Templater syntax
+      const processedContent = this.preprocessTemplaterSyntax(content);
+      
+      const parsed = matter(processedContent);
       const frontmatter = parsed.data as YAMLFrontmatter;
 
       // Generate template key from filename
@@ -88,9 +95,105 @@ export class DynamicTemplateEngine {
         key
       };
     } catch (error) {
-      console.error(`Failed to analyze template ${filename}:`, error);
+      // Silent error handling for MCP compatibility
+      this.failedTemplates.set(filename, error instanceof Error ? error.message : String(error));
       return null;
     }
+  }
+
+  /**
+   * Pre-process template content to handle Templater syntax before YAML parsing
+   */
+  private static preprocessTemplaterSyntax(content: string): string {
+    // Split content into frontmatter and body
+    const lines = content.split('\n');
+    let inFrontmatter = false;
+    let frontmatterStart = -1;
+    let frontmatterEnd = -1;
+    
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() === '---') {
+        if (!inFrontmatter && frontmatterStart === -1) {
+          inFrontmatter = true;
+          frontmatterStart = i;
+        } else if (inFrontmatter) {
+          frontmatterEnd = i;
+          break;
+        }
+      }
+    }
+    
+    // If no frontmatter found, return original content
+    if (frontmatterStart === -1 || frontmatterEnd === -1) {
+      return content;
+    }
+    
+    // Process frontmatter section
+    const processedLines = [...lines];
+    let inTemplaterBlock = false;
+    let templaterStartLine = -1;
+    
+    for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
+      const line = lines[i];
+      
+      // Skip empty lines
+      if (!line.trim()) continue;
+      
+      // Detect multi-line Templater blocks (<%* ... %>)
+      if (line.includes('<%*')) {
+        inTemplaterBlock = true;
+        templaterStartLine = i;
+        // Find the YAML key before the Templater block
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > -1) {
+          const key = line.substring(0, colonIndex);
+          processedLines[i] = `${key}: "TEMPLATER_MULTILINE"`;
+        }
+        continue;
+      }
+      
+      // Skip lines inside Templater blocks
+      if (inTemplaterBlock) {
+        if (line.includes('%>')) {
+          inTemplaterBlock = false;
+        }
+        processedLines[i] = '# Templater code removed';
+        continue;
+      }
+      
+      // Handle single-line Templater syntax
+      if (line.includes('<%') && line.includes('%>')) {
+        // Extract the key part (before the colon)
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > -1) {
+          const key = line.substring(0, colonIndex);
+          const value = line.substring(colonIndex + 1).trim();
+          
+          // If the value contains Templater syntax, replace it with a safe placeholder
+          if (value.includes('<%') && value.includes('%>')) {
+            // Check if it's a quoted value
+            if ((value.startsWith('"') && value.endsWith('"')) || 
+                (value.startsWith("'") && value.endsWith("'"))) {
+              // Keep the quotes but replace the content
+              const quote = value[0];
+              processedLines[i] = `${key}: ${quote}TEMPLATER_PLACEHOLDER${quote}`;
+            } else if (value.startsWith('[') && value.endsWith(']')) {
+              // It's an array, check if the Templater is inside quotes
+              if (value.includes('["') || value.includes("['")) {
+                processedLines[i] = `${key}: ["TEMPLATER_PLACEHOLDER"]`;
+              } else {
+                processedLines[i] = `${key}: []`;
+              }
+            } else {
+              // Replace with a simple placeholder
+              processedLines[i] = `${key}: "TEMPLATER_PLACEHOLDER"`;
+            }
+          }
+        }
+      }
+    }
+    
+    return processedLines.join('\n');
   }
 
   /**
@@ -254,8 +357,16 @@ export class DynamicTemplateEngine {
    */
   static refreshTemplates(): void {
     this.templateCache.clear();
+    this.failedTemplates.clear();
     this.lastScanTime = 0;
     this.scanTemplates();
+  }
+
+  /**
+   * Get templates that failed to parse (for debugging)
+   */
+  static getFailedTemplates(): Map<string, string> {
+    return new Map(this.failedTemplates);
   }
 
   /**
@@ -277,7 +388,7 @@ export class DynamicTemplateEngine {
         content: parsed.content
       };
     } catch (error) {
-      console.error(`Error reading template ${templatePath}:`, error);
+      // Silent error handling for MCP compatibility
       throw new Error(`Failed to parse template: ${templatePath}`);
     }
   }
@@ -369,8 +480,7 @@ export class DynamicTemplateEngine {
     try {
       return this.processTemplate(templateKey, noteTitle, customData);
     } catch (error) {
-      console.error(`Failed to create note from template ${templateKey}:`, error);
-      
+      // Silent error handling for MCP compatibility
       // Fallback to basic note structure
       return {
         frontmatter: {
