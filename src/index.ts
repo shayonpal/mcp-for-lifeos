@@ -358,11 +358,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.source) frontmatter.source = args.source as string;
         if (args.people) frontmatter.people = args.people as string[];
 
-        // Generate filename, preserving dashes for date formats
+        // Generate filename, removing only Obsidian-restricted characters
         const fileName = title
-          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
-          .replace(/\s+/g, '-') // Replace spaces with dashes
-          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
+          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
+          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
+          .trim();                         // Remove leading/trailing spaces
         const note = VaultUtils.createNote(fileName, frontmatter, content, targetFolder);
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
@@ -389,11 +389,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.customData as Record<string, any>) || {}
         );
 
-        // Generate filename, preserving dashes for date formats
+        // Generate filename, removing only Obsidian-restricted characters
         const fileName = title
-          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
-          .replace(/\s+/g, '-') // Replace spaces with dashes
-          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
+          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
+          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
+          .trim();                         // Remove leading/trailing spaces
         const note = VaultUtils.createNote(
           fileName, 
           templateResult.frontmatter, 
