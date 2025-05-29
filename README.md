@@ -98,7 +98,7 @@ Get the current server version and capabilities information
 Comprehensive search with full-text search, metadata filters, and relevance scoring
 - **query**: General search query (searches title, content, and frontmatter)
 - **contentQuery**: Search only in note content
-- **titleQuery**: Search only in note titles
+- **titleQuery**: Search in note titles, filenames (without .md extension), and aliases
 - **contentType**: Filter by content type
 - **category**: Filter by category
 - **subCategory**: Filter by sub-category

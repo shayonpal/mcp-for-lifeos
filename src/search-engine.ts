@@ -243,15 +243,40 @@ export class SearchEngine {
       // Search in title
       if (options.query || options.titleQuery) {
         const titleQuery = options.titleQuery || options.query!;
-        const title = note.frontmatter.title || '';
-        matches.push(...this.findMatches(
-          title, 
-          titleQuery, 
-          'title', 
-          undefined,
-          options.caseSensitive,
-          options.useRegex
-        ));
+        
+        // Search in multiple title-related fields
+        const titleSources: string[] = [];
+        
+        // 1. Use frontmatter title if available
+        if (note.frontmatter.title) {
+          titleSources.push(note.frontmatter.title);
+        }
+        
+        // 2. Always include filename without extension
+        const pathParts = note.path.split('/');
+        const filename = pathParts[pathParts.length - 1];
+        const filenameWithoutExt = filename.replace(/\.md$/, '');
+        titleSources.push(filenameWithoutExt);
+        
+        // 3. Check aliases
+        if (note.frontmatter.aliases) {
+          const aliases = Array.isArray(note.frontmatter.aliases) 
+            ? note.frontmatter.aliases 
+            : [note.frontmatter.aliases];
+          titleSources.push(...aliases.filter(a => typeof a === 'string'));
+        }
+        
+        // Search in all title sources
+        for (const titleSource of titleSources) {
+          matches.push(...this.findMatches(
+            titleSource, 
+            titleQuery, 
+            'title', 
+            undefined,
+            options.caseSensitive,
+            options.useRegex
+          ));
+        }
       }
 
       // Search in content
