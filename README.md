@@ -5,6 +5,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 ## Features
 
 - **YAML-Compliant Note Creation**: Automatically follows LifeOS YAML rules
+- **Custom YAML Rules Integration**: Reference your own YAML frontmatter guidelines for consistent note creation
 - **PARA Method Organization**: Respects Projects/Areas/Resources/Archives structure
 - **Intelligent Template System**: Full integration with 11+ LifeOS templates (restaurant, article, person, etc.)
 - **Advanced Search Engine**: Full-text search with relevance scoring and context extraction
@@ -25,11 +26,13 @@ npm run build
 1. Copy `src/config.example.ts` to `src/config.ts`
 2. Update the vault paths to match your Obsidian vault location
 3. Customize the PEOPLE_MAPPINGS for your specific contacts
+4. **Optional**: Set `yamlRulesPath` to reference your YAML frontmatter guidelines
 
 ```typescript
 export const LIFEOS_CONFIG: LifeOSConfig = {
   vaultPath: '/path/to/your/obsidian/vault',
   templatesPath: '/path/to/your/obsidian/vault/Templates',
+  yamlRulesPath: '/path/to/your/vault/YAML Rules.md', // Optional
   // ... other paths
 };
 ```
@@ -142,6 +145,12 @@ Diagnose vault issues and check for problematic files
 #### `get_server_version`
 Get the current server version and capabilities information
 - **includeTools**: Include full list of available tools in the response (optional)
+
+#### `get_yaml_rules`
+Retrieve your custom YAML frontmatter rules document for reference when creating or editing notes
+- No parameters required
+- Returns the content of your configured YAML rules document
+- Requires `yamlRulesPath` to be set in configuration
 
 #### `advanced_search`
 Comprehensive search with full-text search, metadata filters, and relevance scoring

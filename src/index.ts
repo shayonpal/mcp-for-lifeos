@@ -11,13 +11,17 @@ import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
+import { YamlRulesManager } from './yaml-rules-manager.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.1.1';
+export const SERVER_VERSION = '1.2.0';
+
+// Initialize YAML rules manager
+const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
 
 const server = new Server(
   {
@@ -44,8 +48,16 @@ const tools: Tool[] = [
     }
   },
   {
+    name: 'get_yaml_rules',
+    description: 'Get the user\'s YAML frontmatter rules document for reference when creating or editing note YAML',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
     name: 'create_note',
-    description: 'Create a new note in the LifeOS vault with proper YAML frontmatter',
+    description: 'Create a new note in the LifeOS vault with proper YAML frontmatter. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -66,7 +78,7 @@ const tools: Tool[] = [
   },
   {
     name: 'create_note_from_template',
-    description: 'Create a note using a specific LifeOS template with auto-filled metadata',
+    description: 'Create a note using a specific LifeOS template with auto-filled metadata. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -83,7 +95,7 @@ const tools: Tool[] = [
   },
   {
     name: 'edit_note',
-    description: 'Edit an existing note in the LifeOS vault',
+    description: 'Edit an existing note in the LifeOS vault. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -349,6 +361,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
                   `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
                   `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
                   `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
@@ -366,6 +379,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         
         return addVersionMetadata(response);
+      }
+      case 'get_yaml_rules': {
+        if (!yamlRulesManager.isConfigured()) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'YAML rules are not configured. Set the yamlRulesPath in your config to enable this feature.'
+            }]
+          };
+        }
+
+        try {
+          const isValid = await yamlRulesManager.validateRulesFile();
+          if (!isValid) {
+            return {
+              content: [{
+                type: 'text',
+                text: `YAML rules file not found or not accessible at: ${yamlRulesManager.getRulesPath()}`
+              }]
+            };
+          }
+
+          const rules = await yamlRulesManager.getRules();
+          return {
+            content: [{
+              type: 'text',
+              text: `# YAML Frontmatter Rules\n\n${rules}`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error reading YAML rules: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }]
+          };
+        }
       }
       case 'create_note': {
         const title = args.title as string;

@@ -4,7 +4,8 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
   vaultPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)',
   attachmentsPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/Attachments',
   templatesPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/Templates',
-  dailyNotesPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily'
+  dailyNotesPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily',
+  yamlRulesPath: '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/System/YAML Rules for LifeOS Vault.md'
 };
 
 export const YAML_RULES = {

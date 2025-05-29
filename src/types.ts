@@ -3,6 +3,7 @@ export interface LifeOSConfig {
   attachmentsPath: string;
   templatesPath: string;
   dailyNotesPath: string;
+  yamlRulesPath?: string;
 }
 
 export interface YAMLFrontmatter {

@@ -128,7 +128,15 @@ Update relevant documentation files as appropriate:
 - **README.md**: Update tool documentation, feature lists, or usage examples
 - **CLAUDE.md**: Add any new development guidelines or patterns discovered
 
-### 2. GitHub Issue Management
+### 2. Acceptance Criteria Testing
+Before marking an issue as complete, test against the acceptance criteria:
+- **Review Acceptance Criteria**: Check if the GitHub issue contains acceptance criteria
+- **Test Each Criterion**: Systematically test each acceptance criterion listed in the issue
+- **Document Test Results**: Record which criteria pass/fail during testing
+- **Update Issue Description**: Mark completed acceptance criteria as done using checkboxes (- [x])
+- **Address Failures**: If any criteria fail, implement fixes before closing the issue
+
+### 3. GitHub Issue Management
 Act on the implemented issue appropriately:
 - **Comment**: Add implementation details, test results, or relevant notes
 - **Close**: Close the issue if fully implemented (use "fixes #X" in commit message)
@@ -137,7 +145,7 @@ Act on the implemented issue appropriately:
 - **Mark Duplicate**: If the issue duplicates another, mark and reference
 - **Reopen**: If implementation revealed the issue wasn't fully resolved
 
-### 3. Commit and Push
+### 4. Commit and Push
 Only after completing documentation and issue management:
 ```bash
 git add .
@@ -152,15 +160,20 @@ git push origin branch-name
 # Update README.md if new tools were added
 # Update CLAUDE.md if new patterns were established
 
-# 2. Comment on the issue
-gh issue comment 26 --body "Implemented move_items tool with full test coverage. Supports single/batch operations, folder merging, and comprehensive error handling."
+# 2. Test acceptance criteria (if present in issue)
+# Check issue #26 for acceptance criteria
+# Test each criterion systematically
+# Update issue description to mark completed criteria as [x]
 
-# 3. Commit with issue reference
+# 3. Comment on the issue with test results
+gh issue comment 26 --body "Implemented move_items tool with full test coverage. All acceptance criteria verified: ✅ Single item moves ✅ Batch operations ✅ Folder merging ✅ Error handling"
+
+# 4. Commit with issue reference
 git add .
 git commit -m "Add move_items tool for moving notes and folders (fixes #26)"
 git push origin master
 
-# 4. Close the issue (if not using "fixes" keyword)
+# 5. Close the issue (if not using "fixes" keyword)
 gh issue close 26
 ```
 

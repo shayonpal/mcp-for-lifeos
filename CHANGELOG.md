@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-01-29
+
+### Added
+- **YAML Rules Integration**: New `get_yaml_rules` tool for referencing custom YAML frontmatter guidelines (#19)
+  - Added optional `yamlRulesPath` configuration to reference user's YAML rules document
+  - Created YamlRulesManager class with file caching and validation
+  - Updated `create_note`, `edit_note`, and `create_note_from_template` tools to reference YAML rules
+  - Supports any document format (markdown, YAML, text) for maximum flexibility
+  - Gracefully handles missing or unconfigured rules files
+
 ### Fixed
 - **Template Discovery**: Fixed YAML parsing errors for templates with Templater syntax (#17)
   - Added preprocessing to handle Templater expressions before YAML parsing
