@@ -30,7 +30,7 @@ export class DynamicTemplateEngine {
       return this.templateCache;
     }
 
-    console.log('Scanning templates directory for changes...');
+    console.error('Scanning templates directory for changes...');
     this.templateCache.clear();
 
     try {
@@ -51,7 +51,7 @@ export class DynamicTemplateEngine {
       }
 
       this.lastScanTime = now;
-      console.log(`Discovered ${this.templateCache.size} templates`);
+      console.error(`Discovered ${this.templateCache.size} templates`);
     } catch (error) {
       console.error('Error scanning templates directory:', error);
     }
@@ -67,15 +67,37 @@ export class DynamicTemplateEngine {
     
     try {
       const content = readFileSync(filePath, 'utf-8');
-      const parsed = matter(content);
-      const frontmatter = parsed.data as YAMLFrontmatter;
+      
+      // Check if the file contains Templater syntax in frontmatter
+      const hasTemplaterSyntax = this.hasTemplaterSyntaxInFrontmatter(content);
+      
+      let frontmatter: YAMLFrontmatter = {};
+      let bodyContent = content;
+      
+      if (hasTemplaterSyntax) {
+        // Handle templates with Templater syntax - extract what we can safely
+        console.error(`Template ${filename} contains Templater syntax, using fallback parsing`);
+        frontmatter = this.extractSafeFrontmatter(content);
+        bodyContent = this.extractBodyContent(content);
+      } else {
+        // Standard YAML parsing for templates without Templater syntax
+        try {
+          const parsed = matter(content);
+          frontmatter = parsed.data as YAMLFrontmatter;
+          bodyContent = parsed.content;
+        } catch (yamlError) {
+          console.warn(`YAML parsing failed for ${filename}, falling back to safe parsing:`, yamlError);
+          frontmatter = this.extractSafeFrontmatter(content);
+          bodyContent = this.extractBodyContent(content);
+        }
+      }
 
       // Generate template key from filename
       const key = this.generateTemplateKey(filename);
       
       // Extract or infer template properties
       const name = this.inferTemplateName(filename, frontmatter);
-      const description = this.inferTemplateDescription(filename, frontmatter, parsed.content);
+      const description = this.inferTemplateDescription(filename, frontmatter, bodyContent);
       const targetFolder = this.inferTargetFolder(filename, frontmatter);
       const contentType = this.inferContentType(filename, frontmatter);
 
@@ -89,8 +111,102 @@ export class DynamicTemplateEngine {
       };
     } catch (error) {
       console.error(`Failed to analyze template ${filename}:`, error);
-      return null;
+      // Return a basic template info even on failure to ensure template is still discoverable
+      const key = this.generateTemplateKey(filename);
+      return {
+        name: this.inferTemplateName(filename, {}),
+        path: filename,
+        description: `Template for ${key} notes (parsing failed, using fallback)`,
+        targetFolder: '30 - Resources',
+        contentType: 'Reference',
+        key
+      };
     }
+  }
+
+  /**
+   * Check if content contains Templater syntax in the frontmatter section
+   */
+  private static hasTemplaterSyntaxInFrontmatter(content: string): boolean {
+    // Extract frontmatter section (between --- markers)
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontmatterMatch) return false;
+    
+    const frontmatterSection = frontmatterMatch[1];
+    
+    // Check for Templater syntax patterns
+    const templaterPatterns = [
+      /<%.*?%>/,           // Basic Templater syntax
+      /tp\.file\./,        // Templater file operations
+      /moment\(/,          // Date/time operations
+      /\$\{.*?\}/,         // Template literals
+    ];
+    
+    return templaterPatterns.some(pattern => pattern.test(frontmatterSection));
+  }
+
+  /**
+   * Extract safe frontmatter properties that don't contain Templater syntax
+   */
+  private static extractSafeFrontmatter(content: string): YAMLFrontmatter {
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontmatterMatch) return {};
+    
+    const frontmatterSection = frontmatterMatch[1];
+    const safeFrontmatter: YAMLFrontmatter = {};
+    
+    // Parse line by line, skipping lines with Templater syntax
+    const lines = frontmatterSection.split('\n');
+    
+    for (const line of lines) {
+      // Skip empty lines and comments
+      if (!line.trim() || line.trim().startsWith('#')) continue;
+      
+      // Skip lines with Templater syntax
+      if (line.includes('<%') || line.includes('%>') || line.includes('tp.file') || line.includes('moment(')) {
+        continue;
+      }
+      
+      // Try to parse simple key-value pairs
+      const match = line.match(/^(\s*)([^:]+):\s*(.*)$/);
+      if (match) {
+        const [, indent, key, value] = match;
+        const trimmedKey = key.trim();
+        const trimmedValue = value.trim();
+        
+        // Only include safe, static values
+        if (!trimmedValue.includes('<%') && !trimmedValue.includes('%>')) {
+          // Handle basic types
+          if (trimmedValue.startsWith('"') && trimmedValue.endsWith('"')) {
+            safeFrontmatter[trimmedKey] = trimmedValue.slice(1, -1);
+          } else if (trimmedValue.startsWith("'") && trimmedValue.endsWith("'")) {
+            safeFrontmatter[trimmedKey] = trimmedValue.slice(1, -1);
+          } else if (trimmedValue === 'true' || trimmedValue === 'false') {
+            safeFrontmatter[trimmedKey] = trimmedValue === 'true';
+          } else if (/^\d+$/.test(trimmedValue)) {
+            safeFrontmatter[trimmedKey] = parseInt(trimmedValue, 10);
+          } else if (trimmedValue.startsWith('[') && trimmedValue.endsWith(']')) {
+            // Skip complex arrays for safety
+            continue;
+          } else {
+            safeFrontmatter[trimmedKey] = trimmedValue;
+          }
+        }
+      }
+    }
+    
+    return safeFrontmatter;
+  }
+
+  /**
+   * Extract body content (everything after frontmatter)
+   */
+  private static extractBodyContent(content: string): string {
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (frontmatterMatch) {
+      return frontmatterMatch[2] || '';
+    }
+    return content;
   }
 
   /**
@@ -270,12 +386,33 @@ export class DynamicTemplateEngine {
 
     try {
       const templateContent = readFileSync(fullPath, 'utf-8');
-      const parsed = matter(templateContent);
       
-      return {
-        frontmatter: parsed.data as YAMLFrontmatter,
-        content: parsed.content
-      };
+      // Check if the file contains Templater syntax in frontmatter
+      const hasTemplaterSyntax = this.hasTemplaterSyntaxInFrontmatter(templateContent);
+      
+      if (hasTemplaterSyntax) {
+        // Handle templates with Templater syntax - return raw content for processing
+        console.error(`Template ${templatePath} contains Templater syntax, returning raw content for processing`);
+        const frontmatterMatch = templateContent.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+        if (frontmatterMatch) {
+          return {
+            frontmatter: {}, // Will be populated during Templater processing
+            content: templateContent // Return full content including frontmatter for Templater processing
+          };
+        } else {
+          return {
+            frontmatter: {},
+            content: templateContent
+          };
+        }
+      } else {
+        // Standard YAML parsing for templates without Templater syntax
+        const parsed = matter(templateContent);
+        return {
+          frontmatter: parsed.data as YAMLFrontmatter,
+          content: parsed.content
+        };
+      }
     } catch (error) {
       console.error(`Error reading template ${templatePath}:`, error);
       throw new Error(`Failed to parse template: ${templatePath}`);
@@ -298,15 +435,45 @@ export class DynamicTemplateEngine {
 
     const { frontmatter, content } = this.readTemplateContent(template.path);
 
-    // Process Templater variables (reuse existing logic)
-    const processedFrontmatter = this.processTemplaterVariables(frontmatter, noteTitle, customData);
-    const processedContent = this.processTemplaterVariables(content, noteTitle, customData);
+    // Check if this is a Templater template (content includes the full template)
+    const hasTemplaterSyntax = this.hasTemplaterSyntaxInFrontmatter(content);
+    
+    if (hasTemplaterSyntax) {
+      // For Templater templates, process the entire content and then parse
+      const processedFullContent = this.processTemplaterVariables(content, noteTitle, customData);
+      
+      try {
+        // Now try to parse the processed content
+        const parsed = matter(processedFullContent);
+        return {
+          frontmatter: parsed.data as YAMLFrontmatter,
+          content: parsed.content,
+          targetFolder: template.targetFolder
+        };
+      } catch (error) {
+        console.warn(`Failed to parse processed Templater template ${template.path}, using fallback`);
+        // Fallback: extract what we can from the processed content
+        return {
+          frontmatter: {
+            title: noteTitle,
+            'content type': template.contentType || 'Reference',
+            tags: ['template-processed']
+          },
+          content: processedFullContent,
+          targetFolder: template.targetFolder
+        };
+      }
+    } else {
+      // For regular templates, process frontmatter and content separately
+      const processedFrontmatter = this.processTemplaterVariables(frontmatter, noteTitle, customData);
+      const processedContent = this.processTemplaterVariables(content, noteTitle, customData);
 
-    return {
-      frontmatter: processedFrontmatter,
-      content: processedContent,
-      targetFolder: template.targetFolder
-    };
+      return {
+        frontmatter: processedFrontmatter,
+        content: processedContent,
+        targetFolder: template.targetFolder
+      };
+    }
   }
 
   /**

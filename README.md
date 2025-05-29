@@ -207,11 +207,16 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "lifeos": {
       "command": "node",
-      "args": ["/path/to/your/mcp-for-lifeos/dist/index.js"]
+      "args": ["/path/to/your/mcp-for-lifeos/dist/index.js"],
+      "env": {
+        "ENABLE_WEB_INTERFACE": "false"
+      }
     }
   }
 }
 ```
+
+**Note**: The `ENABLE_WEB_INTERFACE: "false"` setting disables the HTTP server for pure MCP usage, ensuring clean JSON communication with Claude Desktop.
 
 ### Raycast
 The LifeOS MCP server integrates seamlessly with Raycast for AI-powered vault interactions.
@@ -299,6 +304,7 @@ The server automatically enforces LifeOS YAML rules:
 - Handles special people tagging conventions
 - Processes Templater variables automatically
 - Validates YAML syntax and provides error reporting
+- Safely handles templates with Templater syntax that would cause YAML parsing errors
 - Supports flexible tag formats: string (`tags: mytag`), array (`tags: [tag1, tag2]`), or YAML list
 
 ## Folder Structure Awareness
@@ -317,9 +323,10 @@ The server provides full integration with your existing LifeOS templates:
 
 - **Template Discovery**: Automatically maps to your `/00 - Meta/Templates/` folder
 - **Templater Compatibility**: Processes `tp.file.title`, `moment()`, and other Templater functions
+- **Robust YAML Parsing**: Safely handles templates with complex Templater syntax in frontmatter
 - **Intelligent Routing**: Routes notes to appropriate PARA folders based on template
 - **Custom Data Support**: Inject template-specific data (restaurant cuisine, article author, etc.)
-- **Error Recovery**: Falls back gracefully if templates are unavailable
+- **Error Recovery**: Falls back gracefully if templates are unavailable or contain parsing errors
 
 ### Template Processing
 
