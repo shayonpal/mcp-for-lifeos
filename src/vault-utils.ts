@@ -205,6 +205,13 @@ export class VaultUtils {
     return searchTags.some(tag => noteTags.includes(tag));
   }
 
+  static normalizeTagsToArray(tags: any): string[] {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags;
+    if (typeof tags === 'string') return [tags];
+    return [];
+  }
+
   private static validateYAML(frontmatter: YAMLFrontmatter): void {
     // Check for forbidden fields
     YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {

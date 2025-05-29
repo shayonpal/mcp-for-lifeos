@@ -299,6 +299,7 @@ The server automatically enforces LifeOS YAML rules:
 - Handles special people tagging conventions
 - Processes Templater variables automatically
 - Validates YAML syntax and provides error reporting
+- Supports flexible tag formats: string (`tags: mytag`), array (`tags: [tag1, tag2]`), or YAML list
 
 ## Folder Structure Awareness
 

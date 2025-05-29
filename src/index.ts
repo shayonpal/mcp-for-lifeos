@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.0.0';
+export const SERVER_VERSION = '1.0.1';
 
 const server = new Server(
   {
@@ -277,6 +277,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
                   `- **1.0.0:** Initial release with core functionality`
           }]
         };
@@ -397,10 +398,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const note = VaultUtils.readNote(normalizedPath);
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
         
+        // Normalize tags to array format
+        const tags = VaultUtils.normalizeTagsToArray(note.frontmatter.tags);
+        const tagsDisplay = tags.length > 0 ? tags.join(', ') : 'None';
+        
         return addVersionMetadata({
           content: [{
             type: 'text',
-            text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${note.frontmatter.tags?.join(', ') || 'None'}\n\n${obsidianLink}\n\n---\n\n${note.content}`
+            text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
         });
       }
