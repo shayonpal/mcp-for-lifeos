@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, renameSync, mkdirSync, rmSync } from 'fs';
 import { join, dirname, basename, extname } from 'path';
 import matter from 'gray-matter';
 import { glob } from 'glob';
@@ -130,6 +130,81 @@ export class VaultUtils {
     return note;
   }
 
+  static updateNote(
+    filePath: string,
+    updates: {
+      frontmatter?: Partial<YAMLFrontmatter>;
+      content?: string;
+      mode?: 'replace' | 'merge';
+    }
+  ): LifeOSNote {
+    // Check if note exists
+    if (!existsSync(filePath)) {
+      throw new Error(`Note not found: ${filePath}`);
+    }
+
+    // Read existing note
+    const existingNote = this.readNote(filePath);
+    
+    // Prepare updated note
+    const updatedNote: LifeOSNote = {
+      ...existingNote,
+      modified: new Date()
+    };
+
+    // Update content if provided
+    if (updates.content !== undefined) {
+      updatedNote.content = updates.content;
+    }
+
+    // Update frontmatter
+    if (updates.frontmatter) {
+      if (updates.mode === 'replace') {
+        // Replace mode: completely replace frontmatter (but preserve auto-managed fields)
+        const preservedFields: any = {};
+        YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+          if (existingNote.frontmatter[field]) {
+            preservedFields[field] = existingNote.frontmatter[field];
+          }
+        });
+        
+        updatedNote.frontmatter = {
+          ...this.sanitizeFrontmatter(updates.frontmatter),
+          ...preservedFields
+        };
+      } else {
+        // Merge mode (default): merge with existing frontmatter
+        // First, validate only the new fields being added
+        this.validateYAML(updates.frontmatter);
+        
+        updatedNote.frontmatter = {
+          ...existingNote.frontmatter,
+          ...updates.frontmatter
+        };
+        
+        // Ensure we never modify auto-managed fields
+        YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+          if (existingNote.frontmatter[field]) {
+            updatedNote.frontmatter[field] = existingNote.frontmatter[field];
+          }
+        });
+      }
+    }
+
+    // Write without re-validating (since we've already validated the changes)
+    const frontmatterToWrite = { ...updatedNote.frontmatter };
+    
+    // Remove auto-managed fields before writing (they'll be preserved by the linter)
+    YAML_RULES.AUTO_MANAGED_FIELDS.forEach(field => {
+      delete frontmatterToWrite[field];
+    });
+
+    const fileContent = matter.stringify(updatedNote.content, frontmatterToWrite);
+    writeFileSync(updatedNote.path, fileContent, 'utf-8');
+    
+    return updatedNote;
+  }
+
   static searchNotes(options: SearchOptions): LifeOSNote[] {
     const allNotes = this.getAllNotes();
     
@@ -179,21 +254,13 @@ export class VaultUtils {
     const fileName = `${dateStr}.md`;
     const filePath = join(LIFEOS_CONFIG.dailyNotesPath, fileName);
     
-    console.error(`Looking for daily note at: ${filePath}`);
-    console.error(`Input date: ${date.toISOString()}, Local date: ${localDate.toISOString()}, Formatted: ${dateStr}`);
+    // Looking for daily note
     
     if (existsSync(filePath)) {
-      console.error(`Found daily note at: ${filePath}`);
+      // Found daily note
       return this.readNote(filePath);
     } else {
-      console.error(`Daily note not found at: ${filePath}`);
-      // Try to list files in the directory for debugging
-      try {
-        const files = readdirSync(LIFEOS_CONFIG.dailyNotesPath);
-        console.error(`Files in daily notes directory: ${files.filter(f => f.includes(dateStr)).join(', ')}`);
-      } catch (e) {
-        console.error(`Error reading daily notes directory: ${e}`);
-      }
+      // Daily note not found - this is normal, return null
     }
     
     return null;
@@ -310,6 +377,109 @@ export class VaultUtils {
         return join(LIFEOS_CONFIG.vaultPath, '10 - Projects');
       default:
         return join(LIFEOS_CONFIG.vaultPath, '05 - Fleeting Notes');
+    }
+  }
+
+  static moveItem(sourcePath: string, destinationFolder: string, options: {
+    createDestination?: boolean;
+    overwrite?: boolean;
+    mergeFolders?: boolean;
+  } = {}): { success: boolean; newPath: string; error?: string } {
+    // Normalize paths
+    const normalizedSource = sourcePath.startsWith(LIFEOS_CONFIG.vaultPath) 
+      ? sourcePath 
+      : join(LIFEOS_CONFIG.vaultPath, sourcePath);
+    const normalizedDest = destinationFolder.startsWith(LIFEOS_CONFIG.vaultPath)
+      ? destinationFolder
+      : join(LIFEOS_CONFIG.vaultPath, destinationFolder);
+
+    // Validate source exists
+    if (!existsSync(normalizedSource)) {
+      return { success: false, newPath: '', error: 'Source item not found' };
+    }
+
+    // Check if source is file or folder
+    const isDirectory = statSync(normalizedSource).isDirectory();
+    
+    // Prevent moving folder into itself or its subdirectories
+    if (isDirectory && normalizedDest.startsWith(normalizedSource)) {
+      return { success: false, newPath: '', error: 'Cannot move folder into itself or its subdirectories' };
+    }
+
+    // Create destination if needed
+    if (!existsSync(normalizedDest)) {
+      if (options.createDestination) {
+        mkdirSync(normalizedDest, { recursive: true });
+      } else {
+        return { success: false, newPath: '', error: 'Destination folder does not exist' };
+      }
+    }
+
+    // Ensure destination is a directory
+    if (!statSync(normalizedDest).isDirectory()) {
+      return { success: false, newPath: '', error: 'Destination must be a folder' };
+    }
+
+    const itemName = basename(normalizedSource);
+    const newPath = join(normalizedDest, itemName);
+
+    // Handle existing items
+    if (existsSync(newPath)) {
+      if (isDirectory && options.mergeFolders) {
+        // Merge folder contents
+        return this.mergeFolders(normalizedSource, newPath);
+      } else if (!options.overwrite) {
+        return { success: false, newPath: '', error: 'Item already exists in destination' };
+      } else if (!isDirectory) {
+        // For files with overwrite=true, remove the existing file first
+        rmSync(newPath);
+      } else {
+        // For directories with overwrite=true but mergeFolders=false, remove existing directory
+        rmSync(newPath, { recursive: true });
+      }
+    }
+
+    try {
+      renameSync(normalizedSource, newPath);
+      return { success: true, newPath };
+    } catch (error) {
+      return { success: false, newPath: '', error: String(error) };
+    }
+  }
+
+  private static mergeFolders(source: string, destination: string): { success: boolean; newPath: string; error?: string } {
+    try {
+      const items = readdirSync(source, { withFileTypes: true });
+      
+      for (const item of items) {
+        const sourcePath = join(source, item.name);
+        const destPath = join(destination, item.name);
+        
+        if (item.isDirectory()) {
+          if (existsSync(destPath)) {
+            // Recursively merge subdirectories
+            const result = this.mergeFolders(sourcePath, destPath);
+            if (!result.success) {
+              return result;
+            }
+          } else {
+            // Move the subdirectory
+            renameSync(sourcePath, destPath);
+          }
+        } else {
+          // Move the file (overwriting if exists)
+          if (existsSync(destPath)) {
+            rmSync(destPath);
+          }
+          renameSync(sourcePath, destPath);
+        }
+      }
+      
+      // Remove the now-empty source directory
+      rmSync(source, { recursive: true });
+      return { success: true, newPath: destination };
+    } catch (error) {
+      return { success: false, newPath: '', error: `Failed to merge folders: ${String(error)}` };
     }
   }
 }

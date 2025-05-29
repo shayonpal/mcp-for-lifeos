@@ -238,7 +238,15 @@ The HTTP transport layer is now complete. Ready for:
 
 ## Change Log
 
-### May 26, 2025 at 1:50 PM
+### May 29, 2025 at 2:16 AM
+- **Fixed**: MCP server connection issues with Claude Desktop
+- **Problem**: Server was outputting debug logs to stderr, interfering with MCP stdio protocol
+- **Solution**: Removed all console.error and console.log statements from server code
+- **Impact**: Server now connects properly without "Connection closed" errors
+- **Files Modified**: src/index.ts, src/server/http-server.ts
+- **Documentation Updated**: Added MCP stdio communication guidelines to CLAUDE.md
+
+### May 26, 2025 at 9:50 AM
 - **Completed**: HTTP Transport Layer for MCP Server (Issue #8)
 - **Implementation**: Full REST API integration between HTTP server and MCP tools
 - **Features Added**: 
@@ -252,14 +260,14 @@ The HTTP transport layer is now complete. Ready for:
 - **GitHub Issues Updated**: Issue #8 marked as completed
 - **Version**: Bumped to 1.3 upon HTTP transport completion
 
-### January 26, 2025 at 2:15 PM
+### May 26, 2025 at 9:00 AM
 - **Added**: MVP Implementation Status section
 - **Completed**: All Phase 1 MVP requirements successfully implemented
 - **Impact**: Foundation ready for backend integration phase
 - **GitHub Issues Updated**: Issues #1-6 marked as completed
 - **Technical Status**: 15 atomic GitHub issues created, 6 completed in MVP phase
 
-### 2024-05-26
+### May 26, 2025 at 8:37 AM
 - **Added**: Implementation phases with MVP focus on Anthropic-only integration
 - **Added**: Technical constraints including Mac Mini IP address and port configuration
 - **Updated**: Version to 1.1 with phased approach documentation

@@ -5,6 +5,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 ## Features
 
 - **YAML-Compliant Note Creation**: Automatically follows LifeOS YAML rules
+- **Custom YAML Rules Integration**: Reference your own YAML frontmatter guidelines for consistent note creation
 - **PARA Method Organization**: Respects Projects/Areas/Resources/Archives structure
 - **Intelligent Template System**: Full integration with 11+ LifeOS templates (restaurant, article, person, etc.)
 - **Advanced Search Engine**: Full-text search with relevance scoring and context extraction
@@ -13,23 +14,37 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **Robust Error Handling**: Graceful YAML parsing with diagnostic tools
 - **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
 
-## Installation
+## Quick Start
 
+### Automated Setup (Recommended)
+```bash
+# Clone and run automated setup
+git clone https://github.com/shayonpal/mcp-for-lifeos.git
+cd mcp-for-lifeos
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+```
+
+### Manual Installation
 ```bash
 npm install
 npm run build
 ```
+
+📖 **For detailed deployment instructions, see [DEPLOYMENT.md](docs/DEPLOYMENT.md)**
 
 ## Configuration
 
 1. Copy `src/config.example.ts` to `src/config.ts`
 2. Update the vault paths to match your Obsidian vault location
 3. Customize the PEOPLE_MAPPINGS for your specific contacts
+4. **Optional**: Set `yamlRulesPath` to reference your YAML frontmatter guidelines
 
 ```typescript
 export const LIFEOS_CONFIG: LifeOSConfig = {
   vaultPath: '/path/to/your/obsidian/vault',
   templatesPath: '/path/to/your/obsidian/vault/Templates',
+  yamlRulesPath: '/path/to/your/vault/YAML Rules.md', // Optional
   // ... other paths
 };
 ```
@@ -61,9 +76,58 @@ Create a note using a specific LifeOS template with auto-filled metadata
 Read an existing note
 - **path** (required): Full path to the note
 
+#### `edit_note`
+Edit an existing note in the vault
+- **path**: Path to the note file (absolute or relative to vault)
+- **title**: Note title (alternative to path - will search for the note)
+- **content**: New content (optional - preserves existing if not provided)
+- **frontmatter**: Frontmatter fields to update (merged with existing)
+  - `contentType`: Content type
+  - `category`: Category
+  - `subCategory`: Sub-category
+  - `tags`: Tags array
+  - `source`: Source URL
+  - `people`: People mentioned
+- **mode**: Update mode - 'merge' (default) or 'replace' frontmatter
+
+Example usage:
+```bash
+# Edit by path
+edit_note path: "Articles/My Article.md" content: "Updated content"
+
+# Edit by title
+edit_note title: "My Article" frontmatter: {tags: ["updated", "important"]}
+
+# Replace entire frontmatter (preserves date created)
+edit_note title: "My Article" mode: "replace" frontmatter: {contentType: "Article", tags: ["new"]}
+```
+
 #### `get_daily_note`
 Get or create a daily note
 - **date**: Date in YYYY-MM-DD format (optional, defaults to today)
+
+#### `move_items`
+Move notes and/or folders to a different location in the vault
+- **item**: Single item path to move (alternative to items)
+- **items**: Array of items to move, each with:
+  - `path`: Path to note or folder
+  - `type`: Item type - 'note' or 'folder' (auto-detected if not specified)
+- **destination** (required): Target folder path (relative to vault root)
+- **createDestination**: Create destination folder if it doesn't exist (default: false)
+- **overwrite**: Overwrite existing files in destination (default: false)
+- **mergeFolders**: When moving folders, merge with existing folder of same name (default: false)
+
+Example usage:
+```bash
+# Move a single note
+move_items item: "10 - Projects/old-note.md" destination: "40 - Archives/2024"
+
+# Move multiple items
+move_items items: [{path: "10 - Projects/Completed"}, {path: "planning-doc.md"}] destination: "40 - Archives/2024" createDestination: true
+
+# Merge folders
+move_items item: "20 - Areas/Old Resources" destination: "30 - Resources" mergeFolders: true
+```
 
 ### Navigation Tools
 
@@ -93,6 +157,12 @@ Diagnose vault issues and check for problematic files
 #### `get_server_version`
 Get the current server version and capabilities information
 - **includeTools**: Include full list of available tools in the response (optional)
+
+#### `get_yaml_rules`
+Retrieve your custom YAML frontmatter rules document for reference when creating or editing notes
+- No parameters required
+- Returns the content of your configured YAML rules document
+- Requires `yamlRulesPath` to be set in configuration
 
 #### `advanced_search`
 Comprehensive search with full-text search, metadata filters, and relevance scoring
@@ -275,6 +345,43 @@ Optional parameters:
 
 This returns comprehensive information about the server version, capabilities, and available tools.
 
+## Web Interface (Experimental)
+
+The LifeOS MCP server includes an experimental web interface for testing and development purposes. This interface is **disabled by default** to ensure proper MCP protocol compatibility.
+
+### Enabling the Web Interface
+
+To enable the web interface for testing:
+
+```bash
+# Set environment variable before starting
+ENABLE_WEB_INTERFACE=true node dist/index.js
+
+# Or with custom port
+ENABLE_WEB_INTERFACE=true WEB_PORT=8080 node dist/index.js
+```
+
+### Web Interface Features
+
+- **API Explorer**: Test MCP tools via REST API
+- **Model Selection**: Choose between different AI models
+- **Chat Interface**: Interactive chat with vault integration
+- **MCP Tool Execution**: Direct access to all MCP tools
+
+### Important Notes
+
+- **Do NOT enable the web interface when running as an MCP server** (e.g., with Claude Desktop)
+- The web interface uses port 19831 by default
+- Ensure the port is not already in use before enabling
+- This feature is experimental and primarily for development/testing
+
+## Documentation
+
+- **[📖 Deployment Guide](docs/DEPLOYMENT.md)** - Complete setup and deployment instructions
+- **[🔧 Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[📱 Raycast Integration](docs/RAYCAST_INTEGRATION.md)** - Setup guide for Raycast
+- **[💻 Cursor Integration](docs/CURSOR_INTEGRATION.md)** - Setup guide for Cursor IDE
+
 ## Development
 
 ```bash
@@ -294,6 +401,12 @@ npm run lint
 npm run typecheck
 ```
 
+### Quick Setup for Development
+```bash
+# Use automated setup script
+./scripts/setup.sh --skip-deps  # Skip npm install if already done
+```
+
 ## YAML Compliance
 
 The server automatically enforces LifeOS YAML rules:
@@ -306,6 +419,18 @@ The server automatically enforces LifeOS YAML rules:
 - Validates YAML syntax and provides error reporting
 - Safely handles templates with Templater syntax that would cause YAML parsing errors
 - Supports flexible tag formats: string (`tags: mytag`), array (`tags: [tag1, tag2]`), or YAML list
+
+## File Naming Convention
+
+Notes created through the MCP server use a natural file naming convention:
+- **Preserves spaces**: "My Note Title" creates "My Note Title.md" (not "My-Note-Title.md")
+- **Allows special characters**: Most punctuation and symbols are preserved
+- **Obsidian restrictions**: Only removes square brackets `[]`, colons `:`, and semicolons `;`
+- **Examples**:
+  - "Book Review - The 48 Laws of Power" → "Book Review - The 48 Laws of Power.md"
+  - "Meeting Notes (Q1 2024)" → "Meeting Notes (Q1 2024).md"
+  - "What's Next? Planning for 2025!" → "What's Next? Planning for 2025!.md"
+  - "Project [Alpha]: Status Update" → "Project Alpha Status Update.md"
 
 ## Folder Structure Awareness
 
@@ -339,6 +464,16 @@ The server converts Templater syntax to static content:
 # Becomes: "2025-05-24"
 ```
 
+## Support and Contributing
+
+- **🐛 Issues**: Report bugs and request features via [GitHub Issues](https://github.com/shayonpal/mcp-for-lifeos/issues)
+- **💬 Discussions**: Join community discussions in the repository
+- **📖 Documentation**: Check [docs/](docs/) for comprehensive guides
+- **🔧 Troubleshooting**: See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues
+
 ## License
 
-MIT
+This project is licensed under the GNU General Public License v3.0. See [LICENSE.md](LICENSE.md) for details.
+
+**Copyright (C) 2025 Shayon Pal**  
+**AgileCode Studio** - [https://agilecode.studio](https://agilecode.studio)

@@ -4,7 +4,8 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
   vaultPath: '/path/to/your/vault/LifeOS (iCloud)',
   attachmentsPath: '/path/to/your/vault/LifeOS (iCloud)/00 - Meta/Attachments',
   templatesPath: '/path/to/your/vault/LifeOS (iCloud)/00 - Meta/Templates',
-  dailyNotesPath: '/path/to/your/vault/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily'
+  dailyNotesPath: '/path/to/your/vault/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily',
+  yamlRulesPath: '/path/to/your/vault/LifeOS (iCloud)/00 - Meta/System/YAML Rules for LifeOS Vault.md' // Optional: Path to your YAML frontmatter rules document
 };
 
 export const YAML_RULES = {

@@ -11,12 +11,17 @@ import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
+import { YamlRulesManager } from './yaml-rules-manager.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
+import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.0.2';
+export const SERVER_VERSION = '1.2.0';
+
+// Initialize YAML rules manager
+const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
 
 const server = new Server(
   {
@@ -43,8 +48,16 @@ const tools: Tool[] = [
     }
   },
   {
+    name: 'get_yaml_rules',
+    description: 'Get the user\'s YAML frontmatter rules document for reference when creating or editing note YAML',
+    inputSchema: {
+      type: 'object',
+      properties: {}
+    }
+  },
+  {
     name: 'create_note',
-    description: 'Create a new note in the LifeOS vault with proper YAML frontmatter',
+    description: 'Create a new note in the LifeOS vault with proper YAML frontmatter. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -65,7 +78,7 @@ const tools: Tool[] = [
   },
   {
     name: 'create_note_from_template',
-    description: 'Create a note using a specific LifeOS template with auto-filled metadata',
+    description: 'Create a note using a specific LifeOS template with auto-filled metadata. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -78,6 +91,35 @@ const tools: Tool[] = [
         }
       },
       required: ['title', 'template']
+    }
+  },
+  {
+    name: 'edit_note',
+    description: 'Edit an existing note in the LifeOS vault. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
+        title: { type: 'string', description: 'Note title (alternative to path)' },
+        content: { type: 'string', description: 'New content (optional - preserves existing if not provided)' },
+        frontmatter: { 
+          type: 'object', 
+          description: 'Frontmatter fields to update (merged with existing)',
+          properties: {
+            contentType: { type: 'string', description: 'Content type' },
+            category: { type: 'string', description: 'Category' },
+            subCategory: { type: 'string', description: 'Sub-category' },
+            tags: { type: 'array', items: { type: 'string' }, description: 'Tags array' },
+            source: { type: 'string', description: 'Source URL' },
+            people: { type: 'array', items: { type: 'string' }, description: 'People mentioned' }
+          }
+        },
+        mode: { 
+          type: 'string', 
+          enum: ['merge', 'replace'], 
+          description: 'Update mode: merge (default) or replace frontmatter' 
+        }
+      }
     }
   },
   {
@@ -230,6 +272,48 @@ const tools: Tool[] = [
       type: 'object',
       properties: {}
     }
+  },
+  {
+    name: 'move_items',
+    description: 'Move notes and/or folders to a different location in the vault. Use either "item" for single moves or "items" for batch operations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        items: { 
+          type: 'array', 
+          items: { 
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Path to note or folder' },
+              type: { type: 'string', enum: ['note', 'folder'], description: 'Item type (auto-detected if not specified)' }
+            },
+            required: ['path']
+          },
+          description: 'Array of items to move (use this OR item, not both)'
+        },
+        item: {
+          type: 'string',
+          description: 'Single item path to move (use this OR items, not both)'
+        },
+        destination: { 
+          type: 'string', 
+          description: 'Target folder path (relative to vault root)'
+        },
+        createDestination: {
+          type: 'boolean',
+          description: 'Create destination folder if it doesn\'t exist (default: false)'
+        },
+        overwrite: {
+          type: 'boolean',
+          description: 'Overwrite existing files in destination (default: false)'
+        },
+        mergeFolders: {
+          type: 'boolean',
+          description: 'When moving folders, merge with existing folder of same name (default: false)'
+        }
+      },
+      required: ['destination']
+    }
   }
 ];
 
@@ -277,6 +361,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
+                  `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
+                  `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
                   `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
                   `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
                   `- **1.0.0:** Initial release with core functionality`
@@ -292,6 +379,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         
         return addVersionMetadata(response);
+      }
+      case 'get_yaml_rules': {
+        if (!yamlRulesManager.isConfigured()) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'YAML rules are not configured. Set the yamlRulesPath in your config to enable this feature.'
+            }]
+          };
+        }
+
+        try {
+          const isValid = await yamlRulesManager.validateRulesFile();
+          if (!isValid) {
+            return {
+              content: [{
+                type: 'text',
+                text: `YAML rules file not found or not accessible at: ${yamlRulesManager.getRulesPath()}`
+              }]
+            };
+          }
+
+          const rules = await yamlRulesManager.getRules();
+          return {
+            content: [{
+              type: 'text',
+              text: `# YAML Frontmatter Rules\n\n${rules}`
+            }]
+          };
+        } catch (error) {
+          return {
+            content: [{
+              type: 'text',
+              text: `Error reading YAML rules: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }]
+          };
+        }
       }
       case 'create_note': {
         const title = args.title as string;
@@ -329,11 +453,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.source) frontmatter.source = args.source as string;
         if (args.people) frontmatter.people = args.people as string[];
 
-        // Generate filename, preserving dashes for date formats
+        // Generate filename, removing only Obsidian-restricted characters
         const fileName = title
-          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
-          .replace(/\s+/g, '-') // Replace spaces with dashes
-          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
+          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
+          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
+          .trim();                         // Remove leading/trailing spaces
         const note = VaultUtils.createNote(fileName, frontmatter, content, targetFolder);
 
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
@@ -360,11 +484,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           (args.customData as Record<string, any>) || {}
         );
 
-        // Generate filename, preserving dashes for date formats
+        // Generate filename, removing only Obsidian-restricted characters
         const fileName = title
-          .replace(/[^a-zA-Z0-9 \-]/g, '') // Allow dashes for dates
-          .replace(/\s+/g, '-') // Replace spaces with dashes
-          .replace(/--+/g, '-'); // Clean up multiple consecutive dashes
+          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
+          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
+          .trim();                         // Remove leading/trailing spaces
         const note = VaultUtils.createNote(
           fileName, 
           templateResult.frontmatter, 
@@ -395,7 +519,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
         }
         
-        console.error(`Attempting to read note at: ${normalizedPath}`);
+        // Debug logging removed for MCP compatibility
         const note = VaultUtils.readNote(normalizedPath);
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
         
@@ -407,6 +531,71 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [{
             type: 'text',
             text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
+          }]
+        });
+      }
+
+      case 'edit_note': {
+        // Get note path - either from direct path or by searching for title
+        let notePath: string;
+        
+        if (args.path) {
+          notePath = args.path as string;
+          // Normalize path - handle escaped spaces and resolve relative paths
+          notePath = notePath.replace(/\\ /g, ' ');
+          if (!notePath.startsWith('/')) {
+            notePath = `${LIFEOS_CONFIG.vaultPath}/${notePath}`;
+          }
+        } else if (args.title) {
+          // Search for note by title
+          const searchResults = await SearchEngine.quickSearch(args.title as string, 1);
+          
+          if (searchResults.length === 0) {
+            throw new Error(`No note found with title: ${args.title}`);
+          }
+          
+          notePath = searchResults[0].note.path;
+        } else {
+          throw new Error('Either path or title is required');
+        }
+
+        // Prepare update object
+        const updates: any = {
+          mode: args.mode as 'merge' | 'replace' || 'merge'
+        };
+
+        if (args.content !== undefined) {
+          updates.content = args.content as string;
+        }
+
+        if (args.frontmatter) {
+          const fm = args.frontmatter as any;
+          updates.frontmatter = {};
+          
+          // Map from API field names to YAML field names
+          if (fm.contentType) updates.frontmatter['content type'] = fm.contentType;
+          if (fm.category) updates.frontmatter.category = fm.category;
+          if (fm.subCategory) updates.frontmatter['sub-category'] = fm.subCategory;
+          if (fm.tags) updates.frontmatter.tags = fm.tags;
+          if (fm.source) updates.frontmatter.source = fm.source;
+          if (fm.people) updates.frontmatter.people = fm.people;
+          
+          // Allow any other custom fields
+          Object.keys(fm).forEach(key => {
+            if (!['contentType', 'category', 'subCategory', 'tags', 'source', 'people'].includes(key)) {
+              updates.frontmatter[key] = fm[key];
+            }
+          });
+        }
+
+        // Update the note
+        const updatedNote = VaultUtils.updateNote(notePath, updates);
+        const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
+        
+        return addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: `✅ Updated note: **${updatedNote.frontmatter.title || 'Untitled'}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
           }]
         });
       }
@@ -784,6 +973,101 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
       }
 
+      case 'move_items': {
+        const destination = args.destination as string;
+        if (!destination) {
+          throw new Error('Destination is required');
+        }
+
+        // Collect items to move
+        const itemsToMove: Array<{ path: string; type?: string }> = [];
+        
+        if (args.item) {
+          itemsToMove.push({ path: args.item as string });
+        } else if (args.items && Array.isArray(args.items)) {
+          itemsToMove.push(...(args.items as Array<{ path: string; type?: string }>));
+        } else {
+          throw new Error('Either item or items must be provided');
+        }
+
+        if (itemsToMove.length === 0) {
+          throw new Error('No items specified to move');
+        }
+
+        const options = {
+          createDestination: args.createDestination as boolean || false,
+          overwrite: args.overwrite as boolean || false,
+          mergeFolders: args.mergeFolders as boolean || false
+        };
+
+        const results = {
+          moved: { notes: [] as string[], folders: [] as string[] },
+          failed: [] as Array<{ path: string; type: string; reason: string }>
+        };
+
+        for (const item of itemsToMove) {
+          const result = VaultUtils.moveItem(item.path, destination, options);
+          
+          if (result.success) {
+            const relativePath = result.newPath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
+            
+            try {
+              const isDirectory = statSync(result.newPath).isDirectory();
+              if (isDirectory) {
+                results.moved.folders.push(relativePath);
+              } else {
+                results.moved.notes.push(relativePath);
+              }
+            } catch (error) {
+              // If we can't stat the file, assume it's a note
+              results.moved.notes.push(relativePath);
+            }
+          } else {
+            results.failed.push({
+              path: item.path,
+              type: item.type || 'unknown',
+              reason: result.error || 'Unknown error'
+            });
+          }
+        }
+
+        // Generate response
+        let response = `# Move Operation Results\n\n`;
+        
+        if (results.moved.notes.length > 0 || results.moved.folders.length > 0) {
+          response += `## ✅ Successfully Moved\n\n`;
+          
+          if (results.moved.folders.length > 0) {
+            response += `**Folders (${results.moved.folders.length}):**\n`;
+            results.moved.folders.forEach(f => response += `- 📁 ${f}\n`);
+            response += '\n';
+          }
+          
+          if (results.moved.notes.length > 0) {
+            response += `**Notes (${results.moved.notes.length}):**\n`;
+            results.moved.notes.forEach(n => response += `- 📄 ${n}\n`);
+            response += '\n';
+          }
+        }
+        
+        if (results.failed.length > 0) {
+          response += `## ❌ Failed Moves\n\n`;
+          results.failed.forEach(f => {
+            response += `- **${f.path}**: ${f.reason}\n`;
+          });
+          response += '\n';
+        }
+        
+        response += `**Destination:** \`${destination}\``;
+
+        return addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: response
+          }]
+        });
+      }
+
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
@@ -802,30 +1086,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('LifeOS MCP Server running on stdio');
   
-  // Start HTTP server if web interface is enabled
-  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE !== 'false';
+  // Start HTTP server if web interface is explicitly enabled
+  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE === 'true';
   if (enableWebInterface) {
-    console.error('Attempting to start web interface...');
     try {
       const httpServer = new MCPHttpServer({
         host: process.env.WEB_HOST || '0.0.0.0',
         port: parseInt(process.env.WEB_PORT || '19831'),
       }, server); // Pass the MCP server instance
-      console.error('HTTP server created, starting...');
       await httpServer.start();
-      console.error('HTTP server started successfully');
     } catch (error) {
-      console.error('Failed to start web interface:', error);
-      console.error('Error details:', error instanceof Error ? error.stack : String(error));
-      console.error('MCP server will continue running without web interface');
+      // Silently continue without web interface
     }
-  } else {
-    console.error('Web interface disabled');
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch(() => {
+    // Exit silently on error to avoid interfering with MCP protocol
+    process.exit(1);
+  });
 }
