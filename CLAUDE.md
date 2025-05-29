@@ -21,7 +21,7 @@ When feature specifications change during development:
    - Adjust acceptance criteria as needed
    - Update priority or dependencies if required
 
-3. **Change Log Format**: Use this format in the PRD:
+3. **Change Log Format**: Use this format in the PRD. Run the `date` command to get current timestamp:
    ```
    ## Change Log
    
@@ -117,3 +117,35 @@ git push origin master --tags
 - Any references to AI assistance or Claude
 
 Keep commit messages professional and focused on the changes made.
+
+## MCP Server Stdio Communication
+
+**IMPORTANT**: MCP servers communicate via stdio (standard input/output) using JSON-RPC protocol. Any output to stderr (console.error) or stdout (console.log) that is not JSON-RPC will interfere with the protocol and cause connection failures.
+
+### Key Rules for MCP Servers:
+
+1. **Never use console.log or console.error** in production MCP server code
+2. **All debug output must be suppressed** when running as an MCP server
+3. **Only JSON-RPC messages should be sent to stdout**
+4. **Error handling should be silent** - catch errors and handle them without logging
+
+### Common Connection Issues:
+
+- "Connection closed" error: Usually caused by non-JSON output to stdout/stderr
+- "MCP error -32000": Often indicates protocol violation from debug logging
+- Server fails to connect: Check for any console output during startup
+
+### Debugging Tips:
+
+- Use environment variables to conditionally enable debug logging
+- Write debug logs to files instead of console when needed
+- Test the server with `node dist/index.js` to see any console output that would break MCP
+
+### Web Interface
+
+The HTTP web interface is disabled by default to ensure MCP compatibility. To enable it:
+- Set environment variable: `ENABLE_WEB_INTERFACE=true`
+- Ensure port 19831 is not already in use
+- Run the server with: `ENABLE_WEB_INTERFACE=true node dist/index.js`
+
+**Note**: The web interface should only be enabled for testing/development, not when running as an MCP server.

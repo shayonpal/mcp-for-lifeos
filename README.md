@@ -270,6 +270,36 @@ Optional parameters:
 
 This returns comprehensive information about the server version, capabilities, and available tools.
 
+## Web Interface (Experimental)
+
+The LifeOS MCP server includes an experimental web interface for testing and development purposes. This interface is **disabled by default** to ensure proper MCP protocol compatibility.
+
+### Enabling the Web Interface
+
+To enable the web interface for testing:
+
+```bash
+# Set environment variable before starting
+ENABLE_WEB_INTERFACE=true node dist/index.js
+
+# Or with custom port
+ENABLE_WEB_INTERFACE=true WEB_PORT=8080 node dist/index.js
+```
+
+### Web Interface Features
+
+- **API Explorer**: Test MCP tools via REST API
+- **Model Selection**: Choose between different AI models
+- **Chat Interface**: Interactive chat with vault integration
+- **MCP Tool Execution**: Direct access to all MCP tools
+
+### Important Notes
+
+- **Do NOT enable the web interface when running as an MCP server** (e.g., with Claude Desktop)
+- The web interface uses port 19831 by default
+- Ensure the port is not already in use before enabling
+- This feature is experimental and primarily for development/testing
+
 ## Development
 
 ```bash

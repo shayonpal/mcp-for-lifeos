@@ -802,30 +802,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('LifeOS MCP Server running on stdio');
   
-  // Start HTTP server if web interface is enabled
-  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE !== 'false';
+  // Start HTTP server if web interface is explicitly enabled
+  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE === 'true';
   if (enableWebInterface) {
-    console.error('Attempting to start web interface...');
     try {
       const httpServer = new MCPHttpServer({
         host: process.env.WEB_HOST || '0.0.0.0',
         port: parseInt(process.env.WEB_PORT || '19831'),
       }, server); // Pass the MCP server instance
-      console.error('HTTP server created, starting...');
       await httpServer.start();
-      console.error('HTTP server started successfully');
     } catch (error) {
-      console.error('Failed to start web interface:', error);
-      console.error('Error details:', error instanceof Error ? error.stack : String(error));
-      console.error('MCP server will continue running without web interface');
+      // Silently continue without web interface
     }
-  } else {
-    console.error('Web interface disabled');
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch(() => {
+    // Exit silently on error to avoid interfering with MCP protocol
+    process.exit(1);
+  });
 }

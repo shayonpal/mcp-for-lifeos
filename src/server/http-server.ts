@@ -50,18 +50,7 @@ export class MCPHttpServer {
         this.mcpServer = mcpServer;
 
         this.fastify = Fastify({
-            logger: {
-                level: 'info',
-                transport: {
-                    target: 'pino-pretty',
-                    options: {
-                        colorize: true,
-                        translateTime: 'HH:MM:ss Z',
-                        destination: 2, // stderr
-                        ignore: 'pid,hostname'
-                    }
-                }
-            }
+            logger: false // Disable logging for MCP compatibility
         });
 
         this.setupRoutes();
@@ -84,10 +73,9 @@ export class MCPHttpServer {
             prefix: '/', // Optional: default '/'
         });
 
-        // Request logging and timing
+        // Request timing (without logging for MCP compatibility)
         this.fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
             (request as any).startTime = Date.now();
-            request.log.info(`${request.method} ${request.url}`);
         });
 
         // Response time header
@@ -116,10 +104,9 @@ export class MCPHttpServer {
                 prefix: '/', // Optional: default '/'
             });
 
-            // Request logging and timing
+            // Request timing (without logging for MCP compatibility)
             fastify.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
                 (request as any).startTime = Date.now();
-                request.log.info(`${request.method} ${request.url}`);
             });
 
             // Response time header
@@ -196,7 +183,7 @@ export class MCPHttpServer {
                     metadata: result.metadata
                 } as MCPToolResponse;
             } catch (error) {
-                request.log.error('MCP tool execution error:', error);
+                // Error logging disabled for MCP compatibility
                 reply.code(500);
                 return {
                     success: false,
@@ -228,7 +215,7 @@ export class MCPHttpServer {
                 const result = await listToolsHandler(mcpRequest);
                 return result;
             } catch (error) {
-                request.log.error('Error listing MCP tools:', error);
+                // Error logging disabled for MCP compatibility
                 reply.code(500);
                 return {
                     error: error instanceof Error ? error.message : 'Unknown error'
@@ -318,7 +305,7 @@ export class MCPHttpServer {
     private setupErrorHandling(): void {
         // Global error handler
         this.fastify.setErrorHandler(async (error: Error, request: FastifyRequest, reply: FastifyReply) => {
-            request.log.error(error);
+            // Error logging disabled for MCP compatibility
 
             // Don't expose internal errors in production
             const isDevelopment = process.env.NODE_ENV === 'development';
@@ -345,13 +332,10 @@ export class MCPHttpServer {
 
         // Graceful shutdown
         const gracefulShutdown = async (signal: string) => {
-            console.error(`\nReceived ${signal}. Shutting down gracefully...`);
             try {
                 await this.fastify.close();
-                console.error('Server closed successfully.');
                 process.exit(0);
             } catch (error) {
-                console.error('Error during shutdown:', error);
                 process.exit(1);
             }
         };
@@ -367,26 +351,7 @@ export class MCPHttpServer {
                 port: this.config.port
             });
 
-            console.error('\n🚀 LifeOS MCP Web Interface started!');
-            console.error(`📍 Local: http://localhost:${this.config.port}`);
-            console.error(`🌐 Network: http://${this.config.host}:${this.config.port}`);
-            console.error(`📁 Static files: ${this.config.staticPath}`);
-            console.error('\n💡 Available endpoints:');
-            console.error('  GET  /              - Web interface');
-            console.error('  GET  /api/health    - Health check');
-            console.error('  GET  /api/models    - Available models');
-            console.error('  POST /api/chat      - Send chat message');
-            console.error('  GET  /api/chat/stream - Streaming chat');
-            if (this.mcpServer) {
-                console.error('  GET  /api/mcp/tools - List MCP tools');
-                console.error('  POST /api/mcp/tool  - Execute MCP tool');
-                console.error('\n🔗 MCP Integration: ENABLED');
-            } else {
-                console.error('\n🔗 MCP Integration: DISABLED (server not provided)');
-            }
-
         } catch (error) {
-            this.fastify.log.error('Failed to start server:', error);
             process.exit(1);
         }
     }
