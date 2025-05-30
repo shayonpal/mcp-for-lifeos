@@ -2,15 +2,41 @@
 
 This file contains instructions and reminders for Claude AI when working with the LifeOS MCP server.
 
-## Project Requirements
+## Current Project Phase: OpenWebUI Integration POC
 
-The requirements for this project, including the web interface feature, are documented in `docs/Web Interface - PRD.md`. This PRD contains the complete specification for the MVP implementation.
+**Status**: OpenWebUI Integration Proof of Concept (POC) execution phase
+**Goal**: Validate OpenWebUI + mcpo proxy + LifeOS MCP integration for mobile-first vault management
+**Decision**: PWA development PAUSED pending OpenWebUI mobile experience validation
+
+The current requirements are documented in `docs/01-current-poc/POC-OpenWebUI-Integration-PRD.md`. This PRD contains the complete POC specification and 21-issue implementation plan.
+
+### Strategic Context
+- **Approach**: OpenWebUI-first integration replacing custom web interface development
+- **Architecture**: OpenWebUI (Port 3000) ← mcpo Proxy (Port 8000) ← LifeOS MCP (stdio)
+- **Timeline**: 1-2 week POC → data-driven decision on custom PWA necessity
+- **Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2)
+
+### Current POC Status (21 Issues)
+- **Issue #47**: Install OpenWebUI via Docker → Status: Ready ✅ (can start immediately)
+- **Issues #48-50**: Setup sequence (mcpo proxy, integration, performance baseline) → Sequential dependencies
+- **Issues #31-37, #51**: Tool validation (all 18 MCP tools) → Parallel after setup
+- **Issues #38-40**: Mobile experience testing → After setup + basic validation
+- **Issues #41-42**: Error & stability testing → After tool validation
+- **Issues #43-44**: Documentation → Can start early
+- **Issues #45-46**: POC analysis & strategic docs → After all testing complete
+
+### Key Documentation Files
+- `docs/01-current-poc/Claude-Session-Onboarding.md` - Quick session startup prompt
+- `docs/01-current-poc/POC-OpenWebUI-Integration-PRD.md` - Complete POC specification
+- `docs/01-current-poc/POC-Dependencies-Analysis.md` - Issue dependency mapping
+- `docs/02-strategic-docs/OpenWebUI-Integration-Strategy.md` - Strategic approach
+- `docs/04-project-management/GitHub-Project-Setup-Assessment.md` - Project management setup
 
 ### Requirement Change Management
 
 When feature specifications change during development:
 
-1. **Update the PRD**: Log all changes in `docs/Web Interface - PRD.md` with:
+1. **Update the PRD**: Log all changes in `docs/01-current-poc/POC-OpenWebUI-Integration-PRD.md` with:
    - Human-readable timestamps (e.g., "Updated January 15, 2025 at 3:30 PM")
    - Clear description of what changed and why
    - Impact assessment on existing implementation
@@ -200,11 +226,43 @@ gh issue close 26
 - Write debug logs to files instead of console when needed
 - Test the server with `node dist/index.js` to see any console output that would break MCP
 
-### Web Interface
+### OpenWebUI Integration (Current POC)
 
-The HTTP web interface is disabled by default to ensure MCP compatibility. To enable it:
-- Set environment variable: `ENABLE_WEB_INTERFACE=true`
-- Ensure port 19831 is not already in use
-- Run the server with: `ENABLE_WEB_INTERFACE=true node dist/index.js`
+The project is transitioning from custom web interface to OpenWebUI integration via mcpo proxy:
 
-**Note**: The web interface should only be enabled for testing/development, not when running as an MCP server.
+**POC Setup Commands:**
+```bash
+# 1. Install OpenWebUI via Docker (Issue #47)
+docker run -d -p 3000:8080 -v open-webui:/app/backend/data --name open-webui --restart always ghcr.io/open-webui/open-webui:main
+
+# 2. Install mcpo proxy (Issue #48)
+uv tool install mcpo
+
+# 3. Start mcpo proxy with LifeOS MCP server (Issue #48)
+uvx mcpo --port 8000 -- node /Users/shayon/DevProjects/mcp-for-lifeos/dist/index.js
+
+# 4. Configure OpenWebUI to use proxy endpoints (Issue #49)
+# Access OpenWebUI at http://10.0.0.140:3000 and configure MCP integration
+```
+
+**Legacy Web Interface**: The built-in HTTP web interface (`ENABLE_WEB_INTERFACE=true`) is deprecated in favor of OpenWebUI integration.
+
+**Mobile Testing**: POC includes comprehensive mobile PWA testing to validate OpenWebUI as mobile-first solution.
+
+## POC Execution Guidelines
+
+### Critical Success Factors
+1. **Sequential Setup**: Issues #47→#48→#49→#50 MUST be completed in strict order
+2. **Dependency Awareness**: Never advance issues to "Ready" status unless dependencies are met
+3. **Mobile-First Validation**: Focus on mobile experience viability throughout testing
+4. **Documentation Parallel**: Issues #43-44 can start early to capture setup knowledge
+5. **Comprehensive Testing**: All 18 MCP tools must be validated through OpenWebUI interface
+
+### GitHub Project Management
+- **Project**: [Project #4 - MCP Server for Obsidian](https://github.com/users/shayonpal/projects/4)
+- **Status Flow**: Backlog → Ready → In Progress → Done
+- **Current Ready**: Issue #47 (Install OpenWebUI via Docker)
+
+### Session Startup Protocol
+For new Claude sessions, use: `docs/01-current-poc/Claude-Session-Onboarding.md`
+This ensures immediate context and prevents development delays.
