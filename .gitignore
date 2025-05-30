@@ -24,6 +24,10 @@ CLAUDE.md
 *.swo
 *~
 
+# Project-specific configuration
+*.code-workspace
+project_items.json
+
 # OS
 .DS_Store
 .DS_Store?
