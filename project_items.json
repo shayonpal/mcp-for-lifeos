@@ -1,0 +1,1 @@
+{"errors":[{"message":"Expected VAR_SIGN, actual: UNKNOWN_CHAR (\"\") at [2, 21]","locations":[{"line":2,"column":21}]}]}
