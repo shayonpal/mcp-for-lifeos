@@ -106,4 +106,5 @@ coverage/
 
 # Backup files
 *.backup
-*.bakCLAUDE.local.md
+*.bak
+CLAUDE.local.md
