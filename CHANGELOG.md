@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **insert_content tool**: Context-aware content insertion within notes (#29)
+  - Supports targeting by heading text (e.g., "## Today's Tasks")
+  - Supports targeting by block reference (e.g., "^block-id")
+  - Supports targeting by text pattern matching
+  - Supports targeting by specific line number
+  - Configurable position options: before, after, append, prepend
+  - Automatic newline handling for proper formatting
+  - Preserves existing note structure and frontmatter
+  - Works with both file paths and note titles
+
 ## [1.2.0] - 2025-01-29
 
 ### Added

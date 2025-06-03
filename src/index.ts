@@ -314,6 +314,38 @@ const tools: Tool[] = [
       },
       required: ['destination']
     }
+  },
+  {
+    name: 'insert_content',
+    description: 'Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
+        title: { type: 'string', description: 'Note title (alternative to path)' },
+        content: { type: 'string', description: 'Content to insert' },
+        target: { 
+          type: 'object',
+          description: 'Target location for insertion',
+          properties: {
+            heading: { type: 'string', description: 'Heading text to target (e.g., "## Today\'s Tasks")' },
+            blockRef: { type: 'string', description: 'Block reference ID to target (e.g., "^block-id")' },
+            pattern: { type: 'string', description: 'Text pattern to search for' },
+            lineNumber: { type: 'number', description: 'Specific line number (1-based)' }
+          }
+        },
+        position: {
+          type: 'string',
+          enum: ['before', 'after', 'append', 'prepend', 'end-of-section'],
+          description: 'Where to insert content relative to target (default: after). Use "end-of-section" to insert at the end of a heading section.'
+        },
+        ensureNewline: {
+          type: 'boolean',
+          description: 'Ensure proper line breaks around inserted content (default: true)'
+        }
+      },
+      required: ['content', 'target']
+    }
   }
 ];
 
@@ -1066,6 +1098,95 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             text: response
           }]
         });
+      }
+
+      case 'insert_content': {
+        // Get note path - either from direct path or by searching for title
+        let notePath: string;
+        
+        if (args.path) {
+          notePath = args.path as string;
+          // Normalize path - handle escaped spaces and resolve relative paths
+          notePath = notePath.replace(/\\ /g, ' ');
+          if (!notePath.startsWith('/')) {
+            notePath = `${LIFEOS_CONFIG.vaultPath}/${notePath}`;
+          }
+        } else if (args.title) {
+          // Search for note by title
+          const searchResults = await SearchEngine.quickSearch(args.title as string, 1);
+          
+          if (searchResults.length === 0) {
+            throw new Error(`No note found with title: ${args.title}`);
+          }
+          
+          notePath = searchResults[0].note.path;
+        } else {
+          throw new Error('Either path or title is required');
+        }
+
+        // Validate required parameters
+        const content = args.content as string;
+        const target = args.target as any;
+        
+        if (!content) {
+          throw new Error('Content is required');
+        }
+        
+        if (!target || typeof target !== 'object') {
+          throw new Error('Target is required and must be an object');
+        }
+        
+        // Validate target has at least one valid field
+        if (!target.heading && !target.blockRef && !target.pattern && !target.lineNumber) {
+          throw new Error('Target must specify at least one of: heading, blockRef, pattern, or lineNumber');
+        }
+        
+        // Get optional parameters
+        const position = (args.position as 'before' | 'after' | 'append' | 'prepend' | 'end-of-section') || 'after';
+        const ensureNewline = args.ensureNewline !== false; // Default true
+        
+        // Perform the insertion
+        let updatedNote;
+        try {
+          updatedNote = VaultUtils.insertContent(
+            notePath,
+            content,
+            target,
+            position,
+            ensureNewline
+          );
+        } catch (insertError) {
+          throw insertError;
+        }
+        
+        try {
+          const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
+          
+          // Build target description
+          let targetDesc = '';
+          if (target.heading) targetDesc = `heading "${target.heading}"`;
+          else if (target.blockRef) targetDesc = `block reference "${target.blockRef}"`;
+          else if (target.pattern) targetDesc = `pattern "${target.pattern}"`;
+          else if (target.lineNumber) targetDesc = `line ${target.lineNumber}`;
+          
+          const formattedDate = format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss');
+          
+          const response = addVersionMetadata({
+            content: [{
+              type: 'text',
+              text: `✅ Inserted content in **${updatedNote.frontmatter.title || 'Untitled'}**\n\n` +
+                    `${obsidianLink}\n\n` +
+                    `📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n` +
+                    `🎯 Target: ${targetDesc}\n` +
+                    `📍 Position: ${position}\n` +
+                    `⏰ Modified: ${formattedDate}`
+            }]
+          });
+          
+          return response;
+        } catch (responseError) {
+          throw new Error(`Failed to generate response: ${responseError instanceof Error ? responseError.message : String(responseError)}`);
+        }
       }
 
       default:

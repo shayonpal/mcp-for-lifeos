@@ -129,6 +129,34 @@ move_items items: [{path: "10 - Projects/Completed"}, {path: "planning-doc.md"}]
 move_items item: "20 - Areas/Old Resources" destination: "30 - Resources" mergeFolders: true
 ```
 
+#### `insert_content`
+Insert content at specific locations within a note based on headings, block references, or text patterns
+- **path**: Path to the note file (absolute or relative to vault)
+- **title**: Note title (alternative to path - will search for the note)
+- **content** (required): Content to insert
+- **target** (required): Target location for insertion
+  - `heading`: Heading text to target (e.g., "## Today's Tasks")
+  - `blockRef`: Block reference ID to target (e.g., "^block-id")
+  - `pattern`: Text pattern to search for
+  - `lineNumber`: Specific line number (1-based)
+- **position**: Where to insert content relative to target - 'before', 'after', 'append', 'prepend' (default: after)
+- **ensureNewline**: Ensure proper line breaks around inserted content (default: true)
+
+Example usage:
+```bash
+# Insert after a heading
+insert_content title: "Daily Note" content: "- New task" target: {heading: "## Today's Tasks"} position: "after"
+
+# Insert before a block reference
+insert_content path: "project-notes.md" content: "Update: Project approved!" target: {blockRef: "^project-status"} position: "before"
+
+# Append to a line containing a pattern
+insert_content title: "Meeting Notes" content: " - Bob" target: {pattern: "Attendees:"} position: "append"
+
+# Insert at specific line number
+insert_content path: "todo.md" content: "- [ ] New item" target: {lineNumber: 5} position: "after"
+```
+
 ### Navigation Tools
 
 #### `list_folders`

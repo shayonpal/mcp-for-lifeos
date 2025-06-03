@@ -205,6 +205,340 @@ export class VaultUtils {
     return updatedNote;
   }
 
+  /**
+   * Find where a section ends (before the next heading of same or higher level)
+   */
+  private static findSectionEnd(lines: string[], headingIndex: number, headingLevel: number): number {
+    // Start from the line after the heading
+    for (let i = headingIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Check if this is a heading
+      const headingMatch = line.match(/^(#{1,6})\s+/);
+      if (headingMatch) {
+        const nextHeadingLevel = headingMatch[1].length;
+        // If we found a heading of same or higher level (fewer #), section ends here
+        if (nextHeadingLevel <= headingLevel) {
+          // Return the line before this heading, but skip empty lines
+          let endIndex = i - 1;
+          while (endIndex > headingIndex && lines[endIndex].trim() === '') {
+            endIndex--;
+          }
+          return endIndex;
+        }
+      }
+    }
+    
+    // If no next heading found, section goes to end of file
+    // Skip trailing empty lines
+    let endIndex = lines.length - 1;
+    while (endIndex > headingIndex && lines[endIndex].trim() === '') {
+      endIndex--;
+    }
+    return endIndex;
+  }
+
+  /**
+   * Detect if content appears to be a list item
+   */
+  private static isListItem(content: string): boolean {
+    const trimmed = content.trim();
+    // Check for unordered list markers (-, *, +)
+    if (/^[-*+]\s+/.test(trimmed)) return true;
+    // Check for ordered list markers (1., 2., etc.)
+    if (/^\d+\.\s+/.test(trimmed)) return true;
+    // Check for task list markers
+    if (/^[-*+]\s+\[[ x]\]/i.test(trimmed)) return true;
+    return false;
+  }
+
+  /**
+   * Find the last item in a list starting from a given line
+   */
+  private static findLastListItem(lines: string[], startIndex: number): number {
+    let lastListIndex = startIndex;
+    
+    // Skip empty lines after the starting point
+    let i = startIndex + 1;
+    while (i < lines.length && lines[i].trim() === '') {
+      i++;
+    }
+    
+    // Continue while we find list items
+    while (i < lines.length) {
+      const line = lines[i].trim();
+      if (line === '') {
+        // Empty line might be within the list, check next non-empty line
+        let j = i + 1;
+        while (j < lines.length && lines[j].trim() === '') {
+          j++;
+        }
+        if (j < lines.length && this.isListItem(lines[j])) {
+          // Continue through the empty lines
+          i = j;
+          lastListIndex = j;
+        } else {
+          // Double empty line or non-list content, list ends
+          break;
+        }
+      } else if (this.isListItem(line)) {
+        lastListIndex = i;
+        i++;
+      } else {
+        // Non-list content, list ends
+        break;
+      }
+    }
+    
+    return lastListIndex;
+  }
+
+  static insertContent(
+    filePath: string,
+    content: string,
+    target: {
+      heading?: string;
+      blockRef?: string;
+      pattern?: string;
+      lineNumber?: number;
+    },
+    position: 'before' | 'after' | 'append' | 'prepend' | 'end-of-section' = 'after',
+    ensureNewline: boolean = true
+  ): LifeOSNote {
+    // Check if note exists
+    if (!existsSync(filePath)) {
+      throw new Error(`Note not found: ${filePath}`);
+    }
+
+    // Read existing note
+    const existingNote = this.readNote(filePath);
+    const lines = existingNote.content.split('\n');
+    
+    // Find target line index
+    let targetLineIndex = -1;
+    let endOfSectionIndex = -1;
+    
+    if (target.lineNumber) {
+      // Direct line number (convert from 1-based to 0-based)
+      targetLineIndex = target.lineNumber - 1;
+      if (targetLineIndex < 0 || targetLineIndex >= lines.length) {
+        throw new Error(`Line number ${target.lineNumber} is out of range (1-${lines.length})`);
+      }
+    } else if (target.heading) {
+      // Find heading - exact match (ignore leading/trailing whitespace)
+      const headingToFind = target.heading.trim();
+      targetLineIndex = lines.findIndex(line => {
+        const trimmedLine = line.trim();
+        // Match markdown headings (# to ######)
+        return /^#{1,6}\s+/.test(trimmedLine) && 
+               trimmedLine.replace(/^#{1,6}\s+/, '').trim() === headingToFind.replace(/^#{1,6}\s+/, '').trim();
+      });
+      
+      if (targetLineIndex === -1) {
+        throw new Error(`Heading not found: ${target.heading}`);
+      }
+      
+      // For end-of-section, find where this section ends
+      if (position === 'end-of-section') {
+        const headingLevel = lines[targetLineIndex].match(/^#+/)?.[0].length || 1;
+        endOfSectionIndex = this.findSectionEnd(lines, targetLineIndex, headingLevel);
+      }
+    } else if (target.blockRef) {
+      // Find block reference - look for ^blockId at end of lines
+      const blockId = target.blockRef.startsWith('^') ? target.blockRef : `^${target.blockRef}`;
+      targetLineIndex = lines.findIndex(line => line.trim().endsWith(blockId));
+      
+      if (targetLineIndex === -1) {
+        throw new Error(`Block reference not found: ${target.blockRef}`);
+      }
+    } else if (target.pattern) {
+      // Find text pattern
+      targetLineIndex = lines.findIndex(line => line.includes(target.pattern!));
+      
+      if (targetLineIndex === -1) {
+        throw new Error(`Pattern not found: ${target.pattern}`);
+      }
+    } else {
+      throw new Error('No valid target specified');
+    }
+
+    // Handle end-of-section positioning
+    let actualPosition = position;
+    if (position === 'end-of-section') {
+      // end-of-section only makes sense for heading targets
+      if (!target.heading) {
+        // For non-heading targets, convert to 'after' for simplicity and clarity
+        actualPosition = 'after';
+      } else {
+        // For heading targets, we should have endOfSectionIndex set
+        if (endOfSectionIndex === -1) {
+          throw new Error(`Cannot find section end for heading target. Target: ${JSON.stringify(target)}, targetLineIndex: ${targetLineIndex}`);
+        }
+        
+        // Validate endOfSectionIndex is within bounds
+        if (endOfSectionIndex >= lines.length) {
+          endOfSectionIndex = lines.length - 1;
+        }
+        if (endOfSectionIndex < targetLineIndex) {
+          endOfSectionIndex = targetLineIndex;
+        }
+        
+        // Check if we're inserting into a list context
+        const isInsertingListItem = this.isListItem(content);
+        
+        // Look for existing list in the section
+        let insertIndex = endOfSectionIndex;
+        if (isInsertingListItem) {
+          // Find the last list item in the section
+          for (let i = targetLineIndex + 1; i <= endOfSectionIndex && i < lines.length; i++) {
+            if (this.isListItem(lines[i])) {
+              insertIndex = this.findLastListItem(lines, i);
+              break;
+            }
+          }
+        }
+        
+        // Validate insertIndex
+        if (insertIndex >= lines.length) {
+          insertIndex = lines.length - 1;
+        }
+        if (insertIndex < 0) {
+          insertIndex = 0;
+        }
+        
+        // Update target for insertion
+        targetLineIndex = insertIndex;
+        actualPosition = 'after'; // Treat as 'after' the last relevant line
+      }
+    }
+    
+    // Prepare content to insert
+    let contentToInsert = content;
+    
+    // Smart spacing for list continuation
+    if (actualPosition === 'after' && targetLineIndex >= 0) {
+      const targetLine = lines[targetLineIndex];
+      const isTargetList = this.isListItem(targetLine);
+      const isContentList = this.isListItem(content);
+      
+      // If both target and content are list items, minimal spacing
+      if (isTargetList && isContentList) {
+        ensureNewline = false; // Override to prevent extra spacing
+      }
+    }
+    
+    if (ensureNewline && (actualPosition === 'before' || actualPosition === 'after')) {
+      // Smart newline handling - check context
+      if (actualPosition === 'after') {
+        // Check if there's already a blank line after the target
+        const hasBlankLineAfter = targetLineIndex < lines.length - 1 && lines[targetLineIndex + 1].trim() === '';
+        
+        // Add leading newline only if content doesn't start with one
+        if (!contentToInsert.startsWith('\n')) {
+          contentToInsert = '\n' + contentToInsert;
+        }
+        
+        // Add trailing newline only if there isn't already a blank line and content doesn't end with newline
+        if (!hasBlankLineAfter && !contentToInsert.endsWith('\n')) {
+          contentToInsert = contentToInsert + '\n';
+        }
+      } else if (actualPosition === 'before') {
+        // Check if there's already a blank line before the target
+        const hasBlankLineBefore = targetLineIndex > 0 && lines[targetLineIndex - 1].trim() === '';
+        
+        // Add leading newline only if there isn't already a blank line and content doesn't start with newline
+        if (!hasBlankLineBefore && !contentToInsert.startsWith('\n')) {
+          contentToInsert = '\n' + contentToInsert;
+        }
+        
+        // Add trailing newline only if content doesn't end with one
+        if (!contentToInsert.endsWith('\n')) {
+          contentToInsert = contentToInsert + '\n';
+        }
+      }
+    }
+
+    // Insert content based on position
+    let newLines: string[] = [];
+    
+    // Validate targetLineIndex
+    if (targetLineIndex < 0 || targetLineIndex >= lines.length) {
+      throw new Error(`Invalid targetLineIndex: ${targetLineIndex}, lines.length: ${lines.length}, position: ${position}, actualPosition: ${actualPosition}`);
+    }
+    
+    switch (actualPosition) {
+      case 'before':
+        newLines = [
+          ...lines.slice(0, targetLineIndex),
+          ...contentToInsert.split('\n'),
+          ...lines.slice(targetLineIndex)
+        ];
+        break;
+      
+      case 'after':
+        newLines = [
+          ...lines.slice(0, targetLineIndex + 1),
+          ...contentToInsert.split('\n'),
+          ...lines.slice(targetLineIndex + 1)
+        ];
+        break;
+      
+      case 'prepend':
+        // Prepend to the beginning of the target line
+        newLines = [...lines];
+        newLines[targetLineIndex] = contentToInsert + lines[targetLineIndex];
+        break;
+      
+      case 'append':
+        // Append to the end of the target line
+        newLines = [...lines];
+        newLines[targetLineIndex] = lines[targetLineIndex] + contentToInsert;
+        break;
+        
+      case 'end-of-section':
+        // This should never happen as we convert to 'after' above
+        throw new Error('end-of-section should have been converted to after');
+        
+      default:
+        throw new Error(`Invalid position: ${actualPosition}`);
+    }
+
+    // Update the note with new content
+    // Validate newLines before proceeding
+    if (!newLines || !Array.isArray(newLines)) {
+      throw new Error(`Failed to generate new content. Position: ${position}, actualPosition: ${actualPosition}, targetLineIndex: ${targetLineIndex}, newLines: ${typeof newLines}`);
+    }
+    
+    // Validate all elements in the array are strings
+    if (!newLines.every(line => typeof line === 'string')) {
+      throw new Error(`newLines contains non-string elements. Elements: ${newLines.map(line => typeof line).join(', ')}`);
+    }
+    
+    // Clone the array to prevent race conditions in concurrent calls
+    const safeLines = [...newLines];
+    
+    // Additional validation of safeLines
+    if (!safeLines || !Array.isArray(safeLines)) {
+      throw new Error(`Array cloning failed. safeLines: ${typeof safeLines}, newLines: ${typeof newLines}`);
+    }
+    
+    // Final validation before join operation
+    if (safeLines.length === 0) {
+      throw new Error(`Empty array after processing. Original newLines length: ${newLines.length}`);
+    }
+    
+    // Defensive check: ensure all elements are still strings after cloning
+    if (!safeLines.every(line => typeof line === 'string')) {
+      throw new Error(`safeLines contains non-string elements after cloning. Elements: ${safeLines.map(line => typeof line).join(', ')}`);
+    }
+    
+    const contentToWrite = safeLines.join('\n');
+    
+    return this.updateNote(filePath, {
+      content: contentToWrite
+    });
+  }
+
   static searchNotes(options: SearchOptions): LifeOSNote[] {
     const allNotes = this.getAllNotes();
     
