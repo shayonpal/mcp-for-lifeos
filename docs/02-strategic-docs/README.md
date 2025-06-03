@@ -6,10 +6,12 @@ This folder contains strategic analysis and decision-making documentation that g
 
 ## Key Documents
 
-- **[OpenWebUI-Integration-Strategy.md](./OpenWebUI-Integration-Strategy.md)** - Overall integration strategy
+- **[Obsidian-Web-Access-Alternative.md](./Obsidian-Web-Access-Alternative.md)** - Current approach using LinuxServer.io solution
+- **[OpenWebUI-Integration-Strategy.md](./OpenWebUI-Integration-Strategy.md)** - Original integration strategy (deprioritized)
 - **[OpenWebUI-vs-PWA-Decision-Analysis.md](./OpenWebUI-vs-PWA-Decision-Analysis.md)** - DECIDE framework analysis
 
 ## Strategic Context
-**Current Direction**: OpenWebUI-first approach with conditional PWA development  
-**Decision Framework**: Data-driven evaluation based on POC results  
-**Timeline**: 4-week evaluation period for mobile experience validation
+**Current Direction**: Evaluating LinuxServer.io Obsidian web access as primary solution  
+**Previous Approach**: OpenWebUI Integration POC (deprioritized)  
+**Decision Framework**: Testing native Obsidian web access with Copilot plugin for chat  
+**Timeline**: Evaluation in progress

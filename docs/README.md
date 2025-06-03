@@ -4,8 +4,8 @@ This directory contains all project documentation organized by purpose and lifec
 
 ## 📁 Folder Structure
 
-### 🎯 [`01-current-poc/`](./01-current-poc/) - Active POC Documentation
-**Current OpenWebUI Integration Proof of Concept**
+### 🎯 [`01-current-poc/`](./01-current-poc/) - POC Documentation (DEPRIORITIZED)
+**OpenWebUI Integration Proof of Concept - Currently on hold**
 - [`POC-OpenWebUI-Integration-PRD.md`](./01-current-poc/POC-OpenWebUI-Integration-PRD.md) - Complete POC specification and requirements
 - [`POC-Dependencies-Analysis.md`](./01-current-poc/POC-Dependencies-Analysis.md) - Issue dependency mapping and execution order
 - [`POC-GitHub-Project-Fields.md`](./01-current-poc/POC-GitHub-Project-Fields.md) - GitHub project field assignments and component mapping
@@ -14,7 +14,8 @@ This directory contains all project documentation organized by purpose and lifec
 
 ### 📊 [`02-strategic-docs/`](./02-strategic-docs/) - Strategic Analysis
 **High-level strategy and architectural decisions**
-- [`OpenWebUI-Integration-Strategy.md`](./02-strategic-docs/OpenWebUI-Integration-Strategy.md) - Overall integration strategy and approach
+- [`Obsidian-Web-Access-Alternative.md`](./02-strategic-docs/Obsidian-Web-Access-Alternative.md) - ⭐ **Current approach using LinuxServer.io solution**
+- [`OpenWebUI-Integration-Strategy.md`](./02-strategic-docs/OpenWebUI-Integration-Strategy.md) - Original integration strategy (deprioritized)
 - [`OpenWebUI-vs-PWA-Decision-Analysis.md`](./02-strategic-docs/OpenWebUI-vs-PWA-Decision-Analysis.md) - DECIDE framework analysis for PWA vs OpenWebUI
 
 ### 🗄️ [`03-legacy-specs/`](./03-legacy-specs/) - Legacy & Paused Specifications
@@ -38,21 +39,21 @@ This directory contains all project documentation organized by purpose and lifec
 
 ## 🚀 Quick Start for New Sessions
 
-**For immediate project continuation**, use:
+**For strategic context**, refer to:
 ```
-📄 01-current-poc/Claude-Session-Onboarding.md
+📄 02-strategic-docs/Obsidian-Web-Access-Alternative.md
 ```
-This contains everything needed to quickly onboard and continue POC execution.
+This documents the current LinuxServer.io Obsidian web access evaluation approach.
 
 ## 📈 Current Project Status
 
-**Phase**: OpenWebUI Integration POC
-**Active Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2)
-**Ready to Execute**: Issue #47 (Install OpenWebUI via Docker)
+**Phase**: Evaluating LinuxServer.io Obsidian Web Access Solution
+**Previous Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2) - DEPRIORITIZED
+**Current Focus**: Testing native Obsidian web interface with Copilot plugin for chat capabilities
 
 ### Current Priority Documents
-1. **POC Execution**: [`01-current-poc/POC-OpenWebUI-Integration-PRD.md`](./01-current-poc/POC-OpenWebUI-Integration-PRD.md)
-2. **Dependencies**: [`01-current-poc/POC-Dependencies-Analysis.md`](./01-current-poc/POC-Dependencies-Analysis.md)
+1. **Current Strategy**: [`02-strategic-docs/Obsidian-Web-Access-Alternative.md`](./02-strategic-docs/Obsidian-Web-Access-Alternative.md)
+2. **Deprioritized POC**: [`01-current-poc/POC-OpenWebUI-Integration-PRD.md`](./01-current-poc/POC-OpenWebUI-Integration-PRD.md)
 3. **Session Onboarding**: [`01-current-poc/Claude-Session-Onboarding.md`](./01-current-poc/Claude-Session-Onboarding.md)
 
 ## 📚 Document Lifecycle

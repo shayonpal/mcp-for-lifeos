@@ -2,28 +2,23 @@
 
 This file contains instructions and reminders for Claude AI when working with the LifeOS MCP server.
 
-## Current Project Phase: OpenWebUI Integration POC
+## Current Project Phase: Evaluating LinuxServer.io Obsidian Web Access
 
-**Status**: OpenWebUI Integration Proof of Concept (POC) execution phase
-**Goal**: Validate OpenWebUI + mcpo proxy + LifeOS MCP integration for mobile-first vault management
-**Decision**: PWA development PAUSED pending OpenWebUI mobile experience validation
+**Status**: OpenWebUI Integration POC DEPRIORITIZED - Evaluating alternative approach
+**New Direction**: Testing LinuxServer.io's Obsidian web access solution (https://github.com/shayonpal/obsidian-web-access)
+**Rationale**: Direct web access to Obsidian with native Copilot plugin may provide simpler solution for mobile vault access
 
-The current requirements are documented in `docs/01-current-poc/POC-OpenWebUI-Integration-PRD.md`. This PRD contains the complete POC specification and 21-issue implementation plan.
+The OpenWebUI POC requirements remain documented in `docs/01-current-poc/POC-OpenWebUI-Integration-PRD.md` but are currently on hold.
+See `docs/02-strategic-docs/Obsidian-Web-Access-Alternative.md` for current approach.
 
-### Strategic Context
-- **Approach**: OpenWebUI-first integration replacing custom web interface development
-- **Architecture**: OpenWebUI (Port 3000) ← mcpo Proxy (Port 8000) ← LifeOS MCP (stdio)
-- **Timeline**: 1-2 week POC → data-driven decision on custom PWA necessity
-- **Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2)
+### Strategic Context (DEPRIORITIZED)
+- **Previous Approach**: OpenWebUI-first integration replacing custom web interface development
+- **Previous Architecture**: OpenWebUI (Port 3000) ← mcpo Proxy (Port 8000) ← LifeOS MCP (stdio)
+- **Current Focus**: LinuxServer.io Obsidian web access evaluation
+- **Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2) - ON HOLD
 
-### Current POC Status (21 Issues)
-- **Issue #47**: Install OpenWebUI via Docker → Status: Ready ✅ (can start immediately)
-- **Issues #48-50**: Setup sequence (mcpo proxy, integration, performance baseline) → Sequential dependencies
-- **Issues #31-37, #51**: Tool validation (all 18 MCP tools) → Parallel after setup
-- **Issues #38-40**: Mobile experience testing → After setup + basic validation
-- **Issues #41-42**: Error & stability testing → After tool validation
-- **Issues #43-44**: Documentation → Can start early
-- **Issues #45-46**: POC analysis & strategic docs → After all testing complete
+### OpenWebUI POC Status (DEPRIORITIZED - 21 Issues on hold)
+All POC issues (#47-#51, #31-#46) are currently on hold pending evaluation of LinuxServer.io solution.
 
 ### Key Documentation Files
 - `docs/01-current-poc/Claude-Session-Onboarding.md` - Quick session startup prompt

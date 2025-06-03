@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **Deprecated Web Interface** (2025-01-06): Removed `public/` folder containing the legacy web interface
+  - The built-in HTTP web interface has been deprecated in favor of OpenWebUI integration
+  - OpenWebUI provides a more robust, feature-rich interface for mobile and desktop access
+  - The HTTP server code remains for potential API usage but static files are no longer needed
+  - See docs/02-strategic-docs/OpenWebUI-Integration-Strategy.md for migration details
+
 ## [1.2.1] - 2025-06-02
 
 ### Added
