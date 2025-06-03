@@ -18,7 +18,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.2.1';
+export const SERVER_VERSION = '1.3.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -346,6 +346,28 @@ const tools: Tool[] = [
       },
       required: ['content', 'target']
     }
+  },
+  {
+    name: 'list_yaml_properties',
+    description: 'List all YAML frontmatter properties used across all notes in the vault',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        includeCount: { 
+          type: 'boolean', 
+          description: 'Include usage count for each property (default: false)'
+        },
+        sortBy: { 
+          type: 'string',
+          enum: ['alphabetical', 'usage'],
+          description: 'Sort properties by name or usage count (default: alphabetical)'
+        },
+        excludeStandard: { 
+          type: 'boolean',
+          description: 'Exclude standard LifeOS properties (title, contentType, etc.) (default: false)'
+        }
+      }
+    }
   }
 ];
 
@@ -393,6 +415,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
                   `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
                   `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
                   `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
@@ -1187,6 +1210,74 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         } catch (responseError) {
           throw new Error(`Failed to generate response: ${responseError instanceof Error ? responseError.message : String(responseError)}`);
         }
+      }
+
+      case 'list_yaml_properties': {
+        const includeCount = args.includeCount as boolean || false;
+        const sortBy = args.sortBy as 'alphabetical' | 'usage' || 'alphabetical';
+        const excludeStandard = args.excludeStandard as boolean || false;
+
+        // Get all YAML properties from the vault
+        const propertiesInfo = VaultUtils.getAllYamlProperties({
+          includeCount,
+          excludeStandard
+        });
+
+        // Sort the properties
+        let sortedProperties = propertiesInfo.properties;
+        if (sortBy === 'usage' && includeCount) {
+          sortedProperties = sortedProperties.sort((a, b) => 
+            (propertiesInfo.counts?.[b] || 0) - (propertiesInfo.counts?.[a] || 0)
+          );
+        } else {
+          sortedProperties = sortedProperties.sort((a, b) => 
+            a.toLowerCase().localeCompare(b.toLowerCase())
+          );
+        }
+
+        // Format the response
+        let responseText = `# YAML Properties in Vault\n\n`;
+        responseText += `Found **${sortedProperties.length}** unique properties`;
+        if (propertiesInfo.totalNotes) {
+          responseText += ` across **${propertiesInfo.totalNotes}** notes`;
+        }
+        responseText += `\n\n`;
+
+        // Show scan statistics
+        responseText += `## Scan Statistics\n`;
+        responseText += `- **Files scanned**: ${propertiesInfo.scannedFiles || 0}\n`;
+        if (propertiesInfo.skippedFiles && propertiesInfo.skippedFiles > 0) {
+          responseText += `- **Files skipped**: ${propertiesInfo.skippedFiles} (malformed YAML or read errors)\n`;
+        }
+        responseText += `- **Notes with frontmatter**: ${propertiesInfo.totalNotes || 0}\n\n`;
+
+        if (excludeStandard) {
+          responseText += `*Standard LifeOS properties excluded*\n\n`;
+        }
+
+        responseText += `## Properties List\n\n`;
+
+        if (includeCount && propertiesInfo.counts) {
+          // Show properties with usage counts
+          sortedProperties.forEach(prop => {
+            const count = propertiesInfo.counts![prop] || 0;
+            responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+          });
+        } else {
+          // Simple list
+          sortedProperties.forEach(prop => {
+            responseText += `- ${prop}\n`;
+          });
+        }
+
+        const response = addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: responseText
+          }]
+        });
+
+        return response;
       }
 
       default:

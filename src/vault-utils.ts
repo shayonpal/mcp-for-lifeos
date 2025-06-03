@@ -816,4 +816,109 @@ export class VaultUtils {
       return { success: false, newPath: '', error: `Failed to merge folders: ${String(error)}` };
     }
   }
+
+  /**
+   * Get all unique YAML properties used across the vault
+   */
+  static getAllYamlProperties(options: {
+    includeCount?: boolean;
+    excludeStandard?: boolean;
+  } = {}): {
+    properties: string[];
+    counts?: Record<string, number>;
+    totalNotes?: number;
+    scannedFiles?: number;
+    skippedFiles?: number;
+  } {
+    const { includeCount = false, excludeStandard = false } = options;
+    
+    // Standard LifeOS properties to exclude if requested
+    const standardProperties = new Set([
+      'title',
+      'contentType',
+      'category',
+      'subCategory',
+      'tags',
+      'created',
+      'modified',
+      'source',
+      'people',
+      'author',
+      'status',
+      'priority',
+      'due',
+      'completed',
+      'project',
+      'area',
+      'resources',
+      'archive',
+      'rating',
+      'favorite',
+      'pinned'
+    ]);
+
+    const propertySet = new Set<string>();
+    const propertyCounts: Record<string, number> = {};
+    let totalNotes = 0;
+    let scannedFiles = 0;
+    let skippedFiles = 0;
+
+    try {
+      // Find all markdown files
+      const files = glob.sync(join(LIFEOS_CONFIG.vaultPath, '**/*.md'), {
+        ignore: ['**/node_modules/**', '**/.*']
+      });
+
+      // Process each file
+      for (const file of files) {
+        scannedFiles++;
+        try {
+          const content = readFileSync(file, 'utf-8');
+          const { data: frontmatter } = matter(content);
+          
+          if (frontmatter && typeof frontmatter === 'object') {
+            totalNotes++;
+            
+            // Extract all property names
+            for (const prop of Object.keys(frontmatter)) {
+              // Skip if excluding standard and this is a standard property
+              if (excludeStandard && standardProperties.has(prop)) {
+                continue;
+              }
+              
+              propertySet.add(prop);
+              
+              if (includeCount) {
+                propertyCounts[prop] = (propertyCounts[prop] || 0) + 1;
+              }
+            }
+          }
+        } catch (error) {
+          // Skip files that can't be parsed (malformed YAML, file access issues, etc.)
+          skippedFiles++;
+        }
+      }
+
+      const result: {
+        properties: string[];
+        counts?: Record<string, number>;
+        totalNotes?: number;
+        scannedFiles?: number;
+        skippedFiles?: number;
+      } = {
+        properties: Array.from(propertySet),
+        scannedFiles,
+        skippedFiles
+      };
+
+      if (includeCount) {
+        result.counts = propertyCounts;
+        result.totalNotes = totalNotes;
+      }
+
+      return result;
+    } catch (error) {
+      throw new Error(`Failed to get YAML properties: ${String(error)}`);
+    }
+  }
 }

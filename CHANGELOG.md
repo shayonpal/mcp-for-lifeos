@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The HTTP server code remains for potential API usage but static files are no longer needed
   - See docs/02-strategic-docs/OpenWebUI-Integration-Strategy.md for migration details
 
+## [1.3.0] - 2025-06-02
+
+### Added
+- **list_yaml_properties tool**: Discover and analyze YAML frontmatter properties across vault (#53)
+  - Lists all unique YAML property names used in the vault
+  - Optional usage count feature shows how many notes use each property
+  - Sorting options: alphabetical or by usage frequency
+  - Option to exclude standard LifeOS properties to focus on custom fields
+  - Helps identify inconsistent property naming and data quality issues
+  - Supports vault analysis and cleanup planning
+
 ## [1.2.1] - 2025-06-02
 
 ### Added
