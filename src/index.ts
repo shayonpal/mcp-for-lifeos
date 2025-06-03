@@ -18,7 +18,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.2.0';
+export const SERVER_VERSION = '1.2.1';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);

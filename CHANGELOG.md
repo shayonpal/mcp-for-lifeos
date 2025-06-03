@@ -7,16 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-06-02
+
 ### Added
 - **insert_content tool**: Context-aware content insertion within notes (#29)
   - Supports targeting by heading text (e.g., "## Today's Tasks")
   - Supports targeting by block reference (e.g., "^block-id")
   - Supports targeting by text pattern matching
   - Supports targeting by specific line number
-  - Configurable position options: before, after, append, prepend
+  - Configurable position options: before, after, append, prepend, end-of-section
   - Automatic newline handling for proper formatting
   - Preserves existing note structure and frontmatter
   - Works with both file paths and note titles
+
+### Fixed
+- **Race condition in insert_content**: Resolved intermittent "Cannot read properties of undefined (reading 'join')" error (#29)
+  - Added comprehensive array validation before join operations
+  - Simplified end-of-section logic for non-heading targets (converts to 'after')
+  - Enhanced bounds checking and defensive programming throughout
+  - Maintained complex section-finding logic only for heading targets where conceptually appropriate
 
 ## [1.2.0] - 2025-01-29
 

@@ -139,7 +139,7 @@ Insert content at specific locations within a note based on headings, block refe
   - `blockRef`: Block reference ID to target (e.g., "^block-id")
   - `pattern`: Text pattern to search for
   - `lineNumber`: Specific line number (1-based)
-- **position**: Where to insert content relative to target - 'before', 'after', 'append', 'prepend' (default: after)
+- **position**: Where to insert content relative to target - 'before', 'after', 'append', 'prepend', 'end-of-section' (default: after)
 - **ensureNewline**: Ensure proper line breaks around inserted content (default: true)
 
 Example usage:
@@ -155,6 +155,9 @@ insert_content title: "Meeting Notes" content: " - Bob" target: {pattern: "Atten
 
 # Insert at specific line number
 insert_content path: "todo.md" content: "- [ ] New item" target: {lineNumber: 5} position: "after"
+
+# Insert at end of a section (for heading targets)
+insert_content title: "Project Notes" content: "- Final task" target: {heading: "## Action Items"} position: "end-of-section"
 ```
 
 ### Navigation Tools
