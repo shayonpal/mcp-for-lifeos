@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Enhanced Analytics & Examples for list_yaml_property_values tool**: Advanced features for property value analysis (#58)
+  - Added `includeCount` parameter to show usage statistics for each property value
+  - Added `includeExamples` parameter to display sample note titles using each value
+  - Added `sortBy` parameter with options: alphabetical, usage, or type-based sorting
+  - Added `maxExamples` parameter to control number of example notes shown (default: 3)
+  - Implemented memory-efficient example collection with configurable limits
+  - Enhanced output formatting with detailed value type analysis and statistics
+  - Performance optimizations for large vaults with 1000+ notes using properties
+  - Maintains full backward compatibility with existing functionality
+  - Builds foundation for advanced YAML property search capabilities (#55)
+
 ## [1.4.0] - 2025-06-04
 
 ### Added

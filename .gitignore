@@ -14,8 +14,11 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
-CLAUDE.md
 .claude/
+
+# Personal Documents
+CLAUDE.md
+CLAUDE.local.md
 
 # IDE
 .vscode/
@@ -107,4 +110,3 @@ coverage/
 # Backup files
 *.backup
 *.bak
-CLAUDE.local.md

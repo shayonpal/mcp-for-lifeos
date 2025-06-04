@@ -378,6 +378,23 @@ const tools: Tool[] = [
         property: {
           type: 'string',
           description: 'The YAML property name to analyze'
+        },
+        includeCount: {
+          type: 'boolean',
+          description: 'Include usage count for each value (default: false)'
+        },
+        includeExamples: {
+          type: 'boolean',
+          description: 'Include example note titles that use each value (default: false)'
+        },
+        sortBy: {
+          type: 'string',
+          enum: ['alphabetical', 'usage', 'type'],
+          description: 'Sort values by name, usage count, or type (default: alphabetical)'
+        },
+        maxExamples: {
+          type: 'number',
+          description: 'Maximum number of example notes per value (default: 3)'
         }
       },
       required: ['property']
@@ -1301,8 +1318,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Property is required');
         }
 
+        // Get options
+        const options = {
+          includeCount: args.includeCount as boolean || false,
+          includeExamples: args.includeExamples as boolean || false,
+          sortBy: args.sortBy as 'alphabetical' | 'usage' | 'type' || 'alphabetical',
+          maxExamples: args.maxExamples as number || 3
+        };
+
         // Get all values for the specified property
-        const propertyInfo = VaultUtils.getYamlPropertyValues(property);
+        const propertyInfo = VaultUtils.getYamlPropertyValues(property, options);
 
         // Format the response
         let responseText = `# YAML Property Values: "${property}"\n\n`;
@@ -1327,41 +1352,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
           // Single values
           if (propertyInfo.values.single.length > 0) {
-            responseText += `**Single Values** (${propertyInfo.values.single.length} notes):\n`;
             const uniqueSingleValues = Array.from(new Set(propertyInfo.values.single.map(v => String(v))));
+            responseText += `**Single Values** (${uniqueSingleValues.length} unique, ${propertyInfo.values.single.length} total uses):\n`;
+            
             uniqueSingleValues.forEach(value => {
               const count = propertyInfo.values.single.filter(v => String(v) === value).length;
               responseText += `- "${value}" (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+              
+              // Add examples if requested
+              if (options.includeExamples && propertyInfo.valueExamples && propertyInfo.valueExamples[value]) {
+                const examples = propertyInfo.valueExamples[value];
+                responseText += `  Examples: ${examples.map(e => `"${e}"`).join(', ')}\n`;
+              }
             });
             responseText += '\n';
           }
 
           // Array values
           if (propertyInfo.values.array.length > 0) {
-            responseText += `**Array Values** (${propertyInfo.values.array.length} notes):\n`;
             const uniqueArrayValues = Array.from(new Set(propertyInfo.values.array.map(arr => JSON.stringify(arr))));
+            responseText += `**Array Values** (${uniqueArrayValues.length} unique combinations, ${propertyInfo.values.array.length} total uses):\n`;
+            
             uniqueArrayValues.forEach(arrayStr => {
               const arrayValue = JSON.parse(arrayStr);
               const count = propertyInfo.values.array.filter(arr => JSON.stringify(arr) === arrayStr).length;
               responseText += `- [${arrayValue.map((v: any) => `"${v}"`).join(', ')}] (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+              
+              // Add examples if requested
+              if (options.includeExamples && propertyInfo.valueExamples && propertyInfo.valueExamples[arrayStr]) {
+                const examples = propertyInfo.valueExamples[arrayStr];
+                responseText += `  Examples: ${examples.map(e => `"${e}"`).join(', ')}\n`;
+              }
             });
             responseText += '\n';
           }
 
           // Unique individual values across all formats
           if (propertyInfo.values.uniqueValues.length > 0) {
-            responseText += `**Unique Individual Values** (across all formats):\n`;
-            propertyInfo.values.uniqueValues.forEach(value => {
-              const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
-              const arrayCount = propertyInfo.values.array.filter(arr => arr.some(item => String(item) === value)).length;
-              const totalUses = singleCount + arrayCount;
-              
-              let usageDetails = [];
-              if (singleCount > 0) usageDetails.push(`${singleCount} single`);
-              if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
-              
-              responseText += `- "${value}" (${totalUses} total uses: ${usageDetails.join(', ')})\n`;
-            });
+            responseText += `**All Unique Values** (across single and array formats):\n`;
+            
+            if (options.sortBy === 'usage' && options.includeCount && propertyInfo.valueCounts) {
+              // Already sorted by usage if that option was selected
+              propertyInfo.values.uniqueValues.forEach(value => {
+                const totalCount = propertyInfo.valueCounts![value] || 0;
+                const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
+                const arrayCount = totalCount - singleCount;
+                
+                let usageDetails = [];
+                if (singleCount > 0) usageDetails.push(`${singleCount} single`);
+                if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
+                
+                responseText += `- "${value}" (${totalCount} total uses: ${usageDetails.join(', ')})\n`;
+              });
+            } else {
+              propertyInfo.values.uniqueValues.forEach(value => {
+                const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
+                const arrayCount = propertyInfo.values.array.filter(arr => arr.some(item => String(item) === value)).length;
+                const totalUses = singleCount + arrayCount;
+                
+                let usageDetails = [];
+                if (singleCount > 0) usageDetails.push(`${singleCount} single`);
+                if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
+                
+                responseText += `- "${value}" (${totalUses} total uses: ${usageDetails.join(', ')})\n`;
+              });
+            }
+            
+            // Add sorting information
+            if (options.sortBy !== 'alphabetical') {
+              responseText += `\n*Sorted by: ${options.sortBy}*\n`;
+            }
           }
         }
 

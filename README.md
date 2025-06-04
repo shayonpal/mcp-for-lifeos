@@ -260,23 +260,35 @@ list_yaml_properties excludeStandard: true
 #### `list_yaml_property_values`
 Analyze all unique values used for a specific YAML property across the vault
 - **property** (required): The YAML property name to analyze
+- **includeCount**: Include usage count for each value (default: false)
+- **includeExamples**: Include example note titles that use each value (default: false)
+- **sortBy**: Sort values by 'alphabetical', 'usage', or 'type' (default: alphabetical)
+- **maxExamples**: Maximum number of example notes per value (default: 3)
 
 Features:
 - Distinguishes between single values and array values
 - Identifies mixed usage patterns (property used both ways)
 - Accurate deduplication with detailed usage statistics
+- Usage count tracking and example note collection
+- Multiple sorting options for different analysis needs
 - Graceful handling of malformed YAML and missing properties
 
 Example usage:
 ```bash
-# Analyze all values used for the "tags" property
+# Basic analysis
 list_yaml_property_values property: "tags"
 
-# Analyze values for "content type" property
-list_yaml_property_values property: "content type"
+# With usage counts and examples
+list_yaml_property_values property: "contentType" includeCount: true includeExamples: true
 
-# Check usage patterns for custom properties
-list_yaml_property_values property: "project"
+# Sort by most used values first
+list_yaml_property_values property: "category" includeCount: true sortBy: "usage"
+
+# Limit examples shown per value
+list_yaml_property_values property: "tags" includeExamples: true maxExamples: 2
+
+# All enhanced features
+list_yaml_property_values property: "contentType" includeCount: true includeExamples: true sortBy: "usage" maxExamples: 3
 ```
 
 ## Obsidian Integration
