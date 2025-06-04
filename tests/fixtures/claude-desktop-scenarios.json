@@ -1,0 +1,239 @@
+[
+  {
+    "id": "search-basic-text",
+    "userRequest": "search for meeting notes",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "query": "meeting notes",
+      "mode": "auto"
+    },
+    "category": "search",
+    "complexity": "simple",
+    "description": "Basic text search across all notes"
+  },
+  {
+    "id": "search-recent-notes",
+    "userRequest": "find notes from the last few days",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "mode": "recent",
+      "days": 7
+    },
+    "category": "search",
+    "complexity": "medium",
+    "description": "Recent notes search with time filtering"
+  },
+  {
+    "id": "search-pattern-matching",
+    "userRequest": "find all files matching *recipe*",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "mode": "pattern",
+      "pattern": "*recipe*"
+    },
+    "category": "search",
+    "complexity": "medium",
+    "description": "Pattern-based search using glob patterns"
+  },
+  {
+    "id": "search-content-type",
+    "userRequest": "search for all articles",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "mode": "content_type",
+      "contentType": "Article"
+    },
+    "category": "search",
+    "complexity": "medium",
+    "description": "Content type filtering search"
+  },
+  {
+    "id": "search-natural-language",
+    "userRequest": "find Quebec barbecue restaurants",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "naturalLanguage": "Quebec barbecue restaurants",
+      "mode": "advanced"
+    },
+    "category": "search",
+    "complexity": "complex",
+    "description": "Natural language query processing"
+  },
+  {
+    "id": "search-advanced-filters",
+    "userRequest": "search for project notes with high priority tag",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "query": "project",
+      "tags": ["high-priority"],
+      "mode": "advanced"
+    },
+    "category": "search",
+    "complexity": "complex",
+    "description": "Advanced search with multiple filters"
+  },
+  {
+    "id": "create-basic-note",
+    "userRequest": "create a new note called \"Project Plan\"",
+    "expectedTool": "create_note_smart",
+    "expectedParameters": {
+      "title": "Project Plan",
+      "auto_template": true
+    },
+    "category": "creation",
+    "complexity": "simple",
+    "description": "Basic note creation without template"
+  },
+  {
+    "id": "create-restaurant-note",
+    "userRequest": "create a new restaurant note for \"Joe's Pizza\"",
+    "expectedTool": "create_note_smart",
+    "expectedParameters": {
+      "title": "Joe's Pizza",
+      "auto_template": true
+    },
+    "category": "creation",
+    "complexity": "medium",
+    "description": "Template-based creation (restaurant template)"
+  },
+  {
+    "id": "create-person-note",
+    "userRequest": "create a person note for \"John Smith\"",
+    "expectedTool": "create_note_smart",
+    "expectedParameters": {
+      "title": "John Smith",
+      "auto_template": true
+    },
+    "category": "creation",
+    "complexity": "medium",
+    "description": "Template-based creation (person template)"
+  },
+  {
+    "id": "create-article-note",
+    "userRequest": "create an article note about AI development",
+    "expectedTool": "create_note_smart",
+    "expectedParameters": {
+      "title": "AI Development Article",
+      "contentType": "Article",
+      "auto_template": true
+    },
+    "category": "creation",
+    "complexity": "medium",
+    "description": "Template-based creation (article template)"
+  },
+  {
+    "id": "list-all-folders",
+    "userRequest": "list all folders in the vault",
+    "expectedTool": "list",
+    "expectedParameters": {
+      "type": "folders"
+    },
+    "category": "listing",
+    "complexity": "simple",
+    "description": "List all folders in vault hierarchy"
+  },
+  {
+    "id": "list-templates",
+    "userRequest": "show me available templates",
+    "expectedTool": "list",
+    "expectedParameters": {
+      "type": "templates"
+    },
+    "category": "listing",
+    "complexity": "simple",
+    "description": "List all available note templates"
+  },
+  {
+    "id": "list-daily-notes",
+    "userRequest": "list recent daily notes",
+    "expectedTool": "list",
+    "expectedParameters": {
+      "type": "daily_notes",
+      "limit": 10
+    },
+    "category": "listing",
+    "complexity": "simple",
+    "description": "List recent daily notes"
+  },
+  {
+    "id": "list-yaml-properties",
+    "userRequest": "list all YAML properties used in the vault",
+    "expectedTool": "list",
+    "expectedParameters": {
+      "type": "yaml_properties"
+    },
+    "category": "listing",
+    "complexity": "medium",
+    "description": "List all YAML frontmatter properties"
+  },
+  {
+    "id": "workflow-search-create",
+    "userRequest": "search for project templates then create a new project note",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "query": "project template",
+      "mode": "auto"
+    },
+    "category": "workflow",
+    "complexity": "complex",
+    "description": "Multi-step workflow: search then create"
+  },
+  {
+    "id": "workflow-list-create",
+    "userRequest": "list templates and create a restaurant note",
+    "expectedTool": "list",
+    "expectedParameters": {
+      "type": "templates"
+    },
+    "category": "workflow",
+    "complexity": "complex",
+    "description": "Multi-step workflow: list then create"
+  },
+  {
+    "id": "edge-case-empty-query",
+    "userRequest": "search for",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "mode": "auto"
+    },
+    "category": "search",
+    "complexity": "simple",
+    "description": "Edge case: empty search query"
+  },
+  {
+    "id": "edge-case-special-chars",
+    "userRequest": "create note with special chars: @#$%",
+    "expectedTool": "create_note_smart",
+    "expectedParameters": {
+      "title": "Note with special chars",
+      "auto_template": true
+    },
+    "category": "creation",
+    "complexity": "medium",
+    "description": "Edge case: special characters in title"
+  },
+  {
+    "id": "performance-large-search",
+    "userRequest": "search across all notes for common term",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "query": "the",
+      "mode": "quick"
+    },
+    "category": "search",
+    "complexity": "simple",
+    "description": "Performance test: broad search across large dataset"
+  },
+  {
+    "id": "accuracy-ambiguous-request",
+    "userRequest": "find something about work",
+    "expectedTool": "search",
+    "expectedParameters": {
+      "query": "work",
+      "mode": "auto"
+    },
+    "category": "search",
+    "complexity": "medium",
+    "description": "Accuracy test: ambiguous user request"
+  }
+]

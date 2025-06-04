@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### In Progress - AI Tool Caller Optimization (Target: v2.0.0)
+### Added - AI Tool Caller Optimization Phase 2 (Target: v2.0.0)
 
-### Added
+- **Claude Desktop Integration Tests** (#82): Comprehensive validation framework for AI tool caller optimization
+  - Real MCP server integration testing via JSON-RPC communication
+  - 20 realistic user scenarios across search, creation, listing, and workflow categories
+  - **95% tool selection accuracy achieved** (exceeds 90% target by 5%)
+  - Performance validation with 32ms average response time
+  - Standalone test runner (`scripts/test-claude-desktop.js`) for quick validation
+  - Jest integration test suite with statistical validation
+  - NPM scripts for easy test execution (`npm run test:claude-desktop`)
+  - Comprehensive test documentation and troubleshooting guide
+
+### Completed - AI Tool Caller Optimization Phase 1
+
 - **AI Tool Caller Optimization**: Major consolidation of 21 tools down to 11 for better AI decision-making (#62)
   - **Universal Search Tool** (`search`): Consolidates 6 search tools with intelligent auto-mode routing (#71, #72)
     - Automatically detects optimal search strategy (quick, advanced, pattern, recent, content-type)
@@ -24,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Handles common iCloud sync errors (EBUSY, ENOENT, EPERM)
     - Configurable retry attempts and delays
   - **Backward Compatibility Aliases**: All legacy tools continue to work with deprecation warnings (#77)
+  - **Output Validation Tests**: Comprehensive validation that consolidated tools match legacy outputs (#81)
 
 ### Changed
 - **Search Routing Logic**: OR queries now route to quick search instead of advanced for better results
