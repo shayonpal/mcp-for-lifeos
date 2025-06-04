@@ -196,7 +196,7 @@ Retrieve your custom YAML frontmatter rules document for reference when creating
 - Requires `yamlRulesPath` to be set in configuration
 
 #### `advanced_search`
-Comprehensive search with full-text search, metadata filters, and **revolutionary natural language processing**
+Comprehensive search with full-text search, metadata filters, and **natural language processing**
 - **naturalLanguage**: 🆕 **Natural language query** (e.g., "Quebec barbecue restaurants", "recent articles about AI")
 - **query**: General search query (searches title, content, and frontmatter)
 - **contentQuery**: Search only in note content

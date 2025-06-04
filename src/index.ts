@@ -451,7 +451,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
-                  `- **1.5.0:** Revolutionary Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
+                  `- **1.5.0:** Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
                   `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +
                   `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
                   `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +

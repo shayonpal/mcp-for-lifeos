@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.0] - 2025-06-04
 
 ### Added
-- **Natural Language YAML Query Parsing**: Revolutionary AI-powered search capability (#70)
+- **Natural Language YAML Query Parsing**: AI-powered search capability (#70)
   - Transform conversational queries like "Quebec barbecue restaurants" into structured YAML property searches
   - Intelligent entity extraction for locations, cuisines, categories, and temporal references
   - Support for 50+ geographic entities (countries, provinces/states, cities) and 25+ cuisine types

@@ -4,12 +4,12 @@ This file contains instructions and reminders for Claude AI when working with th
 
 ## Current Project Phase: Natural Language Processing (COMPLETED)
 
-**Status**: Natural Language YAML Query Parsing (#70) COMPLETED - Revolutionary Feature Delivered
+**Status**: Natural Language YAML Query Parsing (#70) COMPLETED - Major Feature Delivered
 **Achievement**: Successfully implemented AI-powered conversational search capability
 **Impact**: Transforms technical YAML queries into intuitive natural language interactions
 
 **Completed Features**:
-- ✅ #70: Natural Language YAML Query Parsing - Revolutionary search transformation
+- ✅ #70: Natural Language YAML Query Parsing - Advanced search transformation
   - Entity extraction engine with 50+ geographic locations and 25+ cuisine types
   - Seamless integration with existing `advanced_search` tool via `naturalLanguage` parameter
   - Query interpretation feedback with confidence scoring and suggestions
