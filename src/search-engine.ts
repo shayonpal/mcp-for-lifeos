@@ -24,6 +24,7 @@ export interface AdvancedSearchOptions {
   // YAML property matching modes
   matchMode?: 'all' | 'any';
   arrayMode?: 'exact' | 'contains' | 'any';
+  includeNullValues?: boolean;
   
   // Date filters
   createdAfter?: Date;
@@ -61,6 +62,11 @@ export interface SearchMatch {
 }
 
 export class SearchEngine {
+  // Simple cache for parsed notes to improve performance on repeated searches
+  private static noteCache = new Map<string, LifeOSNote>();
+  private static cacheTimestamp = new Map<string, number>();
+  private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   private static normalizeText(text: string, caseSensitive: boolean = false): string {
     return caseSensitive ? text : text.toLowerCase();
   }
@@ -168,12 +174,13 @@ export class SearchEngine {
     if (options.yamlProperties && typeof options.yamlProperties === 'object') {
       const matchMode = options.matchMode || 'all';
       const arrayMode = options.arrayMode || 'contains';
+      const includeNullValues = options.includeNullValues || false;
       
       const propertyResults: boolean[] = [];
       
       for (const [property, expectedValue] of Object.entries(options.yamlProperties)) {
         const actualValue = fm[property];
-        const matches = this.matchesYamlProperty(actualValue, expectedValue, arrayMode);
+        const matches = this.matchesYamlProperty(actualValue, expectedValue, arrayMode, includeNullValues);
         propertyResults.push(matches);
       }
       
@@ -194,9 +201,14 @@ export class SearchEngine {
     return true;
   }
 
-  private static matchesYamlProperty(actualValue: any, expectedValue: any, arrayMode: 'exact' | 'contains' | 'any'): boolean {
+  private static matchesYamlProperty(actualValue: any, expectedValue: any, arrayMode: 'exact' | 'contains' | 'any', includeNullValues?: boolean): boolean {
     // Handle null/undefined cases
     if (actualValue === null || actualValue === undefined) {
+      // If includeNullValues is true, null/undefined values match any expected value
+      if (includeNullValues) {
+        return true;
+      }
+      // Otherwise, only match if expected value is also null/undefined
       return expectedValue === null || expectedValue === undefined;
     }
     
@@ -511,8 +523,8 @@ export class SearchEngine {
         
         case 'title':
           const titleOrder = processedOptions.sortOrder === 'asc' ? 1 : -1;
-          const titleA = a.note.frontmatter.title || '';
-          const titleB = b.note.frontmatter.title || '';
+          const titleA = String(a.note.frontmatter.title || '');
+          const titleB = String(b.note.frontmatter.title || '');
           return titleOrder * titleA.localeCompare(titleB);
         
         case 'relevance':
@@ -533,10 +545,23 @@ export class SearchEngine {
     const files = await VaultUtils.findNotes('**/*.md');
     const notes: LifeOSNote[] = [];
     let skippedCount = 0;
+    const now = Date.now();
     
     for (const file of files) {
       try {
+        // Check cache first
+        const cachedNote = this.noteCache.get(file);
+        const cacheTime = this.cacheTimestamp.get(file);
+        
+        if (cachedNote && cacheTime && (now - cacheTime) < this.CACHE_TTL) {
+          notes.push(cachedNote);
+          continue;
+        }
+        
+        // Read and cache the note
         const note = VaultUtils.readNote(file);
+        this.noteCache.set(file, note);
+        this.cacheTimestamp.set(file, now);
         notes.push(note);
       } catch (error) {
         // Silent skip for MCP compatibility - don't log to console
@@ -580,5 +605,18 @@ export class SearchEngine {
       sortBy: 'modified',
       sortOrder: 'desc'
     });
+  }
+
+  // Cache management methods
+  static clearCache(): void {
+    this.noteCache.clear();
+    this.cacheTimestamp.clear();
+  }
+
+  static getCacheStats(): { size: number; entries: number } {
+    return {
+      size: this.noteCache.size,
+      entries: this.cacheTimestamp.size
+    };
   }
 }

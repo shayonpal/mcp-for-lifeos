@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-06-04
+
+### Added
+- **Advanced YAML Property Search Features**: Complete implementation of advanced search capabilities (#61)
+  - New `includeNullValues` parameter for including notes where YAML properties don't exist or are null
+  - Performance caching system with 5-minute TTL for improved search performance on large vaults
+  - Enhanced error handling for robust title sorting with mixed data types
+  - Cache management methods for memory optimization in long-running sessions
+  - Comprehensive test suite validating all acceptance criteria
+  - Updated documentation with advanced YAML property examples
+
+### Enhanced
+- **Search Performance**: Significant performance improvements for repeated searches
+  - Note caching reduces file I/O operations on subsequent searches
+  - Memory-efficient cache with automatic cleanup prevents memory leaks
+  - Performance optimization tested and validated for vaults with 1000+ notes
+- **Result Consistency**: Maintained SearchResult format compatibility across all search tools
+- **Documentation**: Updated README.md with comprehensive examples for advanced YAML property matching
+
 ## [1.5.0] - 2025-06-04
 
 ### Added

@@ -210,6 +210,7 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
 - **yamlProperties**: Filter by arbitrary YAML property key-value pairs
 - **matchMode**: Whether notes must match ALL yamlProperties or ANY (default: all)
 - **arrayMode**: How to match array values: exact, contains, or any overlap (default: contains)
+- **includeNullValues**: Include notes where YAML properties don't exist or are null (default: false)
 - **folder**: Filter by folder path
 - **excludeFolders**: Exclude specific folders
 - **createdAfter/createdBefore**: Date range filters for creation
@@ -234,6 +235,30 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
 // Find recipes
 { naturalLanguage: "Italian pasta recipes" }
 // → Automatically detects: category="Recipe", cuisine="Italian"
+```
+
+##### 🔧 Advanced YAML Property Examples
+```javascript
+// Include notes where "project" property is missing/null
+{
+  "yamlProperties": { "status": "active" },
+  "includeNullValues": true
+}
+
+// Search with performance optimizations
+{
+  "yamlProperties": { "contentType": "Daily Note" },
+  "sortBy": "created",
+  "sortOrder": "desc",
+  "maxResults": 10
+}
+
+// Complex property matching with null handling
+{
+  "yamlProperties": { "priority": "high", "assignee": "john" },
+  "matchMode": "any",
+  "includeNullValues": false
+}
 ```
 
 #### `quick_search`

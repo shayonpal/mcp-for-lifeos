@@ -19,7 +19,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.5.0';
+export const SERVER_VERSION = '1.6.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -209,6 +209,7 @@ const tools: Tool[] = [
         yamlProperties: { type: 'object', additionalProperties: true, description: 'Filter by arbitrary YAML property key-value pairs' },
         matchMode: { type: 'string', enum: ['all', 'any'], description: 'Whether notes must match ALL yamlProperties or ANY (default: all)' },
         arrayMode: { type: 'string', enum: ['exact', 'contains', 'any'], description: 'How to match array values: exact match, contains value, or any overlap (default: contains)' },
+        includeNullValues: { type: 'boolean', description: 'Include notes where YAML properties don\'t exist or are null (default: false)' },
         folder: { type: 'string', description: 'Filter by folder path' },
         excludeFolders: { type: 'array', items: { type: 'string' }, description: 'Exclude folders' },
         createdAfter: { type: 'string', description: 'Filter notes created after date (YYYY-MM-DD)' },
@@ -451,6 +452,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.6.0:** Advanced YAML Property Search Features - includeNullValues parameter, performance caching, enhanced sorting\n` +
                   `- **1.5.0:** Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
                   `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +
                   `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
@@ -834,6 +836,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.yamlProperties) searchOptions.yamlProperties = args.yamlProperties as Record<string, any>;
         if (args.matchMode) searchOptions.matchMode = args.matchMode as 'all' | 'any';
         if (args.arrayMode) searchOptions.arrayMode = args.arrayMode as 'exact' | 'contains' | 'any';
+        if (args.includeNullValues !== undefined) searchOptions.includeNullValues = args.includeNullValues as boolean;
         
         // Location filters
         if (args.folder) searchOptions.folder = args.folder as string;
