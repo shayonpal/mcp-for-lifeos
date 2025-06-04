@@ -240,6 +240,45 @@ Basic search by metadata criteria
 - **folder**: Filter by folder path
 - **dateStart/dateEnd**: Date range filtering
 
+### YAML Property Management
+
+#### `list_yaml_properties`
+Discover and analyze YAML frontmatter properties across your entire vault
+- **includeCount**: Include usage count for each property (default: false)
+- **sortBy**: Sort by 'alphabetical' or 'usage' (default: alphabetical)
+- **excludeStandard**: Exclude standard LifeOS properties to focus on custom fields (default: false)
+
+Example usage:
+```bash
+# List all YAML properties with usage counts
+list_yaml_properties includeCount: true sortBy: "usage"
+
+# List only custom properties (excludes standard ones like title, contentType, etc.)
+list_yaml_properties excludeStandard: true
+```
+
+#### `list_yaml_property_values`
+Analyze all unique values used for a specific YAML property across the vault
+- **property** (required): The YAML property name to analyze
+
+Features:
+- Distinguishes between single values and array values
+- Identifies mixed usage patterns (property used both ways)
+- Accurate deduplication with detailed usage statistics
+- Graceful handling of malformed YAML and missing properties
+
+Example usage:
+```bash
+# Analyze all values used for the "tags" property
+list_yaml_property_values property: "tags"
+
+# Analyze values for "content type" property
+list_yaml_property_values property: "content type"
+
+# Check usage patterns for custom properties
+list_yaml_property_values property: "project"
+```
+
 ## Obsidian Integration
 
 All search results and note references include **clickable links** that open notes directly in Obsidian using the `obsidian://` URL scheme.

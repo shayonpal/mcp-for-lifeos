@@ -18,7 +18,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.3.0';
+export const SERVER_VERSION = '1.4.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -368,6 +368,20 @@ const tools: Tool[] = [
         }
       }
     }
+  },
+  {
+    name: 'list_yaml_property_values',
+    description: 'List all unique values used for a specific YAML property, showing which are single values vs arrays',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        property: {
+          type: 'string',
+          description: 'The YAML property name to analyze'
+        }
+      },
+      required: ['property']
+    }
   }
 ];
 
@@ -415,6 +429,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +
                   `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
                   `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
                   `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
@@ -1268,6 +1283,86 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           sortedProperties.forEach(prop => {
             responseText += `- ${prop}\n`;
           });
+        }
+
+        const response = addVersionMetadata({
+          content: [{
+            type: 'text',
+            text: responseText
+          }]
+        });
+
+        return response;
+      }
+
+      case 'list_yaml_property_values': {
+        const property = args.property as string;
+        if (!property) {
+          throw new Error('Property is required');
+        }
+
+        // Get all values for the specified property
+        const propertyInfo = VaultUtils.getYamlPropertyValues(property);
+
+        // Format the response
+        let responseText = `# YAML Property Values: "${property}"\n\n`;
+        
+        if (propertyInfo.totalNotes === 0) {
+          responseText += `**No notes found** using property "${property}"\n\n`;
+        } else {
+          responseText += `Found property "${property}" in **${propertyInfo.totalNotes}** notes\n\n`;
+        }
+
+        // Show scan statistics
+        responseText += `## Scan Statistics\n`;
+        responseText += `- **Files scanned**: ${propertyInfo.scannedFiles}\n`;
+        if (propertyInfo.skippedFiles > 0) {
+          responseText += `- **Files skipped**: ${propertyInfo.skippedFiles} (malformed YAML or read errors)\n`;
+        }
+        responseText += `- **Notes with "${property}"**: ${propertyInfo.totalNotes}\n\n`;
+
+        if (propertyInfo.totalNotes > 0) {
+          // Show value analysis
+          responseText += `## Value Type Analysis\n\n`;
+
+          // Single values
+          if (propertyInfo.values.single.length > 0) {
+            responseText += `**Single Values** (${propertyInfo.values.single.length} notes):\n`;
+            const uniqueSingleValues = Array.from(new Set(propertyInfo.values.single.map(v => String(v))));
+            uniqueSingleValues.forEach(value => {
+              const count = propertyInfo.values.single.filter(v => String(v) === value).length;
+              responseText += `- "${value}" (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+            });
+            responseText += '\n';
+          }
+
+          // Array values
+          if (propertyInfo.values.array.length > 0) {
+            responseText += `**Array Values** (${propertyInfo.values.array.length} notes):\n`;
+            const uniqueArrayValues = Array.from(new Set(propertyInfo.values.array.map(arr => JSON.stringify(arr))));
+            uniqueArrayValues.forEach(arrayStr => {
+              const arrayValue = JSON.parse(arrayStr);
+              const count = propertyInfo.values.array.filter(arr => JSON.stringify(arr) === arrayStr).length;
+              responseText += `- [${arrayValue.map((v: any) => `"${v}"`).join(', ')}] (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+            });
+            responseText += '\n';
+          }
+
+          // Unique individual values across all formats
+          if (propertyInfo.values.uniqueValues.length > 0) {
+            responseText += `**Unique Individual Values** (across all formats):\n`;
+            propertyInfo.values.uniqueValues.forEach(value => {
+              const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
+              const arrayCount = propertyInfo.values.array.filter(arr => arr.some(item => String(item) === value)).length;
+              const totalUses = singleCount + arrayCount;
+              
+              let usageDetails = [];
+              if (singleCount > 0) usageDetails.push(`${singleCount} single`);
+              if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
+              
+              responseText += `- "${value}" (${totalUses} total uses: ${usageDetails.join(', ')})\n`;
+            });
+          }
         }
 
         const response = addVersionMetadata({

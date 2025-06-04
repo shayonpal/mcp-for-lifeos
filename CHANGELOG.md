@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-06-04
+
+### Added
+- **list_yaml_property_values tool**: Core YAML property value discovery and analysis (#57)
+  - Analyzes all unique values used for a specific YAML property across the entire vault
+  - Distinguishes between single values and array values for the same property
+  - Identifies mixed usage patterns (property used both as single value and array)
+  - Accurate deduplication with detailed usage statistics
+  - Graceful handling of malformed YAML and missing properties
+  - Returns structured JSON results matching the issue specification
+  - Foundation for enhanced analytics and search capabilities in upcoming releases
+  - Part of the comprehensive YAML Property Management Suite (#56)
+
 ### Removed
 - **Deprecated Web Interface** (2025-01-06): Removed `public/` folder containing the legacy web interface
   - The built-in HTTP web interface has been deprecated in favor of OpenWebUI integration

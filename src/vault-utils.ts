@@ -818,6 +818,83 @@ export class VaultUtils {
   }
 
   /**
+   * Get all unique values for a specific YAML property across the vault
+   */
+  static getYamlPropertyValues(property: string): {
+    property: string;
+    totalNotes: number;
+    values: {
+      single: any[];
+      array: any[][];
+      uniqueValues: any[];
+    };
+    scannedFiles: number;
+    skippedFiles: number;
+  } {
+    const singleValues: any[] = [];
+    const arrayValues: any[][] = [];
+    const uniqueValuesSet = new Set<string>();
+    let totalNotes = 0;
+    let scannedFiles = 0;
+    let skippedFiles = 0;
+
+    try {
+      // Find all markdown files
+      const files = glob.sync(join(LIFEOS_CONFIG.vaultPath, '**/*.md'), {
+        ignore: ['**/node_modules/**', '**/.*']
+      });
+
+      // Process each file
+      for (const file of files) {
+        scannedFiles++;
+        try {
+          const content = readFileSync(file, 'utf-8');
+          const { data: frontmatter } = matter(content);
+          
+          if (frontmatter && typeof frontmatter === 'object' && frontmatter.hasOwnProperty(property)) {
+            totalNotes++;
+            const value = frontmatter[property];
+            
+            if (Array.isArray(value)) {
+              // Handle array values
+              arrayValues.push(value);
+              // Add each array element to unique values
+              value.forEach(item => {
+                if (item !== null && item !== undefined) {
+                  uniqueValuesSet.add(String(item));
+                }
+              });
+            } else {
+              // Handle single values
+              singleValues.push(value);
+              if (value !== null && value !== undefined) {
+                uniqueValuesSet.add(String(value));
+              }
+            }
+          }
+        } catch (error) {
+          // Skip files that can't be parsed (malformed YAML, file access issues, etc.)
+          skippedFiles++;
+        }
+      }
+
+      return {
+        property,
+        totalNotes,
+        values: {
+          single: singleValues,
+          array: arrayValues,
+          uniqueValues: Array.from(uniqueValuesSet)
+        },
+        scannedFiles,
+        skippedFiles
+      };
+    } catch (error) {
+      throw new Error(`Failed to get YAML property values: ${String(error)}`);
+    }
+  }
+
+  /**
    * Get all unique YAML properties used across the vault
    */
   static getAllYamlProperties(options: {
