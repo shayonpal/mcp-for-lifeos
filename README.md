@@ -196,7 +196,8 @@ Retrieve your custom YAML frontmatter rules document for reference when creating
 - Requires `yamlRulesPath` to be set in configuration
 
 #### `advanced_search`
-Comprehensive search with full-text search, metadata filters, and relevance scoring
+Comprehensive search with full-text search, metadata filters, and **revolutionary natural language processing**
+- **naturalLanguage**: 🆕 **Natural language query** (e.g., "Quebec barbecue restaurants", "recent articles about AI")
 - **query**: General search query (searches title, content, and frontmatter)
 - **contentQuery**: Search only in note content
 - **titleQuery**: Search in note titles, filenames (without .md extension), and aliases
@@ -206,6 +207,9 @@ Comprehensive search with full-text search, metadata filters, and relevance scor
 - **tags**: Filter by tags (any match)
 - **author**: Filter by author
 - **people**: Filter by people mentioned
+- **yamlProperties**: Filter by arbitrary YAML property key-value pairs
+- **matchMode**: Whether notes must match ALL yamlProperties or ANY (default: all)
+- **arrayMode**: How to match array values: exact, contains, or any overlap (default: contains)
 - **folder**: Filter by folder path
 - **excludeFolders**: Exclude specific folders
 - **createdAfter/createdBefore**: Date range filters for creation
@@ -216,6 +220,21 @@ Comprehensive search with full-text search, metadata filters, and relevance scor
 - **maxResults**: Maximum number of results (default: 20)
 - **sortBy**: Sort by relevance, created, modified, or title
 - **sortOrder**: Sort order (asc/desc)
+
+##### 🎯 Natural Language Examples
+```javascript
+// Find restaurants
+{ naturalLanguage: "Quebec barbecue restaurants" }
+// → Automatically detects: state="Quebec", cuisine="Barbecue", category="Restaurant"
+
+// Find recent content
+{ naturalLanguage: "recent articles about AI" }
+// → Automatically detects: category="Article", modifiedAfter=<recent date>
+
+// Find recipes
+{ naturalLanguage: "Italian pasta recipes" }
+// → Automatically detects: category="Recipe", cuisine="Italian"
+```
 
 #### `quick_search`
 Fast text search across all notes with relevance ranking

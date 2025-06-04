@@ -1,12 +1,16 @@
 import { readFileSync } from 'fs';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions } from './types.js';
 import { VaultUtils } from './vault-utils.js';
+import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
 
 export interface AdvancedSearchOptions {
   // Text search
   query?: string;
   contentQuery?: string;
   titleQuery?: string;
+  
+  // Natural language processing
+  naturalLanguage?: string;
   
   // Metadata filters
   contentType?: string | string[];
@@ -44,6 +48,7 @@ export interface SearchResult {
   note: LifeOSNote;
   score: number;
   matches: SearchMatch[];
+  interpretation?: QueryInterpretation;
 }
 
 export interface SearchMatch {
@@ -334,21 +339,65 @@ export class SearchEngine {
   }
 
   static async search(options: AdvancedSearchOptions): Promise<SearchResult[]> {
+    let interpretation: QueryInterpretation | undefined;
+    let processedOptions = { ...options };
+
+    // Process natural language query if provided
+    if (options.naturalLanguage) {
+      interpretation = NaturalLanguageProcessor.processQuery(options.naturalLanguage);
+      
+      // Merge natural language interpretation with existing options
+      if (interpretation.yamlProperties && Object.keys(interpretation.yamlProperties).length > 0) {
+        processedOptions.yamlProperties = {
+          ...processedOptions.yamlProperties,
+          ...interpretation.yamlProperties
+        };
+      }
+      
+      if (interpretation.arrayMode) {
+        processedOptions.arrayMode = interpretation.arrayMode;
+      }
+      
+      if (interpretation.matchMode) {
+        processedOptions.matchMode = interpretation.matchMode;
+      }
+      
+      if (interpretation.dateFilters) {
+        if (interpretation.dateFilters.modifiedAfter) {
+          processedOptions.modifiedAfter = interpretation.dateFilters.modifiedAfter;
+        }
+        if (interpretation.dateFilters.modifiedBefore) {
+          processedOptions.modifiedBefore = interpretation.dateFilters.modifiedBefore;
+        }
+        if (interpretation.dateFilters.createdAfter) {
+          processedOptions.createdAfter = interpretation.dateFilters.createdAfter;
+        }
+        if (interpretation.dateFilters.createdBefore) {
+          processedOptions.createdBefore = interpretation.dateFilters.createdBefore;
+        }
+      }
+      
+      // If no specific query provided but we have natural language, use it as general query for fallback
+      if (!processedOptions.query && interpretation.confidence < 0.5) {
+        processedOptions.query = options.naturalLanguage;
+      }
+    }
+
     const allNotes = await this.getAllNotes();
     const results: SearchResult[] = [];
 
     for (const note of allNotes) {
       // Apply filters first
-      if (!this.matchesMetadataFilter(note, options)) continue;
-      if (!this.matchesDateFilter(note, options)) continue;
-      if (!this.matchesFolderFilter(note, options)) continue;
+      if (!this.matchesMetadataFilter(note, processedOptions)) continue;
+      if (!this.matchesDateFilter(note, processedOptions)) continue;
+      if (!this.matchesFolderFilter(note, processedOptions)) continue;
 
       // Find text matches
       const matches: SearchMatch[] = [];
 
       // Search in title
-      if (options.query || options.titleQuery) {
-        const titleQuery = options.titleQuery || options.query!;
+      if (processedOptions.query || processedOptions.titleQuery) {
+        const titleQuery = processedOptions.titleQuery || processedOptions.query!;
         
         // Search in multiple title-related fields
         const titleSources: string[] = [];
@@ -379,47 +428,47 @@ export class SearchEngine {
             titleQuery, 
             'title', 
             undefined,
-            options.caseSensitive,
-            options.useRegex
+            processedOptions.caseSensitive,
+            processedOptions.useRegex
           ));
         }
       }
 
       // Search in content
-      if ((options.query || options.contentQuery) && options.includeContent !== false) {
-        const contentQuery = options.contentQuery || options.query!;
+      if ((processedOptions.query || processedOptions.contentQuery) && processedOptions.includeContent !== false) {
+        const contentQuery = processedOptions.contentQuery || processedOptions.query!;
         matches.push(...this.findMatches(
           note.content, 
           contentQuery, 
           'content',
           undefined,
-          options.caseSensitive,
-          options.useRegex
+          processedOptions.caseSensitive,
+          processedOptions.useRegex
         ));
       }
 
       // Search in frontmatter fields
-      if (options.query) {
+      if (processedOptions.query) {
         Object.entries(note.frontmatter).forEach(([key, value]) => {
           if (typeof value === 'string') {
             matches.push(...this.findMatches(
               value, 
-              options.query!, 
+              processedOptions.query!, 
               'frontmatter', 
               key,
-              options.caseSensitive,
-              options.useRegex
+              processedOptions.caseSensitive,
+              processedOptions.useRegex
             ));
           } else if (Array.isArray(value)) {
             value.forEach(item => {
               if (typeof item === 'string') {
                 matches.push(...this.findMatches(
                   item, 
-                  options.query!, 
+                  processedOptions.query!, 
                   'frontmatter', 
                   key,
-                  options.caseSensitive,
-                  options.useRegex
+                  processedOptions.caseSensitive,
+                  processedOptions.useRegex
                 ));
               }
             });
@@ -428,33 +477,40 @@ export class SearchEngine {
       }
 
       // If we have query terms but no matches, skip this note
-      if ((options.query || options.titleQuery || options.contentQuery) && matches.length === 0) {
+      if ((processedOptions.query || processedOptions.titleQuery || processedOptions.contentQuery) && matches.length === 0) {
         continue;
       }
 
       // Calculate relevance score
-      const score = this.calculateRelevanceScore(note, matches, options);
+      const score = this.calculateRelevanceScore(note, matches, processedOptions);
 
-      results.push({
+      const result: SearchResult = {
         note,
         score,
         matches
-      });
+      };
+      
+      // Add interpretation to first result only (to avoid duplication)
+      if (interpretation && results.length === 0) {
+        result.interpretation = interpretation;
+      }
+      
+      results.push(result);
     }
 
     // Sort results
     results.sort((a, b) => {
-      switch (options.sortBy) {
+      switch (processedOptions.sortBy) {
         case 'created':
-          const createdOrder = options.sortOrder === 'asc' ? 1 : -1;
+          const createdOrder = processedOptions.sortOrder === 'asc' ? 1 : -1;
           return createdOrder * (a.note.created.getTime() - b.note.created.getTime());
         
         case 'modified':
-          const modifiedOrder = options.sortOrder === 'asc' ? 1 : -1;
+          const modifiedOrder = processedOptions.sortOrder === 'asc' ? 1 : -1;
           return modifiedOrder * (a.note.modified.getTime() - b.note.modified.getTime());
         
         case 'title':
-          const titleOrder = options.sortOrder === 'asc' ? 1 : -1;
+          const titleOrder = processedOptions.sortOrder === 'asc' ? 1 : -1;
           const titleA = a.note.frontmatter.title || '';
           const titleB = b.note.frontmatter.title || '';
           return titleOrder * titleA.localeCompare(titleB);
@@ -466,8 +522,8 @@ export class SearchEngine {
     });
 
     // Apply limit
-    if (options.maxResults) {
-      return results.slice(0, options.maxResults);
+    if (processedOptions.maxResults) {
+      return results.slice(0, processedOptions.maxResults);
     }
 
     return results;
@@ -476,13 +532,16 @@ export class SearchEngine {
   private static async getAllNotes(): Promise<LifeOSNote[]> {
     const files = await VaultUtils.findNotes('**/*.md');
     const notes: LifeOSNote[] = [];
+    let skippedCount = 0;
     
     for (const file of files) {
       try {
         const note = VaultUtils.readNote(file);
         notes.push(note);
       } catch (error) {
-        console.error(`Skipping file ${file} due to error:`, error);
+        // Silent skip for MCP compatibility - don't log to console
+        // Track skipped files for potential reporting
+        skippedCount++;
         // Continue with other files
       }
     }

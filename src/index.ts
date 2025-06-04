@@ -10,6 +10,7 @@ import {
 import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
+import { NaturalLanguageProcessor } from './natural-language-processor.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { YamlRulesManager } from './yaml-rules-manager.js';
 import { LIFEOS_CONFIG } from './config.js';
@@ -18,7 +19,7 @@ import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.4.0';
+export const SERVER_VERSION = '1.5.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -198,6 +199,7 @@ const tools: Tool[] = [
         query: { type: 'string', description: 'General search query (searches title, content, and frontmatter)' },
         contentQuery: { type: 'string', description: 'Search only in note content' },
         titleQuery: { type: 'string', description: 'Search only in note titles' },
+        naturalLanguage: { type: 'string', description: 'Natural language query that will be processed to extract YAML properties and filters (e.g., "Quebec barbecue restaurants")' },
         contentType: { type: 'string', description: 'Filter by content type' },
         category: { type: 'string', description: 'Filter by category' },
         subCategory: { type: 'string', description: 'Filter by sub-category' },
@@ -449,6 +451,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **1.5.0:** Revolutionary Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
                   `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +
                   `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
                   `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
@@ -819,6 +822,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
         if (args.contentQuery) searchOptions.contentQuery = args.contentQuery as string;
         if (args.titleQuery) searchOptions.titleQuery = args.titleQuery as string;
+        if (args.naturalLanguage) searchOptions.naturalLanguage = args.naturalLanguage as string;
         
         // Metadata filters
         if (args.contentType) searchOptions.contentType = args.contentType as string;
@@ -851,6 +855,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const results = await SearchEngine.search(searchOptions);
         
+        // Check if we have natural language interpretation to display
+        let interpretationText = '';
+        if (results.length > 0 && results[0].interpretation) {
+          interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
+        }
+        
         const resultText = results.map((result, index) => {
           const note = result.note;
           const score = result.score.toFixed(1);
@@ -882,7 +892,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return addVersionMetadata({
           content: [{
             type: 'text',
-            text: `Found ${results.length} results:\n\n${resultText}`
+            text: `${interpretationText}Found ${results.length} results:\n\n${resultText}`
           }]
         });
       }

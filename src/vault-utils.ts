@@ -52,7 +52,15 @@ export class VaultUtils {
 
     try {
       const content = readFileSync(normalizedPath, 'utf-8');
-      const parsed = matter(content);
+      let parsed;
+      
+      try {
+        parsed = matter(content);
+      } catch (yamlError) {
+        // Attempt graceful recovery for malformed YAML
+        parsed = this.parseWithFallback(content);
+      }
+      
       const stats = statSync(normalizedPath);
 
       return {
@@ -598,6 +606,94 @@ export class VaultUtils {
     }
     
     return null;
+  }
+
+  /**
+   * Graceful fallback parser for malformed YAML frontmatter
+   * Attempts to extract basic metadata even from broken YAML
+   */
+  private static parseWithFallback(content: string): { data: any; content: string } {
+    // Default fallback values
+    const fallbackData: any = {
+      title: 'Untitled',
+      'content type': 'Note',
+      tags: []
+    };
+    
+    // Try to find frontmatter boundaries
+    const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
+    
+    if (!frontmatterMatch) {
+      // No frontmatter found - extract title from first heading or filename
+      const titleMatch = content.match(/^#\s+(.+)$/m);
+      if (titleMatch) {
+        fallbackData.title = titleMatch[1].trim();
+      }
+      return {
+        data: fallbackData,
+        content: content
+      };
+    }
+    
+    const [, frontmatterText, bodyContent] = frontmatterMatch;
+    
+    // Simple line-by-line parsing to extract what we can
+    const lines = frontmatterText.split('\n');
+    
+    for (const line of lines) {
+      try {
+        // Skip empty lines and comments
+        if (!line.trim() || line.trim().startsWith('#')) continue;
+        
+        // Simple key-value extraction
+        const keyValueMatch = line.match(/^(\s*)([^:]+):\s*(.*)$/);
+        if (keyValueMatch) {
+          const [, indent, key, value] = keyValueMatch;
+          const cleanKey = key.trim();
+          let cleanValue = value.trim();
+          
+          // Skip overly complex values (likely Templater code)
+          if (cleanValue.includes('<%') || cleanValue.includes('%>')) {
+            continue;
+          }
+          
+          // Handle quoted strings
+          if (cleanValue.startsWith('"') && cleanValue.endsWith('"')) {
+            cleanValue = cleanValue.slice(1, -1);
+          } else if (cleanValue.startsWith("'") && cleanValue.endsWith("'")) {
+            cleanValue = cleanValue.slice(1, -1);
+          }
+          
+          // Handle simple arrays
+          if (cleanValue.startsWith('[') && cleanValue.endsWith(']')) {
+            try {
+              cleanValue = JSON.parse(cleanValue);
+            } catch {
+              // If JSON parsing fails, treat as string
+            }
+          }
+          
+          fallbackData[cleanKey] = cleanValue;
+        }
+      } catch (lineError) {
+        // Skip problematic lines silently
+        continue;
+      }
+    }
+    
+    // Ensure we have at least a title
+    if (!fallbackData.title || fallbackData.title === 'Untitled') {
+      // Try to extract from first heading in content
+      const titleMatch = bodyContent.match(/^#\s+(.+)$/m);
+      if (titleMatch) {
+        fallbackData.title = titleMatch[1].trim();
+      }
+    }
+    
+    return {
+      data: fallbackData,
+      content: bodyContent
+    };
   }
 
   static createDailyNote(date: Date): LifeOSNote {

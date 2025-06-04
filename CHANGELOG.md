@@ -7,17 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-06-04
+
 ### Added
-- **Enhanced Analytics & Examples for list_yaml_property_values tool**: Advanced features for property value analysis (#58)
-  - Added `includeCount` parameter to show usage statistics for each property value
-  - Added `includeExamples` parameter to display sample note titles using each value
-  - Added `sortBy` parameter with options: alphabetical, usage, or type-based sorting
-  - Added `maxExamples` parameter to control number of example notes shown (default: 3)
-  - Implemented memory-efficient example collection with configurable limits
-  - Enhanced output formatting with detailed value type analysis and statistics
-  - Performance optimizations for large vaults with 1000+ notes using properties
-  - Maintains full backward compatibility with existing functionality
-  - Builds foundation for advanced YAML property search capabilities (#55)
+- **Natural Language YAML Query Parsing**: Revolutionary AI-powered search capability (#70)
+  - Transform conversational queries like "Quebec barbecue restaurants" into structured YAML property searches
+  - Intelligent entity extraction for locations, cuisines, categories, and temporal references
+  - Support for 50+ geographic entities (countries, provinces/states, cities) and 25+ cuisine types
+  - Seamless integration with existing `advanced_search` tool via `naturalLanguage` parameter
+  - Query interpretation feedback with confidence scoring and helpful suggestions
+  - Graceful fallback to text search when entity recognition confidence is low
+  - Real-world vault compatibility with resilient error handling for malformed YAML
+  - Custom fallback parser recovers basic metadata from broken frontmatter
+  - Silent error handling maintains MCP protocol compatibility
+  - Foundation for future AI-powered vault management features
+
+### Enhanced
+- **Robust YAML Error Handling**: Production-ready resilience for real-world vaults
+  - Custom fallback parser extracts metadata from malformed YAML frontmatter
+  - Silent error recovery prevents crashes from template files and broken syntax
+  - Graceful handling of Templater expressions and complex YAML structures
+  - Maintains search functionality even with partially corrupted notes
 
 ## [1.4.0] - 2025-06-04
 
