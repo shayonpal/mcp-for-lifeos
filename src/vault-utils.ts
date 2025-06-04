@@ -6,6 +6,14 @@ import { format } from 'date-fns';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions, NoteTemplate } from './types.js';
 import { LIFEOS_CONFIG, YAML_RULES } from './config.js';
 
+// iCloud sync retry configuration
+const ICLOUD_RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 200,
+  maxDelayMs: 2000,
+  retryableErrors: ['EBUSY', 'ENOENT', 'EPERM', 'EMFILE', 'ENFILE']
+};
+
 export class VaultUtils {
   /**
    * Get the current local date at midnight (start of day).
@@ -35,6 +43,96 @@ export class VaultUtils {
     return localDate;
   }
 
+  /**
+   * Sleep for specified milliseconds
+   */
+  private static sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Check if an error is retryable (likely due to iCloud sync conflicts)
+   */
+  private static isRetryableError(error: any): boolean {
+    if (!error || typeof error.code !== 'string') return false;
+    return ICLOUD_RETRY_CONFIG.retryableErrors.includes(error.code);
+  }
+
+  /**
+   * Calculate exponential backoff delay
+   */
+  private static calculateBackoffDelay(attempt: number): number {
+    const delay = ICLOUD_RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt);
+    return Math.min(delay, ICLOUD_RETRY_CONFIG.maxDelayMs);
+  }
+
+  /**
+   * Read file with iCloud sync retry logic
+   */
+  static readFileWithRetry(filePath: string, encoding: BufferEncoding = 'utf-8'): string {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= ICLOUD_RETRY_CONFIG.maxRetries; attempt++) {
+      try {
+        return readFileSync(filePath, encoding);
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry if it's not a retryable error
+        if (!this.isRetryableError(error)) {
+          throw error;
+        }
+        
+        // Don't sleep on the last attempt
+        if (attempt < ICLOUD_RETRY_CONFIG.maxRetries) {
+          const delay = this.calculateBackoffDelay(attempt);
+          // Use synchronous sleep approximation for simplicity
+          const start = Date.now();
+          while (Date.now() - start < delay) {
+            // Busy wait - not ideal but works for short delays
+          }
+        }
+      }
+    }
+    
+    // If all retries failed, throw the last error
+    throw new Error(`Failed to read file after ${ICLOUD_RETRY_CONFIG.maxRetries} retries: ${lastError.message}`);
+  }
+
+  /**
+   * Write file with iCloud sync retry logic
+   */
+  static writeFileWithRetry(filePath: string, content: string, encoding: BufferEncoding = 'utf-8'): void {
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= ICLOUD_RETRY_CONFIG.maxRetries; attempt++) {
+      try {
+        writeFileSync(filePath, content, encoding);
+        return; // Success
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry if it's not a retryable error
+        if (!this.isRetryableError(error)) {
+          throw error;
+        }
+        
+        // Don't sleep on the last attempt
+        if (attempt < ICLOUD_RETRY_CONFIG.maxRetries) {
+          const delay = this.calculateBackoffDelay(attempt);
+          // Use synchronous sleep approximation for simplicity
+          const start = Date.now();
+          while (Date.now() - start < delay) {
+            // Busy wait - not ideal but works for short delays
+          }
+        }
+      }
+    }
+    
+    // If all retries failed, throw the last error
+    throw new Error(`Failed to write file after ${ICLOUD_RETRY_CONFIG.maxRetries} retries: ${lastError.message}`);
+  }
+
   static async findNotes(pattern: string = '**/*.md'): Promise<string[]> {
     const searchPath = join(LIFEOS_CONFIG.vaultPath, pattern);
     return await glob(searchPath, { 
@@ -51,7 +149,7 @@ export class VaultUtils {
     }
 
     try {
-      const content = readFileSync(normalizedPath, 'utf-8');
+      const content = this.readFileWithRetry(normalizedPath, 'utf-8');
       let parsed;
       
       try {
@@ -73,7 +171,7 @@ export class VaultUtils {
     } catch (error) {
       console.error(`Error parsing note ${normalizedPath}:`, error);
       // Return note with empty frontmatter if parsing fails
-      const content = readFileSync(normalizedPath, 'utf-8');
+      const content = this.readFileWithRetry(normalizedPath, 'utf-8');
       const stats = statSync(normalizedPath);
       
       return {
@@ -98,7 +196,7 @@ export class VaultUtils {
     });
 
     const fileContent = matter.stringify(note.content, frontmatterToWrite);
-    writeFileSync(note.path, fileContent, 'utf-8');
+    this.writeFileWithRetry(note.path, fileContent, 'utf-8');
   }
 
   static createNote(
@@ -208,7 +306,7 @@ export class VaultUtils {
     });
 
     const fileContent = matter.stringify(updatedNote.content, frontmatterToWrite);
-    writeFileSync(updatedNote.path, fileContent, 'utf-8');
+    this.writeFileWithRetry(updatedNote.path, fileContent, 'utf-8');
     
     return updatedNote;
   }
@@ -962,7 +1060,7 @@ export class VaultUtils {
       for (const file of files) {
         scannedFiles++;
         try {
-          const content = readFileSync(file, 'utf-8');
+          const content = this.readFileWithRetry(file, 'utf-8');
           const { data: frontmatter } = matter(content);
           
           if (frontmatter && typeof frontmatter === 'object' && frontmatter.hasOwnProperty(property)) {
@@ -1165,7 +1263,7 @@ export class VaultUtils {
       for (const file of files) {
         scannedFiles++;
         try {
-          const content = readFileSync(file, 'utf-8');
+          const content = this.readFileWithRetry(file, 'utf-8');
           const { data: frontmatter } = matter(content);
           
           if (frontmatter && typeof frontmatter === 'object') {

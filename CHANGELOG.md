@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### In Progress - AI Tool Caller Optimization (Target: v2.0.0)
+
+### Added
+- **AI Tool Caller Optimization**: Major consolidation of 21 tools down to 11 for better AI decision-making (#62)
+  - **Universal Search Tool** (`search`): Consolidates 6 search tools with intelligent auto-mode routing (#71, #72)
+    - Automatically detects optimal search strategy (quick, advanced, pattern, recent, content-type)
+    - Multi-term OR query support by splitting into multiple searches
+    - Intelligent fallback when advanced searches return no results
+  - **Smart Note Creation** (`create_note_smart`): Consolidates 2 creation tools with auto-template detection (#73)
+    - Automatically detects appropriate template based on title keywords
+    - Supports all 12 available templates (restaurant, article, person, etc.)
+  - **Universal List Tool** (`list`): Consolidates 4 listing tools into 1 (#74)
+    - Single tool for folders, daily notes, templates, and YAML properties
+  - **iCloud Sync Retry Logic**: Automatic retry with exponential backoff for file operations (#75)
+    - Handles common iCloud sync errors (EBUSY, ENOENT, EPERM)
+    - Configurable retry attempts and delays
+  - **Backward Compatibility Aliases**: All legacy tools continue to work with deprecation warnings (#77)
+
+### Changed
+- **Search Routing Logic**: OR queries now route to quick search instead of advanced for better results
+- **Template Detection**: Now uses actual available templates from the system
+- **Error Handling**: More resilient file operations for macOS/iCloud environments
+
+### Technical Details
+- Implemented ToolRouter class for intelligent tool dispatch
+- Added comprehensive output validation tests (#81)
+- Improved search fallback strategies based on expert analysis
+- Fixed regex handling issues in advanced search
+
 ## [1.6.0] - 2025-06-04
 
 ### Added

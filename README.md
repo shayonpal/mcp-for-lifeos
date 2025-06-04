@@ -14,6 +14,13 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **Robust Error Handling**: Graceful YAML parsing with diagnostic tools
 - **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
 
+### Coming Soon: AI-Optimized Tool Consolidation
+- **Universal Search Tool**: Consolidates 6 search tools into 1 intelligent tool with auto-routing
+- **Smart Note Creation**: Automatic template detection based on content and title
+- **Universal List Tool**: Single tool for all listing operations (folders, templates, properties)
+- **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
+- **Backward Compatibility**: All legacy tools continue to work with deprecation warnings
+
 ## Quick Start
 
 ### Automated Setup (Recommended)
