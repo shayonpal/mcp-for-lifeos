@@ -15,6 +15,7 @@ export interface AdvancedSearchOptions {
   tags?: string[];
   author?: string[];
   people?: string[];
+  yamlProperties?: Record<string, any>;
   
   // Date filters
   createdAfter?: Date;
@@ -152,6 +153,33 @@ export class SearchEngine {
     if (options.people && options.people.length > 0) {
       if (!fm.people || !Array.isArray(fm.people)) return false;
       if (!options.people.some(person => fm.people!.includes(person))) return false;
+    }
+
+    // Custom YAML properties filter (exact match)
+    if (options.yamlProperties && typeof options.yamlProperties === 'object') {
+      for (const [property, expectedValue] of Object.entries(options.yamlProperties)) {
+        const actualValue = fm[property];
+        
+        // Handle different value types with exact matching
+        if (typeof expectedValue === 'string' || typeof expectedValue === 'number' || typeof expectedValue === 'boolean') {
+          // For primitive values, require exact match
+          if (actualValue !== expectedValue) {
+            return false;
+          }
+        } else if (Array.isArray(expectedValue)) {
+          // For array values, the note's property must be an array with exact same elements
+          if (!Array.isArray(actualValue) || 
+              actualValue.length !== expectedValue.length ||
+              !actualValue.every((val, idx) => val === expectedValue[idx])) {
+            return false;
+          }
+        } else {
+          // For other types (null, undefined, objects), require exact match
+          if (actualValue !== expectedValue) {
+            return false;
+          }
+        }
+      }
     }
 
     return true;

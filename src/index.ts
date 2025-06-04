@@ -204,6 +204,7 @@ const tools: Tool[] = [
         tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags (any match)' },
         author: { type: 'array', items: { type: 'string' }, description: 'Filter by author' },
         people: { type: 'array', items: { type: 'string' }, description: 'Filter by people mentioned' },
+        yamlProperties: { type: 'object', additionalProperties: true, description: 'Filter by arbitrary YAML property key-value pairs (exact match)' },
         folder: { type: 'string', description: 'Filter by folder path' },
         excludeFolders: { type: 'array', items: { type: 'string' }, description: 'Exclude folders' },
         createdAfter: { type: 'string', description: 'Filter notes created after date (YYYY-MM-DD)' },
@@ -824,6 +825,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.tags) searchOptions.tags = args.tags as string[];
         if (args.author) searchOptions.author = args.author as string[];
         if (args.people) searchOptions.people = args.people as string[];
+        if (args.yamlProperties) searchOptions.yamlProperties = args.yamlProperties as Record<string, any>;
         
         // Location filters
         if (args.folder) searchOptions.folder = args.folder as string;
