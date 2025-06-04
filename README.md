@@ -15,6 +15,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
 
 ### Coming Soon: AI-Optimized Tool Consolidation
+
 - **Universal Search Tool**: Consolidates 6 search tools into 1 intelligent tool with auto-routing
 - **Smart Note Creation**: Automatic template detection based on content and title
 - **Universal List Tool**: Single tool for all listing operations (folders, templates, properties)
@@ -24,6 +25,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 ## Quick Start
 
 ### Automated Setup (Recommended)
+
 ```bash
 # Clone and run automated setup
 git clone https://github.com/shayonpal/mcp-for-lifeos.git
@@ -33,6 +35,7 @@ chmod +x scripts/setup.sh
 ```
 
 ### Manual Installation
+
 ```bash
 npm install
 npm run build
@@ -61,7 +64,9 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 ### Core Operations
 
 #### `create_note`
+
 Create a new note with proper YAML frontmatter and optional template integration
+
 - **title** (required): Note title
 - **content**: Markdown content
 - **template**: Template to use (restaurant, article, person, etc.)
@@ -74,17 +79,23 @@ Create a new note with proper YAML frontmatter and optional template integration
 - **customData**: Custom data for template processing
 
 #### `create_note_from_template`
+
 Create a note using a specific LifeOS template with auto-filled metadata
+
 - **title** (required): Note title
 - **template** (required): Template key (restaurant, article, person, daily, etc.)
 - **customData**: Template-specific data (e.g., cuisine, location for restaurants)
 
 #### `read_note`
+
 Read an existing note
+
 - **path** (required): Full path to the note
 
 #### `edit_note`
+
 Edit an existing note in the vault
+
 - **path**: Path to the note file (absolute or relative to vault)
 - **title**: Note title (alternative to path - will search for the note)
 - **content**: New content (optional - preserves existing if not provided)
@@ -98,6 +109,7 @@ Edit an existing note in the vault
 - **mode**: Update mode - 'merge' (default) or 'replace' frontmatter
 
 Example usage:
+
 ```bash
 # Edit by path
 edit_note path: "Articles/My Article.md" content: "Updated content"
@@ -110,11 +122,15 @@ edit_note title: "My Article" mode: "replace" frontmatter: {contentType: "Articl
 ```
 
 #### `get_daily_note`
+
 Get or create a daily note
+
 - **date**: Date in YYYY-MM-DD format (optional, defaults to today)
 
 #### `move_items`
+
 Move notes and/or folders to a different location in the vault
+
 - **item**: Single item path to move (alternative to items)
 - **items**: Array of items to move, each with:
   - `path`: Path to note or folder
@@ -125,6 +141,7 @@ Move notes and/or folders to a different location in the vault
 - **mergeFolders**: When moving folders, merge with existing folder of same name (default: false)
 
 Example usage:
+
 ```bash
 # Move a single note
 move_items item: "10 - Projects/old-note.md" destination: "40 - Archives/2024"
@@ -137,7 +154,9 @@ move_items item: "20 - Areas/Old Resources" destination: "30 - Resources" mergeF
 ```
 
 #### `insert_content`
+
 Insert content at specific locations within a note based on headings, block references, or text patterns
+
 - **path**: Path to the note file (absolute or relative to vault)
 - **title**: Note title (alternative to path - will search for the note)
 - **content** (required): Content to insert
@@ -150,6 +169,7 @@ Insert content at specific locations within a note based on headings, block refe
 - **ensureNewline**: Ensure proper line breaks around inserted content (default: true)
 
 Example usage:
+
 ```bash
 # Insert after a heading
 insert_content title: "Daily Note" content: "- New task" target: {heading: "## Today's Tasks"} position: "after"
@@ -170,40 +190,56 @@ insert_content title: "Project Notes" content: "- Final task" target: {heading: 
 ### Navigation Tools
 
 #### `list_folders`
+
 List folders in the vault
+
 - **path**: Folder path to list (optional, defaults to root)
 
 #### `find_notes_by_pattern`
+
 Find notes using glob patterns
+
 - **pattern** (required): Glob pattern (e.g., "**/*recipe*.md")
 
 #### `list_daily_notes`
+
 List recent daily notes with full paths (debugging tool)
+
 - **limit**: Number of results (optional, default 10)
 
 #### `list_templates`
+
 List all available note templates in the LifeOS vault
+
 - Shows template descriptions, target folders, and usage examples
 
 #### `diagnose_vault`
+
 Diagnose vault issues and check for problematic files
+
 - **checkYaml**: Check for YAML parsing errors (default: true)
 - **maxFiles**: Maximum files to check (default: 100)
 
 ### Advanced Search Tools
 
 #### `get_server_version`
+
 Get the current server version and capabilities information
+
 - **includeTools**: Include full list of available tools in the response (optional)
 
 #### `get_yaml_rules`
+
 Retrieve your custom YAML frontmatter rules document for reference when creating or editing notes
+
 - No parameters required
 - Returns the content of your configured YAML rules document
 - Requires `yamlRulesPath` to be set in configuration
 
 #### `advanced_search`
+
 Comprehensive search with full-text search, metadata filters, and **natural language processing**
+
 - **naturalLanguage**: 🆕 **Natural language query** (e.g., "Quebec barbecue restaurants", "recent articles about AI")
 - **query**: General search query (searches title, content, and frontmatter)
 - **contentQuery**: Search only in note content
@@ -230,6 +266,7 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
 - **sortOrder**: Sort order (asc/desc)
 
 ##### 🎯 Natural Language Examples
+
 ```javascript
 // Find restaurants
 { naturalLanguage: "Quebec barbecue restaurants" }
@@ -245,6 +282,7 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
 ```
 
 ##### 🔧 Advanced YAML Property Examples
+
 ```javascript
 // Include notes where "project" property is missing/null
 {
@@ -269,22 +307,30 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
 ```
 
 #### `quick_search`
+
 Fast text search across all notes with relevance ranking
+
 - **query** (required): Search query
 - **maxResults**: Maximum results (default: 10)
 
 #### `search_by_content_type`
+
 Find all notes of a specific content type
+
 - **contentType** (required): Content type to search for
 - **maxResults**: Maximum results (optional)
 
 #### `search_recent`
+
 Find recently modified notes
+
 - **days**: Number of days back to search (default: 7)
 - **maxResults**: Maximum results (default: 20)
 
 #### `search_notes` (Legacy)
+
 Basic search by metadata criteria
+
 - **contentType**: Filter by content type
 - **category**: Filter by category
 - **tags**: Filter by tags array
@@ -294,12 +340,15 @@ Basic search by metadata criteria
 ### YAML Property Management
 
 #### `list_yaml_properties`
+
 Discover and analyze YAML frontmatter properties across your entire vault
+
 - **includeCount**: Include usage count for each property (default: false)
 - **sortBy**: Sort by 'alphabetical' or 'usage' (default: alphabetical)
 - **excludeStandard**: Exclude standard LifeOS properties to focus on custom fields (default: false)
 
 Example usage:
+
 ```bash
 # List all YAML properties with usage counts
 list_yaml_properties includeCount: true sortBy: "usage"
@@ -309,7 +358,9 @@ list_yaml_properties excludeStandard: true
 ```
 
 #### `list_yaml_property_values`
+
 Analyze all unique values used for a specific YAML property across the vault
+
 - **property** (required): The YAML property name to analyze
 - **includeCount**: Include usage count for each value (default: false)
 - **includeExamples**: Include example note titles that use each value (default: false)
@@ -317,6 +368,7 @@ Analyze all unique values used for a specific YAML property across the vault
 - **maxExamples**: Maximum number of example notes per value (default: 3)
 
 Features:
+
 - Distinguishes between single values and array values
 - Identifies mixed usage patterns (property used both ways)
 - Accurate deduplication with detailed usage statistics
@@ -325,6 +377,7 @@ Features:
 - Graceful handling of malformed YAML and missing properties
 
 Example usage:
+
 ```bash
 # Basic analysis
 list_yaml_property_values property: "tags"
@@ -347,11 +400,13 @@ list_yaml_property_values property: "contentType" includeCount: true includeExam
 All search results and note references include **clickable links** that open notes directly in Obsidian using the `obsidian://` URL scheme.
 
 ### Link Format
+
 - **Search Results**: Each result includes a "🔗 Open in Obsidian" link
 - **Note Reading**: Direct links to open the specific note
 - **Daily Notes**: Quick access to open daily journal entries
 
 ### URL Scheme Examples
+
 ```
 obsidian://open?vault=YourVaultName&file=path/to/note.md
 obsidian://search?vault=YourVaultName&query=search+terms
@@ -365,19 +420,20 @@ The LifeOS MCP server includes intelligent template integration that automatical
 
 ### Available Templates
 
-| Template | Target Folder | Content Type | Description |
-|----------|---------------|--------------|-------------|
-| **restaurant** | `30 - Resources/Restaurants` | Reference | Restaurant notes with cuisine, location, and ratings |
-| **article** | `30 - Resources/Reading` | Article | Article notes with source and author |
-| **person** | `20 - Areas/Relationships` | MOC | Person/contact notes with relationships |
-| **daily** | `20 - Areas/Personal/Journals/Daily` | Daily Note | Daily journal entries |
-| **reference** | `30 - Resources` | Reference | General reference notes |
-| **medicine** | `20 - Areas/Health` | Medical | Medicine/medication notes |
-| **application** | `30 - Resources/Tools` | Reference | Application/software reviews |
-| **book** | `30 - Resources/Reading` | Reference | Book notes and reviews |
-| **place** | `10 - Projects` | Planning | Travel and places to visit |
-| **fleeting** | `05 - Fleeting Notes` | Fleeting | Quick capture and temporary thoughts |
-| **moc** | `00 - Meta/MOCs` | MOC | Maps of Content for organizing notes |
+
+| Template        | Target Folder                        | Content Type | Description                                          |
+| ----------------- | -------------------------------------- | -------------- | ------------------------------------------------------ |
+| **restaurant**  | `30 - Resources/Restaurants`         | Reference    | Restaurant notes with cuisine, location, and ratings |
+| **article**     | `30 - Resources/Reading`             | Article      | Article notes with source and author                 |
+| **person**      | `20 - Areas/Relationships`           | MOC          | Person/contact notes with relationships              |
+| **daily**       | `20 - Areas/Personal/Journals/Daily` | Daily Note   | Daily journal entries                                |
+| **reference**   | `30 - Resources`                     | Reference    | General reference notes                              |
+| **medicine**    | `20 - Areas/Health`                  | Medical      | Medicine/medication notes                            |
+| **application** | `30 - Resources/Tools`               | Reference    | Application/software reviews                         |
+| **book**        | `30 - Resources/Reading`             | Reference    | Book notes and reviews                               |
+| **place**       | `10 - Projects`                      | Planning     | Travel and places to visit                           |
+| **fleeting**    | `05 - Fleeting Notes`                | Fleeting     | Quick capture and temporary thoughts                 |
+| **moc**         | `00 - Meta/MOCs`                     | MOC          | Maps of Content for organizing notes                 |
 
 ### Template Features
 
@@ -403,6 +459,7 @@ list_templates
 ## Client Integration
 
 ### Claude Desktop
+
 Add to your Claude Desktop configuration:
 
 ```json
@@ -422,22 +479,26 @@ Add to your Claude Desktop configuration:
 **Note**: The `ENABLE_WEB_INTERFACE: "false"` setting disables the HTTP server for pure MCP usage, ensuring clean JSON communication with Claude Desktop.
 
 ### Raycast
+
 The LifeOS MCP server integrates seamlessly with Raycast for AI-powered vault interactions.
 
 **[📖 Complete Raycast Integration Guide](docs/RAYCAST_INTEGRATION.md)**
 
 Key features:
+
 - Use `@lifeos-mcp` to mention the server in AI chats and commands
 - Quick vault search from Raycast's root search
 - Create notes and manage daily entries through AI commands
 - Clickable Obsidian links for seamless vault navigation
 
-### Cursor IDE  
+### Cursor IDE
+
 Enhance your development workflow with AI-powered access to your knowledge vault.
 
 **[📖 Complete Cursor Integration Guide](docs/CURSOR_INTEGRATION.md)**
 
 Key features:
+
 - Access vault context directly in Agent Mode
 - Research existing knowledge while coding
 - Create development notes and link to project planning
@@ -474,6 +535,7 @@ get_server_version
 ```
 
 Optional parameters:
+
 - **includeTools**: Set to `true` to include a list of all available tools
 
 This returns comprehensive information about the server version, capabilities, and available tools.
@@ -554,7 +616,28 @@ node scripts/test-claude-desktop.js --scenario=search-basic-text --verbose
 
 **Current Performance:** 95% tool selection accuracy (exceeds 90% target)
 
+### Tool Parity Validation
+
+Ensure consolidated tools match legacy tool outputs exactly:
+
+```bash
+# Run all parity tests
+npm run test:tool-parity
+
+# Test specific category only
+npm run test:tool-parity:search
+
+# Detailed output for debugging
+npm run test:tool-parity:verbose
+
+# Custom test configuration
+node scripts/test-tool-parity.js --category creation --max-tests 5 --verbose
+```
+
+**Target Performance:** 95% output parity, <500ms performance difference
+
 ### Quick Setup for Development
+
 ```bash
 # Use automated setup script
 ./scripts/setup.sh --skip-deps  # Skip npm install if already done
@@ -563,6 +646,7 @@ node scripts/test-claude-desktop.js --scenario=search-basic-text --verbose
 ## YAML Compliance
 
 The server automatically enforces LifeOS YAML rules:
+
 - Uses `source` field for URLs (not `url` or `URL`)
 - Maintains location format: `Country [CODE]` (e.g., `Canada [CA]`, `India [IN]`)
 - Never edits auto-managed fields (`date created`, `date modified`)
@@ -576,6 +660,7 @@ The server automatically enforces LifeOS YAML rules:
 ## File Naming Convention
 
 Notes created through the MCP server use a natural file naming convention:
+
 - **Preserves spaces**: "My Note Title" creates "My Note Title.md" (not "My-Note-Title.md")
 - **Allows special characters**: Most punctuation and symbols are preserved
 - **Obsidian restrictions**: Only removes square brackets `[]`, colons `:`, and semicolons `;`
@@ -588,6 +673,7 @@ Notes created through the MCP server use a natural file naming convention:
 ## Folder Structure Awareness
 
 The server understands and respects the PARA method organization:
+
 - **00 - Meta**: System files, templates, MOCs
 - **05 - Fleeting Notes**: Quick captures
 - **10 - Projects**: Active work
@@ -609,6 +695,7 @@ The server provides full integration with your existing LifeOS templates:
 ### Template Processing
 
 The server converts Templater syntax to static content:
+
 ```yaml
 # Template: <% tp.file.title %>
 # Becomes: "Restaurant Name"
@@ -628,5 +715,5 @@ The server converts Templater syntax to static content:
 
 This project is licensed under the GNU General Public License v3.0. See [LICENSE.md](LICENSE.md) for details.
 
-**Copyright (C) 2025 Shayon Pal**  
+**Copyright (C) 2025 Shayon Pal**
 **AgileCode Studio** - [https://agilecode.studio](https://agilecode.studio)

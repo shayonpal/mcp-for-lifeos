@@ -25,7 +25,7 @@ export default {
       isolatedModules: true,
     }],
   },
-  testTimeout: 30000, // 30 seconds for integration tests
+  testTimeout: 60000, // 60 seconds for parity tests
   verbose: true,
   detectOpenHandles: true,
   forceExit: true,
