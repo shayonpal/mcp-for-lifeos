@@ -17,6 +17,10 @@ export interface AdvancedSearchOptions {
   people?: string[];
   yamlProperties?: Record<string, any>;
   
+  // YAML property matching modes
+  matchMode?: 'all' | 'any';
+  arrayMode?: 'exact' | 'contains' | 'any';
+  
   // Date filters
   createdAfter?: Date;
   createdBefore?: Date;
@@ -155,34 +159,108 @@ export class SearchEngine {
       if (!options.people.some(person => fm.people!.includes(person))) return false;
     }
 
-    // Custom YAML properties filter (exact match)
+    // Custom YAML properties filter with array matching and match modes
     if (options.yamlProperties && typeof options.yamlProperties === 'object') {
+      const matchMode = options.matchMode || 'all';
+      const arrayMode = options.arrayMode || 'contains';
+      
+      const propertyResults: boolean[] = [];
+      
       for (const [property, expectedValue] of Object.entries(options.yamlProperties)) {
         const actualValue = fm[property];
-        
-        // Handle different value types with exact matching
-        if (typeof expectedValue === 'string' || typeof expectedValue === 'number' || typeof expectedValue === 'boolean') {
-          // For primitive values, require exact match
-          if (actualValue !== expectedValue) {
-            return false;
-          }
-        } else if (Array.isArray(expectedValue)) {
-          // For array values, the note's property must be an array with exact same elements
-          if (!Array.isArray(actualValue) || 
-              actualValue.length !== expectedValue.length ||
-              !actualValue.every((val, idx) => val === expectedValue[idx])) {
-            return false;
-          }
-        } else {
-          // For other types (null, undefined, objects), require exact match
-          if (actualValue !== expectedValue) {
-            return false;
-          }
+        const matches = this.matchesYamlProperty(actualValue, expectedValue, arrayMode);
+        propertyResults.push(matches);
+      }
+      
+      // Apply match mode logic
+      if (matchMode === 'all') {
+        // ALL properties must match (existing behavior)
+        if (propertyResults.some(result => !result)) {
+          return false;
+        }
+      } else if (matchMode === 'any') {
+        // ANY property can match (new behavior)
+        if (propertyResults.length > 0 && propertyResults.every(result => !result)) {
+          return false;
         }
       }
     }
 
     return true;
+  }
+
+  private static matchesYamlProperty(actualValue: any, expectedValue: any, arrayMode: 'exact' | 'contains' | 'any'): boolean {
+    // Handle null/undefined cases
+    if (actualValue === null || actualValue === undefined) {
+      return expectedValue === null || expectedValue === undefined;
+    }
+    
+    // If expectedValue is an array, use array-to-value matching
+    if (Array.isArray(expectedValue)) {
+      return this.matchArrayToValue(actualValue, expectedValue, arrayMode);
+    }
+    
+    // If actualValue is an array, use value-to-array matching  
+    if (Array.isArray(actualValue)) {
+      return this.matchValueToArray(expectedValue, actualValue, arrayMode);
+    }
+    
+    // Both are single values - exact match
+    return actualValue === expectedValue;
+  }
+
+  private static matchArrayToValue(actualValue: any, expectedArray: any[], arrayMode: 'exact' | 'contains' | 'any'): boolean {
+    if (Array.isArray(actualValue)) {
+      // Array to array comparison
+      switch (arrayMode) {
+        case 'exact':
+          // Arrays must be identical (same elements in same order)
+          return actualValue.length === expectedArray.length && 
+                 actualValue.every((val, idx) => val === expectedArray[idx]);
+        
+        case 'contains':
+          // Actual array must contain all expected values
+          return expectedArray.every(expectedVal => actualValue.includes(expectedVal));
+        
+        case 'any':
+          // Any overlap between arrays
+          return expectedArray.some(expectedVal => actualValue.includes(expectedVal));
+        
+        default:
+          return false;
+      }
+    } else {
+      // Single value to array comparison
+      switch (arrayMode) {
+        case 'exact':
+          // Single value must exactly match a single-element expected array
+          return expectedArray.length === 1 && actualValue === expectedArray[0];
+        
+        case 'contains':
+        case 'any':
+          // Single value must be included in the expected array
+          return expectedArray.includes(actualValue);
+        
+        default:
+          return false;
+      }
+    }
+  }
+
+  private static matchValueToArray(expectedValue: any, actualArray: any[], arrayMode: 'exact' | 'contains' | 'any'): boolean {
+    switch (arrayMode) {
+      case 'exact':
+        // Expected single value must exactly match a single-element actual array
+        return actualArray.length === 1 && actualArray[0] === expectedValue;
+      
+      case 'contains':
+      case 'any':
+        // Actual array must contain the expected value
+        return actualArray.includes(expectedValue);
+      
+      default:
+        return false;
+    }
   }
 
   private static matchesContentType(noteType: string | string[] | undefined, searchType: string): boolean {

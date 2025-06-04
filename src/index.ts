@@ -204,7 +204,9 @@ const tools: Tool[] = [
         tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags (any match)' },
         author: { type: 'array', items: { type: 'string' }, description: 'Filter by author' },
         people: { type: 'array', items: { type: 'string' }, description: 'Filter by people mentioned' },
-        yamlProperties: { type: 'object', additionalProperties: true, description: 'Filter by arbitrary YAML property key-value pairs (exact match)' },
+        yamlProperties: { type: 'object', additionalProperties: true, description: 'Filter by arbitrary YAML property key-value pairs' },
+        matchMode: { type: 'string', enum: ['all', 'any'], description: 'Whether notes must match ALL yamlProperties or ANY (default: all)' },
+        arrayMode: { type: 'string', enum: ['exact', 'contains', 'any'], description: 'How to match array values: exact match, contains value, or any overlap (default: contains)' },
         folder: { type: 'string', description: 'Filter by folder path' },
         excludeFolders: { type: 'array', items: { type: 'string' }, description: 'Exclude folders' },
         createdAfter: { type: 'string', description: 'Filter notes created after date (YYYY-MM-DD)' },
@@ -826,6 +828,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (args.author) searchOptions.author = args.author as string[];
         if (args.people) searchOptions.people = args.people as string[];
         if (args.yamlProperties) searchOptions.yamlProperties = args.yamlProperties as Record<string, any>;
+        if (args.matchMode) searchOptions.matchMode = args.matchMode as 'all' | 'any';
+        if (args.arrayMode) searchOptions.arrayMode = args.arrayMode as 'exact' | 'contains' | 'any';
         
         // Location filters
         if (args.folder) searchOptions.folder = args.folder as string;
