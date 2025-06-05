@@ -11,8 +11,9 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **Advanced Search Engine**: Full-text search with relevance scoring and context extraction
 - **Obsidian Integration**: Clickable links that open notes directly in Obsidian
 - **Daily Notes Management**: Create and manage daily journal entries
+- **Personal Analytics Dashboard**: Zero-maintenance telemetry with visual insights (default enabled)
 - **Robust Error Handling**: Graceful YAML parsing with diagnostic tools
-- **Strict Validation**: Prevents editing auto-managed fields and enforces formatting rules
+- **Strict Validation**: Prevents editing auto-managed fields and enforcing formatting rules
 
 ### Coming Soon: AI-Optimized Tool Consolidation
 
@@ -570,12 +571,61 @@ ENABLE_WEB_INTERFACE=true WEB_PORT=8080 node dist/index.js
 - Ensure the port is not already in use before enabling
 - This feature is experimental and primarily for development/testing
 
+## Analytics Dashboard
+
+The LifeOS MCP server includes a built-in analytics system to help you understand your personal tool usage patterns and optimize your workflow.
+
+### Features
+
+- **Zero-maintenance visual dashboard** with beautiful charts
+- **Tool usage tracking** - See which tools you use most frequently
+- **Performance insights** - Execution times, cache hit rates, retry patterns
+- **Routing accuracy** - Monitor auto-mode detection success rates
+- **Daily trends** - Understand your productivity patterns over time
+- **<1ms overhead** - Minimal impact on server performance
+
+### Quick Start
+
+Analytics are **enabled by default**. To view your dashboard:
+
+```bash
+# Start the analytics dashboard (default port 19832)
+node scripts/start-analytics-dashboard.js
+
+# Visit http://localhost:19832 in your browser
+```
+
+### Configuration
+
+```bash
+# Disable analytics (if desired)
+export DISABLE_USAGE_ANALYTICS=true
+
+# Change dashboard port
+export ANALYTICS_DASHBOARD_PORT=9000
+
+# Start dashboard with custom port
+ANALYTICS_DASHBOARD_PORT=9000 node scripts/start-analytics-dashboard.js
+```
+
+### What You'll See
+
+- **Summary statistics**: Total operations, average execution time, success rate
+- **Tool usage distribution**: Pie chart of your most-used tools
+- **Performance analysis**: Bubble chart showing usage vs execution time
+- **Routing effectiveness**: How well auto-mode detection works
+- **Cache performance**: Hit rates and optimization opportunities
+- **Daily usage trends**: Timeline of your workflow patterns
+
+Analytics data is stored locally in `analytics/usage-metrics.json` and automatically exports every 5 minutes. Perfect for understanding and optimizing your personal development workflow!
+
 ## Documentation
 
 - **[📖 Deployment Guide](docs/DEPLOYMENT.md)** - Complete setup and deployment instructions
 - **[🔧 Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[📱 Raycast Integration](docs/RAYCAST_INTEGRATION.md)** - Setup guide for Raycast
 - **[💻 Cursor Integration](docs/CURSOR_INTEGRATION.md)** - Setup guide for Cursor IDE
+- **[📊 Analytics Dashboard](analytics/README.md)** - Detailed analytics configuration and insights
 
 ## Development
 

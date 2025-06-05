@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS MCP Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            color: #7f8c8d;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-container h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        .large-chart {
+            grid-column: 1 / -1;
+        }
+        .large-chart .chart-wrapper {
+            height: 400px;
+        }
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+        }
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 LifeOS MCP Analytics Dashboard</h1>
+            <p>Personal development insights and tool usage patterns</p>
+            <button class="refresh-btn" onclick="loadAnalytics()">🔄 Refresh Data</button>
+            <span id="lastUpdated" class="stat-label"></span>
+        </div>
+
+        <div id="loadingMessage" class="loading">
+            Loading analytics data...
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;">
+            Failed to load analytics data. Make sure usage-metrics.json exists and analytics are enabled.
+        </div>
+
+        <div id="noDataMessage" class="no-data" style="display: none;">
+            <h3>No Analytics Data Available</h3>
+            <p>Enable analytics by setting <code>ENABLE_USAGE_ANALYTICS=true</code> in your environment.</p>
+            <p>Then use the MCP server to generate some analytics data.</p>
+        </div>
+
+        <div id="dashboardContent" style="display: none;">
+            <!-- Summary Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalExecutions">-</div>
+                    <div class="stat-label">Total Operations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="averageTime">-</div>
+                    <div class="stat-label">Average Time (ms)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="successRate">-</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cacheHitRate">-</div>
+                    <div class="stat-label">Cache Hit Rate</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>🔧 Top Tools Usage</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="toolUsageChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>⚡ Performance Distribution</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>🎯 Routing Accuracy</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="routingChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>💾 Cache Performance</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="cacheChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container large-chart">
+                    <h3>📈 Daily Usage Trends</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        async function loadAnalytics() {
+            const loadingEl = document.getElementById('loadingMessage');
+            const errorEl = document.getElementById('errorMessage');
+            const noDataEl = document.getElementById('noDataMessage');
+            const contentEl = document.getElementById('dashboardContent');
+
+            // Show loading
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            noDataEl.style.display = 'none';
+            contentEl.style.display = 'none';
+
+            try {
+                const response = await fetch('./usage-metrics.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.summary || data.summary.totalExecutions === 0) {
+                    loadingEl.style.display = 'none';
+                    noDataEl.style.display = 'block';
+                    return;
+                }
+
+                updateDashboard(data);
+                
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+                
+                // Update last updated time
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${new Date(data.metadata.generated).toLocaleString()}`;
+
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.textContent = `Failed to load analytics data: ${error.message}`;
+            }
+        }
+
+        function updateDashboard(data) {
+            const summary = data.summary;
+            
+            // Update summary stats
+            document.getElementById('totalExecutions').textContent = summary.totalExecutions.toLocaleString();
+            document.getElementById('averageTime').textContent = `${summary.averageExecutionTime}ms`;
+            document.getElementById('successRate').textContent = `${(summary.successRate * 100).toFixed(1)}%`;
+            document.getElementById('cacheHitRate').textContent = `${(summary.performance.cacheHitRate * 100).toFixed(1)}%`;
+
+            // Create charts
+            createToolUsageChart(summary.topTools);
+            createPerformanceChart(summary);
+            createRoutingChart(summary.routingAccuracy);
+            createCacheChart(summary.performance);
+            createTrendsChart(summary.trends);
+        }
+
+        function createToolUsageChart(topTools) {
+            destroyChart('toolUsageChart');
+            
+            const ctx = document.getElementById('toolUsageChart').getContext('2d');
+            charts.toolUsage = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: topTools.map(tool => tool.toolName.replace('_', ' ')),
+                    datasets: [{
+                        data: topTools.map(tool => tool.usageCount),
+                        backgroundColor: [
+                            '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
+                            '#1abc9c', '#e67e22', '#34495e', '#95a5a6', '#d35400'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const tool = topTools[context.dataIndex];
+                                    return `${context.label}: ${tool.usageCount} uses (${tool.averageTime}ms avg)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPerformanceChart(summary) {
+            destroyChart('performanceChart');
+            
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const performanceData = summary.topTools.map(tool => ({
+                x: tool.usageCount,
+                y: tool.averageTime,
+                r: Math.max(3, tool.usageCount / 2)
+            }));
+
+            charts.performance = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Tools Performance',
+                        data: performanceData,
+                        backgroundColor: 'rgba(52, 152, 219, 0.6)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Usage Count' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Average Time (ms)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const tool = summary.topTools[context.dataIndex];
+                                    return `${tool.toolName}: ${tool.usageCount} uses, ${tool.averageTime}ms avg`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createRoutingChart(routingAccuracy) {
+            destroyChart('routingChart');
+            
+            const ctx = document.getElementById('routingChart').getContext('2d');
+            charts.routing = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Successful Auto-Detection', 'Fallbacks Used'],
+                    datasets: [{
+                        data: [
+                            routingAccuracy.autoModeDetections - routingAccuracy.fallbacksTriggered,
+                            routingAccuracy.fallbacksTriggered
+                        ],
+                        backgroundColor: ['#2ecc71', '#e74c3c'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createCacheChart(performance) {
+            destroyChart('cacheChart');
+            
+            const ctx = document.getElementById('cacheChart').getContext('2d');
+            charts.cache = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Cache Hit Rate', 'Slow Operations', 'Average Retries'],
+                    datasets: [{
+                        data: [
+                            performance.cacheHitRate * 100,
+                            performance.slowOperations,
+                            performance.averageRetries
+                        ],
+                        backgroundColor: ['#2ecc71', '#e74c3c', '#f39c12'],
+                        borderWidth: 1,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Value' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = ['%', ' operations', ' retries'];
+                                    return `${context.label}: ${context.parsed.y}${labels[context.dataIndex]}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTrendsChart(trends) {
+            destroyChart('trendsChart');
+            
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            
+            // Sort daily usage by date
+            const sortedDays = Object.keys(trends.dailyUsage).sort();
+            const usageValues = sortedDays.map(day => trends.dailyUsage[day]);
+            
+            charts.trends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedDays.map(date => new Date(date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Daily Operations',
+                        data: usageValues,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Date' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Operations' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        function destroyChart(chartId) {
+            const chartKey = chartId.replace('Chart', '');
+            if (charts[chartKey]) {
+                charts[chartKey].destroy();
+                delete charts[chartKey];
+            }
+        }
+
+        // Load analytics on page load
+        window.addEventListener('load', loadAnalytics);
+        
+        // Auto-refresh every 5 minutes
+        setInterval(loadAnalytics, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

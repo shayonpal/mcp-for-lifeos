@@ -14,16 +14,20 @@ import { NaturalLanguageProcessor } from './natural-language-processor.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { YamlRulesManager } from './yaml-rules-manager.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
+import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.6.0';
+export const SERVER_VERSION = '1.7.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
+
+// Initialize analytics collector
+const analytics = AnalyticsCollector.getInstance();
 
 const server = new Server(
   {
@@ -2084,6 +2088,25 @@ async function main() {
     }
   }
 }
+
+// Graceful shutdown handler for analytics
+process.on('SIGINT', async () => {
+  try {
+    await analytics.shutdown();
+  } catch (error) {
+    // Silently continue
+  }
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  try {
+    await analytics.shutdown();
+  } catch (error) {
+    // Silently continue
+  }
+  process.exit(0);
+});
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(() => {

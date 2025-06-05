@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-06-05
+
+### Added
+
+- **Personal Development Analytics System** (#76): Lightweight telemetry for routing decisions and tool usage insights
+  - Zero-maintenance HTML + Chart.js dashboard for visual analytics
+  - <1ms overhead analytics collection with UsageMetrics interface
+  - Tool usage frequency tracking and routing accuracy measurement
+  - Performance insights: execution times, cache hit rates, retry patterns
+  - Default enabled with opt-out configuration (DISABLE_USAGE_ANALYTICS=true)
+  - Configurable dashboard port (default 19832) via ANALYTICS_DASHBOARD_PORT
+  - Automatic data export every 5 minutes with graceful shutdown flushing
+  - Real-time visual insights: tool distribution, performance bubbles, daily trends
+  - Cross-machine sync ready with GitHub-stored default configuration
+
 ### Added - AI Tool Caller Optimization Phase 2 (Target: v2.0.0)
 
 - **Tool Parity Integration Tests** (#80): Comprehensive validation framework ensuring consolidated tools match legacy tool outputs

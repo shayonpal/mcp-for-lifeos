@@ -11,6 +11,7 @@ import { SearchEngine, AdvancedSearchOptions, SearchResult } from './search-engi
 import { VaultUtils } from './vault-utils.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
+import { AnalyticsCollector } from './analytics/analytics-collector.js';
 
 /**
  * Universal Search Tool - Consolidates 6 search tools into 1
@@ -103,6 +104,7 @@ export interface RoutingDecision {
 export class ToolRouter {
   private static routingStats = new Map<string, number>();
   private static readonly ENABLE_TELEMETRY = process.env.TOOL_ROUTER_TELEMETRY === 'true';
+  private static analytics = AnalyticsCollector.getInstance();
 
   /**
    * Record routing decision for telemetry
@@ -112,6 +114,15 @@ export class ToolRouter {
     
     const key = `${decision.targetTool}_${decision.strategy}`;
     this.routingStats.set(key, (this.routingStats.get(key) || 0) + 1);
+
+    // Also record in new analytics system
+    this.analytics.recordUsage({
+      toolName: 'routing_decision',
+      executionTime: 0, // Routing decisions are instantaneous
+      success: true,
+      routingDecision: `${decision.targetTool}:${decision.strategy}`,
+      searchMode: decision.strategy
+    });
   }
 
   /**
@@ -170,6 +181,21 @@ export class ToolRouter {
    * Universal Search Tool - Routes to appropriate search implementation
    */
   static async routeSearch(options: UniversalSearchOptions): Promise<SearchResult[]> {
+    return await this.analytics.recordToolExecution(
+      'universal_search',
+      async () => {
+        return await this.executeSearch(options);
+      },
+      { 
+        searchMode: options.mode || 'auto'
+      }
+    );
+  }
+
+  /**
+   * Internal search execution (separated for telemetry)
+   */
+  private static async executeSearch(options: UniversalSearchOptions): Promise<SearchResult[]> {
     const startTime = Date.now();
     
     try {
@@ -383,6 +409,18 @@ export class ToolRouter {
    * Smart Note Creation Tool - Routes to appropriate creation method
    */
   static async routeCreateNote(options: SmartCreateNoteOptions): Promise<any> {
+    return await this.analytics.recordToolExecution(
+      'smart_create_note',
+      async () => {
+        return await this.executeCreateNote(options);
+      }
+    );
+  }
+
+  /**
+   * Internal note creation execution (separated for telemetry)
+   */
+  private static async executeCreateNote(options: SmartCreateNoteOptions): Promise<any> {
     try {
       const { title, auto_template = true, template } = options;
 
@@ -462,6 +500,18 @@ export class ToolRouter {
    * Universal List Tool - Routes to appropriate listing method
    */
   static async routeList(options: UniversalListOptions): Promise<any> {
+    return await this.analytics.recordToolExecution(
+      'universal_list',
+      async () => {
+        return await this.executeList(options);
+      }
+    );
+  }
+
+  /**
+   * Internal list execution (separated for telemetry)
+   */
+  private static async executeList(options: UniversalListOptions): Promise<any> {
     try {
       const { type } = options;
       

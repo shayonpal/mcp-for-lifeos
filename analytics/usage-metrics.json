@@ -1,0 +1,92 @@
+{
+  "metadata": {
+    "generated": "2025-06-05T04:22:40.389Z",
+    "totalMetrics": 4,
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "toolName": "test_tool",
+      "executionTime": 45,
+      "success": true,
+      "cacheHit": true,
+      "searchMode": "auto",
+      "timestamp": "2025-06-05T04:22:40.334Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 123,
+      "success": true,
+      "resultCount": 12,
+      "searchMode": "quick",
+      "timestamp": "2025-06-05T04:22:40.334Z"
+    },
+    {
+      "toolName": "smart_create_note",
+      "executionTime": 89,
+      "success": true,
+      "routingDecision": "create_note_from_template:template-based",
+      "timestamp": "2025-06-05T04:22:40.334Z"
+    },
+    {
+      "toolName": "test_execution",
+      "executionTime": 52,
+      "success": true,
+      "searchMode": "test",
+      "timestamp": "2025-06-05T04:22:40.386Z"
+    }
+  ],
+  "summary": {
+    "period": {
+      "start": "2025-05-29T04:22:40.389Z",
+      "end": "2025-06-05T04:22:40.389Z"
+    },
+    "totalExecutions": 4,
+    "averageExecutionTime": 77,
+    "successRate": 1,
+    "topTools": [
+      {
+        "toolName": "test_tool",
+        "usageCount": 1,
+        "averageTime": 45,
+        "successRate": 1
+      },
+      {
+        "toolName": "universal_search",
+        "usageCount": 1,
+        "averageTime": 123,
+        "successRate": 1
+      },
+      {
+        "toolName": "smart_create_note",
+        "usageCount": 1,
+        "averageTime": 89,
+        "successRate": 1
+      },
+      {
+        "toolName": "test_execution",
+        "usageCount": 1,
+        "averageTime": 52,
+        "successRate": 1
+      }
+    ],
+    "routingAccuracy": {
+      "autoModeDetections": 1,
+      "fallbacksTriggered": 0,
+      "accuracy": 1
+    },
+    "performance": {
+      "cacheHitRate": 1,
+      "averageRetries": 0,
+      "slowOperations": 0
+    },
+    "trends": {
+      "dailyUsage": {
+        "2025-06-05": 4
+      },
+      "hourlyDistribution": {
+        "0": 4
+      }
+    }
+  }
+}
