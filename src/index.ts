@@ -29,6 +29,10 @@ const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
 // Initialize analytics collector
 const analytics = AnalyticsCollector.getInstance();
 
+// Client tracking
+let clientInfo: { name?: string; version?: string } = {};
+let sessionId = `session-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
 const server = new Server(
   {
     name: 'lifeos-mcp',
@@ -40,6 +44,22 @@ const server = new Server(
     },
   }
 );
+
+// Capture client info when initialized
+server.oninitialized = () => {
+  const clientImplementation = server.getClientVersion();
+  if (clientImplementation) {
+    clientInfo = {
+      name: clientImplementation.name,
+      version: clientImplementation.version
+    };
+    // Log client info for debugging
+    console.error(`[Analytics] Client connected: ${clientInfo.name} v${clientInfo.version} (session: ${sessionId})`);
+    
+    // Set client info in ToolRouter for analytics
+    ToolRouter.setClientInfo(clientInfo, sessionId);
+  }
+};
 
 // Check if consolidated tools are enabled
 const CONSOLIDATED_TOOLS_ENABLED = process.env.CONSOLIDATED_TOOLS_ENABLED !== 'false'; // Default enabled
@@ -1339,7 +1359,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           analytics.recordUsage({
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
-            success: true
+            success: true,
+            clientName: clientInfo.name,
+            clientVersion: clientInfo.version,
+            sessionId
           });
           
           return addVersionMetadata({
@@ -1354,7 +1377,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
             success: false,
-            errorType: error instanceof Error ? error.constructor.name : 'Unknown'
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+            clientName: clientInfo.name,
+            clientVersion: clientInfo.version,
+            sessionId
           });
           throw error;
         }

@@ -105,6 +105,16 @@ export class ToolRouter {
   private static routingStats = new Map<string, number>();
   private static readonly ENABLE_TELEMETRY = process.env.TOOL_ROUTER_TELEMETRY === 'true';
   private static analytics = AnalyticsCollector.getInstance();
+  private static clientInfo: { name?: string; version?: string } = {};
+  private static sessionId: string = '';
+
+  /**
+   * Set client information for analytics tracking
+   */
+  static setClientInfo(info: { name?: string; version?: string }, sessionId: string): void {
+    this.clientInfo = info;
+    this.sessionId = sessionId;
+  }
 
   /**
    * Record routing decision for telemetry
@@ -121,7 +131,10 @@ export class ToolRouter {
       executionTime: 0, // Routing decisions are instantaneous
       success: true,
       routingDecision: `${decision.targetTool}:${decision.strategy}`,
-      searchMode: decision.strategy
+      searchMode: decision.strategy,
+      clientName: this.clientInfo.name,
+      clientVersion: this.clientInfo.version,
+      sessionId: this.sessionId
     });
   }
 
@@ -187,7 +200,10 @@ export class ToolRouter {
         return await this.executeSearch(options);
       },
       { 
-        searchMode: options.mode || 'auto'
+        searchMode: options.mode || 'auto',
+        clientName: this.clientInfo.name,
+        clientVersion: this.clientInfo.version,
+        sessionId: this.sessionId
       }
     );
   }
@@ -413,6 +429,11 @@ export class ToolRouter {
       'smart_create_note',
       async () => {
         return await this.executeCreateNote(options);
+      },
+      {
+        clientName: this.clientInfo.name,
+        clientVersion: this.clientInfo.version,
+        sessionId: this.sessionId
       }
     );
   }
@@ -504,6 +525,11 @@ export class ToolRouter {
       'universal_list',
       async () => {
         return await this.executeList(options);
+      },
+      {
+        clientName: this.clientInfo.name,
+        clientVersion: this.clientInfo.version,
+        sessionId: this.sessionId
       }
     );
   }

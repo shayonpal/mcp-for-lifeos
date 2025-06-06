@@ -13,6 +13,11 @@ export interface UsageMetrics {
   success: boolean;
   timestamp: Date;
   
+  // Client tracking
+  clientName?: string;      // e.g., "claude-desktop", "cursor", "zed"
+  clientVersion?: string;   // e.g., "0.1.0"
+  sessionId?: string;       // Unique per client session
+  
   // Additional context
   searchMode?: string;
   resultCount?: number;
@@ -48,6 +53,12 @@ export interface AnalyticsSummary {
     dailyUsage: Record<string, number>;
     hourlyDistribution: Record<string, number>;
   };
+  topClients: Array<{
+    clientName: string;
+    usageCount: number;
+    averageTime: number;
+    mostUsedTools: Array<{ toolName: string; count: number }>;
+  }>;
 }
 
 export interface AnalyticsConfig {

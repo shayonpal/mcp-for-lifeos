@@ -93,7 +93,14 @@ export class AnalyticsCollector {
   async recordToolExecution<T>(
     toolName: string, 
     operation: () => Promise<T>,
-    context?: { searchMode?: string; cacheHit?: boolean; retryCount?: number }
+    context?: { 
+      searchMode?: string; 
+      cacheHit?: boolean; 
+      retryCount?: number;
+      clientName?: string;
+      clientVersion?: string;
+      sessionId?: string;
+    }
   ): Promise<T> {
     if (!this.config.enabled) {
       return await operation();
@@ -130,7 +137,10 @@ export class AnalyticsCollector {
         retryCount: context?.retryCount,
         searchMode: context?.searchMode,
         resultCount,
-        errorType
+        errorType,
+        clientName: context?.clientName,
+        clientVersion: context?.clientVersion,
+        sessionId: context?.sessionId
       });
     }
   }
@@ -228,6 +238,44 @@ export class AnalyticsCollector {
     const totalExecutionTime = periodMetrics.reduce((sum, m) => sum + m.executionTime, 0);
     const totalSuccesses = periodMetrics.filter(m => m.success).length;
 
+    // Client usage analysis
+    const clientStats = new Map<string, {
+      count: number;
+      totalTime: number;
+      toolUsage: Map<string, number>;
+    }>();
+
+    periodMetrics.forEach(metric => {
+      const clientKey = metric.clientName || 'unknown';
+      
+      if (!clientStats.has(clientKey)) {
+        clientStats.set(clientKey, {
+          count: 0,
+          totalTime: 0,
+          toolUsage: new Map()
+        });
+      }
+
+      const stats = clientStats.get(clientKey)!;
+      stats.count++;
+      stats.totalTime += metric.executionTime;
+      
+      // Track tool usage per client
+      stats.toolUsage.set(metric.toolName, (stats.toolUsage.get(metric.toolName) || 0) + 1);
+    });
+
+    const topClients = Array.from(clientStats.entries())
+      .map(([clientName, stats]) => ({
+        clientName,
+        usageCount: stats.count,
+        averageTime: Math.round(stats.totalTime / stats.count),
+        mostUsedTools: Array.from(stats.toolUsage.entries())
+          .map(([toolName, count]) => ({ toolName, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+      }))
+      .sort((a, b) => b.usageCount - a.usageCount);
+
     return {
       period: { start: startDate, end: endDate },
       totalExecutions,
@@ -250,7 +298,8 @@ export class AnalyticsCollector {
       trends: {
         dailyUsage,
         hourlyDistribution
-      }
+      },
+      topClients
     };
   }
 
@@ -357,7 +406,8 @@ export class AnalyticsCollector {
       trends: {
         dailyUsage: {},
         hourlyDistribution: {}
-      }
+      },
+      topClients: []
     };
   }
 }

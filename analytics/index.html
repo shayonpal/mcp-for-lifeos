@@ -191,6 +191,13 @@
                     </div>
                 </div>
 
+                <div class="chart-container">
+                    <h3>🖥️ Client Usage</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="clientChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="chart-container large-chart">
                     <h3>📈 Daily Usage Trends</h3>
                     <div class="chart-wrapper">
@@ -261,6 +268,7 @@
             createPerformanceChart(summary);
             createRoutingChart(summary.routingAccuracy);
             createCacheChart(summary.performance);
+            createClientChart(summary.topClients || []);
             createTrendsChart(summary.trends);
         }
 
@@ -429,6 +437,69 @@
                                 label: function(context) {
                                     const labels = ['%', ' operations', ' retries'];
                                     return `${context.label}: ${context.parsed.y}${labels[context.dataIndex]}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createClientChart(topClients) {
+            destroyChart('clientChart');
+            
+            if (!topClients || topClients.length === 0) {
+                const ctx = document.getElementById('clientChart').getContext('2d');
+                ctx.fillStyle = '#999';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No client data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+            
+            const ctx = document.getElementById('clientChart').getContext('2d');
+            
+            const clientNames = topClients.map(client => {
+                // Clean up client names for display
+                return client.clientName || 'Unknown';
+            });
+            const usageCounts = topClients.map(client => client.usageCount);
+            
+            // Generate colors for each client
+            const colors = [
+                '#3498db', '#e74c3c', '#2ecc71', '#f39c12', 
+                '#9b59b6', '#1abc9c', '#34495e', '#e67e22'
+            ];
+            
+            charts.client = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: clientNames,
+                    datasets: [{
+                        data: usageCounts,
+                        backgroundColor: colors.slice(0, clientNames.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const client = topClients[context.dataIndex];
+                                    const mostUsedTool = client.mostUsedTools?.[0];
+                                    const toolInfo = mostUsedTool ? ` (${mostUsedTool.toolName}: ${mostUsedTool.count})` : '';
+                                    return `${context.label}: ${context.parsed} operations${toolInfo}`;
                                 }
                             }
                         }
