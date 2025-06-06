@@ -1,72 +1,45 @@
 {
   "metadata": {
-    "generated": "2025-06-05T04:22:40.389Z",
-    "totalMetrics": 4,
+    "generated": "2025-06-06T01:39:20.283Z",
+    "totalMetrics": 2,
     "version": "1.0.0"
   },
   "metrics": [
     {
-      "toolName": "test_tool",
-      "executionTime": 45,
-      "success": true,
-      "cacheHit": true,
-      "searchMode": "auto",
-      "timestamp": "2025-06-05T04:22:40.334Z"
-    },
-    {
       "toolName": "universal_search",
-      "executionTime": 123,
+      "executionTime": 495,
       "success": true,
-      "resultCount": 12,
-      "searchMode": "quick",
-      "timestamp": "2025-06-05T04:22:40.334Z"
+      "searchMode": "auto",
+      "resultCount": 10,
+      "timestamp": "2025-06-05T12:05:00.866Z"
     },
     {
-      "toolName": "smart_create_note",
-      "executionTime": 89,
+      "toolName": "universal_list",
+      "executionTime": 2,
       "success": true,
-      "routingDecision": "create_note_from_template:template-based",
-      "timestamp": "2025-06-05T04:22:40.334Z"
-    },
-    {
-      "toolName": "test_execution",
-      "executionTime": 52,
-      "success": true,
-      "searchMode": "test",
-      "timestamp": "2025-06-05T04:22:40.386Z"
+      "resultCount": 90,
+      "timestamp": "2025-06-05T12:17:04.362Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-05-29T04:22:40.389Z",
-      "end": "2025-06-05T04:22:40.389Z"
+      "start": "2025-05-30T01:39:20.283Z",
+      "end": "2025-06-06T01:39:20.283Z"
     },
-    "totalExecutions": 4,
-    "averageExecutionTime": 77,
+    "totalExecutions": 2,
+    "averageExecutionTime": 249,
     "successRate": 1,
     "topTools": [
       {
-        "toolName": "test_tool",
-        "usageCount": 1,
-        "averageTime": 45,
-        "successRate": 1
-      },
-      {
         "toolName": "universal_search",
         "usageCount": 1,
-        "averageTime": 123,
+        "averageTime": 495,
         "successRate": 1
       },
       {
-        "toolName": "smart_create_note",
+        "toolName": "universal_list",
         "usageCount": 1,
-        "averageTime": 89,
-        "successRate": 1
-      },
-      {
-        "toolName": "test_execution",
-        "usageCount": 1,
-        "averageTime": 52,
+        "averageTime": 2,
         "successRate": 1
       }
     ],
@@ -76,16 +49,16 @@
       "accuracy": 1
     },
     "performance": {
-      "cacheHitRate": 1,
+      "cacheHitRate": 0,
       "averageRetries": 0,
-      "slowOperations": 0
+      "slowOperations": 1
     },
     "trends": {
       "dailyUsage": {
-        "2025-06-05": 4
+        "2025-06-05": 2
       },
       "hourlyDistribution": {
-        "0": 4
+        "8": 2
       }
     }
   }
