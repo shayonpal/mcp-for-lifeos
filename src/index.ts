@@ -1323,22 +1323,41 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'get_daily_note': {
-        // Use VaultUtils.getLocalDate to ensure proper timezone handling
-        const date = VaultUtils.getLocalDate(args.date as string | undefined);
-        let note = await VaultUtils.getDailyNote(date);
-        
-        if (!note) {
-          note = VaultUtils.createDailyNote(date);
-        }
+        const startTime = Date.now();
+        try {
+          // Use VaultUtils.getLocalDate to ensure proper timezone handling
+          const date = VaultUtils.getLocalDate(args.date as string | undefined);
+          let note = await VaultUtils.getDailyNote(date);
+          
+          if (!note) {
+            note = VaultUtils.createDailyNote(date);
+          }
 
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n${obsidianLink}\n\n---\n\n${note.content}`
-          }]
-        });
+          const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
+          
+          // Record analytics
+          analytics.recordUsage({
+            toolName: 'get_daily_note',
+            executionTime: Date.now() - startTime,
+            success: true
+          });
+          
+          return addVersionMetadata({
+            content: [{
+              type: 'text',
+              text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n${obsidianLink}\n\n---\n\n${note.content}`
+            }]
+          });
+        } catch (error) {
+          // Record failed analytics
+          analytics.recordUsage({
+            toolName: 'get_daily_note',
+            executionTime: Date.now() - startTime,
+            success: false,
+            errorType: error instanceof Error ? error.constructor.name : 'Unknown'
+          });
+          throw error;
+        }
       }
 
       case 'list_folders': {

@@ -271,6 +271,88 @@ chmod +x dist/index.js
 cat ~/.config/claude-desktop/claude_desktop_config.json
 ```
 
+## Analytics System Issues
+
+### Server Startup Failures with ES Module Errors
+
+**Problem:** MCP server fails to start with import/require errors
+```
+ReferenceError: require is not defined in ES module scope
+Error: ENOENT: no such file or directory, mkdir './analytics'
+```
+
+**Root Cause:** ES module compatibility issues in analytics system (Fixed in v1.7.1)
+
+**Solutions:**
+```bash
+# Ensure you're running the latest version
+npm run build
+node dist/index.js
+
+# If still failing, check for mixed require/import usage
+grep -r "require(" src/analytics/
+
+# Verify analytics directory exists
+mkdir -p analytics
+
+# Check file paths are absolute, not relative
+ls -la analytics/usage-metrics*.json
+```
+
+### Analytics Data Loss After Restart
+
+**Problem:** Analytics dashboard shows only recent data after server restart
+```
+Analytics shows "Total Operations: 1" but had more data before
+Historical usage patterns missing from dashboard
+```
+
+**Root Cause:** Analytics system was overwriting existing data (Fixed in v1.7.1)
+
+**Solutions:**
+```bash
+# Verify analytics data is preserved
+cat analytics/usage-metrics.json | jq '.metadata.totalMetrics'
+
+# Check for backup files with historical data
+ls -la analytics/usage-metrics*.json
+
+# If data was lost, check backup files:
+# - usage-metrics-latest.json
+# - usage-metrics-test-backup.json
+
+# Ensure proper startup loading:
+grep -r "loadExistingMetrics" src/analytics/
+```
+
+### Analytics Dashboard Not Updating
+
+**Problem:** Dashboard shows stale data or doesn't reflect recent tool usage
+```
+Recent tool calls not appearing in analytics
+Metrics count not increasing after tool usage
+```
+
+**Root Cause:** Analytics flush interval or collection issues
+
+**Solutions:**
+```bash
+# Check analytics are being collected
+tail -f ~/.logs/claude-desktop.log | grep Analytics
+
+# Verify flush interval (default: 5 minutes)
+grep "flushIntervalMs" src/analytics/usage-metrics.ts
+
+# Force analytics flush by restarting server
+# Or wait for automatic 5-minute flush cycle
+
+# Check if analytics are disabled
+echo $DISABLE_USAGE_ANALYTICS  # Should be empty or 'false'
+
+# Verify analytics tracking in code
+grep -r "analytics.recordUsage" src/
+```
+
 ## Vault Access Problems
 
 ### File Permission Issues

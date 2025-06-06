@@ -69,7 +69,7 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfig = {
   flushIntervalMs: 5 * 60 * 1000, // 5 minutes
   logToConsole: false,
   logToFile: true,
-  outputPath: require('path').join(__dirname, '../../analytics/usage-metrics.json'),
+  outputPath: new URL('../../analytics/usage-metrics.json', import.meta.url).pathname,
   slowOperationThresholdMs: 200,
   dashboardPort: parseInt(process.env.ANALYTICS_DASHBOARD_PORT || '19832') // Default to 19832, configurable
 };

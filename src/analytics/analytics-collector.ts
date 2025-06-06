@@ -5,7 +5,7 @@
  * @see https://github.com/shayonpal/mcp-for-lifeos/issues/76
  */
 
-import { promises as fs } from 'fs';
+import { promises as fs, readFileSync } from 'fs';
 import { existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { UsageMetrics, AnalyticsSummary, AnalyticsConfig, DEFAULT_ANALYTICS_CONFIG } from './usage-metrics.js';
@@ -20,6 +20,7 @@ export class AnalyticsCollector {
     this.config = { ...DEFAULT_ANALYTICS_CONFIG, ...config };
     
     if (this.config.enabled) {
+      this.loadExistingMetrics();
       this.startAutoFlush();
     }
   }
@@ -32,6 +33,34 @@ export class AnalyticsCollector {
       AnalyticsCollector.instance = new AnalyticsCollector(config);
     }
     return AnalyticsCollector.instance;
+  }
+
+  /**
+   * Load existing metrics from disk on startup
+   */
+  private loadExistingMetrics(): void {
+    try {
+      if (existsSync(this.config.outputPath)) {
+        const fileContent = readFileSync(this.config.outputPath, 'utf8');
+        const data = JSON.parse(fileContent);
+        
+        if (data.metrics && Array.isArray(data.metrics)) {
+          // Convert timestamp strings back to Date objects
+          this.metrics = data.metrics.map((metric: any) => ({
+            ...metric,
+            timestamp: new Date(metric.timestamp)
+          }));
+          
+          if (this.config.logToConsole) {
+            console.log(`[Analytics] Loaded ${this.metrics.length} existing metrics from disk`);
+          }
+        }
+      }
+    } catch (error) {
+      // If loading fails, start with empty metrics (don't crash the server)
+      console.error('[Analytics] Failed to load existing metrics:', error);
+      this.metrics = [];
+    }
   }
 
   /**

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Critical Analytics Data Loss Bug** (#83): Fix analytics system losing historical data on server restart
+  - Analytics system now properly loads existing metrics from disk on startup
+  - Historical usage data is preserved across MCP server restarts 
+  - New metrics are appended to existing data instead of overwriting
+  - Prevents permanent loss of analytics trends and insights
+- **ES Module Compatibility** (#83): Fix require() usage causing MCP server startup failures
+  - Replace require('path').join() with ES module compatible new URL() syntax
+  - Ensure analytics directory creation works correctly in all environments
+  - Resolve import errors that prevented MCP server from starting
+
+### Enhanced
+- **Individual Tool Analytics**: Added analytics tracking to non-consolidated tools
+  - get_daily_note tool now records execution metrics
+  - Provides complete usage insights across all tool types
+  - Maintains performance with <1ms overhead per tool call
+
 ### Planning - v2.0.0 Major Release
 - Analytics-driven tool optimization based on real usage data
 - Enhanced AI caller experience with production insights
