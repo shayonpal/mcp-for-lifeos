@@ -1,30 +1,33 @@
 {
   "metadata": {
-    "generated": "2025-06-06T03:45:03.324Z",
+    "generated": "2025-06-20T19:08:25.273Z",
     "totalMetrics": 1,
     "version": "1.0.0"
   },
   "metrics": [
     {
-      "toolName": "get_daily_note",
-      "executionTime": 4,
+      "toolName": "smart_create_note",
+      "executionTime": 7,
       "success": true,
-      "timestamp": "2025-06-06T02:25:26.861Z"
+      "clientName": "claude-ai",
+      "clientVersion": "0.1.0",
+      "sessionId": "session-1750262174116-h2044",
+      "timestamp": "2025-06-18T15:58:16.188Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-05-30T03:45:03.324Z",
-      "end": "2025-06-06T03:45:03.324Z"
+      "start": "2025-06-13T19:08:25.276Z",
+      "end": "2025-06-20T19:08:25.276Z"
     },
     "totalExecutions": 1,
-    "averageExecutionTime": 4,
+    "averageExecutionTime": 7,
     "successRate": 1,
     "topTools": [
       {
-        "toolName": "get_daily_note",
+        "toolName": "smart_create_note",
         "usageCount": 1,
-        "averageTime": 4,
+        "averageTime": 7,
         "successRate": 1
       }
     ],
@@ -40,11 +43,24 @@
     },
     "trends": {
       "dailyUsage": {
-        "2025-06-06": 1
+        "2025-06-18": 1
       },
       "hourlyDistribution": {
-        "22": 1
+        "11": 1
       }
-    }
+    },
+    "topClients": [
+      {
+        "clientName": "claude-ai",
+        "usageCount": 1,
+        "averageTime": 7,
+        "mostUsedTools": [
+          {
+            "toolName": "smart_create_note",
+            "count": 1
+          }
+        ]
+      }
+    ]
   }
 }
