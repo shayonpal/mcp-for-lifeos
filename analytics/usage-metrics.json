@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generated": "2025-06-28T11:02:41.140Z",
-    "totalMetrics": 1,
+    "generated": "2025-06-28T11:28:10.718Z",
+    "totalMetrics": 27,
     "version": "1.0.0"
   },
   "metrics": [
@@ -13,17 +13,252 @@
       "clientVersion": "0.1.0",
       "sessionId": "session-1751050594198-dm8u39",
       "timestamp": "2025-06-27T19:31:44.184Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 440,
+      "success": true,
+      "searchMode": "quick",
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.153Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 47,
+      "success": true,
+      "searchMode": "quick",
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.200Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 29,
+      "success": true,
+      "searchMode": "content_type",
+      "resultCount": 3,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.237Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 27,
+      "success": true,
+      "searchMode": "content_type",
+      "resultCount": 3,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.264Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 27,
+      "success": true,
+      "searchMode": "recent",
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.292Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 27,
+      "success": true,
+      "searchMode": "recent",
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.319Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 8,
+      "success": true,
+      "searchMode": "pattern",
+      "resultCount": 20,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.329Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 10,
+      "success": true,
+      "searchMode": "pattern",
+      "resultCount": 20,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.340Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 28,
+      "success": true,
+      "searchMode": "advanced",
+      "resultCount": 3,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.369Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 27,
+      "success": true,
+      "searchMode": "advanced",
+      "resultCount": 3,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.396Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 66,
+      "success": true,
+      "searchMode": "advanced",
+      "resultCount": 0,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.463Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 28,
+      "success": true,
+      "searchMode": "auto",
+      "resultCount": 147,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.492Z"
+    },
+    {
+      "toolName": "smart_create_note",
+      "executionTime": 0,
+      "success": true,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.496Z"
+    },
+    {
+      "toolName": "smart_create_note",
+      "executionTime": 3,
+      "success": true,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.500Z"
+    },
+    {
+      "toolName": "smart_create_note",
+      "executionTime": 0,
+      "success": true,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.500Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 1,
+      "success": true,
+      "resultCount": 13,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.502Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 0,
+      "success": true,
+      "resultCount": 13,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.502Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 0,
+      "success": true,
+      "resultCount": 12,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.503Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 0,
+      "success": true,
+      "resultCount": 12,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.504Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 0,
+      "success": true,
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.504Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 0,
+      "success": true,
+      "resultCount": 5,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.505Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 103,
+      "success": true,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.608Z"
+    },
+    {
+      "toolName": "universal_list",
+      "executionTime": 105,
+      "success": true,
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.714Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 0,
+      "success": false,
+      "searchMode": "quick",
+      "errorType": "Error",
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.716Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 0,
+      "success": false,
+      "searchMode": "quick",
+      "errorType": "Error",
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.717Z"
+    },
+    {
+      "toolName": "smart_create_note",
+      "executionTime": 1,
+      "success": false,
+      "errorType": "Error",
+      "sessionId": "",
+      "timestamp": "2025-06-28T11:28:10.718Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-06-21T11:02:41.140Z",
-      "end": "2025-06-28T11:02:41.140Z"
+      "start": "2025-06-21T11:28:10.718Z",
+      "end": "2025-06-28T11:28:10.718Z"
     },
-    "totalExecutions": 1,
-    "averageExecutionTime": 3,
-    "successRate": 1,
+    "totalExecutions": 27,
+    "averageExecutionTime": 36,
+    "successRate": 0.89,
     "topTools": [
+      {
+        "toolName": "universal_search",
+        "usageCount": 14,
+        "averageTime": 55,
+        "successRate": 0.86
+      },
+      {
+        "toolName": "universal_list",
+        "usageCount": 8,
+        "averageTime": 26,
+        "successRate": 1
+      },
+      {
+        "toolName": "smart_create_note",
+        "usageCount": 4,
+        "averageTime": 1,
+        "successRate": 0.75
+      },
       {
         "toolName": "get_daily_note",
         "usageCount": 1,
@@ -32,24 +267,45 @@
       }
     ],
     "routingAccuracy": {
-      "autoModeDetections": 0,
+      "autoModeDetections": 1,
       "fallbacksTriggered": 0,
       "accuracy": 1
     },
     "performance": {
       "cacheHitRate": 0,
       "averageRetries": 0,
-      "slowOperations": 0
+      "slowOperations": 1
     },
     "trends": {
       "dailyUsage": {
-        "2025-06-27": 1
+        "2025-06-27": 1,
+        "2025-06-28": 26
       },
       "hourlyDistribution": {
+        "7": 26,
         "15": 1
       }
     },
     "topClients": [
+      {
+        "clientName": "unknown",
+        "usageCount": 26,
+        "averageTime": 38,
+        "mostUsedTools": [
+          {
+            "toolName": "universal_search",
+            "count": 14
+          },
+          {
+            "toolName": "universal_list",
+            "count": 8
+          },
+          {
+            "toolName": "smart_create_note",
+            "count": 4
+          }
+        ]
+      },
       {
         "clientName": "claude",
         "usageCount": 1,
