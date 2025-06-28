@@ -26,6 +26,19 @@
 2. **Fix failing integration tests** - tool-parity.test.ts has multiple failures
 3. **Consider v1.8.0 release** - Many improvements since v1.7.0
 
+## Future Consideration: Issue #85 - Obsidian Tasks Plugin Integration
+**Not for next session, but worth understanding the context:**
+
+Issue #85 proposes adding comprehensive Obsidian Tasks plugin integration with support for 20+ bullet journal task types. Key highlights:
+
+- **Single unified `tasks` tool** with actions: list, get, update, create
+- **Complete bullet journal support**: [ ], [x], [/], [-], [>], [<], [?], [!], [*], ["], [l], [b], [i], [S], [I], [p], [c], [u], [d]
+- **Rich filtering**: by status, dates, priority, tags, folders
+- **Task metadata**: creation, scheduled, due, done dates
+- **Cross-vault visibility**: Query tasks across entire vault efficiently
+
+This would be a significant enhancement for task management workflows but requires substantial implementation work. Consider this after current priorities are addressed.
+
 ## Important Context
 - **DateResolver**: Working correctly but enhanced with logging for future debugging
 - **Section Targeting**: Core functionality fine, but tool callers needed better guidance
