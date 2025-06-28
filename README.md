@@ -184,6 +184,8 @@ Insert content at specific locations within a note based on headings, block refe
 - **position**: Where to insert content relative to target - 'before', 'after', 'append', 'prepend', 'end-of-section' (default: after)
 - **ensureNewline**: Ensure proper line breaks around inserted content (default: true)
 
+**Automatic Task Formatting**: When inserting tasks (lines starting with `- [ ]`), the tool automatically adds creation dates using the Obsidian Tasks Plugin format (➕ YYYY-MM-DD). This helps track when tasks were created and maintains consistency with the Tasks plugin. Tasks with existing creation dates are not modified.
+
 Example usage:
 
 ```bash
@@ -201,6 +203,10 @@ insert_content path: "todo.md" content: "- [ ] New item" target: {lineNumber: 5}
 
 # Insert at end of a section (for heading targets)
 insert_content title: "Project Notes" content: "- Final task" target: {heading: "## Action Items"} position: "end-of-section"
+
+# Task insertion with automatic creation date
+insert_content title: "Daily Note" content: "- [ ] Review PR #123" target: {heading: "Day's Notes"} position: "end-of-section"
+# Result: - [ ] Review PR #123 ➕ 2025-06-28
 ```
 
 ### Navigation Tools

@@ -392,6 +392,70 @@ export class VaultUtils {
   }
 
   /**
+   * Check if content is a task (checkbox list item)
+   */
+  private static isTask(content: string): boolean {
+    const trimmed = content.trim();
+    return /^[-*+]\s+\[[ x]\]/i.test(trimmed);
+  }
+
+  /**
+   * Format a task with Obsidian Tasks Plugin notation
+   * Adds creation date (➕ YYYY-MM-DD) if not already present
+   * Maintains proper property order: ➕ created 🛫 start ⏳ scheduled 📅 due 🔁 recurrence
+   */
+  private static formatTaskWithCreationDate(content: string): string {
+    // Check if it's a task
+    if (!this.isTask(content)) {
+      return content;
+    }
+
+    // Check if it already has a creation date (➕ symbol)
+    if (content.includes('➕')) {
+      return content;
+    }
+
+    // Get today's date in YYYY-MM-DD format
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const creationDate = `➕ ${today}`;
+    
+    // Parse existing properties to maintain order
+    const trimmed = content.trim();
+    
+    // Define property order and their emojis
+    const propertyOrder = ['➕', '🛫', '⏳', '📅', '🔁'];
+    
+    // Extract task text and existing properties
+    let taskText = trimmed;
+    const properties: { [key: string]: string } = {};
+    
+    // Find all existing properties
+    propertyOrder.forEach(emoji => {
+      if (emoji === '➕') return; // Skip creation date as we're adding it
+      
+      const regex = new RegExp(`${emoji}\\s+[^\\s]+(?:\\s+[^\\s]+)*`);
+      const match = taskText.match(regex);
+      if (match) {
+        properties[emoji] = match[0];
+        taskText = taskText.replace(match[0], '').trim();
+      }
+    });
+    
+    // Add creation date to properties
+    properties['➕'] = creationDate;
+    
+    // Rebuild task with properties in correct order
+    let formattedTask = taskText;
+    propertyOrder.forEach(emoji => {
+      if (properties[emoji]) {
+        formattedTask += ` ${properties[emoji]}`;
+      }
+    });
+    
+    return formattedTask;
+  }
+
+  /**
    * Find the last item in a list starting from a given line
    */
   private static findLastListItem(lines: string[], startIndex: number): number {
@@ -598,6 +662,11 @@ export class VaultUtils {
     
     // Prepare content to insert
     let contentToInsert = content;
+    
+    // Format tasks with creation date if applicable
+    const contentLines = contentToInsert.split('\n');
+    const formattedLines = contentLines.map(line => this.formatTaskWithCreationDate(line));
+    contentToInsert = formattedLines.join('\n');
     
     // Smart spacing for list continuation
     if (actualPosition === 'after' && targetLineIndex >= 0) {

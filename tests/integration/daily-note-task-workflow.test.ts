@@ -12,6 +12,7 @@ describe('Daily Note Task Addition Workflow', () => {
   let originalConfig: any;
   const testDate = new Date('2025-06-28');
   const dateStr = format(testDate, 'yyyy-MM-dd');
+  const todayStr = format(new Date(), 'yyyy-MM-dd'); // For task creation dates
 
   beforeEach(async () => {
     // Create temporary vault
@@ -55,7 +56,9 @@ describe('Daily Note Task Addition Workflow', () => {
       );
 
       expect(updatedNote).toBeDefined();
-      expect(updatedNote.content).toContain(taskContent);
+      // Task should now have creation date added (uses today's date, not the daily note date)
+      const expectedTaskWithDate = `${taskContent} ➕ ${todayStr}`;
+      expect(updatedNote.content).toContain(expectedTaskWithDate);
 
       // Verify task is in correct section
       const lines = updatedNote.content.split('\n');
@@ -93,9 +96,9 @@ describe('Daily Note Task Addition Workflow', () => {
         true
       );
 
-      // Verify both tasks are present
-      expect(result.content).toContain('- [ ] First task');
-      expect(result.content).toContain('- [ ] Second task');
+      // Verify both tasks are present with creation dates (uses today's date)
+      expect(result.content).toContain(`- [ ] First task ➕ ${todayStr}`);
+      expect(result.content).toContain(`- [ ] Second task ➕ ${todayStr}`);
       
       // Verify structure is maintained
       const occurrences = (result.content.match(/# Day's Notes/g) || []).length;

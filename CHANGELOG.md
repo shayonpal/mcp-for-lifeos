@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents confusion about exact heading requirements
 
 ### Added
+- **Automatic Task Creation Dates**: Tasks inserted via `insert_content` tool now automatically receive creation date notation
+  - Implements Obsidian Tasks Plugin format with ➕ YYYY-MM-DD notation
+  - Maintains proper property order: ➕ created, 🛫 start, ⏳ scheduled, 📅 due, 🔁 recurrence
+  - Preserves existing creation dates without modification
+  - Applies to all task insertions including daily notes workflow
+  - See `examples/task-creation-date-example.md` for usage details
 - **Template System Integration** (#86): Comprehensive template support for daily notes and general note creation
   - `TemplateManager` class with 24-hour template caching for performance
   - `ObsidianSettings` class for reading Obsidian configuration files
