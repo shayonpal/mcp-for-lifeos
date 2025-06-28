@@ -1,40 +1,42 @@
 # Next Session Instructions - 2025-06-28
 
 ## Session Summary
-- **Duration**: ~30 minutes  
-- **Main focus**: Completed issue #86 - Fixed daily note template inconsistency
-- **Issues worked**: #86 (Bug: tp-daily template not being applied consistently)
+- **Duration**: ~2 hours  
+- **Main focus**: Fixed two critical bugs - date resolution (#87) and section targeting (#88)
+- **Issues worked**: #87 (Date resolution diagnostics), #88 (Section targeting improvements)
 
 ## Current State
 - **Branch**: master
-- **Uncommitted changes**: analytics/usage-metrics.json (auto-updated)
-- **Work in progress**: None - issue #86 complete
+- **Uncommitted changes**: None - all work committed and pushed
+- **Work in progress**: None - both issues completed
 
 ## Completed Today
-- ✅ Verified issue #86 implementation against spec
-- ✅ Completed todo #10: Updated tool documentation with new template parameters
-- ✅ Updated README.md with template system documentation
-- ✅ Updated CHANGELOG.md with fix details
-- ✅ Committed and pushed all changes (commit: bf1e79d)
-- ✅ Issue #86 already closed
+- ✅ Investigated issue #87 - found DateResolver from #86 was working correctly
+- ✅ Added comprehensive logging to DateResolver for diagnostics
+- ✅ Created timezone edge case tests (10 new tests, all passing)
+- ✅ Closed issue #87 with investigation findings
+- ✅ Investigated issue #88 - section targeting for "Day's Notes"
+- ✅ Enhanced error messages with heading suggestions
+- ✅ Added section targeting tests (12 new tests, all passing)
+- ✅ Fixed TypeScript error in insert_content logging
+- ✅ Updated CHANGELOG with both fixes
 
 ## Next Priority
-1. **Monitor template system in production** - Watch for any edge cases with template processing
-2. **Consider v1.8.0 release** - Template system is a significant enhancement
-3. **Check failing integration tests** - Tool parity tests were failing, may need attention
+1. **Issue #89** - User indicated this is next priority
+2. **Fix failing integration tests** - tool-parity.test.ts has multiple failures
+3. **Consider v1.8.0 release** - Many improvements since v1.7.0
 
 ## Important Context
-- **Template System Architecture**: Implemented comprehensive template management with 24-hour caching
-- **Test Coverage**: Full unit and integration tests for template functionality
-- **Jest Config Fix**: Fixed moduleNameMapper typo that was preventing tests from running
-- **Documentation**: Thoroughly documented template parameters in README
+- **DateResolver**: Working correctly but enhanced with logging for future debugging
+- **Section Targeting**: Core functionality fine, but tool callers needed better guidance
+- **Test Coverage**: Added 22 new tests total across both issues
+- **Production Ready**: Both fixes are non-breaking and improve diagnostics
 
 ## Technical Details to Remember
-- TemplateManager uses 24-hour cache for performance
-- ObsidianSettings reads from .obsidian/daily-notes.json and templates.json
-- TemplateParser processes Templater syntax (tp.date.now, tp.file.title)
-- DateResolver handles relative dates (yesterday, tomorrow, +1, -3)
-- VaultUtils.createDailyNote() now uses templates with fallback
+- DateResolver uses date-fns-tz for proper timezone handling
+- Section heading matching is case-sensitive and requires exact match
+- "Day's Notes" (with apostrophe) is the standard daily note heading
+- Enhanced error messages now suggest similar headings when not found
 
 ## Commands to Run
 ```bash
@@ -42,8 +44,11 @@
 cd /Users/shayon/DevProjects/mcp-for-lifeos
 git status
 
-# Check test status
-npm test
+# Check issue #89
+gh issue view 89
+
+# Run failing tests
+npm test -- tests/integration/tool-parity.test.ts
 
 # If releasing v1.8.0
 npm version minor
@@ -51,7 +56,7 @@ git push --tags
 ```
 
 ## Session Notes
-- Successfully implemented a major fix for template consistency
-- All 10 implementation tasks from issue #86 completed
-- System now properly applies tp-daily template to all daily notes
-- Knowledge captured in Pieces for future reference
+- Both issues turned out to be more about improving diagnostics than fixing bugs
+- The DateResolver implementation from #86 is solid
+- Tool callers need clear documentation about exact requirements
+- All new tests provide good coverage for edge cases
