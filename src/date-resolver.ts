@@ -19,13 +19,18 @@ export class DateResolver {
     const ref = referenceDate || new Date();
     const normalizedInput = input.toLowerCase().trim();
     
+    logger.info(`Parsing date input: "${input}" (normalized: "${normalizedInput}")`);
+    logger.debug(`Reference date: ${ref.toISOString()}, Timezone: ${this.userTimezone}`);
+    
     // Get current date in user's timezone
     const zonedRef = toZonedTime(ref, this.userTimezone);
+    logger.debug(`Zoned reference date: ${zonedRef.toISOString()}`)
     
     // Handle relative dates
     switch (normalizedInput) {
       case 'today':
       case 'now':
+        logger.info(`Resolved "${normalizedInput}" to: ${zonedRef.toISOString()}`);
         return zonedRef;
         
       case 'yesterday':
@@ -202,12 +207,17 @@ export class DateResolver {
    */
   public resolveDailyNoteDate(input: string = 'today'): string {
     try {
+      logger.info(`Resolving daily note date for input: "${input}"`);
       const date = this.parseDate(input);
-      return this.formatForDailyNote(date);
+      const formatted = this.formatForDailyNote(date);
+      logger.info(`Daily note date resolved: "${input}" → ${formatted}`);
+      return formatted;
     } catch (error) {
       logger.error(`Error resolving daily note date for input "${input}":`, error);
       // Fallback to today
-      return this.getTodayForDailyNote();
+      const fallback = this.getTodayForDailyNote();
+      logger.warn(`Using fallback date: ${fallback}`);
+      return fallback;
     }
   }
 }

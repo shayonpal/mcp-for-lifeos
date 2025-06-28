@@ -18,6 +18,7 @@ import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
+import { logger } from './logger.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
@@ -1375,8 +1376,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           
           // Parse the date input using DateResolver
           const dateInput = args.date as string || 'today';
+          logger.info(`[get_daily_note] Processing date input: "${dateInput}"`);
+          
           const resolvedDateStr = dateResolver.resolveDailyNoteDate(dateInput);
+          logger.info(`[get_daily_note] DateResolver output: ${resolvedDateStr}`);
+          
           const date = VaultUtils.getLocalDate(resolvedDateStr);
+          logger.info(`[get_daily_note] Final Date object: ${date.toISOString()} (${format(date, 'yyyy-MM-dd')})`);
           
           // Check parameters with defaults
           const createIfMissing = args.createIfMissing !== false;  // default true

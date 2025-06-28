@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced hardcoded daily note content with dynamic template integration
   - Added fallback to minimal template when user template is unavailable
   - Supports relative date formats (yesterday, tomorrow, +1, -3) in date resolution
+- **Date Resolution Diagnostics** (#87): Enhanced logging for date resolution debugging
+  - Added detailed logging throughout DateResolver parsing pipeline
+  - get_daily_note tool now logs date resolution steps
+  - Helps diagnose intermittent timezone-related issues
 
 ### Added
 - **Template System Integration** (#86): Comprehensive template support for daily notes and general note creation
@@ -36,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `confirmCreation` parameter in get_daily_note for user confirmation flow
   - Automatic template discovery from Obsidian templates folder
   - Unit and integration tests for template functionality
+- **Timezone Edge Case Tests** (#87): Comprehensive test coverage for date resolution
+  - Tests for midnight boundary crossings across timezones
+  - DST transition handling tests
+  - Extreme timezone difference tests (UTC+14 to UTC-11)
+  - User scenario simulations for late night/early morning sessions
 
 ### Enhanced
 - **Individual Tool Analytics**: Added analytics tracking to non-consolidated tools
