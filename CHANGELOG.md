@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added detailed logging throughout DateResolver parsing pipeline
   - get_daily_note tool now logs date resolution steps
   - Helps diagnose intermittent timezone-related issues
+- **Section Targeting Improvements** (#88): Enhanced heading detection for insert_content tool
+  - Added detailed logging for heading searches and failures
+  - Improved error messages with heading suggestions when target not found
+  - Lists available headings to help identify case sensitivity issues
+  - Updated tool description to clarify "Day's Notes" heading usage
+  - Prevents confusion about exact heading requirements
 
 ### Added
 - **Template System Integration** (#86): Comprehensive template support for daily notes and general note creation
@@ -45,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - DST transition handling tests
   - Extreme timezone difference tests (UTC+14 to UTC-11)
   - User scenario simulations for late night/early morning sessions
+- **Section Targeting Tests** (#88): Test coverage for heading-based content insertion
+  - Unit tests for exact heading matching including "Day's Notes"
+  - Integration tests for daily note task workflows
+  - Tests to prevent duplicate file creation
+  - Edge case tests for heading variations and case sensitivity
 
 ### Enhanced
 - **Individual Tool Analytics**: Added analytics tracking to non-consolidated tools

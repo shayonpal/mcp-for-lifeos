@@ -569,7 +569,7 @@ const tools: Tool[] = [
   },
   {
     name: 'insert_content',
-    description: 'Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting.',
+    description: 'Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading "Day\'s Notes" (with apostrophe) to target the main content section.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1924,6 +1924,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const position = (args.position as 'before' | 'after' | 'append' | 'prepend' | 'end-of-section') || 'after';
         const ensureNewline = args.ensureNewline !== false; // Default true
         
+        logger.info(`[insert_content] Inserting content into ${notePath}`);
+        logger.info(`[insert_content] Target: ${JSON.stringify(target)}`);
+        logger.info(`[insert_content] Position: ${position}`);
+        
         // Perform the insertion
         let updatedNote;
         try {
@@ -1935,6 +1939,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ensureNewline
           );
         } catch (insertError) {
+          logger.error(`[insert_content] Failed to insert content: ${insertError}`);
           throw insertError;
         }
         

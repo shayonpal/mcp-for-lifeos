@@ -9,6 +9,7 @@ import { TemplateManager } from './template-manager.js';
 import { ObsidianSettings } from './obsidian-settings.js';
 import { DateResolver } from './date-resolver.js';
 import { TemplateContext } from './template-parser.js';
+import { logger } from './logger.js';
 
 // iCloud sync retry configuration
 const ICLOUD_RETRY_CONFIG = {
@@ -465,15 +466,60 @@ export class VaultUtils {
     } else if (target.heading) {
       // Find heading - exact match (ignore leading/trailing whitespace)
       const headingToFind = target.heading.trim();
-      targetLineIndex = lines.findIndex(line => {
+      logger.info(`[insertContent] Looking for heading: "${headingToFind}"`);
+      
+      targetLineIndex = lines.findIndex((line, index) => {
         const trimmedLine = line.trim();
         // Match markdown headings (# to ######)
-        return /^#{1,6}\s+/.test(trimmedLine) && 
-               trimmedLine.replace(/^#{1,6}\s+/, '').trim() === headingToFind.replace(/^#{1,6}\s+/, '').trim();
+        if (/^#{1,6}\s+/.test(trimmedLine)) {
+          const headingText = trimmedLine.replace(/^#{1,6}\s+/, '').trim();
+          const targetHeadingText = headingToFind.replace(/^#{1,6}\s+/, '').trim();
+          
+          if (headingText === targetHeadingText) {
+            logger.info(`[insertContent] Found heading "${headingText}" at line ${index + 1}`);
+            return true;
+          }
+        }
+        return false;
       });
       
       if (targetLineIndex === -1) {
-        throw new Error(`Heading not found: ${target.heading}`);
+        // Log available headings for debugging
+        const availableHeadings = lines
+          .map((line, idx) => ({ line, idx }))
+          .filter(({ line }) => /^#{1,6}\s+/.test(line.trim()))
+          .map(({ line, idx }) => {
+            const headingText = line.trim().replace(/^#{1,6}\s+/, '');
+            return { line: idx + 1, text: headingText, full: line.trim() };
+          });
+        
+        logger.error(`[insertContent] Heading not found: "${target.heading}"`);
+        logger.error(`[insertContent] Available headings in file:`);
+        availableHeadings.forEach(h => {
+          logger.error(`  Line ${h.line}: "${h.full}"`);
+        });
+        
+        // Check for common variations and provide suggestions
+        const targetText = headingToFind.replace(/^#{1,6}\s+/, '').toLowerCase();
+        const suggestions = availableHeadings.filter(h => {
+          const headingLower = h.text.toLowerCase();
+          return (
+            headingLower.includes(targetText) ||
+            targetText.includes(headingLower) ||
+            // Check for common variations
+            (targetText === "day's notes" && headingLower === "days notes") ||
+            (targetText === "days notes" && headingLower === "day's notes") ||
+            // Levenshtein distance would be better, but this is simpler
+            Math.abs(headingLower.length - targetText.length) <= 2
+          );
+        });
+        
+        let errorMsg = `Heading not found: ${target.heading}`;
+        if (suggestions.length > 0) {
+          errorMsg += `\n\nDid you mean one of these?\n${suggestions.map(s => `  - "${s.text}"`).join('\n')}`;
+        }
+        
+        throw new Error(errorMsg);
       }
       
       // For end-of-section, find where this section ends
