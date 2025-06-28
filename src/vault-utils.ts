@@ -5,6 +5,10 @@ import { glob } from 'glob';
 import { format } from 'date-fns';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions, NoteTemplate } from './types.js';
 import { LIFEOS_CONFIG, YAML_RULES } from './config.js';
+import { TemplateManager } from './template-manager.js';
+import { ObsidianSettings } from './obsidian-settings.js';
+import { DateResolver } from './date-resolver.js';
+import { TemplateContext } from './template-parser.js';
 
 // iCloud sync retry configuration
 const ICLOUD_RETRY_CONFIG = {
@@ -15,6 +19,34 @@ const ICLOUD_RETRY_CONFIG = {
 };
 
 export class VaultUtils {
+  private static templateManager: TemplateManager | null = null;
+  private static obsidianSettings: ObsidianSettings | null = null;
+  private static dateResolver: DateResolver | null = null;
+
+  /**
+   * Get singleton instances of our services
+   */
+  private static getTemplateManager(): TemplateManager {
+    if (!this.templateManager) {
+      this.templateManager = new TemplateManager(LIFEOS_CONFIG.vaultPath);
+    }
+    return this.templateManager;
+  }
+
+  private static getObsidianSettings(): ObsidianSettings {
+    if (!this.obsidianSettings) {
+      this.obsidianSettings = new ObsidianSettings(LIFEOS_CONFIG.vaultPath);
+    }
+    return this.obsidianSettings;
+  }
+
+  private static getDateResolver(): DateResolver {
+    if (!this.dateResolver) {
+      this.dateResolver = new DateResolver();
+    }
+    return this.dateResolver;
+  }
+
   /**
    * Get the current local date at midnight (start of day).
    * This ensures consistent date handling regardless of timezone.
@@ -794,21 +826,70 @@ export class VaultUtils {
     };
   }
 
-  static createDailyNote(date: Date): LifeOSNote {
+  static async createDailyNote(date: Date): Promise<LifeOSNote> {
     // Ensure we're working with local date at start of day
     const localDate = this.getLocalDate(date);
     const dateStr = format(localDate, 'yyyy-MM-dd');
-    const dateDisplay = format(localDate, 'MMMM dd, yyyy');
     
-    const frontmatter: YAMLFrontmatter = {
-      aliases: [dateDisplay],
-      'content type': 'Daily Note',
-      tags: ['dailyNote']
-    };
+    try {
+      // Get the template manager and settings
+      const templateManager = this.getTemplateManager();
+      const obsidianSettings = this.getObsidianSettings();
+      
+      // Get the daily note template name and folder from settings
+      const templateName = await templateManager.getDailyNoteTemplate();
+      const dailyNoteFolder = await obsidianSettings.getDailyNoteFolder();
+      
+      if (templateName) {
+        // Create template context
+        const context: TemplateContext = {
+          title: dateStr,
+          date: localDate,
+          folder: dailyNoteFolder
+        };
+        
+        // Process the template
+        const processedContent = await templateManager.processTemplate(templateName, context);
+        
+        if (processedContent) {
+          // Parse the processed template to extract frontmatter and content
+          const parsed = matter(processedContent);
+          
+          // Create the note with the processed template
+          return this.createNote(
+            dateStr, 
+            parsed.data as YAMLFrontmatter, 
+            parsed.content,
+            dailyNoteFolder
+          );
+        }
+      }
+      
+      // Fallback to minimal template if no template found or processing failed
+      const dateDisplay = format(localDate, 'MMMM dd, yyyy');
+      const frontmatter: YAMLFrontmatter = {
+        aliases: [dateDisplay],
+        'content type': ['Daily Note'],  // Use array format to match user's template
+        tags: ['dailyNote']
+      };
 
-    const content = `# ${dateDisplay}\n\n## Today's Focus\n\n\n## Notes\n\n\n## Reflections\n\n`;
+      const content = `# Day's Notes\n\n\n\n\n# Linked Notes\n\n# Notes Created On This Day\n\n`;
 
-    return this.createNote(dateStr, frontmatter, content, '20 - Areas/21 - Myself/Journals/Daily');
+      return this.createNote(dateStr, frontmatter, content, dailyNoteFolder);
+      
+    } catch (error) {
+      // If async operations fail, use synchronous fallback
+      const dateDisplay = format(localDate, 'MMMM dd, yyyy');
+      const frontmatter: YAMLFrontmatter = {
+        aliases: [dateDisplay],
+        'content type': ['Daily Note'],
+        tags: ['dailyNote']
+      };
+
+      const content = `# Day's Notes\n\n\n\n\n# Linked Notes\n\n# Notes Created On This Day\n\n`;
+
+      return this.createNote(dateStr, frontmatter, content, '20 - Areas/21 - Myself/Journals/Daily');
+    }
   }
 
   private static getAllNotes(): LifeOSNote[] {

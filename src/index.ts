@@ -306,7 +306,8 @@ const tools: Tool[] = [
       properties: {
         title: { type: 'string', description: 'Note title' },
         content: { type: 'string', description: 'Note content (markdown)' },
-        template: { type: 'string', description: 'Template to use (restaurant, article, person, etc.)' },
+        template: { type: 'string', description: 'Template name to use (e.g., tpl-person, tpl-article, etc.)' },
+        useTemplate: { type: 'boolean', description: 'If true, returns available templates for selection instead of creating note' },
         contentType: { type: 'string', description: 'Content type (Article, Daily Note, Recipe, etc.)' },
         category: { type: 'string', description: 'Category' },
         subCategory: { type: 'string', description: 'Sub-category' },
@@ -397,7 +398,9 @@ const tools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        date: { type: 'string', description: 'Date in YYYY-MM-DD format (optional, defaults to today)' }
+        date: { type: 'string', description: 'Date in YYYY-MM-DD format, relative date (today, yesterday, tomorrow), or natural language (optional, defaults to today)' },
+        createIfMissing: { type: 'boolean', description: 'Create the daily note if it doesn\'t exist (default: true)' },
+        confirmCreation: { type: 'boolean', description: 'Ask for confirmation before creating a new daily note (default: false)' }
       }
     }
   },
@@ -1139,6 +1142,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Title is required');
         }
 
+        // Handle useTemplate discovery mode
+        if (args.useTemplate === true) {
+          try {
+            const templateManager = new (await import('./template-manager.js')).TemplateManager(LIFEOS_CONFIG.vaultPath);
+            const availableTemplates = await templateManager.getTemplateNames();
+            
+            return addVersionMetadata({
+              content: [{
+                type: 'text',
+                text: `Available templates:\n\n${availableTemplates.map(t => `- ${t}`).join('\n')}\n\nTo use a template, run create_note again with:\ntemplate: "template-name"`
+              }]
+            });
+          } catch (error) {
+            return addVersionMetadata({
+              content: [{
+                type: 'text',
+                text: `Error listing templates: ${error instanceof Error ? error.message : 'Unknown error'}`
+              }]
+            });
+          }
+        }
+
         let frontmatter: any = { title };
         let content = (args.content as string) || '';
         let targetFolder = args.targetFolder as string | undefined;
@@ -1345,12 +1370,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'get_daily_note': {
         const startTime = Date.now();
         try {
-          // Use VaultUtils.getLocalDate to ensure proper timezone handling
-          const date = VaultUtils.getLocalDate(args.date as string | undefined);
+          // Import DateResolver at the top of the file if not already
+          const dateResolver = new (await import('./date-resolver.js')).DateResolver();
+          
+          // Parse the date input using DateResolver
+          const dateInput = args.date as string || 'today';
+          const resolvedDateStr = dateResolver.resolveDailyNoteDate(dateInput);
+          const date = VaultUtils.getLocalDate(resolvedDateStr);
+          
+          // Check parameters with defaults
+          const createIfMissing = args.createIfMissing !== false;  // default true
+          const confirmCreation = args.confirmCreation === true;   // default false
+          
           let note = await VaultUtils.getDailyNote(date);
           
           if (!note) {
-            note = VaultUtils.createDailyNote(date);
+            if (!createIfMissing) {
+              return addVersionMetadata({
+                content: [{
+                  type: 'text',
+                  text: `Daily note for ${format(date, 'MMMM dd, yyyy')} does not exist.\n\nUse createIfMissing: true to create it automatically.`
+                }]
+              });
+            }
+            
+            if (confirmCreation) {
+              return addVersionMetadata({
+                content: [{
+                  type: 'text',
+                  text: `Daily note for ${format(date, 'MMMM dd, yyyy')} does not exist.\n\nWould you like to create it? Please confirm by running the command again with confirmCreation: false or createIfMissing: true.`
+                }]
+              });
+            }
+            
+            note = await VaultUtils.createDailyNote(date);
           }
 
           const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
