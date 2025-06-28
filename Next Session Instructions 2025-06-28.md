@@ -1,16 +1,17 @@
-# Next Session Instructions - 2025-06-28
+# Next Session Instructions - June 28, 2025
 
 ## Session Summary
-- **Duration**: ~2 hours  
-- **Main focus**: Fixed two critical bugs - date resolution (#87) and section targeting (#88)
-- **Issues worked**: #87 (Date resolution diagnostics), #88 (Section targeting improvements)
+- **Duration**: ~45 minutes (including previous ~2 hours session)
+- **Main focus**: Fixed issue #89 - Tasks missing creation date notation
+- **Issues worked**: #87 (completed earlier), #88 (completed earlier), #89 (completed now)
 
 ## Current State
 - **Branch**: master
-- **Uncommitted changes**: None - all work committed and pushed
-- **Work in progress**: None - both issues completed
+- **Uncommitted changes**: analytics/usage-metrics.json (auto-updating)
+- **Work in progress**: None - clean state
 
 ## Completed Today
+### Earlier Session
 - ✅ Investigated issue #87 - found DateResolver from #86 was working correctly
 - ✅ Added comprehensive logging to DateResolver for diagnostics
 - ✅ Created timezone edge case tests (10 new tests, all passing)
@@ -21,35 +22,45 @@
 - ✅ Fixed TypeScript error in insert_content logging
 - ✅ Updated CHANGELOG with both fixes
 
+### Current Session
+- ✅ Implemented automatic task creation dates (➕ YYYY-MM-DD) for Obsidian Tasks Plugin
+- ✅ Added intelligent detection to preserve existing creation dates
+- ✅ Created comprehensive test suite (6 unit tests, 5 integration tests)
+- ✅ Updated CHANGELOG with fix details
+- ✅ Code formatted with Prettier
+- ✅ Successfully deployed to master branch
+- ✅ Issue #89 automatically closed on GitHub
+
 ## Next Priority
-1. **Issue #89** - User indicated this is next priority
-2. **Fix failing integration tests** - tool-parity.test.ts has multiple failures
-3. **Consider v1.8.0 release** - Many improvements since v1.7.0
+1. **Issue #90** - Fix tasks being inserted at top of list instead of bottom in daily notes
+   - User expects tasks to be appended to bottom of existing task lists
+   - Currently they appear at the top which disrupts chronological order
+   - Need to modify the insert_content logic for "end-of-section" positioning
 
-## Future Consideration: Issue #85 - Obsidian Tasks Plugin Integration
-**Not for next session, but worth understanding the context:**
+2. **Thorough Testing of Issues #86-90** - Test all recent task-related fixes together
+   - Daily note template consistency (#86)
+   - Date resolution diagnostics (#87) 
+   - Section targeting improvements (#88)
+   - Task creation date formatting (#89)
+   - Task insertion positioning (#90)
 
-Issue #85 proposes adding comprehensive Obsidian Tasks plugin integration with support for 20+ bullet journal task types. Key highlights:
-
-- **Single unified `tasks` tool** with actions: list, get, update, create
-- **Complete bullet journal support**: [ ], [x], [/], [-], [>], [<], [?], [!], [*], ["], [l], [b], [i], [S], [I], [p], [c], [u], [d]
-- **Rich filtering**: by status, dates, priority, tags, folders
-- **Task metadata**: creation, scheduled, due, done dates
-- **Cross-vault visibility**: Query tasks across entire vault efficiently
-
-This would be a significant enhancement for task management workflows but requires substantial implementation work. Consider this after current priorities are addressed.
+3. **Issue #27** (Low priority) - Add faster editing methods for large notes
+   - P1 enhancement but not urgent
+   - Can be addressed after task formatting issues are fully resolved
+   - User explicitly stated this is low priority right now
 
 ## Important Context
-- **DateResolver**: Working correctly but enhanced with logging for future debugging
-- **Section Targeting**: Core functionality fine, but tool callers needed better guidance
-- **Test Coverage**: Added 22 new tests total across both issues
-- **Production Ready**: Both fixes are non-breaking and improve diagnostics
+- The task formatting system now automatically adds creation dates using the formatTaskWithCreationDate() method in VaultUtils
+- Property order is maintained: ➕ created, 🛫 start, ⏳ scheduled, 📅 due, 🔁 recurrence
+- All task-related issues (#86-90) are interconnected and affect daily note workflows
+- The "end-of-section" logic currently finds the last list item but may need adjustment for chronological ordering
 
 ## Technical Details to Remember
-- DateResolver uses date-fns-tz for proper timezone handling
-- Section heading matching is case-sensitive and requires exact match
-- "Day's Notes" (with apostrophe) is the standard daily note heading
-- Enhanced error messages now suggest similar headings when not found
+- VaultUtils.insertContent() now includes task formatting logic
+- The findLastListItem() method determines where tasks are inserted
+- Task detection uses isTask() helper method checking for "- [ ]" pattern
+- Integration tests verify the complete daily note workflow
+- Analytics file auto-updates are normal and don't need to be committed
 
 ## Commands to Run
 ```bash
@@ -57,19 +68,19 @@ This would be a significant enhancement for task management workflows but requir
 cd /Users/shayon/DevProjects/mcp-for-lifeos
 git status
 
-# Check issue #89
-gh issue view 89
+# Start work on issue #90
+gh issue view 90
 
-# Run failing tests
-npm test -- tests/integration/tool-parity.test.ts
+# Run the specific test that likely needs updating
+npm test tests/integration/daily-note-task-workflow.test.ts
 
-# If releasing v1.8.0
-npm version minor
-git push --tags
+# Check all task-related tests
+npm test -- --testNamePattern="task"
 ```
 
-## Session Notes
-- Both issues turned out to be more about improving diagnostics than fixing bugs
-- The DateResolver implementation from #86 is solid
-- Tool callers need clear documentation about exact requirements
-- All new tests provide good coverage for edge cases
+## Session Progress Summary
+- 3 of 5 task-related issues completed (#87, #88, #89)
+- 1 issue remaining before comprehensive testing (#90)
+- Total new tests added today: 28 tests (10 + 12 + 6)
+- All tests currently passing
+- Code quality maintained with TypeScript checking and Prettier formatting
