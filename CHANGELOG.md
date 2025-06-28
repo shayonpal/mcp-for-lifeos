@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2025-06-28
+
 ### Fixed
 - **Critical Analytics Data Loss Bug** (#83): Fix analytics system losing historical data on server restart
   - Analytics system now properly loads existing metrics from disk on startup
@@ -39,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Lists available headings to help identify case sensitivity issues
   - Updated tool description to clarify "Day's Notes" heading usage
   - Prevents confusion about exact heading requirements
+- **Task Insertion Order Verification** (#90): Investigated and verified correct task insertion behavior
+  - Confirmed tasks are correctly appended at bottom of existing lists
+  - Added 4 comprehensive integration tests for task insertion scenarios
+  - Works correctly with empty sections, mixed content, and existing tasks
+  - Issue may have been resolved by fixes #86-89 or confused with duplicate file issue
 
 ### Added
 - **Automatic Task Creation Dates**: Tasks inserted via `insert_content` tool now automatically receive creation date notation

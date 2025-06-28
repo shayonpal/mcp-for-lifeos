@@ -44,10 +44,12 @@
    - Task creation date formatting (#89)
    - Task insertion positioning (#90)
 
-3. **Issue #27** (Low priority) - Add faster editing methods for large notes
-   - P1 enhancement but not urgent
-   - Can be addressed after task formatting issues are fully resolved
-   - User explicitly stated this is low priority right now
+3. **Release v1.8.0** - Once #90 is resolved and #86-90 are thoroughly tested together
+   - Significant improvements warrant a minor version bump
+   - Will include all task-related fixes and enhancements
+   - Update version in package.json
+   - Create comprehensive release notes
+   - Tag and push release
 
 ## Important Context
 - The task formatting system now automatically adds creation dates using the formatTaskWithCreationDate() method in VaultUtils
@@ -76,6 +78,11 @@ npm test tests/integration/daily-note-task-workflow.test.ts
 
 # Check all task-related tests
 npm test -- --testNamePattern="task"
+
+# When ready for v1.8.0 release
+npm version minor
+git push --tags
+gh release create v1.8.0 --title "v1.8.0: Task Management Enhancements" --notes-file RELEASE_NOTES.md
 ```
 
 ## Session Progress Summary

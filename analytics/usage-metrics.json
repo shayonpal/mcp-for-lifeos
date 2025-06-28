@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generated": "2025-06-28T13:23:42.060Z",
-    "totalMetrics": 2,
+    "generated": "2025-06-28T13:47:41.253Z",
+    "totalMetrics": 1,
     "version": "1.0.0"
   },
   "metrics": [
@@ -13,30 +13,21 @@
       "clientVersion": "0.1.0",
       "sessionId": "session-1751050594198-dm8u39",
       "timestamp": "2025-06-27T19:31:44.184Z"
-    },
-    {
-      "toolName": "get_daily_note",
-      "executionTime": 5,
-      "success": true,
-      "clientName": "claude",
-      "clientVersion": "0.1.0",
-      "sessionId": "session-1751113122476-lud5kw",
-      "timestamp": "2025-06-28T13:04:32.473Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-06-21T13:23:42.060Z",
-      "end": "2025-06-28T13:23:42.060Z"
+      "start": "2025-06-21T13:47:41.253Z",
+      "end": "2025-06-28T13:47:41.253Z"
     },
-    "totalExecutions": 2,
-    "averageExecutionTime": 4,
+    "totalExecutions": 1,
+    "averageExecutionTime": 3,
     "successRate": 1,
     "topTools": [
       {
         "toolName": "get_daily_note",
-        "usageCount": 2,
-        "averageTime": 4,
+        "usageCount": 1,
+        "averageTime": 3,
         "successRate": 1
       }
     ],
@@ -52,23 +43,21 @@
     },
     "trends": {
       "dailyUsage": {
-        "2025-06-27": 1,
-        "2025-06-28": 1
+        "2025-06-27": 1
       },
       "hourlyDistribution": {
-        "9": 1,
         "15": 1
       }
     },
     "topClients": [
       {
         "clientName": "claude",
-        "usageCount": 2,
-        "averageTime": 4,
+        "usageCount": 1,
+        "averageTime": 3,
         "mostUsedTools": [
           {
             "toolName": "get_daily_note",
-            "count": 2
+            "count": 1
           }
         ]
       }
