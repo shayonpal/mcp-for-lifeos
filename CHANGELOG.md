@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added detailed logging throughout DateResolver parsing pipeline
   - get_daily_note tool now logs date resolution steps
   - Helps diagnose intermittent timezone-related issues
+- **Tasks Missing Creation Date** (#89): Fix tasks inserted via MCP server missing creation date notation
+  - Tasks now automatically include creation date in Obsidian Tasks Plugin format (➕ YYYY-MM-DD)
+  - Intelligent detection preserves existing creation dates to avoid duplication
+  - Maintains proper property order as per Obsidian Tasks Plugin specification
+  - Works seamlessly with daily note workflows and all insert_content operations
 - **Section Targeting Improvements** (#88): Enhanced heading detection for insert_content tool
   - Added detailed logging for heading searches and failures
   - Improved error messages with heading suggestions when target not found
