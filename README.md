@@ -70,7 +70,8 @@ Create a new note with proper YAML frontmatter and optional template integration
 
 - **title** (required): Note title
 - **content**: Markdown content
-- **template**: Template to use (restaurant, article, person, etc.)
+- **template**: Template name to use (e.g., tpl-person, tpl-article, etc.)
+- **useTemplate**: If true, returns available templates for selection instead of creating note
 - **contentType**: Content type (Article, Daily Note, Recipe, etc.)
 - **category**: Category classification
 - **tags**: Array of tags
@@ -78,6 +79,12 @@ Create a new note with proper YAML frontmatter and optional template integration
 - **source**: Source URL for articles
 - **people**: People mentioned in the note
 - **customData**: Custom data for template processing
+
+Template integration features:
+- Automatically discovers templates from your Obsidian templates folder
+- Processes Templater syntax (`<% tp.file.title %>`, `<% tp.date.now() %>`)
+- Falls back gracefully if templates are missing or unavailable
+- Use `useTemplate: true` to list available templates before creating
 
 #### `create_note_from_template`
 
@@ -124,9 +131,17 @@ edit_note title: "My Article" mode: "replace" frontmatter: {contentType: "Articl
 
 #### `get_daily_note`
 
-Get or create a daily note
+Get or create a daily note with automatic template integration
 
-- **date**: Date in YYYY-MM-DD format (optional, defaults to today)
+- **date**: Date in YYYY-MM-DD format, relative date (today, yesterday, tomorrow, +1, -3), or natural language (optional, defaults to today)
+- **createIfMissing**: Create the daily note if it doesn't exist (default: true)
+- **confirmCreation**: Ask for confirmation before creating a new daily note (default: false)
+
+The daily note system integrates with your Obsidian template configuration:
+- Automatically uses the template specified in `.obsidian/daily-notes.json`
+- Processes Templater syntax (`<% tp.date.now() %>`, `<% tp.file.title %>`)
+- Falls back to a minimal template if no template is configured
+- Supports relative dates like "yesterday", "tomorrow", "+5", "-3"
 
 #### `move_items`
 
@@ -744,15 +759,17 @@ The server provides full integration with your existing LifeOS templates:
 
 ### Template Processing
 
-The server converts Templater syntax to static content:
+The server includes a comprehensive template system with 24-hour caching:
 
-```yaml
-# Template: <% tp.file.title %>
-# Becomes: "Restaurant Name"
-
-# Template: <% moment().format('YYYY-MM-DD') %>
-# Becomes: "2025-05-24"
-```
+- **Automatic Template Discovery**: Reads templates from your configured Obsidian templates folder
+- **Templater Syntax Support**: Processes common Templater variables:
+  - `<% tp.file.title %>` → Note title
+  - `<% tp.date.now("YYYY-MM-DD") %>` → Current date in specified format
+  - `<% tp.date.now("dddd, MMMM D, YYYY") %>` → Formatted date (e.g., "Saturday, June 28, 2025")
+  - `<% moment().format('YYYY-MM-DD') %>` → Legacy moment.js syntax (also supported)
+- **Daily Note Integration**: Automatically uses the template specified in `.obsidian/daily-notes.json`
+- **Performance Optimization**: Templates cached for 24 hours to reduce file I/O
+- **Graceful Fallback**: If template processing fails, falls back to minimal default templates
 
 ## Support and Contributing
 

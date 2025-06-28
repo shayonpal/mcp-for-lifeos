@@ -17,6 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replace require('path').join() with ES module compatible new URL() syntax
   - Ensure analytics directory creation works correctly in all environments
   - Resolve import errors that prevented MCP server from starting
+- **Daily Note Template Inconsistency** (#86): Fix tp-daily template not being applied consistently
+  - Implemented comprehensive template management system with 24-hour caching
+  - Daily notes now automatically use the template specified in `.obsidian/daily-notes.json`
+  - Added Templater syntax processing for `<% tp.date.now() %>` and `<% tp.file.title %>`
+  - Replaced hardcoded daily note content with dynamic template integration
+  - Added fallback to minimal template when user template is unavailable
+  - Supports relative date formats (yesterday, tomorrow, +1, -3) in date resolution
+
+### Added
+- **Template System Integration** (#86): Comprehensive template support for daily notes and general note creation
+  - `TemplateManager` class with 24-hour template caching for performance
+  - `ObsidianSettings` class for reading Obsidian configuration files
+  - `TemplateParser` for processing Templater syntax in templates
+  - `DateResolver` service for centralized date parsing and formatting
+  - Template parameters added to `create_note` and `get_daily_note` tools
+  - `useTemplate` flag in create_note to list available templates
+  - `confirmCreation` parameter in get_daily_note for user confirmation flow
+  - Automatic template discovery from Obsidian templates folder
+  - Unit and integration tests for template functionality
 
 ### Enhanced
 - **Individual Tool Analytics**: Added analytics tracking to non-consolidated tools
