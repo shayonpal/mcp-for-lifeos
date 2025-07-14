@@ -1,33 +1,105 @@
 {
   "metadata": {
-    "generated": "2025-06-28T13:51:50.153Z",
-    "totalMetrics": 1,
+    "generated": "2025-07-14T21:56:03.465Z",
+    "totalMetrics": 7,
     "version": "1.0.0"
   },
   "metrics": [
     {
       "toolName": "get_daily_note",
-      "executionTime": 3,
+      "executionTime": 8,
       "success": true,
-      "clientName": "claude",
-      "clientVersion": "0.1.0",
-      "sessionId": "session-1751050594198-dm8u39",
-      "timestamp": "2025-06-27T19:31:44.184Z"
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:42:01.959Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 48,
+      "success": true,
+      "searchMode": "pattern",
+      "resultCount": 36,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:45:52.723Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 484,
+      "success": true,
+      "searchMode": "recent",
+      "resultCount": 4,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:45:58.542Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 12,
+      "success": true,
+      "searchMode": "pattern",
+      "resultCount": 4,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:46:02.620Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 18,
+      "success": true,
+      "searchMode": "pattern",
+      "resultCount": 4,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:46:08.152Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 453,
+      "success": true,
+      "searchMode": "recent",
+      "resultCount": 0,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:55:43.560Z"
+    },
+    {
+      "toolName": "universal_search",
+      "executionTime": 48,
+      "success": true,
+      "searchMode": "recent",
+      "resultCount": 0,
+      "clientName": "claude-code",
+      "clientVersion": "1.0.51",
+      "sessionId": "session-1752529263654-9arnsf",
+      "timestamp": "2025-07-14T21:55:48.696Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-06-21T13:51:50.154Z",
-      "end": "2025-06-28T13:51:50.154Z"
+      "start": "2025-07-07T21:56:03.465Z",
+      "end": "2025-07-14T21:56:03.465Z"
     },
-    "totalExecutions": 1,
-    "averageExecutionTime": 3,
+    "totalExecutions": 7,
+    "averageExecutionTime": 153,
     "successRate": 1,
     "topTools": [
       {
+        "toolName": "universal_search",
+        "usageCount": 6,
+        "averageTime": 177,
+        "successRate": 1
+      },
+      {
         "toolName": "get_daily_note",
         "usageCount": 1,
-        "averageTime": 3,
+        "averageTime": 8,
         "successRate": 1
       }
     ],
@@ -39,22 +111,26 @@
     "performance": {
       "cacheHitRate": 0,
       "averageRetries": 0,
-      "slowOperations": 0
+      "slowOperations": 2
     },
     "trends": {
       "dailyUsage": {
-        "2025-06-27": 1
+        "2025-07-14": 7
       },
       "hourlyDistribution": {
-        "15": 1
+        "17": 7
       }
     },
     "topClients": [
       {
-        "clientName": "claude",
-        "usageCount": 1,
-        "averageTime": 3,
+        "clientName": "claude-code",
+        "usageCount": 7,
+        "averageTime": 153,
         "mostUsedTools": [
+          {
+            "toolName": "universal_search",
+            "count": 6
+          },
           {
             "toolName": "get_daily_note",
             "count": 1

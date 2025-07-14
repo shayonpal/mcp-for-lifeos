@@ -14,12 +14,9 @@ import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 // Test configuration
 const TEST_CONFIG = {
-  SERVER_PATH: join(__dirname, '../../dist/index.js'),
+  SERVER_PATH: 'dist/index.js',
   TIMEOUT_MS: 30000,
   SAMPLE_SIZE: 50, // Statistically significant for 90% accuracy target
   SUCCESS_THRESHOLD: 0.9, // 90% tool selection accuracy target
