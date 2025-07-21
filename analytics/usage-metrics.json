@@ -1,105 +1,35 @@
 {
   "metadata": {
-    "generated": "2025-07-14T21:56:03.465Z",
-    "totalMetrics": 7,
+    "generated": "2025-07-21T02:38:04.416Z",
+    "totalMetrics": 1,
     "version": "1.0.0"
   },
   "metrics": [
     {
-      "toolName": "get_daily_note",
-      "executionTime": 8,
-      "success": true,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:42:01.959Z"
-    },
-    {
       "toolName": "universal_search",
-      "executionTime": 48,
-      "success": true,
-      "searchMode": "pattern",
-      "resultCount": 36,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:45:52.723Z"
-    },
-    {
-      "toolName": "universal_search",
-      "executionTime": 484,
+      "executionTime": 497,
       "success": true,
       "searchMode": "recent",
-      "resultCount": 4,
+      "resultCount": 5,
       "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:45:58.542Z"
-    },
-    {
-      "toolName": "universal_search",
-      "executionTime": 12,
-      "success": true,
-      "searchMode": "pattern",
-      "resultCount": 4,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:46:02.620Z"
-    },
-    {
-      "toolName": "universal_search",
-      "executionTime": 18,
-      "success": true,
-      "searchMode": "pattern",
-      "resultCount": 4,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:46:08.152Z"
-    },
-    {
-      "toolName": "universal_search",
-      "executionTime": 453,
-      "success": true,
-      "searchMode": "recent",
-      "resultCount": 0,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:55:43.560Z"
-    },
-    {
-      "toolName": "universal_search",
-      "executionTime": 48,
-      "success": true,
-      "searchMode": "recent",
-      "resultCount": 0,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.51",
-      "sessionId": "session-1752529263654-9arnsf",
-      "timestamp": "2025-07-14T21:55:48.696Z"
+      "clientVersion": "1.0.56",
+      "sessionId": "session-1753025566714-naudlo",
+      "timestamp": "2025-07-20T15:34:18.607Z"
     }
   ],
   "summary": {
     "period": {
-      "start": "2025-07-07T21:56:03.465Z",
-      "end": "2025-07-14T21:56:03.465Z"
+      "start": "2025-07-14T02:38:04.416Z",
+      "end": "2025-07-21T02:38:04.416Z"
     },
-    "totalExecutions": 7,
-    "averageExecutionTime": 153,
+    "totalExecutions": 1,
+    "averageExecutionTime": 497,
     "successRate": 1,
     "topTools": [
       {
         "toolName": "universal_search",
-        "usageCount": 6,
-        "averageTime": 177,
-        "successRate": 1
-      },
-      {
-        "toolName": "get_daily_note",
         "usageCount": 1,
-        "averageTime": 8,
+        "averageTime": 497,
         "successRate": 1
       }
     ],
@@ -111,28 +41,24 @@
     "performance": {
       "cacheHitRate": 0,
       "averageRetries": 0,
-      "slowOperations": 2
+      "slowOperations": 1
     },
     "trends": {
       "dailyUsage": {
-        "2025-07-14": 7
+        "2025-07-20": 1
       },
       "hourlyDistribution": {
-        "17": 7
+        "11": 1
       }
     },
     "topClients": [
       {
         "clientName": "claude-code",
-        "usageCount": 7,
-        "averageTime": 153,
+        "usageCount": 1,
+        "averageTime": 497,
         "mostUsedTools": [
           {
             "toolName": "universal_search",
-            "count": 6
-          },
-          {
-            "toolName": "get_daily_note",
             "count": 1
           }
         ]
