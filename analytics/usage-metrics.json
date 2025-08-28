@@ -1,19 +1,10 @@
 {
   "metadata": {
-    "generated": "2025-08-28T13:29:23.808Z",
-    "totalMetrics": 65,
+    "generated": "2025-08-28T14:22:56.293Z",
+    "totalMetrics": 64,
     "version": "1.0.0"
   },
   "metrics": [
-    {
-      "toolName": "smart_create_note",
-      "executionTime": 69,
-      "success": true,
-      "clientName": "claude-code",
-      "clientVersion": "1.0.88",
-      "sessionId": "session-1755902546415-usnhakt",
-      "timestamp": "2025-08-23T01:47:52.192Z"
-    },
     {
       "toolName": "universal_search",
       "executionTime": 584,
@@ -541,10 +532,10 @@
   ],
   "summary": {
     "period": {
-      "start": "2025-08-21T13:29:23.808Z",
-      "end": "2025-08-28T13:29:23.808Z"
+      "start": "2025-08-21T14:22:56.293Z",
+      "end": "2025-08-28T14:22:56.293Z"
     },
-    "totalExecutions": 65,
+    "totalExecutions": 64,
     "averageExecutionTime": 40,
     "successRate": 0.97,
     "topTools": [
@@ -556,8 +547,8 @@
       },
       {
         "toolName": "smart_create_note",
-        "usageCount": 23,
-        "averageTime": 3,
+        "usageCount": 22,
+        "averageTime": 0,
         "successRate": 1
       },
       {
@@ -579,12 +570,10 @@
     },
     "trends": {
       "dailyUsage": {
-        "2025-08-23": 1,
         "2025-08-28": 64
       },
       "hourlyDistribution": {
-        "9": 64,
-        "21": 1
+        "9": 64
       }
     },
     "topClients": [
@@ -604,17 +593,6 @@
           {
             "toolName": "universal_list",
             "count": 6
-          }
-        ]
-      },
-      {
-        "clientName": "claude-code",
-        "usageCount": 1,
-        "averageTime": 69,
-        "mostUsedTools": [
-          {
-            "toolName": "smart_create_note",
-            "count": 1
           }
         ]
       }
