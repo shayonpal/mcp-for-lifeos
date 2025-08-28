@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **Empty Support Directory** (2025-08-28): Removed unused `Support/Raycast/script-commands` directory structure
+  - Directory was created as placeholder for Raycast Script Commands but never populated
+  - Project uses MCP protocol integration with Raycast instead of Script Commands
+  - Cleaning up unused directory structure to reduce confusion
+
 ## [1.8.0] - 2025-06-28
 
 ### Fixed
