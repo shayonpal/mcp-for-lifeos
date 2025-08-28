@@ -110,3 +110,6 @@ coverage/
 # Backup files
 *.backup
 *.bak
+
+# Analytics data
+analytics/usage-metrics.json
