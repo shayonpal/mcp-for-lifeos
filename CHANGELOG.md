@@ -7,6 +7,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **get_server_version Tool Documentation** (2025-08-29): Created comprehensive documentation for the server information and discovery tool
+  - Added detailed docs/tools/get_server_version.md with complete server capabilities and version information
+  - Documents includeTools parameter for optional complete tool inventory with descriptions
+  - Covers server version semantics, template availability count, vault path configuration, and capabilities summary
+  - Includes comprehensive version history from 1.0.0 to 1.7.0 with feature introduction timeline and breaking changes
+  - Documents configuration status reporting (vault path, YAML rules, analytics, web interface) and discovery capabilities
+  - Provides usage examples for debugging, compatibility checks, feature discovery, and initial handshake workflows
+  - Covers implementation details with SERVER_VERSION constant, DynamicTemplateEngine integration, and tool registry access
+  - Documents tool list format with categories (Search, Creation, Organization, Analysis, Maintenance, Information)
+  - Includes integration points for Claude Desktop, Raycast, API version verification, and client capability negotiation
+  - Documents error handling, performance considerations, security aspects, and troubleshooting strategies
+  - Covers semantic versioning interpretation, backward compatibility notes, and deprecation tracking
+- **diagnose_vault Tool Documentation** (2025-08-29): Created comprehensive documentation for the vault health check tool
+  - Added detailed docs/tools/diagnose_vault.md with complete diagnostic capabilities and troubleshooting guide
+  - Documents parameters (checkYaml, maxFiles) with performance considerations and default limits
+  - Covers YAML frontmatter validation, file access verification, and bulk scanning capabilities
+  - Includes diagnostic checks for syntax validation, structure verification, value type checking, and encoding validation
+  - Documents common issues detection (missing delimiters, invalid indentation, unescaped characters, mixed types, null values)
+  - Provides 6 usage examples from quick health checks to full vault audits with performance optimization strategies
+  - Documents comprehensive error types (YAML parse, file read, encoding, structure, value type) with specific fixes
+  - Includes troubleshooting guide with step-by-step repair strategies and prevention best practices
+  - Covers implementation details with VaultUtils.readNote(), parseWithFallback(), and iCloud-aware retry mechanisms
+  - Documents analytics integration, related tool workflows, and maintenance scheduling recommendations
+- **move_items Tool Documentation** (2025-08-29): Created comprehensive documentation for the file organization tool
+  - Added detailed docs/tools/move_items.md with complete parameter reference and dual operation mode documentation
+  - Documents single vs batch operations using "item" parameter vs "items" array with path and optional type specification
+  - Covers auto-detection of item types (note vs folder), destination folder creation, overwrite protection, and folder merging
+  - Includes detailed parameter documentation (destination, createDestination, overwrite, mergeFolders) with safety defaults
+  - Documents link preservation during moves with automatic internal link updates and reference maintenance
+  - Provides PARA method integration for LifeOS organization (Projects, Areas, Resources, Archive) with workflow examples
+  - Includes 15+ usage examples covering single moves, batch operations, inbox processing, project archival, and seasonal cleanup
+  - Documents comprehensive error handling for source not found, permission denied, name conflicts, circular moves, and invalid paths
+  - Covers implementation details with VaultUtils.moveItem() core handler, mergeFolders() recursive processing, and safety mechanisms
+  - Includes best practices for organization planning, safety-first approach, PARA method workflows, and performance optimization
+  - Documents related tool integration with list, search, create_note tools and comprehensive troubleshooting guide
+- **get_yaml_rules Tool Documentation** (2025-08-29): Created comprehensive documentation for the YAML rules reference tool
+  - Added detailed docs/tools/get_yaml_rules.md with complete configuration and usage documentation
+  - Documents parameter-free tool that returns complete YAML frontmatter rules document for reference
+  - Covers configuration requirements (yamlRulesPath) and response types (configured, not configured, file not found, errors)
+  - Includes YAML rules document structure with field definitions, auto-managed fields, validation rules, and examples
+  - Documents integration with create_note, edit_note, create_note_smart for YAML compliance validation
+  - Provides auto-managed field protection (created, modified, id) and best practices for schema compliance
+  - Includes comprehensive configuration setup guide, troubleshooting, and standard LifeOS rules template
+- **insert_content Tool Documentation** (2025-08-29): Created comprehensive documentation for the surgical content insertion tool
+  - Added detailed docs/tools/insert_content.md with complete parameter reference and targeting method documentation
+- **list_yaml_property_values Tool Documentation** (2025-08-29): Created comprehensive documentation for the YAML property analysis tool
+  - Added detailed docs/tools/list_yaml_property_values.md with complete metadata discovery and standardization guidance
+  - Documents all parameters (property, includeCount, includeExamples, sortBy, maxExamples) with examples and use cases
+  - Covers value type detection (single vs array), sorting options (alphabetical, usage, type), and response structure
+  - Includes property name formats (simple, spaces, case-sensitivity, nested), common LifeOS properties analysis
+  - Provides extensive usage examples for metadata cleanup, data quality audits, and standardization projects
+  - Documents performance considerations, error handling, and best practices for vault organization
+  - Includes data quality insights for finding inconsistencies, typos, orphaned values, and popular patterns
+  - Documents 4 targeting methods: heading (exact match), block reference (^block-id), pattern search, and line number
+  - Covers 5 position options: before, after, append, prepend, end-of-section with smart section boundary detection
+  - Includes special emphasis on daily notes "Day's Notes" pattern and proper apostrophe handling in heading matching
+  - Documents list-aware insertion maintaining proper formatting and indentation for task lists and nested content
+  - Provides 15+ usage examples covering daily journaling, task management, meeting notes, research, and template completion
+  - Includes comprehensive error handling, troubleshooting guide, and performance considerations for large documents
+- **read_note Tool Documentation** (2025-08-29): Created comprehensive documentation for the note reading tool
+  - Added detailed docs/tools/read_note.md with complete parameter reference and path resolution documentation
+  - Documents single required parameter (path) with support for absolute, relative, and escaped space formats
+  - Covers intelligent path normalization, YAML frontmatter parsing with graceful error handling, and tag normalization
+  - Includes formatted output structure with metadata headers, clickable Obsidian links, and content separation
+  - Documents error handling for file not found, permission errors, and corrupted YAML with fallback parsing
+  - Provides 5+ usage examples covering daily notes, project notes, spaces in paths, and subfolder access
+  - Includes implementation details, performance considerations, best practices, and integration with related tools
+- **edit_note Tool Documentation** (2025-08-29): Created comprehensive documentation for the note editing tool
+  - Added detailed docs/tools/edit_note.md with complete parameter reference and dual update mode documentation
+  - Documents merge mode (default, preserves existing fields) vs replace mode (complete frontmatter replacement)
+  - Covers flexible note selection by path or title with automatic path resolution and space handling
+  - Includes frontmatter field mapping (contentType→"content type", subCategory→"sub-category") and custom field support
+  - Documents YAML rules compliance with auto-managed field protection (created, modified, id) and validation
+  - Provides 15+ usage examples covering content updates, metadata changes, and advanced operations
+  - Includes comprehensive error handling, best practices, security considerations, and tool integration guidance
+- **create_note Tool Documentation** (2025-08-29): Created comprehensive documentation for the manual note creation tool
+  - Added detailed docs/tools/create_note.md with complete parameter reference and usage examples
+  - Documents manual YAML frontmatter control with template support and discovery mode capabilities
+  - Covers template variable injection through customData parameter and custom folder placement
+  - Includes comparison with create_note_smart tool highlighting when to use each approach
+  - Provides detailed YAML frontmatter structure documentation and PARA method folder organization
+  - Documents template discovery mode (useTemplate=true) and 11 available templates with descriptions
+  - Includes comprehensive error handling, performance considerations, and troubleshooting guide
+- **get_daily_note Tool Documentation** (2025-08-29): Created comprehensive documentation for the daily note management tool
+  - Added detailed docs/tools/get_daily_note.md with extensive natural language date parsing capabilities
+  - Documents intelligent date resolution supporting "today", "yesterday", "next Monday", relative dates, and multiple formats
+  - Covers auto-creation features with createIfMissing and confirmCreation parameters for user control
+  - Includes comprehensive date parsing examples (ISO, US, European formats, natural language, relative dates)
+  - Documents PARA method folder organization and template-based note creation system
+  - Provides detailed error handling for invalid dates, file system issues, and template processing
+  - Includes timezone-aware date handling and performance optimization details
+- **List Tool Documentation** (2025-08-29): Created comprehensive documentation for the universal list tool
+  - Added detailed docs/tools/list.md with complete parameter reference and usage examples
+  - Documents auto-detection logic for folders, daily_notes, templates, and yaml_properties list types
+  - Covers tool consolidation strategy replacing 4 legacy listing tools (list_folders, list_daily_notes, list_templates, list_yaml_properties)
+  - Includes migration guide from legacy tools with direct parameter mapping examples
+  - Provides detailed response formats for each list type and routing behavior documentation
+  - Documents PARA methodology support for folder listing and template discovery system
+- **create_note_smart Tool Documentation** (2025-08-29): Created comprehensive documentation for the smart note creation tool
+  - Added detailed docs/tools/create_note_smart.md with complete parameter reference and usage examples
+  - Documents automatic template detection logic based on title keywords (restaurant, person, article, etc.)
+  - Covers tool consolidation strategy combining create_note and create_note_from_template functionality
+  - Includes migration guide from legacy tools and routing behavior documentation
+  - Provides practical examples with custom data injection and template variable processing
+  - Documents 11 available templates with detection triggers and use cases
+- **Search Tool Documentation** (2025-08-29): Created comprehensive documentation for the universal search tool
+  - Added detailed docs/tools/search.md with complete parameter reference
+  - Covers all search modes (auto, advanced, quick, content_type, recent, pattern)
+  - Includes auto-detection logic, migration guide from legacy tools
+  - Documents intelligent fallback mechanisms and performance optimizations
+  - Provides practical usage examples and best practices for AI tool callers
+
 ### Fixed
 - **Critical Test Isolation Bug** (MCP-20, 2025-08-29): Fixed insert-content.test.ts writing to production Obsidian vault
   - Replaced direct LIFEOS_CONFIG.vaultPath usage with temporary directory pattern
