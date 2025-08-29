@@ -1,91 +1,100 @@
-# MCP-for-LifeOS Documentation
+# LifeOS MCP Server Documentation
 
-This directory contains all project documentation organized by purpose and lifecycle stage.
+This directory contains comprehensive documentation for the LifeOS MCP Server, organized by purpose and maintained for current development priorities.
 
-## 📁 Folder Structure
+## 📁 Directory Structure
 
-### 🎯 [`01-current-poc/`](./01-current-poc/) - POC Documentation (DEPRIORITIZED)
-**OpenWebUI Integration Proof of Concept - Currently on hold**
-- [`POC-OpenWebUI-Integration-PRD.md`](./01-current-poc/POC-OpenWebUI-Integration-PRD.md) - Complete POC specification and requirements
-- [`POC-Dependencies-Analysis.md`](./01-current-poc/POC-Dependencies-Analysis.md) - Issue dependency mapping and execution order
-- [`POC-GitHub-Project-Fields.md`](./01-current-poc/POC-GitHub-Project-Fields.md) - GitHub project field assignments and component mapping
-- [`POC-Issues-Specification.md`](./01-current-poc/POC-Issues-Specification.md) - Detailed 21-issue POC breakdown
-- [`Claude-Session-Onboarding.md`](./01-current-poc/Claude-Session-Onboarding.md) - ⭐ **Quick session startup prompt**
+### 🏛️ [`adr/`](./adr/) - Architecture Decision Records
+**Major architectural and strategic decisions**
+- [ADR-001](./adr/001-openwebui-integration-strategy.md) - OpenWebUI Integration Strategy (Superseded)
+- [ADR-002](./adr/002-strategic-pivot-to-core-server.md) - **Strategic Pivot to Core Server Development** ⭐
+- [ADR-003](./adr/003-search-tool-consolidation-fallback-strategy.md) - Search Tool Consolidation Strategy
+- [ADR-004](./adr/004-project-review-roadmap-2025.md) - **Project Review and Technical Debt Roadmap** ⭐
 
-### 📊 [`02-strategic-docs/`](./02-strategic-docs/) - Strategic Analysis
-**High-level strategy and architectural decisions**
-- [`Obsidian-Web-Access-Alternative.md`](./02-strategic-docs/Obsidian-Web-Access-Alternative.md) - ⭐ **Current approach using LinuxServer.io solution**
-- [`OpenWebUI-Integration-Strategy.md`](./02-strategic-docs/OpenWebUI-Integration-Strategy.md) - Original integration strategy (deprioritized)
-- [`OpenWebUI-vs-PWA-Decision-Analysis.md`](./02-strategic-docs/OpenWebUI-vs-PWA-Decision-Analysis.md) - DECIDE framework analysis for PWA vs OpenWebUI
+### 📖 [`guides/`](./guides/) - Setup and Integration Guides
+**Client setup, deployment, and integration instructions**
+- [Deployment Guide](./guides/Deployment-Guide.md) - Complete setup and deployment instructions
+- [Raycast Integration](./guides/Raycast-Integration.md) - Raycast setup for macOS
+- [Cursor Integration](./guides/Cursor-IDE-Integration.md) - Cursor IDE setup and usage
 
-### 🗄️ [`03-legacy-specs/`](./03-legacy-specs/) - Legacy & Paused Specifications
-**Historical specifications and paused development tracks**
-- [`Legacy-Web-Interface-PRD.md`](./03-legacy-specs/Legacy-Web-Interface-PRD.md) - Original custom web interface specification
-- [`Paused-PWA-PRD.md`](./03-legacy-specs/Paused-PWA-PRD.md) - Mobile PWA specification (paused pending OpenWebUI validation)
+### 📋 [`specs/`](./specs/) - Product Specifications
+**Feature requirements, implementation plans, and use cases**
+- [`features/`](./specs/features/) - Product requirements and feature specifications
+- [`implementation/`](./specs/implementation/) - Technical implementation guides
+- [`use-cases/`](./specs/use-cases/) - User scenarios and workflow documentation
+- [`rfcs/`](./specs/rfcs/) - Request for Comments (future major changes)
 
-### 📋 [`04-project-management/`](./04-project-management/) - Project Management
-**GitHub project setup and workflow management**
-- [`GitHub-Project-Setup-Assessment.md`](./04-project-management/GitHub-Project-Setup-Assessment.md) - Project board configuration and field mapping
+### 🗄️ [`archive/`](./archive/) - Historical Documentation
+**Preserved historical content and deprecated approaches**
+- [`openwebui-poc/`](./archive/openwebui-poc/) - OpenWebUI integration analysis (deprioritized)
+- [`legacy-pwa/`](./archive/legacy-pwa/) - Legacy web interface specifications (abandoned)
 
-### 🔌 [`05-integration-guides/`](./05-integration-guides/) - Integration Guides
-**Third-party tool integrations and deployment**
-- [`Cursor-IDE-Integration.md`](./05-integration-guides/Cursor-IDE-Integration.md) - Cursor IDE setup and usage
-- [`Raycast-Integration.md`](./05-integration-guides/Raycast-Integration.md) - Raycast integration for macOS
-- [`Deployment-Guide.md`](./05-integration-guides/Deployment-Guide.md) - Production deployment instructions
+## 🎯 Current Strategic Direction
 
-### 🛠️ [`06-troubleshooting/`](./06-troubleshooting/) - Support & Troubleshooting
-**Debugging guides and common issues**
-- [`General-Troubleshooting.md`](./06-troubleshooting/General-Troubleshooting.md) - Common issues and solutions
+**Status**: Focus on core MCP server development and technical debt reduction  
+**Priority**: Server decomposition, test suite health, analytics fixes  
+**Deferred**: All web interface approaches (OpenWebUI, LinuxServer.io, custom PWA)
 
-## 🚀 Quick Start for New Sessions
+### Key Documents for Current Phase
+1. **[ADR-002: Strategic Pivot](./adr/002-strategic-pivot-to-core-server.md)** - Current direction and rationale
+2. **[ADR-004: Project Roadmap](./adr/004-project-review-roadmap-2025.md)** - Comprehensive technical debt roadmap
+3. **[Tool Consolidation Spec](./specs/features/tool-consolidation-optimization.md)** - AI optimization implementation
 
-**For strategic context**, refer to:
-```
-📄 02-strategic-docs/Obsidian-Web-Access-Alternative.md
-```
-This documents the current LinuxServer.io Obsidian web access evaluation approach.
+## 🚀 Quick Start
 
-## 📈 Current Project Status
+### For Contributors
+1. **Understand Current Direction**: Read [ADR-002](./adr/002-strategic-pivot-to-core-server.md)
+2. **See Roadmap**: Review [ADR-004](./adr/004-project-review-roadmap-2025.md) for priorities
+3. **Setup Environment**: Follow [Deployment Guide](./guides/Deployment-Guide.md)
 
-**Phase**: Evaluating LinuxServer.io Obsidian Web Access Solution
-**Previous Milestone**: [OpenWebUI Integration POC](https://github.com/shayonpal/mcp-for-lifeos/milestone/2) - DEPRIORITIZED
-**Current Focus**: Testing native Obsidian web interface with Copilot plugin for chat capabilities
+### For Users
+1. **Setup**: [Deployment Guide](./guides/Deployment-Guide.md)
+2. **Client Integration**: [Raycast](./guides/Raycast-Integration.md) | [Cursor](./guides/Cursor-IDE-Integration.md)
+3. **Common Issues**: See README.md Common Issues section
 
-### Current Priority Documents
-1. **Current Strategy**: [`02-strategic-docs/Obsidian-Web-Access-Alternative.md`](./02-strategic-docs/Obsidian-Web-Access-Alternative.md)
-2. **Deprioritized POC**: [`01-current-poc/POC-OpenWebUI-Integration-PRD.md`](./01-current-poc/POC-OpenWebUI-Integration-PRD.md)
-3. **Session Onboarding**: [`01-current-poc/Claude-Session-Onboarding.md`](./01-current-poc/Claude-Session-Onboarding.md)
+## 📊 Project Status
 
-## 📚 Document Lifecycle
+**Technical Debt Score**: 7.8/10 → Target: 3.0/10  
+**Test Suite Health**: 67% passing → Target: 100%  
+**Tool Count**: 37 tools → Target: ~11 tools  
+**Monolithic Files**: index.ts (2,224 lines), vault-utils.ts (1,687 lines) → Target: <500 lines each
 
-### Active Documents
-- All files in `01-current-poc/` and `02-strategic-docs/`
-- Reflect current project direction and active work
+**Active Linear Projects**:
+- Emergency Analytics Fix (P0)
+- Server Decomposition + Rename Tool (P1) 
+- Tool Consolidation Validation & Legacy Retirement (P1)
 
-### Legacy Documents  
-- Files in `03-legacy-specs/` are preserved for reference
-- Represent paused or superseded approaches
-- May be reactivated based on POC findings
+## 🔄 Documentation Lifecycle
 
-### Reference Documents
-- Files in `04-project-management/`, `05-integration-guides/`, `06-troubleshooting/`
-- Provide ongoing operational support
-- Updated as needed throughout project lifecycle
+### Current Documents
+- **ADRs**: Document major architectural decisions and strategic pivots
+- **Guides**: Maintain for current integrations and deployment procedures
+- **Specs**: Active specifications for current and planned features
 
-## 🔄 Document Maintenance
+### Historical Documents
+- **Archive**: Preserved for context but not actively maintained
+- **Legacy Approaches**: OpenWebUI, PWA, custom web interfaces (all deprioritized)
 
-**When to Update:**
-- Active POC documents: Update as POC progresses
-- Strategic documents: Update after major decisions
-- Legacy documents: Generally preserved as-is
-- Integration guides: Update when tools/processes change
+### Future Documentation
+As outlined in ADR-004 Slice 4:
+- **API Documentation** (`docs/api/`) - Auto-generated tool reference
+- **System Reference** (`docs/reference/`) - Architecture overview, development guide
 
-**Update Responsibility:**
-- Claude AI: Technical documentation during development
-- Project owner: Strategic decisions and architecture changes
-- Community: Integration guides and troubleshooting tips
+## 📝 Maintenance Guidelines
+
+**Update When**:
+- ADRs: After major architectural or strategic decisions
+- Guides: When client integration procedures change  
+- Specs: During active feature development
+- Archive: Generally preserved as-is (historical record)
+
+**Update Responsibility**:
+- **ADRs**: Lead developer/architect for major decisions
+- **Guides**: Community contributions welcome for integration improvements
+- **Specs**: Product owner and development team collaboration
 
 ---
 
-**Last Updated**: May 30, 2025  
-**Documentation Version**: 2.0 (Post-reorganization)
+**Last Updated**: August 29, 2025  
+**Documentation Version**: 3.0 (Post-cleanup & ADR implementation)  
+**Project Management**: Linear (Team ID: `d1aae15e-d5b9-418d-a951-adcf8c7e39a8`)
