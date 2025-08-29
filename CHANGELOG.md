@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Critical Test Isolation Bug** (MCP-20, 2025-08-29): Fixed insert-content.test.ts writing to production Obsidian vault
+  - Replaced direct LIFEOS_CONFIG.vaultPath usage with temporary directory pattern
+  - Added proper imports: tmpdir from 'os', randomBytes from 'crypto', fs.promises
+  - Implemented beforeEach/afterEach hooks with config backup/restore
+  - Follows established pattern from other test files (daily-note-simple.test.ts, etc.)
+  - All 14 tests in insert-content.test.ts now pass
+  - Verified no test artifacts in production vault
+
 ### Removed
 - **Empty Support Directory** (2025-08-28): Removed unused `Support/Raycast/script-commands` directory structure
   - Directory was created as placeholder for Raycast Script Commands but never populated

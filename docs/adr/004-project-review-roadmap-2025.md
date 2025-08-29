@@ -129,7 +129,7 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
 
 ### Slice 4: Tool Documentation **[P2 - Document After Tools Are Stable]**
 **Goal**: Create complete, AI-optimized tool documentation
-**Linear Status**: ❌ **Not yet created**
+**Linear Status**: ✅ **Issue created**
 
 **Documentation Structure Overhaul:**
 ```
@@ -165,7 +165,7 @@ docs/
 
 ### Slice 5: Fast Note Editing **[P2 - Performance Improvement]**
 **Goal**: Reduce latency for large note edits
-**Linear Status**: ❌ **Needs creation**
+**Linear Status**: ✅ **Issue created**
 
 **Extract from Monolith:**
 ```
@@ -191,7 +191,7 @@ src/domain/note-operations.ts (new, ~300 lines)
 
 ### Slice 6: Obsidian Tasks Integration **[P2 - New Feature]**
 **Goal**: Query and manage tasks across vault
-**Linear Status**: ❌ **Needs creation**
+**Linear Status**: ✅ **Issue created**
 
 **Domain Extraction:**
 ```
@@ -218,7 +218,7 @@ src/tools/tasks-tool.ts (new, ~200 lines)
 
 ### Slice 7: Custom Instructions + Final Decomposition **[P3 - Feature + Cleanup]**
 **Goal**: Ship custom instructions and eliminate vault-utils.ts
-**Linear Status**: ❌ **Needs creation**
+**Linear Status**: ✅ **Issue created**
 
 **Final Domain Separation:**
 ```
@@ -362,12 +362,12 @@ The refactoring plan outlined above will transform this from a functional protot
 1. **Emergency Analytics Fix** - Single issue created and configured
 2. **Server Decomposition + Rename Tool** - Project with 6 issues created
 3. **Tool Consolidation Validation & Legacy Retirement** - Project with 3 issues created
+4. **Tool Documentation** - Single issue created
+5. **Fast Note Editing** - Single issue created
+6. **Obsidian Tasks Integration** - Single issue created
+7. **Custom Instructions + Final Decomposition** - Single issue created
 
 ### ❌ **Remaining Issues to Create**
-- Slice 4: Tool Documentation
-- Slice 5: Fast Note Editing  
-- Slice 6: Obsidian Tasks Integration
-- Slice 7: Custom Instructions + Final Decomposition
 - Slice 8: Performance & LlamaIndex Integration
 
 ## Metrics for Success

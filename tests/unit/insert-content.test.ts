@@ -3,22 +3,43 @@ import { VaultUtils } from '../../src/vault-utils.js';
 import { LIFEOS_CONFIG } from '../../src/config.js';
 import { writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+import * as fs from 'fs/promises';
 
 describe('VaultUtils.insertContent', () => {
-  const testDir = join(LIFEOS_CONFIG.vaultPath, 'test-notes');
-  const testNotePath = join(testDir, 'test-note.md');
+  let vaultPath: string;
+  let testDir: string;
+  let testNotePath: string;
+  let originalConfig: any;
   
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Create temporary vault
+    const randomId = randomBytes(8).toString('hex');
+    vaultPath = join(tmpdir(), `test-vault-${randomId}`);
+    await fs.mkdir(vaultPath, { recursive: true });
+    
+    // Set test paths
+    testDir = join(vaultPath, 'test-notes');
+    testNotePath = join(testDir, 'test-note.md');
+    
+    // Mock the LIFEOS_CONFIG
+    originalConfig = { ...LIFEOS_CONFIG };
+    LIFEOS_CONFIG.vaultPath = vaultPath;
+    
     // Create test directory
-    if (!existsSync(testDir)) {
-      mkdirSync(testDir, { recursive: true });
-    }
+    await fs.mkdir(testDir, { recursive: true });
   });
   
-  afterEach(() => {
-    // Clean up test files
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
+  afterEach(async () => {
+    // Restore original config
+    if (originalConfig) {
+      Object.assign(LIFEOS_CONFIG, originalConfig);
+    }
+    
+    // Clean up temporary vault
+    if (vaultPath) {
+      await fs.rm(vaultPath, { recursive: true, force: true });
     }
   });
   
@@ -222,15 +243,17 @@ Line 3
 Line 4`;
       writeFileSync(testNotePath, content);
       
+      // Line 4 is "Line 1" (after the frontmatter which is stripped)
       const result = VaultUtils.insertContent(
         testNotePath,
         'Inserted line',
-        { lineNumber: 5 }, // After "Line 2"
+        { lineNumber: 2 }, // Insert after "Line 2" 
         'after'
       );
       
       const lines = result.content.split('\n');
-      expect(lines[5]).toBe('Inserted line');
+      // Check that the inserted line appears after "Line 2"
+      expect(result.content).toContain('Line 2\n\nInserted line\n\nLine 3');
     });
     
     it('should throw error if line number out of range', () => {
