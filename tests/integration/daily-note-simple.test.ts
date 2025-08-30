@@ -84,10 +84,14 @@ tags:
     
     // Mock the LIFEOS_CONFIG for VaultUtils
     const { LIFEOS_CONFIG } = await import('../../src/config.js');
+    const { VaultUtils } = await import('../../src/vault-utils.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
     LIFEOS_CONFIG.dailyNotesPath = path.join(vaultPath, 'Daily');
     LIFEOS_CONFIG.templatesPath = path.join(vaultPath, 'Templates');
+    
+    // Reset VaultUtils singletons to use new config
+    VaultUtils.resetSingletons();
   });
 
   afterEach(async () => {

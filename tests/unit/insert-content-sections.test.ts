@@ -20,6 +20,9 @@ describe('Insert Content - Section Targeting', () => {
     // Store original config
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
+    
+    // Reset VaultUtils singletons to use new config
+    VaultUtils.resetSingletons();
   });
 
   afterEach(async () => {

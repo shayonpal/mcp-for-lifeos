@@ -63,6 +63,17 @@ export class VaultUtils {
   }
 
   /**
+   * Reset all singleton instances - for testing purposes only
+   * This ensures that when config changes, the singletons are recreated
+   * with the new config values
+   */
+  static resetSingletons(): void {
+    this.templateManager = null;
+    this.obsidianSettings = null;
+    this.dateResolver = null;
+  }
+
+  /**
    * Get the current local date at midnight (start of day).
    * This ensures consistent date handling regardless of timezone.
    */

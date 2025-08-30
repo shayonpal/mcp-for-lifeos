@@ -34,6 +34,9 @@ describe("Daily Note Task Addition Workflow", () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
     LIFEOS_CONFIG.dailyNotesPath = dailyNotesPath;
+    
+    // Reset VaultUtils singletons to use new config
+    VaultUtils.resetSingletons();
   });
 
   afterEach(async () => {

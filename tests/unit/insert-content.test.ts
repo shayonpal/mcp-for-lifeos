@@ -27,6 +27,9 @@ describe('VaultUtils.insertContent', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
     
+    // Reset VaultUtils singletons to use new config
+    VaultUtils.resetSingletons();
+    
     // Create test directory
     await fs.mkdir(testDir, { recursive: true });
   });
