@@ -1,5 +1,7 @@
 # LifeOS MCP Analytics Dashboard
 
+*Last updated: 2025-08-30 07:59*
+
 ## Overview
 
 Lightweight telemetry system for tracking personal tool usage patterns, routing effectiveness, and performance insights. Built for zero-maintenance development optimization.
@@ -72,7 +74,7 @@ ANALYTICS_DASHBOARD_PORT=9000 node scripts/start-analytics-dashboard.js
 
 ## Data Files
 
-- `usage-metrics.json` - Current analytics data (auto-generated)
+- `usage-metrics.jsonl` - Current analytics data (auto-generated)
 - `sample-data.json` - Example data for testing the dashboard
 - `historical/` - Date-based archives (future feature)
 
@@ -91,7 +93,7 @@ TOOL_ROUTER_TELEMETRY=true
 Analytics configuration is handled automatically with sensible defaults:
 - **Memory limit**: 1000 metrics before auto-flush
 - **Flush interval**: 5 minutes
-- **File output**: `./analytics/usage-metrics.json`
+- **File output**: `./analytics/usage-metrics.jsonl`
 - **Slow operation threshold**: 200ms
 
 ## Privacy & Data
@@ -119,11 +121,11 @@ After using the system, you might discover:
 ### Dashboard shows "No Data Available"
 1. Make sure `ENABLE_USAGE_ANALYTICS=true` is set
 2. Use the MCP server to generate some analytics data
-3. Check that `usage-metrics.json` exists in the analytics folder
+3. Check that `usage-metrics.jsonl` exists in the analytics folder
 
 ### Dashboard shows loading error
-1. Check that `usage-metrics.json` exists and is valid JSON
-2. Try copying `sample-data.json` to `usage-metrics.json` for testing
+1. Check that `usage-metrics.jsonl` exists and is valid JSONL
+2. Try copying `sample-data.json` to `usage-metrics.jsonl` for testing
 3. Check browser console for specific error messages
 
 ### Analytics not collecting
@@ -137,7 +139,7 @@ To test the dashboard with sample data:
 
 ```bash
 # Copy sample data to see the dashboard in action
-cp sample-data.json usage-metrics.json
+cp sample-data.json usage-metrics.jsonl
 
 # Open dashboard
 open index.html

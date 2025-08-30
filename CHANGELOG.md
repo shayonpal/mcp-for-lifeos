@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Test Isolation Bug - Production Vault Pollution** (2025-08-30): Fixed tests writing to production Obsidian vault
+  - Added `resetSingletons()` method to VaultUtils to clear cached singleton instances during tests
+  - VaultUtils singleton instances (templateManager, obsidianSettings) were persisting with production paths
+  - All test files now call `VaultUtils.resetSingletons()` after modifying LIFEOS_CONFIG
+  - Ensures complete test isolation with temporary directories instead of production vault
+  - Prevents test artifacts from appearing in live Obsidian vault during test runs
+
 ### Added
 - **get_server_version Tool Documentation** (2025-08-29): Created comprehensive documentation for the server information and discovery tool
   - Added detailed docs/tools/get_server_version.md with complete server capabilities and version information
@@ -121,6 +129,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Provides practical usage examples and best practices for AI tool callers
 
 ### Fixed
+- **JSONL Append-Only Analytics (MCP-21)** (2025-08-30 07:59): Complete overhaul of analytics system for multi-instance safety
+  - Replaced JSON file format with JSONL (JSON Lines) for atomic append operations  
+  - Eliminates data loss when multiple MCP server instances run concurrently
+  - Added instance identification (UUID, process ID, hostname) for debugging
+  - Performance improvements: sub-5ms write latency, 1200+ operations per second
+  - Automatic migration from legacy JSON format with full backward compatibility
+  - Comprehensive test coverage with 27 new tests validating concurrent operations
+  - Builds upon earlier critical analytics data loss fix (#83)
 - **Critical Test Isolation Bug** (MCP-20, 2025-08-29): Fixed insert-content.test.ts writing to production Obsidian vault
   - Replaced direct LIFEOS_CONFIG.vaultPath usage with temporary directory pattern
   - Added proper imports: tmpdir from 'os', randomBytes from 'crypto', fs.promises

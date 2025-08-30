@@ -5,9 +5,11 @@
  * @see https://github.com/shayonpal/mcp-for-lifeos/issues/76
  */
 
-import { promises as fs, readFileSync } from 'fs';
+import { promises as fs, readFileSync, appendFileSync } from 'fs';
 import { existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
+import { dirname, extname } from 'path';
+import { hostname } from 'os';
+import { randomUUID } from 'crypto';
 import { UsageMetrics, AnalyticsSummary, AnalyticsConfig, DEFAULT_ANALYTICS_CONFIG } from './usage-metrics.js';
 
 export class AnalyticsCollector {
@@ -15,9 +17,21 @@ export class AnalyticsCollector {
   private metrics: UsageMetrics[] = [];
   private config: AnalyticsConfig;
   private flushTimer: NodeJS.Timeout | null = null;
+  private readonly instanceId: string = randomUUID();
+  private readonly processInfo = {
+    pid: process.pid,
+    hostname: hostname(),
+    sessionStart: new Date().toISOString()
+  };
+  private buffer: UsageMetrics[] = [];
 
   private constructor(config: Partial<AnalyticsConfig> = {}) {
     this.config = { ...DEFAULT_ANALYTICS_CONFIG, ...config };
+    
+    // Use JSONL format for new files
+    if (this.config.outputPath && !this.config.outputPath.endsWith('.jsonl')) {
+      this.config.outputPath = this.config.outputPath.replace(/\.json$/, '.jsonl');
+    }
     
     if (this.config.enabled) {
       this.loadExistingMetrics();
@@ -40,8 +54,11 @@ export class AnalyticsCollector {
    */
   private loadExistingMetrics(): void {
     try {
-      if (existsSync(this.config.outputPath)) {
-        const fileContent = readFileSync(this.config.outputPath, 'utf8');
+      // Check for legacy JSON file first
+      const legacyPath = this.config.outputPath.replace('.jsonl', '.json');
+      if (existsSync(legacyPath) && !existsSync(this.config.outputPath)) {
+        // Load from legacy JSON format
+        const fileContent = readFileSync(legacyPath, 'utf8');
         const data = JSON.parse(fileContent);
         
         if (data.metrics && Array.isArray(data.metrics)) {
@@ -52,8 +69,30 @@ export class AnalyticsCollector {
           }));
           
           if (this.config.logToConsole) {
-            console.log(`[Analytics] Loaded ${this.metrics.length} existing metrics from disk`);
+            console.log(`[Analytics] Loaded ${this.metrics.length} existing metrics from legacy JSON`);
           }
+        }
+      } else if (existsSync(this.config.outputPath)) {
+        // Load from JSONL format
+        const fileContent = readFileSync(this.config.outputPath, 'utf8');
+        const lines = fileContent.split('\n').filter(line => line.trim());
+        
+        this.metrics = [];
+        for (const line of lines) {
+          try {
+            const metric = JSON.parse(line);
+            this.metrics.push({
+              ...metric,
+              timestamp: new Date(metric.timestamp)
+            });
+          } catch (lineError) {
+            // Skip malformed lines
+            console.warn('[Analytics] Skipping malformed JSONL line:', line.substring(0, 100));
+          }
+        }
+        
+        if (this.config.logToConsole) {
+          console.log(`[Analytics] Loaded ${this.metrics.length} metrics from JSONL`);
         }
       }
     } catch (error) {
@@ -71,9 +110,30 @@ export class AnalyticsCollector {
 
     const fullMetric: UsageMetrics = {
       ...metric,
-      timestamp: new Date()
+      timestamp: new Date(),
+      // Add instance identification
+      instanceId: this.instanceId,
+      pid: this.processInfo.pid,
+      hostname: this.processInfo.hostname,
+      sessionStart: this.processInfo.sessionStart
     };
 
+    // For critical metrics (errors, slow operations), append immediately
+    const isCritical = !metric.success || (metric.executionTime && metric.executionTime > this.config.slowOperationThresholdMs);
+    
+    if (isCritical) {
+      this.appendMetric(fullMetric);
+    } else {
+      // Buffer non-critical metrics
+      this.buffer.push(fullMetric);
+      
+      // Flush buffer if it reaches size limit
+      if (this.buffer.length >= 100) {
+        this.flushBuffer();
+      }
+    }
+
+    // Keep in-memory metrics for summary generation
     this.metrics.push(fullMetric);
 
     // Log to console if enabled (for development)
@@ -81,9 +141,71 @@ export class AnalyticsCollector {
       console.log(`[Analytics] ${metric.toolName}: ${metric.executionTime}ms, success: ${metric.success}`);
     }
 
-    // Auto-flush if memory limit reached
-    if (this.metrics.length >= this.config.maxMetricsInMemory) {
-      this.flush();
+    // Archive older metrics in memory, keep recent ones
+    const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)); // 24 hours
+    this.metrics = this.metrics.filter(m => m.timestamp > cutoffTime);
+  }
+
+  /**
+   * Append a single metric to the JSONL file (atomic operation)
+   */
+  private appendMetric(metric: UsageMetrics): void {
+    try {
+      // Ensure output directory exists
+      const outputDir = dirname(this.config.outputPath);
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir, { recursive: true });
+      }
+
+      // Convert metric to JSON line
+      const jsonLine = JSON.stringify({
+        ...metric,
+        timestamp: metric.timestamp.toISOString()
+      }) + '\n';
+
+      // Atomic append using explicit O_APPEND flag for cross-platform guarantee
+      appendFileSync(this.config.outputPath, jsonLine, { 
+        encoding: 'utf8', 
+        flag: 'a'  // Explicit append flag ensures atomic O_APPEND behavior
+      });
+    } catch (error) {
+      console.error('[Analytics] Failed to append metric:', error);
+      // Continue operation - analytics failure shouldn't break the server
+    }
+  }
+
+  /**
+   * Flush buffered metrics to JSONL file
+   */
+  private flushBuffer(): void {
+    if (this.buffer.length === 0) return;
+
+    try {
+      // Ensure output directory exists
+      const outputDir = dirname(this.config.outputPath);
+      if (!existsSync(outputDir)) {
+        mkdirSync(outputDir, { recursive: true });
+      }
+
+      // Convert all buffered metrics to JSONL lines
+      const lines = this.buffer.map(metric => 
+        JSON.stringify({
+          ...metric,
+          timestamp: metric.timestamp.toISOString()
+        })
+      ).join('\n') + '\n';
+
+      // Atomic append all lines at once with explicit O_APPEND flag
+      appendFileSync(this.config.outputPath, lines, {
+        encoding: 'utf8',
+        flag: 'a'  // Explicit append flag ensures atomic O_APPEND behavior
+      });
+      
+      // Clear buffer after successful write
+      this.buffer = [];
+    } catch (error) {
+      console.error('[Analytics] Failed to flush buffer:', error);
+      // Keep buffer intact on failure for retry on next flush
     }
   }
 
@@ -307,39 +429,23 @@ export class AnalyticsCollector {
    * Flush metrics to file
    */
   async flush(): Promise<void> {
-    if (!this.config.enabled || this.metrics.length === 0) return;
+    if (!this.config.enabled) return;
 
     try {
-      // Ensure output directory exists
-      const outputDir = dirname(this.config.outputPath);
-      if (!existsSync(outputDir)) {
-        mkdirSync(outputDir, { recursive: true });
-      }
+      // Flush any buffered metrics first
+      this.flushBuffer();
 
-      // Prepare data for export
-      const exportData = {
-        metadata: {
-          generated: new Date().toISOString(),
-          totalMetrics: this.metrics.length,
-          version: '1.0.0'
-        },
-        metrics: this.metrics.slice(), // Copy array
-        summary: this.generateSummary()
-      };
-
-      // Write to file
-      if (this.config.logToFile) {
-        await fs.writeFile(
-          this.config.outputPath, 
-          JSON.stringify(exportData, null, 2),
-          'utf8'
-        );
-      }
-
-      // Archive older metrics, keep recent ones
+      // For JSONL format, we don't need to rewrite the entire file
+      // Metrics are already written via append operations
+      // This method now primarily handles cleanup and summary generation
+      
+      // Archive older metrics in memory, keep recent ones
       const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)); // 24 hours
       this.metrics = this.metrics.filter(m => m.timestamp > cutoffTime);
 
+      if (this.config.logToConsole) {
+        console.log(`[Analytics] Flush complete. ${this.metrics.length} metrics in memory.`);
+      }
     } catch (error) {
       console.error('[Analytics] Failed to flush metrics:', error);
     }
@@ -351,11 +457,21 @@ export class AnalyticsCollector {
   private startAutoFlush(): void {
     if (this.flushTimer) return;
 
+    // Set up timer for buffer flush (500ms for better I/O efficiency)
+    // Balances between data safety and performance
+    const bufferFlushInterval = 500; // 500ms for buffer flush
+    
     this.flushTimer = setInterval(() => {
-      this.flush().catch(error => {
-        console.error('[Analytics] Auto-flush failed:', error);
-      });
-    }, this.config.flushIntervalMs);
+      // Flush buffer every 500ms
+      this.flushBuffer();
+      
+      // Do full flush periodically for memory cleanup (every 5 minutes)
+      if (Date.now() % this.config.flushIntervalMs < bufferFlushInterval) {
+        this.flush().catch(error => {
+          console.error('[Analytics] Auto-flush failed:', error);
+        });
+      }
+    }, bufferFlushInterval);
   }
 
   /**
