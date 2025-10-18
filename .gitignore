@@ -15,9 +15,9 @@ build/
 .env.test.local
 .env.production.local
 .claude/
+.serena/
 
 # Personal Documents
-CLAUDE.md
 CLAUDE.local.md
 
 # IDE
