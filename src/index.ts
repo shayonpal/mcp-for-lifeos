@@ -71,7 +71,14 @@ const tools: Tool[] = [
   ...(CONSOLIDATED_TOOLS_ENABLED ? [
     {
       name: 'search',
-      description: 'Universal search tool with intelligent auto-mode routing. Consolidates all search functionality: basic search, advanced search, quick search, content type search, recent search, and pattern matching.',
+      description: `Universal search tool with intelligent auto-mode routing. Consolidates all search functionality: basic search, advanced search, quick search, content type search, recent search, and pattern matching.
+
+WHEN TO USE:
+- Find notes by content/metadata: mode="advanced", query="meeting notes"
+- Recent activity discovery: mode="recent", days=7
+- File pattern matching: mode="pattern", pattern="**/*recipe*.md"
+
+RETURNS: Array of SearchResult objects with path, title, excerpt, relevance score, and frontmatter metadata`,
       annotations: {
         readOnlyHint: true,
         idempotentHint: true,
@@ -110,7 +117,14 @@ const tools: Tool[] = [
     },
     {
       name: 'create_note_smart',
-      description: 'Smart note creation with automatic template detection. Consolidates create_note and create_note_from_template with intelligent template routing.',
+      description: `Smart note creation with automatic template detection. Consolidates create_note and create_note_from_template with intelligent template routing.
+
+WHEN TO USE:
+- Restaurant/person/article auto-detection: auto_template=true, title includes keywords
+- Explicit template selection: template="tpl-restaurant", customData provided
+- Manual note creation without templates: auto_template=false, content provided
+
+RETURNS: Success message with created note path and applied template name`,
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -132,7 +146,14 @@ const tools: Tool[] = [
     },
     {
       name: 'list',
-      description: 'Universal listing tool that consolidates folders, daily notes, templates, and YAML properties listing with auto-detection.',
+      description: `Universal listing tool that consolidates folders, daily notes, templates, and YAML properties listing with auto-detection.
+
+WHEN TO USE:
+- Browse vault folder structure: type="folders", path="Projects"
+- Discover available templates: type="templates"
+- List daily notes: type="daily_notes", limit=10
+
+RETURNS: Type-specific arrays: folder paths, template list, daily note paths, or YAML property names`,
       annotations: {
         readOnlyHint: true,
         idempotentHint: true,
@@ -410,7 +431,14 @@ const tools: Tool[] = [
   },
   {
     name: 'edit_note',
-    description: 'Edit an existing note in the LifeOS vault. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
+    description: `Edit an existing note in the LifeOS vault. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.
+
+WHEN TO USE:
+- Update frontmatter fields: frontmatter={tags: [...]}, mode="merge"
+- Replace entire note content: content provided, mode optional
+- Selective field editing: frontmatter updates specific fields only
+
+RETURNS: Success message with summary of updated frontmatter fields and content changes`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -439,7 +467,14 @@ const tools: Tool[] = [
   },
   {
     name: 'read_note',
-    description: 'Read a note from the vault',
+    description: `Read a note from the vault.
+
+WHEN TO USE:
+- Before editing: Read to understand current state
+- Content export: Extract for external processing
+- Metadata verification: Check frontmatter fields and tags
+
+RETURNS: Formatted text with complete YAML frontmatter, Obsidian link, and full note content`,
     annotations: {
       readOnlyHint: true,
       idempotentHint: true,
@@ -475,7 +510,14 @@ const tools: Tool[] = [
   },
   {
     name: 'get_daily_note',
-    description: 'Get or create a daily note for a specific date',
+    description: `Get or create a daily note for a specific date.
+
+WHEN TO USE:
+- Today's daily note: date omitted or date="today"
+- Relative date references: date="yesterday" or date="tomorrow"
+- Natural language dates: date="last Monday" or date="2025-10-15"
+
+RETURNS: Daily note path, creation status (created/existed), and applied template name`,
     annotations: {
       readOnlyHint: false,
       idempotentHint: true,
@@ -699,7 +741,14 @@ const tools: Tool[] = [
   },
   {
     name: 'insert_content',
-    description: 'Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading "Day\'s Notes" (with apostrophe) to target the main content section.',
+    description: `Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading "Day's Notes" (with apostrophe) to target the main content section.
+
+WHEN TO USE:
+- Append to daily notes: target={heading: "Day's Notes"}, position="end-of-section"
+- Insert after specific heading: target={heading: "## Tasks"}, position="after"
+- Target by text pattern: target={pattern: "TODO"}, position="before"
+
+RETURNS: Success message with insertion location (heading/line) and content preview`,
     inputSchema: {
       type: 'object',
       properties: {

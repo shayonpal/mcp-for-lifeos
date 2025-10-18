@@ -23,7 +23,9 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Th
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
 - **Backward Compatibility**: All legacy tools continue to work with deprecation warnings
 
-*95% AI tool selection accuracy achieved (exceeds 90% target)*
+### Performance Metrics
+
+95% AI tool selection accuracy achieved (exceeds 90% target)
 
 ## Quick Start
 
@@ -83,6 +85,7 @@ Create a new note with proper YAML frontmatter and optional template integration
 - **customData**: Custom data for template processing
 
 Template integration features:
+
 - Automatically discovers templates from your Obsidian templates folder
 - Processes Templater syntax (`<% tp.file.title %>`, `<% tp.date.now() %>`)
 - Falls back gracefully if templates are missing or unavailable
@@ -140,6 +143,7 @@ Get or create a daily note with automatic template integration
 - **confirmCreation**: Ask for confirmation before creating a new daily note (default: false)
 
 The daily note system integrates with your Obsidian template configuration:
+
 - Automatically uses the template specified in `.obsidian/daily-notes.json`
 - Processes Templater syntax (`<% tp.date.now() %>`, `<% tp.file.title %>`)
 - Falls back to a minimal template if no template is configured
@@ -444,7 +448,6 @@ The LifeOS MCP server includes intelligent template integration that automatical
 
 ### Available Templates
 
-
 | Template        | Target Folder                        | Content Type | Description                                          |
 | ----------------- | -------------------------------------- | -------------- | ------------------------------------------------------ |
 | **restaurant**  | `30 - Resources/Restaurants`         | Reference    | Restaurant notes with cuisine, location, and ratings |
@@ -554,7 +557,7 @@ All API responses include version metadata to help clients check compatibility:
 
 Use the `get_server_version` tool to get detailed information about the server:
 
-```
+```bash
 get_server_version
 ```
 
@@ -805,5 +808,5 @@ A: Wait 5 minutes for auto-flush, or restart server to force flush
 
 This project is licensed under the GNU General Public License v3.0. See [LICENSE.md](LICENSE.md) for details.
 
-**Copyright (C) 2025 Shayon Pal**
+**Copyright (C) 2025 Shayon Pal**  
 **AgileCode Studio** - [https://agilecode.studio](https://agilecode.studio)

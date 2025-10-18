@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Enhanced Tool Descriptions with Usage Examples** (MCP-36, 2025-10-18 14:26): Added WHEN TO USE and RETURNS sections to 7 consolidated tools for improved AI tool selection accuracy
+  - Tools updated: search, create_note_smart, list, edit_note, read_note, get_daily_note, insert_content
+  - Provides concrete usage examples showing when to use each tool vs alternatives
+  - Documents parameter combinations for common scenarios (e.g., mode="advanced", auto_template=true)
+  - Clarifies return format expectations for AI tool callers with structured RETURNS sections
+  - Improves Claude Desktop and Raycast AI command tool selection accuracy
+  - Reinforces Tool Router consolidation strategy with explicit consolidation notes in descriptions
+  - Zero runtime impact - metadata-only enhancement loaded once at server initialization
+
 ### Fixed
 - **Test Isolation Bug - Production Vault Pollution** (2025-08-30): Fixed tests writing to production Obsidian vault
   - Added `resetSingletons()` method to VaultUtils to clear cached singleton instances during tests
