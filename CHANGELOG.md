@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents test artifacts from appearing in live Obsidian vault during test runs
 
 ### Added
+- **MCP Tool Annotations for Read/Write Classification** (MCP-35, 2025-10-18 04:15): Added standardized MCP protocol annotations to all 27 tools for enhanced AI understanding
+  - Annotated 24 read-only tools with `readOnlyHint: true` for safe, non-mutating operations
+  - Annotated 3 write tools (`create_note`, `create_note_smart`, `edit_note`) with `readOnlyHint: false`
+  - Added `idempotentHint: true` to 1 conditional write tool (`get_daily_note`) indicating safe repeated execution
+  - Added `openWorldHint: true` to 26 tools indicating file system interaction and potential new information discovery
+  - Read-only tools include: search, list, read_note, get_daily_note, get_server_version, get_yaml_rules, list_yaml_properties, list_yaml_property_values, diagnose_vault, and all legacy tools
+  - Write tools clearly marked: create_note (false), create_note_smart (false), edit_note (false)
+  - Benefits: AI can confidently identify safe read operations, better tool selection accuracy, clearer API surface for developers
+  - Improves Claude Desktop integration with explicit operation safety guarantees
+  - Enhances tool discoverability and usage patterns for AI tool callers
+  - Provides foundation for future safety-critical AI workflows requiring operation classification
 - **get_server_version Tool Documentation** (2025-08-29): Created comprehensive documentation for the server information and discovery tool
   - Added detailed docs/tools/get_server_version.md with complete server capabilities and version information
   - Documents includeTools parameter for optional complete tool inventory with descriptions

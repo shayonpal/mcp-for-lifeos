@@ -72,6 +72,11 @@ const tools: Tool[] = [
     {
       name: 'search',
       description: 'Universal search tool with intelligent auto-mode routing. Consolidates all search functionality: basic search, advanced search, quick search, content type search, recent search, and pattern matching.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -128,6 +133,11 @@ const tools: Tool[] = [
     {
       name: 'list',
       description: 'Universal listing tool that consolidates folders, daily notes, templates, and YAML properties listing with auto-detection.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -153,6 +163,11 @@ const tools: Tool[] = [
     {
       name: 'search_notes',
       description: '[LEGACY ALIAS] Use "search" tool instead. Basic search by metadata filters.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -168,6 +183,11 @@ const tools: Tool[] = [
     {
       name: 'advanced_search',
       description: '[LEGACY ALIAS] Use "search" tool with mode="advanced" instead. Advanced search with full-text search and metadata filters.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -182,6 +202,11 @@ const tools: Tool[] = [
     {
       name: 'quick_search',
       description: '[LEGACY ALIAS] Use "search" tool with mode="quick" instead. Quick text search across all notes.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -194,6 +219,11 @@ const tools: Tool[] = [
     {
       name: 'search_by_content_type',
       description: '[LEGACY ALIAS] Use "search" tool with mode="content_type" instead. Find notes by content type.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -206,6 +236,11 @@ const tools: Tool[] = [
     {
       name: 'search_recent',
       description: '[LEGACY ALIAS] Use "search" tool with mode="recent" instead. Find recently modified notes.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -217,6 +252,11 @@ const tools: Tool[] = [
     {
       name: 'find_notes_by_pattern',
       description: '[LEGACY ALIAS] Use "search" tool with mode="pattern" instead. Find notes by glob pattern.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -241,6 +281,11 @@ const tools: Tool[] = [
     {
       name: 'list_folders',
       description: '[LEGACY ALIAS] Use "list" tool with type="folders" instead. List vault folders.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -251,6 +296,11 @@ const tools: Tool[] = [
     {
       name: 'list_daily_notes',
       description: '[LEGACY ALIAS] Use "list" tool with type="daily_notes" instead. List daily notes.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -261,6 +311,11 @@ const tools: Tool[] = [
     {
       name: 'list_templates',
       description: '[LEGACY ALIAS] Use "list" tool with type="templates" instead. List available templates.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {}
@@ -269,6 +324,11 @@ const tools: Tool[] = [
     {
       name: 'list_yaml_properties',
       description: '[LEGACY ALIAS] Use "list" tool with type="yaml_properties" instead. List YAML properties.',
+      annotations: {
+        readOnlyHint: true,
+        idempotentHint: true,
+        openWorldHint: true
+      },
       inputSchema: {
         type: 'object' as const,
         properties: {
@@ -284,6 +344,11 @@ const tools: Tool[] = [
   {
     name: 'get_server_version',
     description: 'Get the current server version and capabilities information',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -294,6 +359,11 @@ const tools: Tool[] = [
   {
     name: 'get_yaml_rules',
     description: 'Get the user\'s YAML frontmatter rules document for reference when creating or editing note YAML',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {}
@@ -370,6 +440,11 @@ const tools: Tool[] = [
   {
     name: 'read_note',
     description: 'Read a note from the vault',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -381,6 +456,11 @@ const tools: Tool[] = [
   {
     name: 'search_notes',
     description: 'Search notes by content type, tags, category, or date range',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -396,6 +476,11 @@ const tools: Tool[] = [
   {
     name: 'get_daily_note',
     description: 'Get or create a daily note for a specific date',
+    annotations: {
+      readOnlyHint: false,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -408,6 +493,11 @@ const tools: Tool[] = [
   {
     name: 'list_folders',
     description: 'List all folders in the vault following PARA structure',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -418,6 +508,11 @@ const tools: Tool[] = [
   {
     name: 'find_notes_by_pattern',
     description: 'Find notes matching a glob pattern',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -429,6 +524,11 @@ const tools: Tool[] = [
   {
     name: 'list_daily_notes',
     description: 'List all daily notes with their full paths for debugging',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -439,6 +539,11 @@ const tools: Tool[] = [
   {
     name: 'advanced_search',
     description: 'Advanced search with full-text search, metadata filters, and relevance scoring',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -474,6 +579,11 @@ const tools: Tool[] = [
   {
     name: 'quick_search',
     description: 'Quick text search across all notes with relevance ranking',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -486,6 +596,11 @@ const tools: Tool[] = [
   {
     name: 'search_by_content_type',
     description: 'Find all notes of a specific content type',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -498,6 +613,11 @@ const tools: Tool[] = [
   {
     name: 'search_recent',
     description: 'Find recently modified notes',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -509,6 +629,11 @@ const tools: Tool[] = [
   {
     name: 'diagnose_vault',
     description: 'Diagnose vault issues and check for problematic files',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -520,6 +645,11 @@ const tools: Tool[] = [
   {
     name: 'list_templates',
     description: 'List all available note templates in the LifeOS vault',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {}
@@ -602,6 +732,11 @@ const tools: Tool[] = [
   {
     name: 'list_yaml_properties',
     description: 'List all YAML frontmatter properties used across all notes in the vault',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -624,6 +759,11 @@ const tools: Tool[] = [
   {
     name: 'list_yaml_property_values',
     description: 'List all unique values used for a specific YAML property, showing which are single values vs arrays',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
     inputSchema: {
       type: 'object',
       properties: {
