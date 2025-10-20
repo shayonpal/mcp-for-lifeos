@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Impact: Daily notes now properly identified by date across ALL MCP tools, clickable links show correct dates
 
 ### Changed
+- **Contract Directory Migration from .claude/ to dev/** (2025-10-20): Moved TypeScript implementation contracts to proper development artifacts location
+  - Migrated 3 existing contracts (MCP-29, MCP-36, MCP-37) from `.claude/contracts/` to `dev/contracts/`
+  - Updated `tsconfig.json` to include `dev/contracts/**/*` and changed rootDir from `./src` to `.` for multi-directory support
+  - Updated `.gitignore` to exclude `dev/` directory under "Development artifacts" section
+  - Updated workflow commands (02-stage.md, 03-execute.md) to reference `dev/contracts/` path
+  - Fixed contract type errors: replaced invalid `typeof Interface` with string references and removed invalid default export of type definitions
+  - Enables proper TypeScript validation of contracts (previously ignored when in `.claude/`)
+  - Workflow promise of `npm run typecheck` validating contracts now functional
+  - Contracts can now properly import types from `src/` instead of duplicating interface definitions
+  - Semantically correct: `dev/` clearly indicates development artifacts vs CLI configuration in `.claude/`
+
 - **Enhanced Tool Descriptions with Title Extraction Documentation** (MCP-29, 2025-10-20): Added TITLE EXTRACTION section to 4 key tools documenting note title priority logic for improved AI understanding
   - Tools updated: search, read_note, edit_note, insert_content
   - Documents 3-tier title extraction priority: frontmatter.title → daily note date → title-cased filename
