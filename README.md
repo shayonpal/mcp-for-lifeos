@@ -66,6 +66,43 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 
 ## Available Tools
 
+### Recommended: Consolidated Tools
+
+#### `search`
+
+Universal search tool with intelligent auto-routing for all search operations
+
+- **mode**: Search strategy - 'auto' (recommended), 'advanced', 'quick', 'content_type', 'recent', 'pattern'
+- **query**: Search text across titles, content, and metadata
+- **naturalLanguage**: Natural language query (e.g., "Quebec barbecue restaurants")
+- **All advanced_search parameters supported** - See `advanced_search` documentation below for full parameter list
+
+The `search` tool automatically detects the optimal search strategy based on your query and consolidates 6 legacy search tools into one intelligent interface.
+
+#### `create_note_smart`
+
+Smart note creation with automatic template detection and YAML compliance
+
+- **title** (required): Note title
+- **auto_template**: Auto-detect template from title/content (default: true)
+- **template**: Explicit template override (restaurant, article, person, etc.)
+- **All create_note parameters supported** - See `create_note` documentation below for full parameter list
+
+Automatically detects appropriate templates (e.g., "Pizza Palace" → restaurant template) and handles template processing, YAML validation, and folder placement.
+
+#### `list`
+
+Universal listing tool for folders, daily notes, templates, and YAML properties
+
+- **type**: Item type - 'folders', 'daily_notes', 'templates', 'yaml_properties', 'auto'
+- **path**: Folder path (for folders type)
+- **limit**: Number of results (for daily_notes type)
+- **sortBy**, **includeCount**, **excludeStandard**: YAML property options
+
+Consolidates all listing operations into one tool with automatic type detection.
+
+---
+
 ### Core Operations
 
 #### `create_note`
@@ -90,14 +127,6 @@ Template integration features:
 - Processes Templater syntax (`<% tp.file.title %>`, `<% tp.date.now() %>`)
 - Falls back gracefully if templates are missing or unavailable
 - Use `useTemplate: true` to list available templates before creating
-
-#### `create_note_from_template`
-
-Create a note using a specific LifeOS template with auto-filled metadata
-
-- **title** (required): Note title
-- **template** (required): Template key (restaurant, article, person, daily, etc.)
-- **customData**: Template-specific data (e.g., cuisine, location for restaurants)
 
 #### `read_note`
 
@@ -215,31 +244,7 @@ insert_content title: "Daily Note" content: "- [ ] Review PR #123" target: {head
 # Result: - [ ] Review PR #123 ➕ 2025-06-28
 ```
 
-### Navigation Tools
-
-#### `list_folders`
-
-List folders in the vault
-
-- **path**: Folder path to list (optional, defaults to root)
-
-#### `find_notes_by_pattern`
-
-Find notes using glob patterns
-
-- **pattern** (required): Glob pattern (e.g., "**/*recipe*.md")
-
-#### `list_daily_notes`
-
-List recent daily notes with full paths (debugging tool)
-
-- **limit**: Number of results (optional, default 10)
-
-#### `list_templates`
-
-List all available note templates in the LifeOS vault
-
-- Shows template descriptions, target folders, and usage examples
+### Utility Tools
 
 #### `diagnose_vault`
 
@@ -247,8 +252,6 @@ Diagnose vault issues and check for problematic files
 
 - **checkYaml**: Check for YAML parsing errors (default: true)
 - **maxFiles**: Maximum files to check (default: 100)
-
-### Advanced Search Tools
 
 #### `get_server_version`
 
@@ -263,6 +266,8 @@ Retrieve your custom YAML frontmatter rules document for reference when creating
 - No parameters required
 - Returns the content of your configured YAML rules document
 - Requires `yamlRulesPath` to be set in configuration
+
+### Search Tools
 
 #### `advanced_search`
 
@@ -333,37 +338,6 @@ Comprehensive search with full-text search, metadata filters, and **natural lang
   "includeNullValues": false
 }
 ```
-
-#### `quick_search`
-
-Fast text search across all notes with relevance ranking
-
-- **query** (required): Search query
-- **maxResults**: Maximum results (default: 10)
-
-#### `search_by_content_type`
-
-Find all notes of a specific content type
-
-- **contentType** (required): Content type to search for
-- **maxResults**: Maximum results (optional)
-
-#### `search_recent`
-
-Find recently modified notes
-
-- **days**: Number of days back to search (default: 7)
-- **maxResults**: Maximum results (default: 20)
-
-#### `search_notes` (Legacy)
-
-Basic search by metadata criteria
-
-- **contentType**: Filter by content type
-- **category**: Filter by category
-- **tags**: Filter by tags array
-- **folder**: Filter by folder path
-- **dateStart/dateEnd**: Date range filtering
 
 ### YAML Property Management
 
@@ -473,14 +447,14 @@ The LifeOS MCP server includes intelligent template integration that automatical
 ### Usage Examples
 
 ```bash
-# Create a restaurant note with template
-create_note_from_template title: "Example Restaurant" template: "restaurant"
+# Create a restaurant note with smart detection
+create_note_smart title: "Pizza Palace"  # Auto-detects restaurant template
 
-# Create any note with auto-template detection
-create_note title: "New Coffee Shop" template: "restaurant"
+# Create with explicit template
+create_note_smart title: "My Article" template: "article"
 
 # List all available templates
-list_templates
+list type: "templates"
 ```
 
 ## Client Integration
@@ -643,7 +617,7 @@ ANALYTICS_DASHBOARD_PORT=9000 node scripts/start-analytics-dashboard.js
 - **Cache performance**: Hit rates and optimization opportunities
 - **Daily usage trends**: Timeline of your workflow patterns
 
-Analytics data is stored locally in `analytics/usage-metrics.json` and automatically exports every 5 minutes. Perfect for understanding and optimizing your personal development workflow!
+Analytics data is stored locally in `analytics/usage-metrics.jsonl` and automatically exports every 5 minutes. Perfect for understanding and optimizing your personal development workflow!
 
 ## Documentation
 
@@ -755,31 +729,6 @@ The server understands and respects the PARA method organization:
 - **20 - Areas**: Life management
 - **30 - Resources**: Reference materials
 - **40 - Archives**: Completed items
-
-## Template System
-
-The server provides full integration with your existing LifeOS templates:
-
-- **Template Discovery**: Automatically maps to your `/00 - Meta/Templates/` folder
-- **Templater Compatibility**: Processes `tp.file.title`, `moment()`, and other Templater functions
-- **Robust YAML Parsing**: Safely handles templates with complex Templater syntax in frontmatter
-- **Intelligent Routing**: Routes notes to appropriate PARA folders based on template
-- **Custom Data Support**: Inject template-specific data (restaurant cuisine, article author, etc.)
-- **Error Recovery**: Falls back gracefully if templates are unavailable or contain parsing errors
-
-### Template Processing
-
-The server includes a comprehensive template system with 24-hour caching:
-
-- **Automatic Template Discovery**: Reads templates from your configured Obsidian templates folder
-- **Templater Syntax Support**: Processes common Templater variables:
-  - `<% tp.file.title %>` → Note title
-  - `<% tp.date.now("YYYY-MM-DD") %>` → Current date in specified format
-  - `<% tp.date.now("dddd, MMMM D, YYYY") %>` → Formatted date (e.g., "Saturday, June 28, 2025")
-  - `<% moment().format('YYYY-MM-DD') %>` → Legacy moment.js syntax (also supported)
-- **Daily Note Integration**: Automatically uses the template specified in `.obsidian/daily-notes.json`
-- **Performance Optimization**: Templates cached for 24 hours to reduce file I/O
-- **Graceful Fallback**: If template processing fails, falls back to minimal default templates
 
 ## Common Issues
 
