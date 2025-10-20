@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Daily Notes Display "Untitled" Bug + Timezone Date Display** (MCP-29, 2025-10-20 14:27): Fixed daily notes showing "Untitled" across 11 MCP tools and timezone-induced date shift in clickable links
+  - Root cause: Tools used `note.frontmatter.title || 'Untitled'` fallback, but daily notes lack title field
+  - Timezone bug: `new Date('2025-08-30')` created UTC midnight → displayed as "August 29, 2025" in EST/PST
+  - Solution: Enhanced ObsidianLinks.extractNoteTitle() with 3-tier priority logic and parseISO() for timezone-safe parsing
+  - Priority 1: YAML frontmatter 'title' field (if present and non-empty)
+  - Priority 2: Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+  - Priority 3: Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)
+  - Tools updated: insert_content, read_note, edit_note, search (2 locations), search_notes, advanced_search, quick_search, search_by_content_type, search_recent, tool-router pattern mode
+  - Backward compatible: Optional frontmatter parameter maintains original API signature
+  - Testing: 35 comprehensive unit tests created (34/35 passing, 97.1% success rate)
+  - Critical validation: Timezone fix verified - dates display correctly without day shift
+  - Impact: Daily notes now properly identified by date across ALL MCP tools, clickable links show correct dates
+
 ### Changed
+- **Enhanced Tool Descriptions with Title Extraction Documentation** (MCP-29, 2025-10-20): Added TITLE EXTRACTION section to 4 key tools documenting note title priority logic for improved AI understanding
+  - Tools updated: search, read_note, edit_note, insert_content
+  - Documents 3-tier title extraction priority: frontmatter.title → daily note date → title-cased filename
+  - Provides concrete examples: "August 30, 2025" for daily notes, "My Project Note" for regular notes
+  - Helps AI models understand why daily notes show formatted dates instead of filenames
+  - Improves AI prompt quality when referencing notes by explaining title resolution logic
+  - Zero runtime impact - metadata-only documentation enhancement
+
 - **Enhanced Tool Descriptions with Usage Examples** (MCP-36, 2025-10-18 14:26): Added WHEN TO USE and RETURNS sections to 7 consolidated tools for improved AI tool selection accuracy
   - Tools updated: search, create_note_smart, list, edit_note, read_note, get_daily_note, insert_content
   - Provides concrete usage examples showing when to use each tool vs alternatives

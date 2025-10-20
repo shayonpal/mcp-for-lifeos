@@ -1062,13 +1062,14 @@ export class VaultUtils {
     const dateStr = format(localDate, "yyyy-MM-dd");
 
     try {
-      // Get the template manager and settings
+      // Get the template manager
       const templateManager = this.getTemplateManager();
-      const obsidianSettings = this.getObsidianSettings();
 
-      // Get the daily note template name and folder from settings
+      // Get the daily note template name
       const templateName = await templateManager.getDailyNoteTemplate();
-      const dailyNoteFolder = await obsidianSettings.getDailyNoteFolder();
+
+      // Use configured daily notes path directly (not from Obsidian settings)
+      const dailyNoteFolder = LIFEOS_CONFIG.dailyNotesPath;
 
       if (templateName) {
         // Create template context
@@ -1124,7 +1125,7 @@ export class VaultUtils {
         dateStr,
         frontmatter,
         content,
-        "20 - Areas/21 - Myself/Journals/Daily",
+        LIFEOS_CONFIG.dailyNotesPath,
       );
     }
   }

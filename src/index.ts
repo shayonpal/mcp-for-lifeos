@@ -78,7 +78,12 @@ WHEN TO USE:
 - Recent activity discovery: mode="recent", days=7
 - File pattern matching: mode="pattern", pattern="**/*recipe*.md"
 
-RETURNS: Array of SearchResult objects with path, title, excerpt, relevance score, and frontmatter metadata`,
+RETURNS: Array of SearchResult objects with path, title, excerpt, relevance score, and frontmatter metadata
+
+TITLE EXTRACTION: Search result titles are determined by priority:
+1. YAML frontmatter 'title' field (if present and non-empty)
+2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
       annotations: {
         readOnlyHint: true,
         idempotentHint: true,
@@ -438,7 +443,12 @@ WHEN TO USE:
 - Replace entire note content: content provided, mode optional
 - Selective field editing: frontmatter updates specific fields only
 
-RETURNS: Success message with summary of updated frontmatter fields and content changes`,
+RETURNS: Success message with summary of updated frontmatter fields and content changes
+
+TITLE EXTRACTION: Note titles in responses are determined by priority:
+1. YAML frontmatter 'title' field (if present and non-empty)
+2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -474,7 +484,12 @@ WHEN TO USE:
 - Content export: Extract for external processing
 - Metadata verification: Check frontmatter fields and tags
 
-RETURNS: Formatted text with complete YAML frontmatter, Obsidian link, and full note content`,
+RETURNS: Formatted text with complete YAML frontmatter, Obsidian link, and full note content
+
+TITLE EXTRACTION: Note titles are determined by priority:
+1. YAML frontmatter 'title' field (if present and non-empty)
+2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
     annotations: {
       readOnlyHint: true,
       idempotentHint: true,
@@ -748,7 +763,12 @@ WHEN TO USE:
 - Insert after specific heading: target={heading: "## Tasks"}, position="after"
 - Target by text pattern: target={pattern: "TODO"}, position="before"
 
-RETURNS: Success message with insertion location (heading/line) and content preview`,
+RETURNS: Success message with insertion location (heading/line) and content preview
+
+TITLE EXTRACTION: Note titles in responses are determined by priority:
+1. YAML frontmatter 'title' field (if present and non-empty)
+2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -889,7 +909,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const note = result.note;
           const score = result.score.toFixed(1);
           const matchCount = result.matches.length;
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           let output = ObsidianLinks.formatSearchResult(
             index + 1,
@@ -1082,7 +1102,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const note = result.note;
           const score = result.score.toFixed(1);
           const matchCount = result.matches.length;
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           let output = ObsidianLinks.formatSearchResult(
             index + 1,
@@ -1461,7 +1481,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return addVersionMetadata({
           content: [{
             type: 'text',
-            text: `# ${note.frontmatter.title || 'Untitled'}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
+            text: `# ${ObsidianLinks.extractNoteTitle(note.path, note.frontmatter)}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
           }]
         });
       }
@@ -1526,7 +1546,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return addVersionMetadata({
           content: [{
             type: 'text',
-            text: `✅ Updated note: **${updatedNote.frontmatter.title || 'Untitled'}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
+            text: `✅ Updated note: **${ObsidianLinks.extractNoteTitle(updatedNote.path, updatedNote.frontmatter)}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
           }]
         });
       }
@@ -1545,8 +1565,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         const results = VaultUtils.searchNotes(searchOptions);
-        const resultText = results.map(note => 
-          `**${note.frontmatter.title || 'Untitled'}** (${note.frontmatter['content type']})\n${note.path}`
+        const resultText = results.map(note =>
+          `**${ObsidianLinks.extractNoteTitle(note.path, note.frontmatter)}** (${note.frontmatter['content type']})\n${note.path}`
         ).join('\n\n');
 
         return addVersionMetadata({
@@ -1762,7 +1782,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const note = result.note;
           const score = result.score.toFixed(1);
           const matchCount = result.matches.length;
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           let output = ObsidianLinks.formatSearchResult(
             index + 1,
@@ -1803,7 +1823,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const resultText = results.map((result, index) => {
           const note = result.note;
           const topMatch = result.matches[0];
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           let output = ObsidianLinks.formatSearchResult(
             index + 1,
@@ -1836,7 +1856,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const resultText = results.map((result, index) => {
           const note = result.note;
           const modifiedDate = format(note.modified, 'MMM dd, yyyy');
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           return ObsidianLinks.formatSearchResult(
             index + 1,
@@ -1865,7 +1885,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const resultText = results.map((result, index) => {
           const note = result.note;
           const modifiedDate = format(note.modified, 'MMM dd, yyyy HH:mm');
-          const title = note.frontmatter.title || 'Untitled';
+          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
           
           return ObsidianLinks.formatSearchResult(
             index + 1,
@@ -2147,7 +2167,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const response = addVersionMetadata({
             content: [{
               type: 'text',
-              text: `✅ Inserted content in **${updatedNote.frontmatter.title || 'Untitled'}**\n\n` +
+              text: `✅ Inserted content in **${ObsidianLinks.extractNoteTitle(updatedNote.path, updatedNote.frontmatter)}**\n\n` +
                     `${obsidianLink}\n\n` +
                     `📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n` +
                     `🎯 Target: ${targetDesc}\n` +

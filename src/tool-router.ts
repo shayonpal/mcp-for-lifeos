@@ -12,6 +12,7 @@ import { VaultUtils } from './vault-utils.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
+import { ObsidianLinks } from './obsidian-links.js';
 
 /**
  * Universal Search Tool - Consolidates 6 search tools into 1
@@ -239,15 +240,16 @@ export class ToolRouter {
             files.slice(0, options.maxResults || 20).map(async (filePath) => {
               try {
                 const note = VaultUtils.readNote(filePath);
+                const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
                 return {
                   note,
                   score: 1.0,
                   matches: [{
                     type: 'title' as const,
-                    text: note.frontmatter.title || 'Untitled',
+                    text: title,
                     context: `File: ${filePath}`,
                     position: 0,
-                    length: (note.frontmatter.title || '').length
+                    length: title.length
                   }]
                 };
               } catch (error) {

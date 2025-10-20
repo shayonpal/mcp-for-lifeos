@@ -1,5 +1,7 @@
 import { LIFEOS_CONFIG } from './config.js';
 import { basename } from 'path';
+import { parseISO, format } from 'date-fns';
+import type { YAMLFrontmatter } from './types.js';
 
 export class ObsidianLinks {
   /**
@@ -69,21 +71,53 @@ export class ObsidianLinks {
 
   /**
    * Extract a readable note title from file path
+   *
+   * @param filePath - Absolute or relative path to the note file
+   * @param frontmatter - Optional YAML frontmatter object; if provided and contains 'title', that takes precedence
+   * @returns Human-readable title string
+   *
+   * Priority for title extraction:
+   * 1. Frontmatter title field (if provided and non-empty)
+   * 2. Formatted date for daily notes (YYYY-MM-DD format)
+   * 3. Formatted filename (spaces, title case)
+   *
+   * @example
+   * // Daily note with frontmatter title
+   * extractNoteTitle('/path/2025-08-30.md', { title: 'Custom Title' }) // → 'Custom Title'
+   *
+   * @example
+   * // Daily note without frontmatter title (timezone fix applied)
+   * extractNoteTitle('/path/2025-08-30.md') // → 'August 30, 2025'
+   *
+   * @example
+   * // Regular note without frontmatter
+   * extractNoteTitle('/path/my-project-note.md') // → 'My Project Note'
+   *
+   * @remarks
+   * MCP-31 Fix: Uses parseISO() from date-fns instead of new Date() to prevent timezone
+   * parsing bugs where UTC dates shift to previous day in negative offset timezones (EST, PST).
+   * Example: File '2025-08-30.md' now correctly shows 'August 30, 2025' instead of 'August 29, 2025'
    */
-  private static extractNoteTitle(filePath: string): string {
-    const filename = basename(filePath, '.md');
-    
-    // Handle daily notes (YYYY-MM-DD format)
-    if (/^\d{4}-\d{2}-\d{2}$/.test(filename)) {
-      const date = new Date(filename);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+  public static extractNoteTitle(filePath: string, frontmatter?: YAMLFrontmatter | Record<string, any>): string {
+    // Priority 1: Check frontmatter title if provided
+    if (frontmatter?.title && typeof frontmatter.title === 'string' && frontmatter.title.trim()) {
+      return frontmatter.title;
     }
-    
-    // Convert dashes/underscores to spaces and title case
+
+    const filename = basename(filePath, '.md');
+
+    // Priority 2: Handle daily notes (YYYY-MM-DD format)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(filename)) {
+      // MCP-31 Timezone Fix: Use parseISO() instead of new Date() to prevent day shift
+      // parseISO() parses as local date without timezone conversion
+      // new Date(filename) creates UTC date at midnight, causing previous day in EST/PST
+      const date = parseISO(filename);
+
+      // Use date-fns format() for consistency with get_daily_note tool
+      return format(date, 'MMMM dd, yyyy');
+    }
+
+    // Priority 3: Convert dashes/underscores to spaces and title case for regular notes
     return filename
       .replace(/[-_]/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase());
