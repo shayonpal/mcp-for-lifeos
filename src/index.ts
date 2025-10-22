@@ -16,6 +16,8 @@ import { YamlRulesManager } from './yaml-rules-manager.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
+import { ResponseTruncator } from './response-truncator.js';
+import { validateMaxResults, DEFAULT_TOKEN_BUDGET, TruncationMetadata } from '../dev/contracts/MCP-38-contracts.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
@@ -111,7 +113,13 @@ TITLE EXTRACTION: Search result titles are determined by priority:
           tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
           people: { type: 'array', items: { type: 'string' }, description: 'Filter by people mentioned' },
           folder: { type: 'string', description: 'Filter by folder path' },
-          maxResults: { type: 'number', description: 'Maximum number of results' },
+          maxResults: {
+            type: 'number',
+            description: 'Maximum number of results (1-100, default: 25)',
+            minimum: 1,
+            maximum: 100,
+            default: 25
+          },
           // Legacy compatibility
           dateStart: { type: 'string', description: 'Start date (YYYY-MM-DD) - legacy compatibility' },
           dateEnd: { type: 'string', description: 'End date (YYYY-MM-DD) - legacy compatibility' },
@@ -903,24 +911,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!CONSOLIDATED_TOOLS_ENABLED) {
           throw new Error('Consolidated tools are disabled. Use legacy search tools instead.');
         }
-        
-        const searchOptions: UniversalSearchOptions = args as unknown as UniversalSearchOptions;
-        
+
+        // Validate and apply maxResults constraints
+        const validatedMaxResults = validateMaxResults(
+          typeof args.maxResults === 'number' ? args.maxResults : undefined,
+          'search'
+        );
+
+        const searchOptions: UniversalSearchOptions = {
+          ...args as unknown as UniversalSearchOptions,
+          maxResults: validatedMaxResults
+        };
+
         // Note: OR queries are now handled in the ToolRouter by splitting into multiple searches
-        const results = await ToolRouter.routeSearch(searchOptions);
+        const allResults = await ToolRouter.routeSearch(searchOptions);
 
         // Extract format parameter (default: detailed for backward compatibility)
         const format = (args.format === 'concise' || args.format === 'detailed')
           ? args.format
           : 'detailed';
 
+        // Initialize token budget tracker
+        const tokenBudget = new ResponseTruncator(DEFAULT_TOKEN_BUDGET);
+
         // Check if we have natural language interpretation to display
         let interpretationText = '';
-        if (results.length > 0 && results[0].interpretation) {
-          interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
+        if (allResults.length > 0 && allResults[0].interpretation) {
+          interpretationText = NaturalLanguageProcessor.formatInterpretation(allResults[0].interpretation) + '\n\n';
+          // Account for interpretation text in budget
+          tokenBudget.consumeBudget(interpretationText);
         }
 
-        const resultText = results.map((result, index) => {
+        // Track results that fit within budget
+        const includedResults: string[] = [];
+        let truncated = false;
+
+        for (let index = 0; index < allResults.length; index++) {
+          const result = allResults[index];
           const note = result.note;
           const score = result.score.toFixed(1);
           const matchCount = result.matches.length;
@@ -933,7 +960,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             note.frontmatter['content type'] || 'Unknown',
             result.score,
             `${matchCount} matches`,
-            format
+            format,
+            tokenBudget  // Pass truncator for potential future use
           );
 
           // Show top 3 matches with context (only in detailed mode for performance)
@@ -948,14 +976,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
           }
 
-          return output;
-        }).join('\n\n---\n\n');
+          // Check if adding this result would exceed budget
+          if (!tokenBudget.canAddResult(output + '\n\n---\n\n')) {
+            truncated = true;
+            break;  // Stop adding results (early termination)
+          }
+
+          // Consume budget for this result
+          tokenBudget.consumeBudget(output + '\n\n---\n\n');
+          includedResults.push(output);
+        }
+
+        const resultText = includedResults.join('\n\n---\n\n');
+
+        // Generate truncation metadata
+        const truncationInfo = tokenBudget.getTruncationInfo(
+          includedResults.length,
+          allResults.length,
+          format,
+          false  // autoDowngraded not implemented yet
+        );
+
+        // Build response text with truncation notice if applicable
+        let responseText = `${interpretationText}Found ${allResults.length} results`;
+        if (truncationInfo.truncated) {
+          responseText += ` (showing ${truncationInfo.shownCount})\n\n${truncationInfo.suggestion}`;
+        } else {
+          responseText += ':';
+        }
+        responseText += `\n\n${resultText}`;
 
         return addVersionMetadata({
           content: [{
             type: 'text',
-            text: `${interpretationText}Found ${results.length} results:\n\n${resultText}`
-          }]
+            text: responseText
+          }],
+          // Add truncation metadata for debugging/telemetry
+          truncation: truncationInfo.truncated ? truncationInfo : undefined
         });
       }
 
@@ -1009,80 +1066,222 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ? args.format
           : 'detailed';
 
+        // Initialize token budget tracker
+        const tokenBudget = new ResponseTruncator(DEFAULT_TOKEN_BUDGET);
+
         let responseText = '';
+        let truncated = false;
+        let totalItems = 0;
+        let shownItems = 0;
 
         switch (listOptions.type) {
           case 'folders': {
             const folders = results as string[];
-            const formattedList = ObsidianLinks.formatListResult(folders, 'folders', format);
-            responseText = format === 'concise'
-              ? formattedList
-              : `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
+            totalItems = folders.length;
+
+            if (format === 'concise') {
+              // Build response incrementally with budget tracking
+              const includedFolders: string[] = [];
+              for (const folder of folders) {
+                const formattedItem = `📁 ${folder}\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedFolders.push(folder);
+              }
+              shownItems = includedFolders.length;
+              responseText = includedFolders.map(f => `📁 ${f}`).join('\n');
+            } else {
+              const header = `Folders in ${listOptions.path || 'vault root'}:\n\n`;
+              tokenBudget.consumeBudget(header);
+              responseText = header;
+
+              const includedFolders: string[] = [];
+              for (const folder of folders) {
+                const formattedItem = `📁 ${folder}\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedFolders.push(folder);
+              }
+              shownItems = includedFolders.length;
+              responseText += includedFolders.map(f => `📁 ${f}`).join('\n');
+            }
             break;
           }
 
           case 'daily_notes': {
             const files = results as string[];
-            const formattedList = ObsidianLinks.formatListResult(files, 'daily_notes', format);
-            responseText = format === 'concise'
-              ? formattedList
-              : `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
+            totalItems = files.length;
+
+            if (format === 'concise') {
+              const includedFiles: string[] = [];
+              for (const file of files) {
+                const formattedItem = `${file}\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedFiles.push(file);
+              }
+              shownItems = includedFiles.length;
+              responseText = includedFiles.join('\n');
+            } else {
+              const header = `Latest ${files.length} daily notes:\n\n`;
+              tokenBudget.consumeBudget(header);
+              responseText = header;
+
+              const includedFiles: string[] = [];
+              for (const file of files) {
+                const formattedItem = `**${file}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${file}\`\n\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedFiles.push(file);
+              }
+              shownItems = includedFiles.length;
+              responseText += includedFiles.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n');
+            }
             break;
           }
 
           case 'templates': {
             const templates = results as any[];
-            const formattedList = ObsidianLinks.formatListResult(templates, 'templates', format);
-            responseText = format === 'concise'
-              ? formattedList
-              : `# Available Templates\n\n${templates.map((template, index) => {
-                  return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                         `   ${template.description}\n` +
-                         `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                         `   📄 Content Type: ${template.contentType || 'Varies'}`;
-                }).join('\n\n')}`;
+            totalItems = templates.length;
+
+            if (format === 'concise') {
+              const includedTemplates: any[] = [];
+              for (const template of templates) {
+                const formattedItem = `**${template.key}**: ${template.name}\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedTemplates.push(template);
+              }
+              shownItems = includedTemplates.length;
+              responseText = includedTemplates.map(t => `**${t.key}**: ${t.name}`).join('\n');
+            } else {
+              const header = `# Available Templates\n\n`;
+              tokenBudget.consumeBudget(header);
+              responseText = header;
+
+              const includedTemplates: any[] = [];
+              for (let index = 0; index < templates.length; index++) {
+                const template = templates[index];
+                const formattedItem =
+                  `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
+                  `   ${template.description}\n` +
+                  `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
+                  `   📄 Content Type: ${template.contentType || 'Varies'}\n\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedTemplates.push(template);
+              }
+              shownItems = includedTemplates.length;
+              responseText += includedTemplates.map((template, index) => {
+                return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
+                       `   ${template.description}\n` +
+                       `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
+                       `   📄 Content Type: ${template.contentType || 'Varies'}`;
+              }).join('\n\n');
+            }
             break;
           }
 
           case 'yaml_properties': {
             const propertiesInfo = results as any;
             const sortedProperties = propertiesInfo.properties;
+            totalItems = sortedProperties.length;
 
             if (format === 'concise') {
-              // Concise mode: just property names
-              responseText = sortedProperties.join('\n');
-            } else {
-              // Detailed mode: existing formatting
-              responseText = `# YAML Properties in Vault\n\n`;
-              responseText += `Found **${sortedProperties.length}** unique properties`;
-              if (propertiesInfo.totalNotes) {
-                responseText += ` across **${propertiesInfo.totalNotes}** notes`;
+              const includedProperties: string[] = [];
+              for (const prop of sortedProperties) {
+                const formattedItem = `${prop}\n`;
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedProperties.push(prop);
               }
-              responseText += `\n\n## Properties List\n\n`;
+              shownItems = includedProperties.length;
+              responseText = includedProperties.join('\n');
+            } else {
+              const header = `# YAML Properties in Vault\n\n` +
+                           `Found **${sortedProperties.length}** unique properties` +
+                           (propertiesInfo.totalNotes ? ` across **${propertiesInfo.totalNotes}** notes` : '') +
+                           `\n\n## Properties List\n\n`;
+              tokenBudget.consumeBudget(header);
+              responseText = header;
+
+              const includedProperties: string[] = [];
+              for (const prop of sortedProperties) {
+                let formattedItem: string;
+                if (listOptions.includeCount && propertiesInfo.counts) {
+                  const count = propertiesInfo.counts[prop] || 0;
+                  formattedItem = `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+                } else {
+                  formattedItem = `- ${prop}\n`;
+                }
+                if (!tokenBudget.canAddResult(formattedItem)) {
+                  truncated = true;
+                  break;
+                }
+                tokenBudget.consumeBudget(formattedItem);
+                includedProperties.push(prop);
+              }
+              shownItems = includedProperties.length;
 
               if (listOptions.includeCount && propertiesInfo.counts) {
-                sortedProperties.forEach((prop: string) => {
+                responseText += includedProperties.map((prop: string) => {
                   const count = propertiesInfo.counts[prop] || 0;
-                  responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-                });
+                  return `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})`;
+                }).join('\n');
               } else {
-                sortedProperties.forEach((prop: string) => {
-                  responseText += `- ${prop}\n`;
-                });
+                responseText += includedProperties.map((prop: string) => `- ${prop}`).join('\n');
               }
             }
             break;
           }
-          
+
           default:
             responseText = `Listed ${Array.isArray(results) ? results.length : 'unknown'} items`;
+            totalItems = Array.isArray(results) ? results.length : 0;
+            shownItems = totalItems;
+        }
+
+        // Generate truncation metadata
+        const truncationInfo = tokenBudget.getTruncationInfo(
+          shownItems,
+          totalItems,
+          format,
+          false  // autoDowngraded not implemented yet
+        );
+
+        // Add truncation notice if applicable
+        if (truncationInfo.truncated) {
+          responseText = `Showing ${truncationInfo.shownCount} of ${truncationInfo.totalCount} items (limit reached)\n\n${truncationInfo.suggestion}\n\n---\n\n${responseText}`;
         }
 
         return addVersionMetadata({
           content: [{
             type: 'text',
             text: responseText
-          }]
+          }],
+          // Add truncation metadata for debugging/telemetry
+          truncation: truncationInfo.truncated ? truncationInfo : undefined
         });
       }
 

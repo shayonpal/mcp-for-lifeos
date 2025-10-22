@@ -143,15 +143,21 @@ export class ObsidianLinks {
 
   /**
    * Create a search result entry with Obsidian link
+   *
+   * @param tokenBudget - RESERVED for future use. Token budget tracking is handled
+   *                      at the handler level (index.ts) for incremental consumption.
+   *                      This parameter maintains API consistency for potential future
+   *                      per-result budget validation. Currently unused.
    */
   static formatSearchResult(
-    index: number, 
-    title: string, 
-    filePath: string, 
-    contentType?: string | string[], 
+    index: number,
+    title: string,
+    filePath: string,
+    contentType?: string | string[],
     score?: number,
     additionalInfo?: string,
-    format: 'concise' | 'detailed' = 'detailed'
+    format: 'concise' | 'detailed' = 'detailed',
+    tokenBudget?: import('./response-truncator.js').ResponseTruncator
   ): string {
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
     
@@ -169,18 +175,18 @@ export class ObsidianLinks {
       result += ` (Score: ${score.toFixed(1)})`;
     }
     
-    result += '\\n';
+    result += '\\\n';
     
     if (contentType) {
       const typeText = Array.isArray(contentType) ? contentType.join(', ') : contentType;
-      result += `*${typeText}*\\n`;
+      result += `*${typeText}*\\\n`;
     }
     
     if (additionalInfo) {
-      result += `${additionalInfo}\\n`;
+      result += `${additionalInfo}\\\n`;
     }
     
-    result += `\`${relativePath}\`\\n`;
+    result += `\`${relativePath}\`\\\n`;
     result += `${obsidianLink}`;
     
     return result;
@@ -188,11 +194,17 @@ export class ObsidianLinks {
 
   /**
    * Format list results with type-specific formatting
+   *
+   * @param tokenBudget - RESERVED for future use. Token budget tracking is handled
+   *                      at the handler level (index.ts) for incremental consumption.
+   *                      This parameter maintains API consistency for potential future
+   *                      per-result budget validation. Currently unused.
    */
   static formatListResult(
     items: string[] | any[] | Record<string, number>,
     listType: 'folders' | 'daily_notes' | 'templates' | 'yaml_properties',
-    format: 'concise' | 'detailed' = 'detailed'
+    format: 'concise' | 'detailed' = 'detailed',
+    tokenBudget?: import('./response-truncator.js').ResponseTruncator
   ): string {
     // Concise mode formatting
     if (format === 'concise') {
@@ -200,19 +212,19 @@ export class ObsidianLinks {
         case 'folders':
         case 'daily_notes':
           // Already minimal (string arrays)
-          return Array.isArray(items) ? items.join('\\n') : '';
+          return Array.isArray(items) ? items.join('\\\n') : '';
         
         case 'templates':
           // Return key + name only
           if (Array.isArray(items)) {
-            return items.map((t: any) => `**${t.key}**: ${t.name}`).join('\\n');
+            return items.map((t: any) => `**${t.key}**: ${t.name}`).join('\\\n');
           }
           return '';
         
         case 'yaml_properties':
           // Return property names array
           if (typeof items === 'object' && !Array.isArray(items)) {
-            return Object.keys(items).join('\\n');
+            return Object.keys(items).join('\\\n');
           }
           return '';
       }
@@ -222,26 +234,26 @@ export class ObsidianLinks {
     switch (listType) {
       case 'folders':
       case 'daily_notes':
-        return Array.isArray(items) ? items.join('\\n') : '';
+        return Array.isArray(items) ? items.join('\\\n') : '';
       
       case 'templates':
         if (Array.isArray(items)) {
           return items.map((template: any) => {
-            let result = `**${template.key}**: ${template.name}\\n`;
+            let result = `**${template.key}**: ${template.name}\\\n`;
             if (template.description) {
-              result += `  ${template.description}\\n`;
+              result += `  ${template.description}\\\n`;
             }
             if (template.path) {
-              result += `  Path: \`${template.path}\`\\n`;
+              result += `  Path: \`${template.path}\`\\\n`;
             }
             if (template.targetFolder) {
-              result += `  Target: ${template.targetFolder}\\n`;
+              result += `  Target: ${template.targetFolder}\\\n`;
             }
             if (template.contentType) {
-              result += `  Content Type: ${template.contentType}\\n`;
+              result += `  Content Type: ${template.contentType}\\\n`;
             }
             return result;
-          }).join('\\n');
+          }).join('\\\n');
         }
         return '';
       
@@ -249,7 +261,7 @@ export class ObsidianLinks {
         if (typeof items === 'object' && !Array.isArray(items)) {
           return Object.entries(items)
             .map(([key, count]) => `**${key}**: ${count} notes`)
-            .join('\\n');
+            .join('\\\n');
         }
         return '';
       
