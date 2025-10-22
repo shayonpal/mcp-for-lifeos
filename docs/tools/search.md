@@ -13,13 +13,15 @@ The `search` tool is the primary interface for all search operations in the Life
 ## Key Features
 
 - **Intelligent Auto-Mode Detection**: Automatically determines the best search strategy based on query characteristics
+- **Multi-Word Query Support** (MCP-59): Advanced query parsing with auto-detection of search strategies (exact_phrase, all_terms, any_term)
+- **Cross-Field Search** (MCP-59): Searches across title + content + frontmatter simultaneously for multi-word queries
 - **Unified Interface**: Consolidates 6 legacy search tools into one comprehensive tool
 - **Multiple Search Modes**: Supports advanced, quick, content_type, recent, and pattern search modes
 - **Full-Text Search**: Searches through note content, titles, and YAML frontmatter with relevance scoring
 - **YAML Property Filtering**: Flexible filtering on any YAML frontmatter property with multiple matching modes
 - **Natural Language Processing**: Interprets natural language queries and extracts structured search parameters
 - **Intelligent Fallbacks**: If advanced searches return no results, automatically attempts simplified fallback searches
-- **Performance Optimized**: Built-in caching and optimized search algorithms
+- **Performance Optimized**: Built-in caching and optimized search algorithms with LRU cache for parsed queries
 
 ## Parameters
 
@@ -200,17 +202,39 @@ Auto mode intelligently detects the optimal search strategy based on the provide
 
 ### Quick Mode
 
-**Mode**: `quick`  
-**Triggered by**: Simple text queries without complex operators  
+**Mode**: `quick`
+**Triggered by**: Simple text queries without complex operators
 **Use case**: Fast text-based searches
 
+**Last updated**: 2025-10-22 16:58 (MCP-59: Enhanced multi-word search support)
+
+Quick mode now includes intelligent multi-word query parsing with automatic strategy detection:
+
+**Query Strategies** (Auto-detected):
+- **Exact Phrase**: Quoted strings or 2-word queries → `"trip planning"` or `india trip`
+- **All Terms**: 3+ word queries → `trip to india november planning` (all terms must appear)
+- **Any Term**: OR operators → `react or vue or angular` (any term can match)
+
+**Multi-Word Search Features** (Added in MCP-59):
+- Cross-field matching: Searches across title + content + frontmatter simultaneously
+- Term normalization: Case-insensitive matching with whitespace handling
+- Regex lookaheads: Optimized `(?=[\s\S]*\bword\b)` patterns for each term
+- LRU caching: Parsed queries cached for improved performance on repeated searches
+
 ```javascript
-// Simple text search
+// Simple text search (exact phrase strategy)
 { query: "machine learning" }
 
-// Multiple terms with OR
+// Multi-word search (all terms strategy) - NEW in MCP-59
+{ query: "trip to india november planning" }
+// Finds notes containing ALL terms: trip, india, november, planning
+
+// Multiple terms with OR (any term strategy)
 { query: "react or vue or angular" }
+// Finds notes containing ANY of: react, vue, angular
 ```
+
+**Performance Note**: Multi-word searches with 5+ terms may be slower on very large vaults (7.8GB+) due to regex lookahead patterns. Optimization using individual word tests is planned for future releases.
 
 ## Usage Examples
 

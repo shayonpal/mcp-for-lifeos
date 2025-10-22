@@ -116,3 +116,6 @@ coverage/
 
 # Analytics data
 analytics/usage-metrics.json
+
+# Agent-facing docs
+AGENTS.md
