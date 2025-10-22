@@ -110,7 +110,7 @@ export class ResponseTruncator implements IResponseTruncator {
       limitType,
       formatUsed,
       autoDowngraded,
-      estimatedTokens: this.estimateTokens(this.consumed.toString()),
+      estimatedTokens: Math.ceil(this.consumed / this.config.estimationRatio),
       estimatedCharacters: this.consumed,
       suggestion
     };

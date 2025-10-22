@@ -312,8 +312,8 @@ describe('ResponseTruncator', () => {
 
       const metadata = truncator.getTruncationInfo(4, 10, 'detailed', false);
 
-      // 8000 / 4 = 2000 tokens (but estimateTokens converts consumed to string first)
-      expect(metadata.estimatedTokens).toBeGreaterThan(0);
+      // 8000 / 4 = 2000 tokens expected
+      expect(metadata.estimatedTokens).toBe(2000);
       expect(metadata.estimatedCharacters).toBe(8000);
     });
 
