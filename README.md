@@ -76,9 +76,10 @@ Universal search tool with intelligent auto-routing for all search operations
 - **query**: Search text across titles, content, and metadata
 - **naturalLanguage**: Natural language query (e.g., "Quebec barbecue restaurants")
 - **format**: Response format - 'concise' (title+path, ~50-100 tokens/result) or 'detailed' (full metadata, default)
+- **maxResults**: Maximum results to return (1-100, default: 25) - Automatic token budget management prevents context overflow
 - **All advanced_search parameters supported** - See `advanced_search` documentation below for full parameter list
 
-The `search` tool automatically detects the optimal search strategy based on your query and consolidates 6 legacy search tools into one intelligent interface.
+The `search` tool automatically detects the optimal search strategy based on your query and consolidates 6 legacy search tools into one intelligent interface. Results are automatically truncated to fit within ~25K token budget with helpful suggestions when limits are reached.
 
 #### `create_note_smart`
 
@@ -99,9 +100,10 @@ Universal listing tool for folders, daily notes, templates, and YAML properties
 - **path**: Folder path (for folders type)
 - **limit**: Number of results (for daily_notes type)
 - **format**: Response format - 'concise' (minimal fields) or 'detailed' (full metadata, default)
+- **maxResults**: Maximum results to return (1-100, default: 10) - Automatic token budget management prevents context overflow
 - **sortBy**, **includeCount**, **excludeStandard**: YAML property options
 
-Consolidates all listing operations into one tool with automatic type detection.
+Consolidates all listing operations into one tool with automatic type detection. Results are automatically truncated to fit within ~25K token budget with helpful suggestions when limits are reached.
 
 ---
 

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Token Budget Management for Response Truncation** (MCP-38, 2025-10-22 03:18): Implemented ~25K token limit per response with smart truncation to prevent AI context window overflow
+  - Added `maxResults` parameter to search and list tools (range: 1-100, defaults: search=25, list=10)
+  - Character-based token estimation (4 chars ≈ 1 token) for <0.1ms performance per result
+  - Intelligent truncation with actionable user guidance when limits reached
+  - Format-aware truncation respecting concise vs detailed response modes
+  - Automatic downgrade suggestions when detailed format hits token limit
+  - New `ResponseTruncator` class managing incremental budget tracking
+  - Truncation metadata includes shown/total counts and helpful next-step suggestions
+  - Configuration validation prevents misuse of maxResults and token budgets
+  - Implementation: `src/response-truncator.ts` with factory functions and validation utilities
+  - Testing: 54 comprehensive unit tests (100% passing), performance benchmarks validated
+  - Performance: <0.1ms per token estimation, scales efficiently for 100+ results
+  - Zero breaking changes: All existing tool calls work unchanged with sensible defaults
+
 ### Fixed
 - **Daily Notes Display "Untitled" Bug + Timezone Date Display** (MCP-29, 2025-10-20 14:27): Fixed daily notes showing "Untitled" across 11 MCP tools and timezone-induced date shift in clickable links
   - Root cause: Tools used `note.frontmatter.title || 'Untitled'` fallback, but daily notes lack title field
