@@ -41,22 +41,7 @@ describe('QueryParser', () => {
     });
   });
 
-  describe('normalizeTerms', () => {
-    it('should lowercase terms', () => {
-      const normalized = QueryParser.normalizeTerms(['Trip', 'TO', 'India']);
-      expect(normalized).toEqual(['trip', 'to', 'india']);
-    });
-
-    it('should trim whitespace', () => {
-      const normalized = QueryParser.normalizeTerms([' trip ', '  to  ', 'india ']);
-      expect(normalized).toEqual(['trip', 'to', 'india']);
-    });
-
-    it('should handle empty array', () => {
-      const normalized = QueryParser.normalizeTerms([]);
-      expect(normalized).toEqual([]);
-    });
-  });
+  // Note: normalizeTerms tests removed - functionality moved to text-utils.ts (MCP-59)
 
   describe('hasRegexChars', () => {
     it('should detect regex special chars', () => {
@@ -177,72 +162,72 @@ describe('QueryParser', () => {
   describe('createPatterns', () => {
     describe('exact_phrase strategy', () => {
       it('should create single pattern for sequential match', () => {
-        const patterns = QueryParser.createPatterns(
+        const pattern = QueryParser.createPatterns(
           ['trip', 'to', 'india'],
           'exact_phrase',
           false
         );
-        expect(patterns).toHaveLength(1);
-        expect(patterns[0].source).toContain('trip');
-        expect(patterns[0].source).toContain('to');
-        expect(patterns[0].source).toContain('india');
+        expect(pattern).toBeInstanceOf(RegExp);
+        expect(pattern.source).toContain('trip');
+        expect(pattern.source).toContain('to');
+        expect(pattern.source).toContain('india');
       });
 
       it('should respect case sensitivity', () => {
         const caseSensitive = QueryParser.createPatterns(['Trip'], 'exact_phrase', true);
         const caseInsensitive = QueryParser.createPatterns(['Trip'], 'exact_phrase', false);
 
-        expect(caseSensitive[0].flags).not.toContain('i');
-        expect(caseInsensitive[0].flags).toContain('i');
+        expect(caseSensitive.flags).not.toContain('i');
+        expect(caseInsensitive.flags).toContain('i');
       });
     });
 
     describe('all_terms strategy', () => {
       it('should create lookahead pattern for all terms', () => {
-        const patterns = QueryParser.createPatterns(
+        const pattern = QueryParser.createPatterns(
           ['trip', 'india', 'november'],
           'all_terms',
           false
         );
-        expect(patterns).toHaveLength(1);
-        expect(patterns[0].source).toContain('(?=');
-        expect(patterns[0].source).toContain('trip');
-        expect(patterns[0].source).toContain('india');
-        expect(patterns[0].source).toContain('november');
+        expect(pattern).toBeInstanceOf(RegExp);
+        expect(pattern.source).toContain('(?=');
+        expect(pattern.source).toContain('trip');
+        expect(pattern.source).toContain('india');
+        expect(pattern.source).toContain('november');
       });
 
       it('should use word boundaries', () => {
-        const patterns = QueryParser.createPatterns(['trip'], 'all_terms', false);
-        expect(patterns[0].source).toContain('\\b');
+        const pattern = QueryParser.createPatterns(['trip'], 'all_terms', false);
+        expect(pattern.source).toContain('\\b');
       });
     });
 
     describe('any_term strategy', () => {
       it('should create alternation pattern for any term', () => {
-        const patterns = QueryParser.createPatterns(
+        const pattern = QueryParser.createPatterns(
           ['trip', 'india', 'november'],
           'any_term',
           false
         );
-        expect(patterns).toHaveLength(1);
-        expect(patterns[0].source).toContain('trip');
-        expect(patterns[0].source).toContain('india');
-        expect(patterns[0].source).toContain('november');
-        expect(patterns[0].source).toContain('|');
+        expect(pattern).toBeInstanceOf(RegExp);
+        expect(pattern.source).toContain('trip');
+        expect(pattern.source).toContain('india');
+        expect(pattern.source).toContain('november');
+        expect(pattern.source).toContain('|');
       });
 
       it('should use word boundaries', () => {
-        const patterns = QueryParser.createPatterns(['trip'], 'any_term', false);
-        expect(patterns[0].source).toContain('\\b');
+        const pattern = QueryParser.createPatterns(['trip'], 'any_term', false);
+        expect(pattern.source).toContain('\\b');
       });
     });
 
     describe('auto strategy', () => {
       it('should fallback to exact_phrase for auto', () => {
-        const patterns = QueryParser.createPatterns(['trip'], 'auto', false);
-        expect(patterns).toHaveLength(1);
+        const pattern = QueryParser.createPatterns(['trip'], 'auto', false);
+        expect(pattern).toBeInstanceOf(RegExp);
         // Auto should resolve to exact_phrase for single word
-        expect(patterns[0].source).toContain('trip');
+        expect(pattern.source).toContain('trip');
       });
     });
   });
@@ -253,38 +238,38 @@ describe('QueryParser', () => {
       expect(parsed.strategy).toBe('all_terms');
       expect(parsed.terms).toHaveLength(5);
 
-      const patterns = QueryParser.createPatterns(
+      const pattern = QueryParser.createPatterns(
         parsed.normalizedTerms,
         parsed.strategy,
         false
       );
-      expect(patterns).toHaveLength(1);
+      expect(pattern).toBeInstanceOf(RegExp);
 
       // Test pattern matches text with all terms in different order
       const testText = 'November 2025 planning for trip to india';
-      expect(patterns[0].test(testText.toLowerCase())).toBe(true);
+      expect(pattern.test(testText.toLowerCase())).toBe(true);
 
       // Test pattern does NOT match text missing a term
-      patterns[0].lastIndex = 0; // Reset regex state
+      pattern.lastIndex = 0; // Reset regex state
       const partialText = 'November planning for india trip';
-      expect(patterns[0].test(partialText.toLowerCase())).toBe(false);
+      expect(pattern.test(partialText.toLowerCase())).toBe(false);
     });
 
     it('should maintain exact_phrase for "India trip"', () => {
       const parsed = QueryParser.parse('India trip');
       expect(parsed.strategy).toBe('exact_phrase');
 
-      const patterns = QueryParser.createPatterns(
+      const pattern = QueryParser.createPatterns(
         parsed.normalizedTerms,
         parsed.strategy,
         false
       );
 
       // Should match sequential
-      expect(patterns[0].test('india trip planning')).toBe(true);
+      expect(pattern.test('india trip planning')).toBe(true);
 
       // Should NOT match non-sequential (exact phrase)
-      expect(patterns[0].test('trip to india')).toBe(false);
+      expect(pattern.test('trip to india')).toBe(false);
     });
   });
 });

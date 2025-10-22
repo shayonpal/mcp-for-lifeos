@@ -70,16 +70,6 @@ describe('SearchEngine MCP-59 regressions', () => {
       return note;
     });
 
-    const parsed = QueryParser.parse(query);
-    const pattern = QueryParser.createPatterns(parsed.terms, 'all_terms', false)[0];
-    pattern.lastIndex = 0;
-    const combinedText = [
-      targetNote.frontmatter.title ?? '',
-      'India Trip (Nov 24 - Dec 23, 2025)',
-      targetNote.content
-    ].join('\n');
-    throw new Error(`pattern:${pattern.source}\ncombined:${combinedText}`);
-
     const results = await SearchEngine.search({ query, includeContent: true });
 
     expect(results.length).toBeGreaterThan(0);

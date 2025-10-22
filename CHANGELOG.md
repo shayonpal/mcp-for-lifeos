@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Multi-Word Search Queries (3+ Words) Return Results** (MCP-59, 2025-10-22 16:58): Fixed regression where search queries with 3+ words returned 0 results while shorter queries worked correctly
+  - Root cause: Quick search mode lacked multi-word query parsing and cross-field matching logic
+  - Created QueryParser utility class with auto-detection of search strategies (exact_phrase, all_terms, any_term)
+  - Implemented cross-field prefilter combining title/content/frontmatter for multi-word matching
+  - Query strategies: exact_phrase (quoted/"2 words"), all_terms (3+ words default), any_term (OR operators)
+  - All-terms strategy uses optimized regex lookaheads (?=[\s\S]*\bword\b) for each term
+  - Enhanced SearchEngine with queryStrategy pipeline parameter for consistent routing
+  - Updated ToolRouter to pass queryStrategy from universal search to advanced search
+  - Implementation: New `src/query-parser.ts` (238 lines, LRU cache), enhanced `src/search-engine.ts` (165 lines)
+  - Testing: 35 new QueryParser unit tests (100% coverage), 89 additional SearchEngine tests
+  - Backward compatible: All existing single and two-word searches continue to work
+  - Example: "trip to india november planning" now correctly finds travel notes in PARA structure
+  - Known limitation: Lookahead patterns may be slow on very large vaults (7.8GB+), optimization pending
+
 ### Added
 - **Token Budget Management for Response Truncation** (MCP-38, 2025-10-22 03:18): Implemented ~25K token limit per response with smart truncation to prevent AI context window overflow
   - Added `maxResults` parameter to search and list tools (range: 1-100, defaults: search=25, list=10)

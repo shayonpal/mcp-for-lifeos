@@ -6,25 +6,43 @@
  */
 
 import type { QueryStrategy, ParsedQuery } from '../dev/contracts/MCP-59-contracts';
+import { escapeRegex } from './regex-utils.js';
+import { normalizeText } from './text-utils.js';
 
 /**
  * Utility class for parsing and analyzing search queries
  * Implements QueryParserContract from MCP-59 contracts
  */
 export class QueryParser {
+  // LRU cache for parsed queries (MCP-59: Performance optimization)
+  private static parseCache = new Map<string, ParsedQuery>();
+  private static readonly MAX_CACHE_SIZE = 100;
+
   /**
    * Parse a query string into structured components
+   * Uses LRU cache to avoid redundant parsing of repeated queries
+   *
    * @param query - Raw query string
    * @returns Parsed query with terms and detected strategy
+   *
+   * @since MCP-59 - Added LRU caching for performance
    */
   static parse(query: string): ParsedQuery {
+    // Check cache first
+    const cached = this.parseCache.get(query);
+    if (cached) {
+      // Move to end (most recently used) by deleting and re-inserting
+      this.parseCache.delete(query);
+      this.parseCache.set(query, cached);
+      return cached;
+    }
     const terms = this.extractTerms(query);
-    const normalizedTerms = this.normalizeTerms(terms);
+    const normalizedTerms = normalizeText(terms); // MCP-59: Use shared text-utils
     const strategy = this.detectStrategy(query);
     const hasRegexChars = this.hasRegexChars(query);
     const isQuoted = this.isQuoted(query);
 
-    return {
+    const result: ParsedQuery = {
       original: query,
       terms,
       normalizedTerms,
@@ -32,6 +50,18 @@ export class QueryParser {
       hasRegexChars,
       isQuoted
     };
+
+    // Add to cache with LRU eviction
+    if (this.parseCache.size >= this.MAX_CACHE_SIZE) {
+      // Remove oldest entry (first key in Map maintains insertion order)
+      const firstKey = this.parseCache.keys().next().value;
+      if (firstKey !== undefined) {
+        this.parseCache.delete(firstKey);
+      }
+    }
+    this.parseCache.set(query, result);
+
+    return result;
   }
 
   /**
@@ -84,18 +114,7 @@ export class QueryParser {
     return terms;
   }
 
-  /**
-   * Normalize terms for consistent matching
-   * @param terms - Array of raw terms
-   * @param caseSensitive - Whether to preserve original casing
-   * @returns Normalized terms (lowercase if not case-sensitive, trimmed)
-   */
-  static normalizeTerms(terms: string[], caseSensitive: boolean = false): string[] {
-    if (caseSensitive) {
-      return terms.map(term => term.trim());
-    }
-    return terms.map(term => term.toLowerCase().trim());
-  }
+  // Note: normalizeTerms removed - now using shared normalizeText from text-utils.ts (MCP-59)
 
   /**
    * Auto-detect appropriate query strategy
@@ -164,19 +183,23 @@ export class QueryParser {
   }
 
   /**
-   * Create regex patterns for different strategies
+   * Create regex pattern for different strategies
    * @param terms - Normalized terms to match
    * @param strategy - Query strategy to apply
    * @param caseSensitive - Case sensitivity flag
-   * @returns Array of regex patterns (single pattern for most strategies)
+   * @returns Regex pattern for the specified strategy
+   *
+   * @since MCP-59 - Simplified to return single RegExp instead of array
    */
   static createPatterns(
     terms: string[],
     strategy: QueryStrategy,
     caseSensitive: boolean
-  ): RegExp[] {
-    // Don't use 'g' flag - it breaks .test() by maintaining state between calls
-    // We only need 'i' for case-insensitive matching, not 'g' for global search
+  ): RegExp {
+    // Regex Flag Strategy (MCP-59 standardization):
+    // Omit 'g' flag to avoid stateful regex issues (lastIndex property maintains state)
+    // SearchEngine.findMatches() handles single-match behavior when !regex.global
+    // Only use 'i' flag for case-insensitive matching
     const flags = caseSensitive ? '' : 'i';
 
     // Resolve 'auto' strategy based on term count
@@ -185,8 +208,8 @@ export class QueryParser {
       resolvedStrategy = terms.length >= 3 ? 'all_terms' : 'exact_phrase';
     }
 
-    // Normalize terms based on case sensitivity
-    const normalizedTerms = this.normalizeTerms(terms, caseSensitive);
+    // Normalize terms based on case sensitivity (MCP-59: Use shared text-utils)
+    const normalizedTerms = normalizeText(terms, caseSensitive);
 
     // Filter out logical operators ONLY for any_term strategy (boolean queries)
     // For other strategies (exact_phrase, all_terms), keep literals like "OR gate"
@@ -197,19 +220,17 @@ export class QueryParser {
     // Guard against empty term list (e.g., query="AND OR NOT" with any_term strategy)
     if (filteredTerms.length === 0) {
       // Return a pattern that matches nothing
-      return [/(?!.*)/];
+      return /(?!.*)/;
     }
 
-    // Escape terms for regex
-    const escapedTerms = filteredTerms.map(term =>
-      term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    );
+    // Escape terms for regex using shared utility (MCP-59: eliminates duplication)
+    const escapedTerms = filteredTerms.map(escapeRegex);
 
     switch (resolvedStrategy) {
       case 'exact_phrase': {
         // Sequential match: "trip to india"
         const pattern = escapedTerms.join('\\s+');
-        return [new RegExp(pattern, flags)];
+        return new RegExp(pattern, flags);
       }
 
       case 'all_terms': {
@@ -220,19 +241,19 @@ export class QueryParser {
           .map(term => `(?=[\\s\\S]*\\b${term}\\b)`)
           .join('');
         // Add [\s\S]* to match all characters including newlines (dotAll equivalent)
-        return [new RegExp(`${lookaheads}[\\s\\S]*`, flags)];
+        return new RegExp(`${lookaheads}[\\s\\S]*`, flags);
       }
 
       case 'any_term': {
         // Any term matches (OR logic): \b(trip|india|november)\b
         const alternation = escapedTerms.join('|');
-        return [new RegExp(`\\b(${alternation})\\b`, flags)];
+        return new RegExp(`\\b(${alternation})\\b`, flags);
       }
 
       default:
         // Fallback to exact_phrase for unknown strategies
         const pattern = escapedTerms.join('\\s+');
-        return [new RegExp(pattern, flags)];
+        return new RegExp(pattern, flags);
     }
   }
 }

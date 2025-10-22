@@ -4,6 +4,8 @@ import { VaultUtils } from './vault-utils.js';
 import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
 import { QueryParser } from './query-parser.js';
 import type { QueryStrategy } from '../dev/contracts/MCP-59-contracts.js';
+import { escapeRegex } from './regex-utils.js';
+import { normalizeText } from './text-utils.js';
 
 export interface AdvancedSearchOptions {
   // Text search
@@ -76,9 +78,7 @@ export class SearchEngine {
   private static cacheTimestamp = new Map<string, number>();
   private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  private static normalizeText(text: string, caseSensitive: boolean = false): string {
-    return caseSensitive ? text : text.toLowerCase();
-  }
+  // Note: normalizeText moved to text-utils.ts to eliminate duplication (MCP-59)
 
   /**
    * Create regex pattern(s) based on query strategy
@@ -97,6 +97,9 @@ export class SearchEngine {
     useRegex: boolean = false,
     queryStrategy: QueryStrategy = 'auto'
   ): RegExp {
+    // Note: useRegex path uses 'g' flag for multiple matches via exec() loop
+    // QueryParser path omits 'g' flag to avoid stateful regex issues with .test()
+    // See findMatches() which breaks after first match when !regex.global (MCP-59)
     if (useRegex) {
       return new RegExp(query, caseSensitive ? 'g' : 'gi');
     }
@@ -107,14 +110,12 @@ export class SearchEngine {
 
     // Create pattern based on strategy
     // Pass raw terms (not normalizedTerms) so createPatterns can handle case sensitivity
-    const patterns = QueryParser.createPatterns(
+    // MCP-59: createPatterns now returns single RegExp (simplified from array)
+    return QueryParser.createPatterns(
       parsed.terms,
       effectiveStrategy,
       caseSensitive
     );
-
-    // Return first pattern (QueryParser.createPatterns returns array for consistency)
-    return patterns[0];
   }
 
   private static extractContext(text: string, position: number, contextSize: number = 100): string {
@@ -456,7 +457,9 @@ export class SearchEngine {
     const results: SearchResult[] = [];
 
     // Optimization: Parse query once before loop for all_terms prefilter
-    let allTermsPrefilterPattern: RegExp | null = null;
+    // Use individual word tests instead of complex lookahead pattern for better performance
+    let allTermsPrefilterWords: string[] | null = null;
+    let allTermsPrefilterCaseSensitive = false;
     if (processedOptions.query) {
       const parsed = QueryParser.parse(processedOptions.query);
       const effectiveStrategy = processedOptions.queryStrategy === 'auto'
@@ -464,12 +467,11 @@ export class SearchEngine {
         : processedOptions.queryStrategy;
 
       if (effectiveStrategy === 'all_terms') {
-        // Create pattern once, reuse for all notes
-        allTermsPrefilterPattern = QueryParser.createPatterns(
-          parsed.terms,
-          'all_terms',
-          processedOptions.caseSensitive || false
-        )[0];
+        // Store normalized terms for individual word matching
+        allTermsPrefilterCaseSensitive = processedOptions.caseSensitive || false;
+        allTermsPrefilterWords = allTermsPrefilterCaseSensitive
+          ? parsed.terms
+          : parsed.normalizedTerms;
       }
     }
 
@@ -484,7 +486,8 @@ export class SearchEngine {
 
       // Pre-filter for all_terms strategy: Check if ALL terms exist somewhere in the note
       // This handles cross-field searches where words are split across title/content/frontmatter
-      if (allTermsPrefilterPattern) {
+      // PERFORMANCE: Use individual word tests instead of lookahead pattern (much faster)
+      if (allTermsPrefilterWords) {
         // Concatenate all searchable text
         const titleSources: string[] = [];
         if (note.frontmatter.title) titleSources.push(note.frontmatter.title);
@@ -507,11 +510,16 @@ export class SearchEngine {
           )
         ].join('\n');
 
-        // Test against pre-compiled pattern
-        // Reset lastIndex because global regexes retain state across executions
-        allTermsPrefilterPattern.lastIndex = 0;
-        if (!allTermsPrefilterPattern.test(combinedText)) {
-          // All terms not found - skip this note
+        // Test each word individually - much faster than lookahead pattern
+        // Short-circuits on first missing word
+        const textToTest = allTermsPrefilterCaseSensitive ? combinedText : combinedText.toLowerCase();
+        const allWordsPresent = allTermsPrefilterWords.every(word => {
+          const regex = new RegExp(`\\b${escapeRegex(word)}\\b`, allTermsPrefilterCaseSensitive ? '' : 'i');
+          return regex.test(textToTest);
+        });
+
+        if (!allWordsPresent) {
+          // Not all terms found - skip this note
           continue;
         }
       }
