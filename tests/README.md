@@ -29,10 +29,39 @@ npm run test:watch
 - Mock external dependencies (file system, vault operations)
 - Focus on business logic and error handling
 
-### Integration Tests  
+### Integration Tests
 - Test complete MCP tool workflows
-- Use test vault with known structure
+- Use temporary test vaults in system tmpdir for complete isolation (MCP-61)
+- **CRITICAL**: Never write to production vault - use direct tool imports with temp vault setup
 - Verify tool inputs/outputs and side effects
+- Clean up test artifacts in afterEach() hooks
+
+**Test Isolation Pattern** (MCP-61, 2025-10-22):
+```typescript
+// ✅ Correct: Direct import with temp vault
+import { VaultUtils } from '../../src/vault-utils.js';
+
+beforeEach(async () => {
+  vaultPath = join(tmpdir(), `test-vault-${randomBytes(8).toString('hex')}`);
+  await fs.mkdir(vaultPath, { recursive: true });
+  // Override config via module import, not env vars
+});
+
+afterEach(async () => {
+  await fs.rm(vaultPath, { recursive: true, force: true });
+});
+```
+
+```typescript
+// ❌ Wrong: Spawning server process (env var propagation unreliable)
+const server = spawn('node', ['dist/index.js'], {
+  env: { LIFEOS_VAULT_PATH: testVault } // May not propagate
+});
+```
+
+**Rationale**: Direct imports test all tool logic reliably while avoiding production vault pollution. Process spawning tests (stdio transport, JSON-RPC) deferred to future work.
+
+**Legacy Scripts Archived** (2025-10-22): 6 standalone test scripts moved to scripts/archived/ - Jest is now the single testing framework. See scripts/archived/README.md for migration details.
 
 ### Test Data
 - Store sample vault structures in `fixtures/`

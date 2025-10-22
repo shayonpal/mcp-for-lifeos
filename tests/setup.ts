@@ -42,6 +42,20 @@ expect.extend({
 // Environment setup
 process.env.NODE_ENV = 'test';
 process.env.CONSOLIDATED_TOOLS_ENABLED = 'true';
+process.env.DISABLE_USAGE_ANALYTICS = 'true'; // MCP-61: Disable analytics for tests
+
+// MCP-61: Mock analytics module to avoid import.meta.url ESM parsing issues in Jest
+// This must come after environment setup but before any imports that use analytics
+jest.mock('../src/analytics/analytics-collector.js', () => ({
+  AnalyticsCollector: {
+    getInstance: jest.fn().mockReturnValue({
+      trackToolCall: jest.fn(),
+      trackError: jest.fn(),
+      recordToolExecution: jest.fn(async (_toolName, fn) => await fn()), // Execute the wrapped function
+      shutdown: jest.fn().mockResolvedValue(undefined),
+    }),
+  },
+}));
 
 // Silence console.log during tests unless explicitly enabled
 const originalConsoleLog = console.log;

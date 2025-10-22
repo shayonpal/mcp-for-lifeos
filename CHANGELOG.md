@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Test Infrastructure Cleanup** (MCP-61, 2025-10-22 19:29): Archived 6 legacy standalone test scripts to scripts/archived/
+  - Migrated to Jest as single testing framework (250+ passing tests)
+  - Removed npm scripts: test:claude-desktop, test:tool-parity (5 entries total)
+  - Scripts archived: test-claude-desktop.js (vault pollution risk), test-tool-parity.js, test-tool-consolidation.js, test-analytics.js, test-advanced-features.js, test-issue-61-acceptance.js
+  - See scripts/archived/README.md for rationale and Jest migration map
+
 ### Fixed
+- **Integration Test Vault Pollution Prevention** (MCP-61, 2025-10-22 19:06): Fixed integration tests creating permanent artifacts in production Obsidian vault
+  - Root cause: claude-desktop-integration.test.ts spawned real MCP server writing to production vault at "05 - Fleeting Notes/"
+  - Test created "Integration Test Note" with no cleanup logic in afterAll() hook
+  - Solution: Pivoted from process-spawn approach to direct tool import pattern (proven by daily-note-simple.test.ts)
+  - Created temporary test vault in system tmpdir with random ID for complete isolation
+  - Enhanced config.ts with environment variable support for vault path overrides (LIFEOS_VAULT_PATH, etc.)
+  - Mock AnalyticsCollector in tests/setup.ts to prevent import.meta.url ESM parsing issues
+  - Cleanup: Recursive deletion of temp vault in afterEach() ensures zero artifacts
+  - Trade-offs: Tests tool logic directly (faster, reliable) but doesn't test stdio transport or JSON-RPC protocol
+  - Decision rationale: Fixing P1 production pollution takes priority over debugging env var propagation
+  - Implementation: Modified tests/integration/claude-desktop-integration.test.ts (600 lines → 199 lines)
+  - Testing: Verified zero artifacts remain after test execution in production vault
+  - Backward compatible: No changes to MCP server runtime behavior or actual tool logic
 - **Multi-Word Search Queries (3+ Words) Return Results** (MCP-59, 2025-10-22 16:58): Fixed regression where search queries with 3+ words returned 0 results while shorter queries worked correctly
   - Root cause: Quick search mode lacked multi-word query parsing and cross-field matching logic
   - Created QueryParser utility class with auto-detection of search strategies (exact_phrase, all_terms, any_term)

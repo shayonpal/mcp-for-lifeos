@@ -99,56 +99,34 @@ node scripts/generate-test-analytics.js
 
 ## 🧪 Testing and Validation
 
-### **[test-claude-desktop.js](./test-claude-desktop.js)** - Claude Desktop Integration Tests
-Standalone test runner for AI Tool Caller Optimization validation.
+**Primary Testing**: Use the Jest test suite for all testing needs.
 
 ```bash
-# Quick accuracy test (30 seconds)
-node scripts/test-claude-desktop.js --accuracy-only
+# Run all tests (250+ passing tests)
+npm test
 
-# Full test suite with detailed results
-node scripts/test-claude-desktop.js
+# Run specific test types
+npm run test:unit
+npm run test:integration
 
-# Test specific scenario
-node scripts/test-claude-desktop.js --scenario=search-basic-text --verbose
-
-# Available scenarios: search-*, creation-*, listing-*, workflow-*
+# Run tests in watch mode
+npm run test:watch
 ```
 
-**Performance Target:** 95% AI tool selection accuracy (currently achieved)
+### **Archived Test Scripts** (2025-10-22)
 
-### **[test-tool-parity.js](./test-tool-parity.js)** - Tool Parity Validation
-Comprehensive testing to ensure consolidated tools match legacy tool outputs exactly.
+Standalone test scripts have been **archived** to `scripts/archived/` and superseded by the Jest test suite:
 
-```bash
-# Run all parity tests
-node scripts/test-tool-parity.js
+- ~~test-claude-desktop.js~~ → `tests/integration/claude-desktop-integration.test.ts`
+- ~~test-tool-parity.js~~ → Jest integration tests
+- ~~test-tool-consolidation.js~~ → `tests/unit/tool-router.test.ts`
+- ~~test-analytics.js~~ → Analytics unit tests
+- ~~test-advanced-features.js~~ → `tests/unit/search-engine.test.ts`, `tests/unit/query-parser.test.ts`
+- ~~test-issue-61-acceptance.js~~ → `tests/unit/search-engine.test.ts`
 
-# Test specific category
-node scripts/test-tool-parity.js --category search
+**Why archived**: Migration to Jest complete, some scripts had vault pollution risks (MCP-61).
 
-# Verbose debugging output
-node scripts/test-tool-parity.js --verbose
-
-# Custom configuration
-node scripts/test-tool-parity.js --category creation --max-tests 5 --verbose
-```
-
-**Performance Target:** 95% output parity, <500ms performance difference
-
-### **[test-tool-consolidation.js](./test-tool-consolidation.js)** - Consolidation Testing
-Test the tool consolidation and routing logic effectiveness.
-
-```bash
-# Test tool consolidation routing
-node scripts/test-tool-consolidation.js
-
-# Validates:
-# - Auto-mode detection accuracy
-# - Routing logic correctness  
-# - Fallback mechanism effectiveness
-# - Performance within targets
-```
+**See**: `scripts/archived/README.md` for full rationale and safety warnings.
 
 ## 🔍 Development and Debugging
 
@@ -234,14 +212,11 @@ node scripts/test-tool-parity.js
 ### CI/CD Integration
 
 ```bash
-# Quick validation (suitable for CI)
-npm run test:claude-desktop:accuracy
-npm run test:tool-parity
-
-# Full validation (for releases)
-npm test
-node scripts/test-claude-desktop.js
-node scripts/test-tool-parity.js --verbose
+# Validation for CI/CD pipelines
+npm test                # All Jest tests
+npm run test:unit       # Unit tests only
+npm run test:integration # Integration tests only
+npm run typecheck       # TypeScript validation
 ```
 
 ### Production Deployment
@@ -261,10 +236,9 @@ npm run typecheck
 |----------|---------|---------|
 | **Setup** | setup.sh | Environment configuration and installation |
 | **Server Management** | start-mcp.sh, start-web.js, start-with-analytics.sh | Various server startup modes |
-| **Analytics** | start-analytics-dashboard.js, generate-test-analytics.js, test-analytics.js | Analytics system management |
-| **Testing** | test-claude-desktop.js, test-tool-parity.js, test-server.js | Comprehensive testing suite |
-| **Validation** | test-tool-consolidation.js, test-advanced-features.js, test-issue-*.js | Feature validation and regression testing |
-| **Development** | test-manual.sh | Interactive development helpers |
+| **Analytics** | start-analytics-dashboard.js, generate-test-analytics.js | Analytics system management |
+| **Development** | test-server.js, test-manual.sh | Server validation and manual testing helpers |
+| **Archived** | archived/* (6 scripts) | Legacy test scripts superseded by Jest (see archived/README.md) |
 
 ## ⚠️ Important Notes
 
@@ -301,6 +275,7 @@ Most scripts require:
 
 ---
 
-**Last Updated**: August 29, 2025  
-**Script Count**: 14 utility scripts  
-**Categories**: Setup, server management, analytics, testing, validation, development
+**Last Updated**: October 22, 2025
+**Active Scripts**: 8 utility scripts
+**Archived Scripts**: 6 (see archived/README.md)
+**Categories**: Setup, server management, analytics, development
