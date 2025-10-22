@@ -116,7 +116,12 @@ TITLE EXTRACTION: Search result titles are determined by priority:
           dateStart: { type: 'string', description: 'Start date (YYYY-MM-DD) - legacy compatibility' },
           dateEnd: { type: 'string', description: 'End date (YYYY-MM-DD) - legacy compatibility' },
           pattern: { type: 'string', description: 'Glob pattern for pattern mode (e.g., "**/*recipe*.md")' },
-          days: { type: 'number', description: 'Days back for recent search (default: 7)' }
+          days: { type: 'number', description: 'Days back for recent search (default: 7)' },
+          format: {
+            type: 'string',
+            enum: ['concise', 'detailed'],
+            description: 'Response format: concise (paths only, ~50-100 tokens/result) or detailed (full metadata, ~200-500 tokens/result, default: detailed)'
+          }
         }
       }
     },
@@ -177,7 +182,12 @@ RETURNS: Type-specific arrays: folder paths, template list, daily note paths, or
           limit: { type: 'number', description: 'Limit number of results (for daily_notes)' },
           includeCount: { type: 'boolean', description: 'Include usage count (for yaml_properties)' },
           sortBy: { type: 'string', description: 'Sort method (for yaml_properties)' },
-          excludeStandard: { type: 'boolean', description: 'Exclude standard properties (for yaml_properties)' }
+          excludeStandard: { type: 'boolean', description: 'Exclude standard properties (for yaml_properties)' },
+          format: {
+            type: 'string',
+            enum: ['concise', 'detailed'],
+            description: 'Response format: concise (minimal fields) or detailed (full metadata, default: detailed)'
+          }
         },
         required: ['type']
       }
@@ -898,38 +908,46 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         
         // Note: OR queries are now handled in the ToolRouter by splitting into multiple searches
         const results = await ToolRouter.routeSearch(searchOptions);
-        
+
+        // Extract format parameter (default: detailed for backward compatibility)
+        const format = (args.format === 'concise' || args.format === 'detailed')
+          ? args.format
+          : 'detailed';
+
         // Check if we have natural language interpretation to display
         let interpretationText = '';
         if (results.length > 0 && results[0].interpretation) {
           interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
         }
-        
+
         const resultText = results.map((result, index) => {
           const note = result.note;
           const score = result.score.toFixed(1);
           const matchCount = result.matches.length;
           const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
+
           let output = ObsidianLinks.formatSearchResult(
             index + 1,
             title,
             note.path,
             note.frontmatter['content type'] || 'Unknown',
             result.score,
-            `${matchCount} matches`
+            `${matchCount} matches`,
+            format
           );
-          
-          // Show top 3 matches with context
-          const topMatches = result.matches.slice(0, 3);
-          if (topMatches.length > 0) {
-            output += '\n\n**Matches:**\n';
-            topMatches.forEach(match => {
-              const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
-              output += `- *${type}*: "${match.context}"\n`;
-            });
+
+          // Show top 3 matches with context (only in detailed mode for performance)
+          if (format === 'detailed') {
+            const topMatches = result.matches.slice(0, 3);
+            if (topMatches.length > 0) {
+              output += '\n\n**Matches:**\n';
+              topMatches.forEach(match => {
+                const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
+                output += `- *${type}*: "${match.context}"\n`;
+              });
+            }
           }
-          
+
           return output;
         }).join('\n\n---\n\n');
 
@@ -982,58 +1000,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!CONSOLIDATED_TOOLS_ENABLED) {
           throw new Error('Consolidated tools are disabled. Use specific list tools instead.');
         }
-        
+
         const listOptions: UniversalListOptions = args as unknown as UniversalListOptions;
         const results = await ToolRouter.routeList(listOptions);
-        
+
+        // Extract format parameter (default: detailed for backward compatibility)
+        const format = (args.format === 'concise' || args.format === 'detailed')
+          ? args.format
+          : 'detailed';
+
         let responseText = '';
-        
+
         switch (listOptions.type) {
           case 'folders': {
             const folders = results as string[];
-            responseText = `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
+            const formattedList = ObsidianLinks.formatListResult(folders, 'folders', format);
+            responseText = format === 'concise'
+              ? formattedList
+              : `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
             break;
           }
-          
+
           case 'daily_notes': {
             const files = results as string[];
-            responseText = `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
+            const formattedList = ObsidianLinks.formatListResult(files, 'daily_notes', format);
+            responseText = format === 'concise'
+              ? formattedList
+              : `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
             break;
           }
-          
+
           case 'templates': {
             const templates = results as any[];
-            const templateList = templates.map((template, index) => {
-              return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                     `   ${template.description}\n` +
-                     `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                     `   📄 Content Type: ${template.contentType || 'Varies'}`;
-            }).join('\n\n');
-            
-            responseText = `# Available Templates\n\n${templateList}`;
+            const formattedList = ObsidianLinks.formatListResult(templates, 'templates', format);
+            responseText = format === 'concise'
+              ? formattedList
+              : `# Available Templates\n\n${templates.map((template, index) => {
+                  return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
+                         `   ${template.description}\n` +
+                         `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
+                         `   📄 Content Type: ${template.contentType || 'Varies'}`;
+                }).join('\n\n')}`;
             break;
           }
-          
+
           case 'yaml_properties': {
             const propertiesInfo = results as any;
             const sortedProperties = propertiesInfo.properties;
-            
-            responseText = `# YAML Properties in Vault\n\n`;
-            responseText += `Found **${sortedProperties.length}** unique properties`;
-            if (propertiesInfo.totalNotes) {
-              responseText += ` across **${propertiesInfo.totalNotes}** notes`;
-            }
-            responseText += `\n\n## Properties List\n\n`;
-            
-            if (listOptions.includeCount && propertiesInfo.counts) {
-              sortedProperties.forEach((prop: string) => {
-                const count = propertiesInfo.counts[prop] || 0;
-                responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-              });
+
+            if (format === 'concise') {
+              // Concise mode: just property names
+              responseText = sortedProperties.join('\n');
             } else {
-              sortedProperties.forEach((prop: string) => {
-                responseText += `- ${prop}\n`;
-              });
+              // Detailed mode: existing formatting
+              responseText = `# YAML Properties in Vault\n\n`;
+              responseText += `Found **${sortedProperties.length}** unique properties`;
+              if (propertiesInfo.totalNotes) {
+                responseText += ` across **${propertiesInfo.totalNotes}** notes`;
+              }
+              responseText += `\n\n## Properties List\n\n`;
+
+              if (listOptions.includeCount && propertiesInfo.counts) {
+                sortedProperties.forEach((prop: string) => {
+                  const count = propertiesInfo.counts[prop] || 0;
+                  responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+                });
+              } else {
+                sortedProperties.forEach((prop: string) => {
+                  responseText += `- ${prop}\n`;
+                });
+              }
             }
             break;
           }

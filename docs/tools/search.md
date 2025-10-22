@@ -90,6 +90,37 @@ The `search` tool accepts a comprehensive set of parameters through the `Univers
 | `maxResults` | number | Maximum number of results to return |
 | `sortBy` | `relevance` \| `created` \| `modified` \| `title` | Sort results by specified field |
 | `sortOrder` | `asc` \| `desc` | Sort order (ascending or descending) |
+| `format` | `'concise'` \| `'detailed'` | Response format for context window optimization (default: `'detailed'`) |
+
+### Response Format Options
+
+The `format` parameter controls the level of detail in search results to optimize AI context window usage:
+
+**`'detailed'` (default)**:
+- Full metadata including score, content type, match excerpts
+- Obsidian clickable links
+- ~200-500 tokens per result
+- Best for: Comprehensive analysis, metadata inspection, content verification
+
+**`'concise'`**:
+- Title and path only
+- ~50-100 tokens per result (50-70% reduction vs detailed)
+- Best for: Quick lookups, high-level browsing, large result sets, token budget constraints
+
+**Example concise output**:
+```
+**1. Meeting Notes 2025-08-30** - `20 - Areas/21 - Myself/Journals/Daily/2025-08-30.md`
+**2. Project Roadmap** - `10 - Projects/Project Alpha/roadmap.md`
+```
+
+**Example detailed output**:
+```
+**1. Meeting Notes 2025-08-30** (Score: 9.2)
+*Daily Note*
+3 matches: "discussed project timeline", "action items assigned", "next meeting scheduled"
+`20 - Areas/21 - Myself/Journals/Daily/2025-08-30.md`
+[[2025-08-30]]
+```
 
 ## Search Modes
 

@@ -61,6 +61,9 @@ export interface UniversalSearchOptions {
   dateEnd?: string;
   pattern?: string;
   days?: number;
+  
+  // Response format option for token optimization
+  format?: 'concise' | 'detailed';
 }
 
 /**
@@ -93,6 +96,9 @@ export interface UniversalListOptions {
   includeCount?: boolean; // For yaml_properties
   sortBy?: string; // For yaml_properties
   excludeStandard?: boolean; // For yaml_properties
+  
+  // Response format option for token optimization
+  format?: 'concise' | 'detailed';
 }
 
 export interface RoutingDecision {

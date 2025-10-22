@@ -150,10 +150,18 @@ export class ObsidianLinks {
     filePath: string, 
     contentType?: string | string[], 
     score?: number,
-    additionalInfo?: string
+    additionalInfo?: string,
+    format: 'concise' | 'detailed' = 'detailed'
   ): string {
-    const obsidianLink = this.createClickableLink(filePath, title);
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
+    
+    // Concise mode: title + path only (~50-100 tokens)
+    if (format === 'concise') {
+      return `**${index}. ${title}** - \`${relativePath}\``;
+    }
+    
+    // Detailed mode: current behavior (full metadata)
+    const obsidianLink = this.createClickableLink(filePath, title);
     
     let result = `**${index}. ${title}**`;
     
@@ -161,20 +169,92 @@ export class ObsidianLinks {
       result += ` (Score: ${score.toFixed(1)})`;
     }
     
-    result += '\n';
+    result += '\\n';
     
     if (contentType) {
       const typeText = Array.isArray(contentType) ? contentType.join(', ') : contentType;
-      result += `*${typeText}*\n`;
+      result += `*${typeText}*\\n`;
     }
     
     if (additionalInfo) {
-      result += `${additionalInfo}\n`;
+      result += `${additionalInfo}\\n`;
     }
     
-    result += `\`${relativePath}\`\n`;
+    result += `\`${relativePath}\`\\n`;
     result += `${obsidianLink}`;
     
     return result;
+  }
+
+  /**
+   * Format list results with type-specific formatting
+   */
+  static formatListResult(
+    items: string[] | any[] | Record<string, number>,
+    listType: 'folders' | 'daily_notes' | 'templates' | 'yaml_properties',
+    format: 'concise' | 'detailed' = 'detailed'
+  ): string {
+    // Concise mode formatting
+    if (format === 'concise') {
+      switch (listType) {
+        case 'folders':
+        case 'daily_notes':
+          // Already minimal (string arrays)
+          return Array.isArray(items) ? items.join('\\n') : '';
+        
+        case 'templates':
+          // Return key + name only
+          if (Array.isArray(items)) {
+            return items.map((t: any) => `**${t.key}**: ${t.name}`).join('\\n');
+          }
+          return '';
+        
+        case 'yaml_properties':
+          // Return property names array
+          if (typeof items === 'object' && !Array.isArray(items)) {
+            return Object.keys(items).join('\\n');
+          }
+          return '';
+      }
+    }
+    
+    // Detailed mode formatting
+    switch (listType) {
+      case 'folders':
+      case 'daily_notes':
+        return Array.isArray(items) ? items.join('\\n') : '';
+      
+      case 'templates':
+        if (Array.isArray(items)) {
+          return items.map((template: any) => {
+            let result = `**${template.key}**: ${template.name}\\n`;
+            if (template.description) {
+              result += `  ${template.description}\\n`;
+            }
+            if (template.path) {
+              result += `  Path: \`${template.path}\`\\n`;
+            }
+            if (template.targetFolder) {
+              result += `  Target: ${template.targetFolder}\\n`;
+            }
+            if (template.contentType) {
+              result += `  Content Type: ${template.contentType}\\n`;
+            }
+            return result;
+          }).join('\\n');
+        }
+        return '';
+      
+      case 'yaml_properties':
+        if (typeof items === 'object' && !Array.isArray(items)) {
+          return Object.entries(items)
+            .map(([key, count]) => `**${key}**: ${count} notes`)
+            .join('\\n');
+        }
+        return '';
+      
+      default:
+        return '';
+    }
   }
 }

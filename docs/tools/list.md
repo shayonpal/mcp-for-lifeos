@@ -40,6 +40,63 @@ The `list` tool accepts parameters through the `UniversalListOptions` interface:
 | `includeCount` | boolean | yaml_properties | Include usage count for each property |
 | `sortBy` | string | yaml_properties | Sort method for properties |
 | `excludeStandard` | boolean | yaml_properties | Exclude standard LifeOS properties |
+| `format` | `'concise'` \| `'detailed'` | All types | Response format for context window optimization (default: `'detailed'`) |
+
+### Response Format Options
+
+The `format` parameter controls the level of detail in list results to optimize AI context window usage:
+
+**`'detailed'` (default)**:
+- Full metadata for templates (description, path, target folder, content type)
+- Property usage counts for YAML properties
+- Formatted presentation with emoji and descriptions
+- Current behavior (backward compatible)
+
+**`'concise'`**:
+- Minimal data optimized for token budget
+- Templates: Key + name only (~60-70% reduction)
+- YAML properties: Property names array (vs object with counts)
+- Folders/daily_notes: Already minimal (no change)
+
+**Example - Templates (concise)**:
+```
+**tpl-restaurant**: Restaurant Template
+**tpl-recipe**: Recipe Template
+**tpl-meeting**: Meeting Notes Template
+```
+
+**Example - Templates (detailed)**:
+```
+**tpl-restaurant**: Restaurant Template
+  Template for documenting restaurant experiences
+  Path: `templates/tpl-restaurant.md`
+  Target: 30 - Resources/Restaurants
+  Content Type: Restaurant
+
+**tpl-recipe**: Recipe Template
+  Template for capturing cooking recipes
+  Path: `templates/tpl-recipe.md`
+  Target: 30 - Resources/Recipes
+  Content Type: Recipe
+```
+
+**Example - YAML Properties (concise)**:
+```
+title
+author
+tags
+date
+status
+```
+
+**Example - YAML Properties (detailed)**:
+```
+**title**: 1,234 notes
+**author**: 856 notes
+**tags**: 2,103 notes
+**date**: 1,456 notes
+**status**: 789 notes
+```
 
 ## List Types and Auto-Detection
 

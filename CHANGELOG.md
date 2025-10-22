@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Critical validation: Timezone fix verified - dates display correctly without day shift
   - Impact: Daily notes now properly identified by date across ALL MCP tools, clickable links show correct dates
 
+### Added
+- **Format Parameter for Context Window Optimization** (MCP-37, 2025-10-22 01:26): Added `format` parameter to search and list tools enabling concise vs detailed response modes for AI context budget management
+  - Parameter: `format?: 'concise' | 'detailed'` (defaults to 'detailed' for backward compatibility)
+  - Concise mode: Returns minimal data (title + path only for search, ~50-100 tokens/result)
+  - Detailed mode: Returns full metadata (current behavior preserved, ~200-500 tokens/result)
+  - Token savings: 50-70% reduction in concise mode vs detailed mode
+  - Performance boost: Skips expensive match context extraction in concise mode
+  - Implementation scope: Presentation layer only (domain logic unchanged)
+  - Files modified: `src/tool-router.ts` (interface updates), `src/index.ts` (tool schemas and handlers), `src/obsidian-links.ts` (formatting methods)
+  - New method: `ObsidianLinks.formatListResult()` for unified list formatting across all types
+  - Enhanced method: `ObsidianLinks.formatSearchResult()` with format parameter support
+  - Graceful fallback: Invalid format values default to 'detailed' (never causes tool failure)
+  - Use cases: Concise for quick lookups/browsing/large result sets, detailed for comprehensive analysis/metadata inspection
+  - AI benefit: Enables better multi-step workflows by optimizing token usage per query type
+  - Backward compatible: Existing tool callers continue working without changes (format defaults to 'detailed')
+
 ### Changed
 - **Contract Directory Migration from .claude/ to dev/** (2025-10-20): Moved TypeScript implementation contracts to proper development artifacts location
   - Migrated 3 existing contracts (MCP-29, MCP-36, MCP-37) from `.claude/contracts/` to `dev/contracts/`

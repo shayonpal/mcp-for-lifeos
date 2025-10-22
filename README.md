@@ -75,6 +75,7 @@ Universal search tool with intelligent auto-routing for all search operations
 - **mode**: Search strategy - 'auto' (recommended), 'advanced', 'quick', 'content_type', 'recent', 'pattern'
 - **query**: Search text across titles, content, and metadata
 - **naturalLanguage**: Natural language query (e.g., "Quebec barbecue restaurants")
+- **format**: Response format - 'concise' (title+path, ~50-100 tokens/result) or 'detailed' (full metadata, default)
 - **All advanced_search parameters supported** - See `advanced_search` documentation below for full parameter list
 
 The `search` tool automatically detects the optimal search strategy based on your query and consolidates 6 legacy search tools into one intelligent interface.
@@ -97,6 +98,7 @@ Universal listing tool for folders, daily notes, templates, and YAML properties
 - **type**: Item type - 'folders', 'daily_notes', 'templates', 'yaml_properties', 'auto'
 - **path**: Folder path (for folders type)
 - **limit**: Number of results (for daily_notes type)
+- **format**: Response format - 'concise' (minimal fields) or 'detailed' (full metadata, default)
 - **sortBy**, **includeCount**, **excludeStandard**: YAML property options
 
 Consolidates all listing operations into one tool with automatic type detection.
