@@ -2,6 +2,8 @@ import { readFileSync } from 'fs';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions } from './types.js';
 import { VaultUtils } from './vault-utils.js';
 import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
+import { QueryParser } from './query-parser.js';
+import type { QueryStrategy } from '../dev/contracts/MCP-59-contracts.js';
 
 export interface AdvancedSearchOptions {
   // Text search
@@ -43,6 +45,13 @@ export interface AdvancedSearchOptions {
   maxResults?: number;
   sortBy?: 'relevance' | 'created' | 'modified' | 'title';
   sortOrder?: 'asc' | 'desc';
+
+  /**
+   * Strategy for handling multi-word queries
+   * @default 'auto' - Automatically detects based on word count and query structure
+   * @since MCP-59
+   */
+  queryStrategy?: QueryStrategy;
 }
 
 export interface SearchResult {
@@ -71,14 +80,41 @@ export class SearchEngine {
     return caseSensitive ? text : text.toLowerCase();
   }
 
-  private static createRegex(query: string, caseSensitive: boolean = false, useRegex: boolean = false): RegExp {
+  /**
+   * Create regex pattern(s) based on query strategy
+   * Enhanced in MCP-59 to support multi-word search strategies
+   *
+   * @param query - Query string
+   * @param caseSensitive - Case sensitivity flag
+   * @param useRegex - Whether query is a regex
+   * @param queryStrategy - Strategy for multi-word queries (default: 'auto')
+   * @returns Regex pattern for matching
+   * @since MCP-59 - Added queryStrategy parameter
+   */
+  private static createRegex(
+    query: string,
+    caseSensitive: boolean = false,
+    useRegex: boolean = false,
+    queryStrategy: QueryStrategy = 'auto'
+  ): RegExp {
     if (useRegex) {
       return new RegExp(query, caseSensitive ? 'g' : 'gi');
     }
-    
-    // Escape special regex characters for literal search
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(escaped, caseSensitive ? 'g' : 'gi');
+
+    // Parse query to detect strategy if auto mode
+    const parsed = QueryParser.parse(query);
+    const effectiveStrategy = queryStrategy === 'auto' ? parsed.strategy : queryStrategy;
+
+    // Create pattern based on strategy
+    // Pass raw terms (not normalizedTerms) so createPatterns can handle case sensitivity
+    const patterns = QueryParser.createPatterns(
+      parsed.terms,
+      effectiveStrategy,
+      caseSensitive
+    );
+
+    // Return first pattern (QueryParser.createPatterns returns array for consistency)
+    return patterns[0];
   }
 
   private static extractContext(text: string, position: number, contextSize: number = 100): string {
@@ -94,17 +130,32 @@ export class SearchEngine {
     return context.trim();
   }
 
+  /**
+   * Find matches with strategy support
+   * Enhanced in MCP-59 to pass queryStrategy through
+   *
+   * @param text - Text to search in
+   * @param query - Query string
+   * @param type - Match type
+   * @param field - Optional field name
+   * @param caseSensitive - Case sensitivity flag
+   * @param useRegex - Whether query is a regex
+   * @param queryStrategy - Strategy for multi-word queries
+   * @returns Array of matches
+   * @since MCP-59 - Added queryStrategy parameter
+   */
   private static findMatches(
-    text: string, 
-    query: string, 
-    type: SearchMatch['type'], 
+    text: string,
+    query: string,
+    type: SearchMatch['type'],
     field?: string,
     caseSensitive: boolean = false,
-    useRegex: boolean = false
+    useRegex: boolean = false,
+    queryStrategy: QueryStrategy = 'auto'
   ): SearchMatch[] {
     if (!query || !text) return [];
 
-    const regex = this.createRegex(query, caseSensitive, useRegex);
+    const regex = this.createRegex(query, caseSensitive, useRegex, queryStrategy);
     const matches: SearchMatch[] = [];
     let match;
 
@@ -354,6 +405,12 @@ export class SearchEngine {
     let interpretation: QueryInterpretation | undefined;
     let processedOptions = { ...options };
 
+    // Default queryStrategy to 'auto' for intelligent multi-word search detection (MCP-59)
+    // This ensures quickSearch() and other calls without explicit queryStrategy use auto-detection
+    if (!processedOptions.queryStrategy) {
+      processedOptions.queryStrategy = 'auto';
+    }
+
     // Process natural language query if provided
     if (options.naturalLanguage) {
       interpretation = NaturalLanguageProcessor.processQuery(options.naturalLanguage);
@@ -398,6 +455,24 @@ export class SearchEngine {
     const allNotes = await this.getAllNotes();
     const results: SearchResult[] = [];
 
+    // Optimization: Parse query once before loop for all_terms prefilter
+    let allTermsPrefilterPattern: RegExp | null = null;
+    if (processedOptions.query) {
+      const parsed = QueryParser.parse(processedOptions.query);
+      const effectiveStrategy = processedOptions.queryStrategy === 'auto'
+        ? parsed.strategy
+        : processedOptions.queryStrategy;
+
+      if (effectiveStrategy === 'all_terms') {
+        // Create pattern once, reuse for all notes
+        allTermsPrefilterPattern = QueryParser.createPatterns(
+          parsed.terms,
+          'all_terms',
+          processedOptions.caseSensitive || false
+        )[0];
+      }
+    }
+
     for (const note of allNotes) {
       // Apply filters first
       if (!this.matchesMetadataFilter(note, processedOptions)) continue;
@@ -406,6 +481,40 @@ export class SearchEngine {
 
       // Find text matches
       const matches: SearchMatch[] = [];
+
+      // Pre-filter for all_terms strategy: Check if ALL terms exist somewhere in the note
+      // This handles cross-field searches where words are split across title/content/frontmatter
+      if (allTermsPrefilterPattern) {
+        // Concatenate all searchable text
+        const titleSources: string[] = [];
+        if (note.frontmatter.title) titleSources.push(note.frontmatter.title);
+        const pathParts = note.path.split('/');
+        const filename = pathParts[pathParts.length - 1];
+        titleSources.push(filename.replace(/\.md$/, ''));
+        if (note.frontmatter.aliases) {
+          const aliases = Array.isArray(note.frontmatter.aliases)
+            ? note.frontmatter.aliases
+            : [note.frontmatter.aliases];
+          titleSources.push(...aliases.filter(a => typeof a === 'string'));
+        }
+
+        const combinedText = [
+          ...titleSources,
+          note.content,
+          ...Object.values(note.frontmatter).flatMap(v =>
+            Array.isArray(v) ? v.filter(i => typeof i === 'string') :
+            typeof v === 'string' ? [v] : []
+          )
+        ].join('\n');
+
+        // Test against pre-compiled pattern
+        // Reset lastIndex because global regexes retain state across executions
+        allTermsPrefilterPattern.lastIndex = 0;
+        if (!allTermsPrefilterPattern.test(combinedText)) {
+          // All terms not found - skip this note
+          continue;
+        }
+      }
 
       // Search in title
       if (processedOptions.query || processedOptions.titleQuery) {
@@ -436,12 +545,13 @@ export class SearchEngine {
         // Search in all title sources
         for (const titleSource of titleSources) {
           matches.push(...this.findMatches(
-            titleSource, 
-            titleQuery, 
-            'title', 
+            titleSource,
+            titleQuery,
+            'title',
             undefined,
             processedOptions.caseSensitive,
-            processedOptions.useRegex
+            processedOptions.useRegex,
+            processedOptions.queryStrategy
           ));
         }
       }
@@ -450,12 +560,13 @@ export class SearchEngine {
       if ((processedOptions.query || processedOptions.contentQuery) && processedOptions.includeContent !== false) {
         const contentQuery = processedOptions.contentQuery || processedOptions.query!;
         matches.push(...this.findMatches(
-          note.content, 
-          contentQuery, 
+          note.content,
+          contentQuery,
           'content',
           undefined,
           processedOptions.caseSensitive,
-          processedOptions.useRegex
+          processedOptions.useRegex,
+          processedOptions.queryStrategy
         ));
       }
 
@@ -464,23 +575,25 @@ export class SearchEngine {
         Object.entries(note.frontmatter).forEach(([key, value]) => {
           if (typeof value === 'string') {
             matches.push(...this.findMatches(
-              value, 
-              processedOptions.query!, 
-              'frontmatter', 
+              value,
+              processedOptions.query!,
+              'frontmatter',
               key,
               processedOptions.caseSensitive,
-              processedOptions.useRegex
+              processedOptions.useRegex,
+              processedOptions.queryStrategy
             ));
           } else if (Array.isArray(value)) {
             value.forEach(item => {
               if (typeof item === 'string') {
                 matches.push(...this.findMatches(
-                  item, 
-                  processedOptions.query!, 
-                  'frontmatter', 
+                  item,
+                  processedOptions.query!,
+                  'frontmatter',
                   key,
                   processedOptions.caseSensitive,
-                  processedOptions.useRegex
+                  processedOptions.useRegex,
+                  processedOptions.queryStrategy
                 ));
               }
             });

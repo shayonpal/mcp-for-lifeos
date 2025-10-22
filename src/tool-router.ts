@@ -61,9 +61,16 @@ export interface UniversalSearchOptions {
   dateEnd?: string;
   pattern?: string;
   days?: number;
-  
+
   // Response format option for token optimization
   format?: 'concise' | 'detailed';
+
+  /**
+   * Strategy for handling multi-word queries
+   * @default 'auto' - Automatically detects based on word count and query structure
+   * @since MCP-59
+   */
+  queryStrategy?: 'exact_phrase' | 'all_terms' | 'any_term' | 'auto';
 }
 
 /**
@@ -327,7 +334,7 @@ export class ToolRouter {
           
           // Convert universal options to advanced search options
           const advancedOptions: AdvancedSearchOptions = { ...options };
-          
+
           // Handle legacy date format conversion
           if (options.dateStart) {
             advancedOptions.createdAfter = new Date(options.dateStart);
@@ -335,7 +342,11 @@ export class ToolRouter {
           if (options.dateEnd) {
             advancedOptions.createdBefore = new Date(options.dateEnd);
           }
-          
+
+          // Pass queryStrategy through (MCP-59 multi-word search fix)
+          // Always pass queryStrategy, defaulting to 'auto' for intelligent detection
+          advancedOptions.queryStrategy = options.queryStrategy || 'auto';
+
           results = await SearchEngine.search(advancedOptions);
           
           // Intelligent fallback: If advanced search returns no results,
