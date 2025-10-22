@@ -220,7 +220,7 @@ export class QueryParser {
     // Guard against empty term list (e.g., query="AND OR NOT" with any_term strategy)
     if (filteredTerms.length === 0) {
       // Return a pattern that matches nothing
-      return /(?!.*)/;
+      return /(?!.*)/; // Negative lookahead - matches nothing
     }
 
     // Escape terms for regex using shared utility (MCP-59: eliminates duplication)

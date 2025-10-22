@@ -19,7 +19,7 @@ describe('SearchEngine MCP-59 regressions', () => {
 
   const query = 'trip to india november planning';
   const firstNotePath = '/vault/projects/travel/first-note.md';
-  const targetNotePath = '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/20 - Areas/26 - Interests/Travel/Trip Planning/India Trip (Nov 24 - Dec 23, 2025).md';
+  const targetNotePath = '/vault/20 - Areas/26 - Interests/Travel/Trip Planning/India Trip (Nov 24 - Dec 23, 2025).md';
 
   const makeNote = (path: string, frontmatter: LifeOSNote['frontmatter'], content: string): LifeOSNote => ({
     path,
