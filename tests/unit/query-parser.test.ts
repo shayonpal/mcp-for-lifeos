@@ -250,7 +250,6 @@ describe('QueryParser', () => {
       expect(pattern.test(testText.toLowerCase())).toBe(true);
 
       // Test pattern does NOT match text missing a term
-      pattern.lastIndex = 0; // Reset regex state
       const partialText = 'November planning for india trip';
       expect(pattern.test(partialText.toLowerCase())).toBe(false);
     });

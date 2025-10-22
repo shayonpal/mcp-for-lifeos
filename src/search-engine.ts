@@ -459,6 +459,7 @@ export class SearchEngine {
     // Optimization: Parse query once before loop for all_terms prefilter
     // Use individual word tests instead of complex lookahead pattern for better performance
     let allTermsPrefilterWords: string[] | null = null;
+    let allTermsPrefilterRegexes: RegExp[] | null = null;
     let allTermsPrefilterCaseSensitive = false;
     if (processedOptions.query) {
       const parsed = QueryParser.parse(processedOptions.query);
@@ -472,6 +473,11 @@ export class SearchEngine {
         allTermsPrefilterWords = allTermsPrefilterCaseSensitive
           ? parsed.terms
           : parsed.normalizedTerms;
+
+        // Pre-compile regexes to avoid recompilation in the loop (performance optimization)
+        allTermsPrefilterRegexes = allTermsPrefilterWords.map(word =>
+          new RegExp(`\\b${escapeRegex(word)}\\b`, allTermsPrefilterCaseSensitive ? '' : 'i')
+        );
       }
     }
 
@@ -513,10 +519,7 @@ export class SearchEngine {
         // Test each word individually - much faster than lookahead pattern
         // Short-circuits on first missing word
         const textToTest = allTermsPrefilterCaseSensitive ? combinedText : combinedText.toLowerCase();
-        const allWordsPresent = allTermsPrefilterWords.every(word => {
-          const regex = new RegExp(`\\b${escapeRegex(word)}\\b`, allTermsPrefilterCaseSensitive ? '' : 'i');
-          return regex.test(textToTest);
-        });
+        const allWordsPresent = allTermsPrefilterRegexes!.every(regex => regex.test(textToTest));
 
         if (!allWordsPresent) {
           // Not all terms found - skip this note
