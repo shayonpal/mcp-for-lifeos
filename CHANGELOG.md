@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **TypeScript Type Safety for Tool Inputs** (MCP-40, 2025-10-23 19:48): Added TypeScript interfaces for tool input parameters to improve developer experience
+  - Created EditNoteInput, InsertContentInput, and MoveItemsInput interfaces in src/types.ts
+  - Applied typed casting in edit_note, move_items, and insert_content tool handlers (src/index.ts)
+  - Interfaces provide compile-time type checking, IDE autocomplete, and documentation
+  - No runtime overhead or behavior changes - pure TypeScript benefit
+  - JSON Schema remains primary source of truth for MCP protocol validation
+  - Future: Remaining tools (search, create_note_smart, list) to be typed in follow-up work
 - **Documentation Restructuring** (2025-10-23): Reorganized documentation into professional structure with lean README
   - README reduced from 724 lines to 257 lines (64% reduction)
   - Created comprehensive API reference: docs/api/TOOLS.md (complete tool documentation)
