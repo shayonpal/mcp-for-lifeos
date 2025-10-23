@@ -293,7 +293,7 @@ The tool uses intelligent routing to determine the creation method:
 ```json
 {
   "error": "Template not found: invalid_template. Available templates: restaurant, person, article, books, placetovisit. Run list(type='templates') to see all options.",
-  "availableTemplables": ["restaurant", "person", "article", ...],
+  "availableTemplates": ["restaurant", "person", "article", ...],
   "suggestion": "Use list tool with type='templates' to see all available templates"
 }
 ```
