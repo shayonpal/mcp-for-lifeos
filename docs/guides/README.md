@@ -4,7 +4,7 @@ This directory contains comprehensive guides for setting up, deploying, and inte
 
 ## 📖 Available Guides
 
-### 🚀 **[Deployment Guide](./Deployment-Guide.md)**
+### 🚀 **[Deployment Guide](./DEPLOYMENT-GUIDE.md)**
 Complete setup and deployment instructions for the LifeOS MCP Server.
 
 **Contents:**
@@ -18,7 +18,7 @@ Complete setup and deployment instructions for the LifeOS MCP Server.
 
 ---
 
-### 📱 **[Raycast Integration](./Raycast-Integration.md)**
+### 📱 **[Raycast Integration](./RAYCAST-INTEGRATION.md)**
 Setup guide for integrating LifeOS MCP Server with Raycast on macOS.
 
 **Contents:**
@@ -31,7 +31,7 @@ Setup guide for integrating LifeOS MCP Server with Raycast on macOS.
 
 ---
 
-### 💻 **[Cursor Integration](./Cursor-IDE-Integration.md)**
+### 💻 **[Cursor Integration](./CURSOR-IDE-INTEGRATION.md)**
 Setup guide for integrating LifeOS MCP Server with Cursor IDE.
 
 **Contents:**

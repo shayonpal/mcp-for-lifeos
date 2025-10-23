@@ -13,9 +13,13 @@ This directory contains comprehensive documentation for the LifeOS MCP Server, o
 
 ### 📖 [`guides/`](./guides/) - Setup and Integration Guides
 **Client setup, deployment, and integration instructions**
-- [Deployment Guide](./guides/Deployment-Guide.md) - Complete setup and deployment instructions
-- [Raycast Integration](./guides/Raycast-Integration.md) - Raycast setup for macOS
-- [Cursor Integration](./guides/Cursor-IDE-Integration.md) - Cursor IDE setup and usage
+- [Deployment Guide](./guides/DEPLOYMENT-GUIDE.md) - Complete setup and deployment instructions
+- [Configuration Guide](./guides/CONFIGURATION.md) - Detailed configuration options
+- [Templates Guide](./guides/TEMPLATES.md) - Template system and customization
+- [Integrations Guide](./guides/INTEGRATIONS.md) - Client integration setup
+- [Troubleshooting Guide](./guides/TROUBLESHOOTING.md) - Common issues and solutions
+- [Raycast Integration](./guides/RAYCAST-INTEGRATION.md) - Raycast setup for macOS
+- [Cursor Integration](./guides/CURSOR-IDE-INTEGRATION.md) - Cursor IDE setup and usage
 
 ### 📋 [`specs/`](./specs/) - Product Specifications
 **Feature requirements, implementation plans, and use cases**
@@ -45,11 +49,11 @@ This directory contains comprehensive documentation for the LifeOS MCP Server, o
 ### For Contributors
 1. **Understand Current Direction**: Read [ADR-002](./adr/002-strategic-pivot-to-core-server.md)
 2. **See Roadmap**: Review [ADR-004](./adr/004-project-review-roadmap-2025.md) for priorities
-3. **Setup Environment**: Follow [Deployment Guide](./guides/Deployment-Guide.md)
+3. **Setup Environment**: Follow [Deployment Guide](./guides/DEPLOYMENT-GUIDE.md)
 
 ### For Users
-1. **Setup**: [Deployment Guide](./guides/Deployment-Guide.md)
-2. **Client Integration**: [Raycast](./guides/Raycast-Integration.md) | [Cursor](./guides/Cursor-IDE-Integration.md)
+1. **Setup**: [Deployment Guide](./guides/DEPLOYMENT-GUIDE.md)
+2. **Client Integration**: [Raycast](./guides/RAYCAST-INTEGRATION.md) | [Cursor](./guides/CURSOR-IDE-INTEGRATION.md)
 3. **Common Issues**: See README.md Common Issues section
 
 ## 📊 Project Status

@@ -125,7 +125,7 @@ Use @lifeos-mcp to create a restaurant note with:
 - **Hotkeys**: Global keyboard shortcuts
 - **Clipboard**: Easy copying of search results
 
-For detailed Raycast setup, see [Raycast Integration Guide](Raycast-Integration.md).
+For detailed Raycast setup, see [Raycast Integration Guide](RAYCAST-INTEGRATION.md).
 
 ---
 
@@ -177,7 +177,7 @@ Agent: "Show me my TypeScript learning notes"
 - **Documentation**: Keep development notes organized
 - **Planning**: Link code to project planning notes
 
-For complete Cursor setup, see [Cursor IDE Integration Guide](Cursor-IDE-Integration.md).
+For complete Cursor setup, see [Cursor IDE Integration Guide](CURSOR-IDE-INTEGRATION.md).
 
 ---
 
@@ -305,6 +305,8 @@ Set these in your client configuration or shell environment.
 
 For more information:
 
-- [Deployment Guide](Deployment-Guide.md) - Complete setup instructions
-- [Configuration Guide](CONFIGURATION.md) - Detailed configuration options
 - [Tools API Reference](../api/TOOLS.md) - Complete tool documentation
+- [Configuration Guide](CONFIGURATION.md) - Detailed configuration options
+- [Templates Guide](TEMPLATES.md) - Template system and customization
+- [Deployment Guide](DEPLOYMENT-GUIDE.md) - Complete setup instructions
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions

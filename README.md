@@ -37,7 +37,7 @@ npm install
 npm run build
 ```
 
-**📖 For detailed deployment instructions, see [Deployment Guide](docs/guides/Deployment-Guide.md)**
+**📖 For detailed deployment instructions, see [Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)**
 
 ## Configuration
 
@@ -171,13 +171,13 @@ node scripts/start-analytics-dashboard.js
 
 ### Guides
 
-- **[📖 Deployment Guide](docs/guides/Deployment-Guide.md)** - Complete setup and deployment instructions
+- **[📖 Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)** - Complete setup and deployment instructions
 - **[⚙️ Configuration Guide](docs/guides/CONFIGURATION.md)** - Detailed configuration options
 - **[🔧 Templates Guide](docs/guides/TEMPLATES.md)** - Template system and customization
 - **[🔌 Integrations Guide](docs/guides/INTEGRATIONS.md)** - Client integration (Claude Desktop, Raycast, Cursor)
 - **[🐛 Troubleshooting Guide](docs/guides/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[📱 Raycast Integration](docs/guides/Raycast-Integration.md)** - Raycast-specific setup
-- **[💻 Cursor Integration](docs/guides/Cursor-IDE-Integration.md)** - Cursor IDE-specific setup
+- **[📱 Raycast Integration](docs/guides/RAYCAST-INTEGRATION.md)** - Raycast-specific setup
+- **[💻 Cursor Integration](docs/guides/CURSOR-IDE-INTEGRATION.md)** - Cursor IDE-specific setup
 
 ### API Reference
 

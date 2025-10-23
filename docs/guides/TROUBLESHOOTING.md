@@ -463,6 +463,8 @@ If you've tried these solutions and still have issues:
 
 For more information:
 
-- [Configuration Guide](CONFIGURATION.md) - Setup and configuration
-- [Deployment Guide](Deployment-Guide.md) - Installation and deployment
 - [Tools API Reference](../api/TOOLS.md) - Complete tool documentation
+- [Configuration Guide](CONFIGURATION.md) - Setup and configuration
+- [Templates Guide](TEMPLATES.md) - Template system and customization
+- [Integrations Guide](INTEGRATIONS.md) - Client integration setup
+- [Deployment Guide](DEPLOYMENT-GUIDE.md) - Installation and deployment

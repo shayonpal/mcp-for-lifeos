@@ -263,6 +263,8 @@ The template will receive these values and populate the frontmatter accordingly.
 
 For more information:
 
-- [Complete Tools API Reference](../api/TOOLS.md)
-- [Configuration Guide](CONFIGURATION.md)
-- [Troubleshooting Guide](TROUBLESHOOTING.md)
+- [Tools API Reference](../api/TOOLS.md) - Complete tool documentation
+- [Configuration Guide](CONFIGURATION.md) - Setup and configuration
+- [Integrations Guide](INTEGRATIONS.md) - Client integration setup
+- [Deployment Guide](DEPLOYMENT-GUIDE.md) - Installation and deployment
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions

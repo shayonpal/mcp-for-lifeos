@@ -419,6 +419,8 @@ node dist/src/index.js
 
 For more information:
 
-- [Deployment Guide](Deployment-Guide.md) - Complete setup
+- [Tools API Reference](../api/TOOLS.md) - Complete tool documentation
 - [Templates Guide](TEMPLATES.md) - Template configuration
+- [Integrations Guide](INTEGRATIONS.md) - Client integration setup
+- [Deployment Guide](DEPLOYMENT-GUIDE.md) - Complete setup
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues
