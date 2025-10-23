@@ -288,9 +288,11 @@ The tool uses intelligent routing to determine the creation method:
 
 ### Error Response
 
+> **Note**: Error messages enhanced in MCP-39 (2025-10-23) to provide actionable guidance for recovery.
+
 ```json
 {
-  "error": "Template not found: invalid_template. Available templates: restaurant, person, article, books, placetovisit, medicine, application, daily, fleeting, moc, reference",
+  "error": "Template not found: invalid_template. Available templates: restaurant, person, article, books, placetovisit. Run list(type='templates') to see all options.",
   "availableTemplates": ["restaurant", "person", "article", ...],
   "suggestion": "Use list tool with type='templates' to see all available templates"
 }

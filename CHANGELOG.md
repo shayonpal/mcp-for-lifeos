@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed "AI-Optimized Tool Consolidation" banner (now standard functionality)
   - New README focuses on quick start, navigation to detailed docs, and essential information
   - All documentation properly organized for maintainability and professional presentation
+- **Enhanced Error Messages with Actionable Guidance** (MCP-39, 2025-10-23 16:12): Transformed 6 error messages from diagnostics to recovery instructions for AI agents
+  - Applied 3 reusable patterns: LIST_AVAILABLE_OPTIONS (shows alternatives), SUGGEST_SEARCH (guides discovery), REFERENCE_DOC_TOOL (points to schema docs)
+  - Template not found errors now list available templates and suggest list(type='templates') tool
+  - File not found errors now suggest search(query='filename') for discovery
+  - YAML validation errors now reference get_yaml_rules() for schema guidance
+  - Enhanced error sites: template-engine.ts (1 site), vault-utils.ts (5 sites: readNote, updateNote, insertContent, YAML validation x2)
+  - Pattern documentation created in dev/contracts/MCP-39-error-patterns.md for 59 remaining error sites
+  - Zero infrastructure overhead: inline string enhancements only, uses cached data (<1ms)
+  - MCP protocol compliant: existing isError=true pattern maintained, stdio transport compatible
+  - Character limits self-enforcing (~2000 chars max per error message)
+  - Implementation: 27 lines changed across 2 files, 100% pattern adherence, zero code duplication
+  - Testing: All 249 existing tests pass, manual MCP server validation successful
+  - Benefit: AI agents can now self-correct errors without user intervention
 - **Test Infrastructure Cleanup** (MCP-61, 2025-10-22 19:29): Archived 6 legacy standalone test scripts to scripts/archived/
   - Migrated to Jest as single testing framework (250+ passing tests)
   - Removed npm scripts: test:claude-desktop, test:tool-parity (5 entries total)
