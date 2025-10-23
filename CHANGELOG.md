@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Documentation Restructuring** (2025-10-23): Reorganized documentation into professional structure with lean README
+  - README reduced from 724 lines to 257 lines (64% reduction)
+  - Created comprehensive API reference: docs/api/TOOLS.md (complete tool documentation)
+  - Created 4 new guides: CONFIGURATION.md, TEMPLATES.md, INTEGRATIONS.md, TROUBLESHOOTING.md
+  - Removed outdated claims: all "95% accuracy" metrics removed, grounded tone throughout
+  - Fixed Claude Desktop path: dist/index.js → dist/src/index.js
+  - Updated analytics/README.md: removed hubris claims, updated date to 2025-10-23
+  - Condensed analytics section in README: 45 lines → 13 lines with link to detailed docs
+  - Removed "AI-Optimized Tool Consolidation" banner (now standard functionality)
+  - New README focuses on quick start, navigation to detailed docs, and essential information
+  - All documentation properly organized for maintainability and professional presentation
 - **Test Infrastructure Cleanup** (MCP-61, 2025-10-22 19:29): Archived 6 legacy standalone test scripts to scripts/archived/
   - Migrated to Jest as single testing framework (250+ passing tests)
   - Removed npm scripts: test:claude-desktop, test:tool-parity (5 entries total)

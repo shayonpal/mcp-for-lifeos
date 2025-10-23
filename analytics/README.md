@@ -1,6 +1,6 @@
 # LifeOS MCP Analytics Dashboard
 
-*Last updated: 2025-08-30 07:59*
+*Last updated: 2025-10-23*
 
 ## Overview
 
@@ -112,7 +112,7 @@ After using the system, you might discover:
 
 - **Most used tools**: "I use `search` 80% of the time, maybe I should optimize it further"
 - **Performance patterns**: "List operations are slower on Monday mornings (probably larger datasets)"
-- **Routing accuracy**: "Auto-mode detection works 95% of the time, fallbacks are rare"
+- **Routing accuracy**: "Auto-mode detection works well, with rare fallbacks to legacy tools"
 - **Cache effectiveness**: "Search cache is working well at 73% hit rate"
 - **Usage trends**: "I'm most productive between 2-4 PM"
 
