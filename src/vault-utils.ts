@@ -222,7 +222,11 @@ export class VaultUtils {
     const normalizedPath = filePath.replace(/\\ /g, " ");
 
     if (!existsSync(normalizedPath)) {
-      throw new Error(`Note not found: ${normalizedPath}`);
+      const fileName = basename(normalizedPath, '.md');
+      throw new Error(
+        `Note not found: ${normalizedPath}. ` +
+        `Run search(query='${fileName}') to find similar notes.`
+      );
     }
 
     try {
@@ -325,7 +329,11 @@ export class VaultUtils {
   ): LifeOSNote {
     // Check if note exists
     if (!existsSync(filePath)) {
-      throw new Error(`Note not found: ${filePath}`);
+      const fileName = basename(filePath, '.md');
+      throw new Error(
+        `Note not found: ${filePath}. ` +
+        `Run search(query='${fileName}') to find similar notes.`
+      );
     }
 
     // Read existing note
@@ -568,7 +576,11 @@ export class VaultUtils {
   ): LifeOSNote {
     // Check if note exists
     if (!existsSync(filePath)) {
-      throw new Error(`Note not found: ${filePath}`);
+      const fileName = basename(filePath, '.md');
+      throw new Error(
+        `Note not found: ${filePath}. ` +
+        `Run search(query='${fileName}') to find similar notes.`
+      );
     }
 
     // Read existing note
@@ -1171,14 +1183,18 @@ export class VaultUtils {
     // Check for forbidden fields
     YAML_RULES.AUTO_MANAGED_FIELDS.forEach((field) => {
       if (frontmatter[field]) {
-        throw new Error(`Cannot manually set auto-managed field: ${field}`);
+        throw new Error(
+          `Cannot set auto-managed field '${field}'. ` +
+          `Run get_yaml_rules() to see which fields are auto-managed.`
+        );
       }
     });
 
     // Validate URL field naming
     if (frontmatter.url || frontmatter.URL) {
       throw new Error(
-        `Use '${YAML_RULES.URL_FIELD}' instead of 'url' or 'URL'`,
+        `Invalid YAML field 'url' or 'URL': Use '${YAML_RULES.URL_FIELD}' instead. ` +
+        `Run get_yaml_rules() to see expected format and valid fields.`
       );
     }
 

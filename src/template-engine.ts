@@ -144,7 +144,12 @@ export class TemplateEngine {
     const template = this.getTemplate(templateKey);
     
     if (!template) {
-      throw new Error(`Template not found: ${templateKey}`);
+      const availableTemplates = Array.from(this.templates.keys()).join(', ');
+      throw new Error(
+        `Template not found: ${templateKey}. ` +
+        `Available templates: ${availableTemplates}. ` +
+        `Run list(type='templates') to see all options.`
+      );
     }
 
     const { frontmatter, content } = this.readTemplateContent(template.path);
