@@ -1757,7 +1757,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         if (args.frontmatter) {
-          const fm: EditNoteFrontmatter = args.frontmatter;
+          const fm = args.frontmatter;
           updates.frontmatter = {};
 
           // Map from API field names to YAML field names
@@ -2352,8 +2352,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         // Validate required parameters
-        const content: string = args.content;
-        const target: InsertContentTarget = args.target;
+        const content = args.content;
+        const target = args.target;
 
         if (!content) {
           throw new Error('Content is required');

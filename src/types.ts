@@ -104,7 +104,7 @@ export interface EditNoteFrontmatter {
   people?: string[];
 
   /** Allow arbitrary custom fields */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
