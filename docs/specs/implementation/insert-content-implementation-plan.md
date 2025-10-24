@@ -5,6 +5,7 @@
 Based on Issue #29, the following requirements must be met:
 
 ### ✅ Implemented
+
 - [x] New MCP tool for context-aware content insertion (`insert_content`)
 - [x] Support for heading-based targeting (H1-H6)
 - [x] Support for block reference targeting
@@ -14,6 +15,7 @@ Based on Issue #29, the following requirements must be met:
 - [x] Documentation and examples
 
 ### ⚠️ Needs Enhancement
+
 - [ ] Preserve existing note formatting and structure (partially implemented - needs improvement for list handling)
 
 ## Use Cases from Acceptance Criteria
@@ -39,9 +41,11 @@ The issue specifically mentions these use cases that must be supported:
 ## Key Design Decisions
 
 ### 1. API Design Approach
+
 We have several options for the API:
 
 **Option A: Intent-Based**
+
 ```typescript
 {
   target: { heading: "## Tasks" },
@@ -51,6 +55,7 @@ We have several options for the API:
 ```
 
 **Option B: Context-Aware with Hints**
+
 ```typescript
 {
   target: { 
@@ -64,6 +69,7 @@ We have several options for the API:
 ```
 
 **Option C: Smart Auto-Detection**
+
 ```typescript
 {
   target: { heading: "## Tasks" },
@@ -79,6 +85,7 @@ We have several options for the API:
 ### 2. Section Boundary Detection
 
 **Approaches:**
+
 1. **Next Heading**: Section ends at next heading of same or higher level
 2. **Blank Line Rule**: Section ends at double blank line
 3. **Content Type Change**: Section ends when content type changes (list → paragraph)
@@ -87,6 +94,7 @@ We have several options for the API:
 ### 3. List Handling Strategy
 
 **Key Questions:**
+
 - How to detect if we're in a list context?
 - Should we auto-continue list formatting?
 - How to handle nested lists?
@@ -95,6 +103,7 @@ We have several options for the API:
 ## Implementation Phases
 
 ### Phase 1: Foundation (Current + Improvements)
+
 **Goal**: Make current functionality more intelligent
 
 1. **Improve Heading Insertion**
@@ -114,6 +123,7 @@ We have several options for the API:
 **Estimated Effort**: 1-2 days
 
 ### Phase 2: Smart Context (Priority)
+
 **Goal**: Understand document structure
 
 1. **List Continuation**
@@ -135,6 +145,7 @@ We have several options for the API:
 **Estimated Effort**: 2-3 days
 
 ### Phase 3: Advanced Features
+
 **Goal**: Handle complex scenarios
 
 1. **Multiple Match Handling**
@@ -169,7 +180,8 @@ We have several options for the API:
 
 ## Recommended First Implementation
 
-### Enhanced Target API:
+### Enhanced Target API
+
 ```typescript
 target: {
   heading?: string,
@@ -182,13 +194,15 @@ target: {
 }
 ```
 
-### Smart Defaults:
+### Smart Defaults
+
 1. If content starts with list marker and section has lists → continue list
 2. If section is empty → minimal spacing
 3. If inserting paragraph → ensure blank line separation
 4. Detect and preserve indentation
 
-### Example Usage:
+### Example Usage
+
 ```typescript
 // Add task to end of task list
 insert_content({

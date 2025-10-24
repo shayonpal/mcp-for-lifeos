@@ -110,6 +110,9 @@ test-output/
 coverage/
 .jest-cache/
 
+# Ruff cache
+.ruff_cache/
+
 # Backup files
 *.backup
 *.bak

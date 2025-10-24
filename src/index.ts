@@ -14,6 +14,7 @@ import { NaturalLanguageProcessor } from './natural-language-processor.js';
 import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { YamlRulesManager } from './yaml-rules-manager.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
+import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { ResponseTruncator } from './response-truncator.js';
@@ -1722,6 +1723,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'edit_note': {
+        const args = request.params.arguments as unknown as EditNoteInput;
         // Get note path - either from direct path or by searching for title
         let notePath: string;
         
@@ -1755,9 +1757,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         if (args.frontmatter) {
-          const fm = args.frontmatter as any;
+          const fm = args.frontmatter;
           updates.frontmatter = {};
-          
+
           // Map from API field names to YAML field names
           if (fm.contentType) updates.frontmatter['content type'] = fm.contentType;
           if (fm.category) updates.frontmatter.category = fm.category;
@@ -1765,7 +1767,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if (fm.tags) updates.frontmatter.tags = fm.tags;
           if (fm.source) updates.frontmatter.source = fm.source;
           if (fm.people) updates.frontmatter.people = fm.people;
-          
+
           // Allow any other custom fields
           Object.keys(fm).forEach(key => {
             if (!['contentType', 'category', 'subCategory', 'tags', 'source', 'people'].includes(key)) {
@@ -2229,18 +2231,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'move_items': {
+        const args = request.params.arguments as unknown as MoveItemsInput;
         const destination = args.destination as string;
         if (!destination) {
           throw new Error('Destination is required');
         }
 
         // Collect items to move
-        const itemsToMove: Array<{ path: string; type?: string }> = [];
-        
+        const itemsToMove: MoveItemType[] = [];
+
         if (args.item) {
-          itemsToMove.push({ path: args.item as string });
+          itemsToMove.push({ path: args.item });
         } else if (args.items && Array.isArray(args.items)) {
-          itemsToMove.push(...(args.items as Array<{ path: string; type?: string }>));
+          itemsToMove.push(...args.items);
         } else {
           throw new Error('Either item or items must be provided');
         }
@@ -2324,6 +2327,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'insert_content': {
+        const args = request.params.arguments as unknown as InsertContentInput;
         // Get note path - either from direct path or by searching for title
         let notePath: string;
         
@@ -2348,9 +2352,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
 
         // Validate required parameters
-        const content = args.content as string;
-        const target = args.target as any;
-        
+        const content = args.content;
+        const target = args.target;
+
         if (!content) {
           throw new Error('Content is required');
         }
