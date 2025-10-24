@@ -23,9 +23,10 @@ import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
 import { statSync } from 'fs';
+import packageJson from '../package.json' with { type: 'json' };
 
-// Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '2.0.0';
+// Server version - sourced from package.json (single source of truth)
+export const SERVER_VERSION = packageJson.version;
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -1595,19 +1596,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **Search:** Advanced full-text with metadata filtering\n` +
                   `- **Daily Notes:** Supported with auto-creation\n` +
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
-                  `- **Obsidian Integration:** Direct vault linking\n\n` +
-                  `## Version History\n` +
-                  `- **2.0.0:** BREAKING - TOOL_MODE configuration system (default: 12 tools). TypeScript interfaces for type safety. Enhanced error messages with recovery guidance. Token limit management (~25K). Format parameter for optimization. MCP protocol annotations. Multi-word search fix. Test isolation improvements.\n` +
-                  `- **1.6.0:** Advanced YAML Property Search Features - includeNullValues parameter, performance caching, enhanced sorting\n` +
-                  `- **1.5.0:** Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
-                  `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +
-                  `- **1.3.0:** Added list_yaml_properties tool to discover YAML frontmatter properties across vault\n` +
-                  `- **1.2.0:** Added YAML rules integration tool for custom frontmatter guidelines\n` +
-                  `- **1.1.1:** Fixed move_items tool schema to remove unsupported oneOf constraint\n` +
-                  `- **1.1.0:** Added move_items tool for moving notes and folders within the vault\n` +
-                  `- **1.0.2:** Fixed get_daily_note timezone issue - now uses local date instead of UTC\n` +
-                  `- **1.0.1:** Fixed read_note tool to handle different tag formats (string, array, null)\n` +
-                  `- **1.0.0:** Initial release with core functionality`
+                  `- **Obsidian Integration:** Direct vault linking`
           }]
         };
         
