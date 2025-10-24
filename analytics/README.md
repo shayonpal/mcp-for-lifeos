@@ -21,11 +21,13 @@ Lightweight telemetry system for tracking personal tool usage patterns, routing 
 Analytics are **enabled by default** for personal development insights.
 
 **To disable analytics:**
+
 ```bash
 export DISABLE_USAGE_ANALYTICS=true
 ```
 
 **To configure dashboard port:**
+
 ```bash
 export ANALYTICS_DASHBOARD_PORT=19832  # Default port, change as needed
 ```
@@ -33,6 +35,7 @@ export ANALYTICS_DASHBOARD_PORT=19832  # Default port, change as needed
 ### 2. Use the MCP Server
 
 Simply use the server normally. Analytics are collected automatically for:
+
 - Universal search operations (`search` tool)
 - Smart note creation (`create_note_smart` tool)
 - Universal listing (`list` tool)
@@ -55,12 +58,14 @@ ANALYTICS_DASHBOARD_PORT=9000 node scripts/start-analytics-dashboard.js
 ## Dashboard Features
 
 ### Summary Statistics
+
 - Total operations performed
 - Average execution time
 - Overall success rate
 - Cache hit rate
 
 ### Visual Charts
+
 1. **Tool Usage Distribution** - Pie chart showing which tools you use most
 2. **Performance Bubble Chart** - Usage count vs execution time
 3. **Routing Accuracy** - Success rate of auto-mode detection
@@ -68,6 +73,7 @@ ANALYTICS_DASHBOARD_PORT=9000 node scripts/start-analytics-dashboard.js
 5. **Daily Usage Trends** - Timeline of your tool usage patterns
 
 ### Real-time Updates
+
 - Dashboard auto-refreshes every 5 minutes
 - Manual refresh button available
 - Shows last updated timestamp
@@ -91,6 +97,7 @@ TOOL_ROUTER_TELEMETRY=true
 ```
 
 Analytics configuration is handled automatically with sensible defaults:
+
 - **Memory limit**: 1000 metrics before auto-flush
 - **Flush interval**: 5 minutes
 - **File output**: `./analytics/usage-metrics.jsonl`
@@ -119,16 +126,19 @@ After using the system, you might discover:
 ## Troubleshooting
 
 ### Dashboard shows "No Data Available"
+
 1. Make sure `ENABLE_USAGE_ANALYTICS=true` is set
 2. Use the MCP server to generate some analytics data
 3. Check that `usage-metrics.jsonl` exists in the analytics folder
 
 ### Dashboard shows loading error
+
 1. Check that `usage-metrics.jsonl` exists and is valid JSONL
 2. Try copying `sample-data.json` to `usage-metrics.jsonl` for testing
 3. Check browser console for specific error messages
 
 ### Analytics not collecting
+
 1. Verify environment variable: `echo $ENABLE_USAGE_ANALYTICS`
 2. Check that the analytics folder exists and is writable
 3. Look for error messages in the MCP server logs

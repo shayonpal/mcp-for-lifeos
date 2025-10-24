@@ -2,14 +2,27 @@
 
 All notable changes to the LifeOS MCP Server will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Server Version Single Source of Truth** (MCP-82, 2025-10-24 02:02): Centralized version management to package.json to eliminate manual synchronization and version drift risk
+  - Replaced hardcoded SERVER_VERSION constant with JSON import from package.json using ES Module syntax
+  - Eliminates dual maintenance burden - version now automatically updates when running npm version commands
+  - Implementation: Changed src/index.ts line 28 from hardcoded '2.0.0' to packageJson.version with compile-time type assertion
+  - Zero runtime overhead: Version resolved at compile-time via static JSON import (no file I/O operations)
+  - Type-safe: TypeScript compiler validates package.json structure and ensures version is string type
+  - Removed version history section from help text (12 lines) for improved maintainability
+  - Backward compatible: No changes to SERVER_VERSION API signature or MCP protocol responses
+  - Benefits: Single source of truth, automatic version updates, compile-time safety, zero maintenance overhead
+
 ## [2.0.0] - 2025-10-24
 
 ### Changed
+
 - **Tool Mode Configuration System** (MCP-60, 2025-10-24 00:23): Added TOOL_MODE environment variable to control tool visibility and changed default from 34 tools to 12 consolidated tools
   - New TOOL_MODE environment variable with 3 modes: consolidated-only (12 tools, new default), legacy-only (20 tools), consolidated-with-aliases (34 tools, previous default)
   - Breaking change: Default mode now shows only 12 consolidated tools instead of 34 (users can restore previous behavior with TOOL_MODE=consolidated-with-aliases)
@@ -60,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - See scripts/archived/README.md for rationale and Jest migration map
 
 ### Fixed
+
 - **Integration Test Vault Pollution Prevention** (MCP-61, 2025-10-22 19:06): Fixed integration tests creating permanent artifacts in production Obsidian vault
   - Root cause: claude-desktop-integration.test.ts spawned real MCP server writing to production vault at "05 - Fleeting Notes/"
   - Test created "Integration Test Note" with no cleanup logic in afterAll() hook
@@ -88,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Known limitation: Lookahead patterns may be slow on very large vaults (7.8GB+), optimization pending
 
 ### Added
+
 - **Token Budget Management for Response Truncation** (MCP-38, 2025-10-22 03:18): Implemented ~25K token limit per response with smart truncation to prevent AI context window overflow
   - Added `maxResults` parameter to search and list tools (range: 1-100, defaults: search=25, list=10)
   - Character-based token estimation (4 chars ≈ 1 token) for <0.1ms performance per result
@@ -103,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Zero breaking changes: All existing tool calls work unchanged with sensible defaults
 
 ### Fixed
+
 - **Daily Notes Display "Untitled" Bug + Timezone Date Display** (MCP-29, 2025-10-20 14:27): Fixed daily notes showing "Untitled" across 11 MCP tools and timezone-induced date shift in clickable links
   - Root cause: Tools used `note.frontmatter.title || 'Untitled'` fallback, but daily notes lack title field
   - Timezone bug: `new Date('2025-08-30')` created UTC midnight → displayed as "August 29, 2025" in EST/PST
@@ -117,6 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Impact: Daily notes now properly identified by date across ALL MCP tools, clickable links show correct dates
 
 ### Added
+
 - **Format Parameter for Context Window Optimization** (MCP-37, 2025-10-22 01:26): Added `format` parameter to search and list tools enabling concise vs detailed response modes for AI context budget management
   - Parameter: `format?: 'concise' | 'detailed'` (defaults to 'detailed' for backward compatibility)
   - Concise mode: Returns minimal data (title + path only for search, ~50-100 tokens/result)
@@ -133,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Backward compatible: Existing tool callers continue working without changes (format defaults to 'detailed')
 
 ### Changed
+
 - **Contract Directory Migration from .claude/ to dev/** (2025-10-20): Moved TypeScript implementation contracts to proper development artifacts location
   - Migrated 3 existing contracts (MCP-29, MCP-36, MCP-37) from `.claude/contracts/` to `dev/contracts/`
   - Updated `tsconfig.json` to include `dev/contracts/**/*` and changed rootDir from `./src` to `.` for multi-directory support
@@ -162,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Zero runtime impact - metadata-only enhancement loaded once at server initialization
 
 ### Fixed
+
 - **Test Isolation Bug - Production Vault Pollution** (2025-08-30): Fixed tests writing to production Obsidian vault
   - Added `resetSingletons()` method to VaultUtils to clear cached singleton instances during tests
   - VaultUtils singleton instances (templateManager, obsidianSettings) were persisting with production paths
@@ -170,6 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents test artifacts from appearing in live Obsidian vault during test runs
 
 ### Added
+
 - **MCP Tool Annotations for Read/Write Classification** (MCP-35, 2025-10-18 04:15): Added standardized MCP protocol annotations to all 27 tools for enhanced AI understanding
   - Annotated 24 read-only tools with `readOnlyHint: true` for safe, non-mutating operations
   - Annotated 3 write tools (`create_note`, `create_note_smart`, `edit_note`) with `readOnlyHint: false`
@@ -294,6 +314,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Provides practical usage examples and best practices for AI tool callers
 
 ### Fixed
+
 - **JSONL Append-Only Analytics (MCP-21)** (2025-08-30 07:59): Complete overhaul of analytics system for multi-instance safety
   - Replaced JSON file format with JSONL (JSON Lines) for atomic append operations  
   - Eliminates data loss when multiple MCP server instances run concurrently
@@ -311,6 +332,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verified no test artifacts in production vault
 
 ### Removed
+
 - **Empty Support Directory** (2025-08-28): Removed unused `Support/Raycast/script-commands` directory structure
   - Directory was created as placeholder for Raycast Script Commands but never populated
   - Project uses MCP protocol integration with Raycast instead of Script Commands
@@ -319,9 +341,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.8.0] - 2025-06-28
 
 ### Fixed
+
 - **Critical Analytics Data Loss Bug** (#83): Fix analytics system losing historical data on server restart
   - Analytics system now properly loads existing metrics from disk on startup
-  - Historical usage data is preserved across MCP server restarts 
+  - Historical usage data is preserved across MCP server restarts
   - New metrics are appended to existing data instead of overwriting
   - Prevents permanent loss of analytics trends and insights
 - **ES Module Compatibility** (#83): Fix require() usage causing MCP server startup failures
@@ -357,6 +380,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Issue may have been resolved by fixes #86-89 or confused with duplicate file issue
 
 ### Added
+
 - **Automatic Task Creation Dates**: Tasks inserted via `insert_content` tool now automatically receive creation date notation
   - Implements Obsidian Tasks Plugin format with ➕ YYYY-MM-DD notation
   - Maintains proper property order: ➕ created, 🛫 start, ⏳ scheduled, 📅 due, 🔁 recurrence
@@ -385,12 +409,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Edge case tests for heading variations and case sensitivity
 
 ### Enhanced
+
 - **Individual Tool Analytics**: Added analytics tracking to non-consolidated tools
   - get_daily_note tool now records execution metrics
   - Provides complete usage insights across all tool types
   - Maintains performance with <1ms overhead per tool call
 
 ### Planning - v2.0.0 Major Release
+
 - Analytics-driven tool optimization based on real usage data
 - Enhanced AI caller experience with production insights
 - Potential breaking changes for optimal performance
@@ -462,11 +488,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Output Validation Tests**: Comprehensive validation that consolidated tools match legacy outputs (#81)
 
 ### Changed
+
 - **Search Routing Logic**: OR queries now route to quick search instead of advanced for better results
 - **Template Detection**: Now uses actual available templates from the system
 - **Error Handling**: More resilient file operations for macOS/iCloud environments
 
 ### Technical Details
+
 - Implemented ToolRouter class for intelligent tool dispatch
 - Added comprehensive output validation tests (#81)
 - Improved search fallback strategies based on expert analysis
@@ -475,6 +503,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0] - 2025-06-04
 
 ### Added
+
 - **Advanced YAML Property Search Features**: Complete implementation of advanced search capabilities (#61)
   - New `includeNullValues` parameter for including notes where YAML properties don't exist or are null
   - Performance caching system with 5-minute TTL for improved search performance on large vaults
@@ -484,6 +513,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated documentation with advanced YAML property examples
 
 ### Enhanced
+
 - **Search Performance**: Significant performance improvements for repeated searches
   - Note caching reduces file I/O operations on subsequent searches
   - Memory-efficient cache with automatic cleanup prevents memory leaks
@@ -494,6 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.0] - 2025-06-04
 
 ### Added
+
 - **Natural Language YAML Query Parsing**: AI-powered search capability (#70)
   - Transform conversational queries like "Quebec barbecue restaurants" into structured YAML property searches
   - Intelligent entity extraction for locations, cuisines, categories, and temporal references
@@ -507,6 +538,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Foundation for future AI-powered vault management features
 
 ### Enhanced
+
 - **Robust YAML Error Handling**: Production-ready resilience for real-world vaults
   - Custom fallback parser extracts metadata from malformed YAML frontmatter
   - Silent error recovery prevents crashes from template files and broken syntax
@@ -516,6 +548,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.0] - 2025-06-04
 
 ### Added
+
 - **list_yaml_property_values tool**: Core YAML property value discovery and analysis (#57)
   - Analyzes all unique values used for a specific YAML property across the entire vault
   - Distinguishes between single values and array values for the same property
@@ -527,6 +560,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Part of the comprehensive YAML Property Management Suite (#56)
 
 ### Removed
+
 - **Deprecated Web Interface** (2025-01-06): Removed `public/` folder containing the legacy web interface
   - The built-in HTTP web interface has been deprecated in favor of OpenWebUI integration
   - OpenWebUI provides a more robust, feature-rich interface for mobile and desktop access
@@ -536,6 +570,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2025-06-02
 
 ### Added
+
 - **list_yaml_properties tool**: Discover and analyze YAML frontmatter properties across vault (#53)
   - Lists all unique YAML property names used in the vault
   - Optional usage count feature shows how many notes use each property
@@ -547,6 +582,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.1] - 2025-06-02
 
 ### Added
+
 - **insert_content tool**: Context-aware content insertion within notes (#29)
   - Supports targeting by heading text (e.g., "## Today's Tasks")
   - Supports targeting by block reference (e.g., "^block-id")
@@ -558,6 +594,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Works with both file paths and note titles
 
 ### Fixed
+
 - **Race condition in insert_content**: Resolved intermittent "Cannot read properties of undefined (reading 'join')" error (#29)
   - Added comprehensive array validation before join operations
   - Simplified end-of-section logic for non-heading targets (converts to 'after')
@@ -567,6 +604,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2025-01-29
 
 ### Added
+
 - **YAML Rules Integration**: New `get_yaml_rules` tool for referencing custom YAML frontmatter guidelines (#19)
   - Added optional `yamlRulesPath` configuration to reference user's YAML rules document
   - Created YamlRulesManager class with file caching and validation
@@ -589,6 +627,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `package.json` with repository metadata and proper licensing
 
 ### Fixed
+
 - **Template Discovery**: Fixed YAML parsing errors for templates with Templater syntax (#17)
   - Added preprocessing to handle Templater expressions before YAML parsing
   - Removed all console output for MCP protocol compatibility
@@ -596,6 +635,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added silent error tracking for debugging template issues
 
 ### Changed
+
 - **Project Organization**: Reorganized file structure for better maintainability
   - Scripts consolidated in `scripts/` directory
   - Removed redundant `setup.md` (superseded by comprehensive `docs/DEPLOYMENT.md`)
@@ -605,11 +645,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] - 2025-01-29
 
 ### Fixed
+
 - **move_items tool**: Removed unsupported `oneOf` constraint from schema that was causing API errors
 
 ## [1.1.0] - 2025-01-29
 
 ### Added
+
 - **move_items tool**: Move notes and folders within the vault (#26)
   - Supports single item moves with `item` parameter
   - Supports batch operations with `items` array parameter
@@ -621,6 +663,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Prevents circular references when moving folders
 
 ### Changed
+
 - **File Naming Convention**: Notes now preserve spaces and special characters in filenames (#25)
   - Spaces are no longer replaced with dashes
   - Most special characters are preserved (except square brackets, colons, and semicolons which Obsidian doesn't support)
