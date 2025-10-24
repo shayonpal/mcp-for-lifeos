@@ -1,33 +1,22 @@
 # Current Development Focus
 
-**Last Updated:** 2025-10-23  
-**Cycle:** Cycle 8 (Oct 20-27, 2025)  
-**Progress:** 75% complete (9/12 issues done)  
+**Last Updated:** 2025-10-24
+**Cycle:** Cycle 8 (Oct 20-27, 2025)
+**Progress:** 83% complete (10/12 issues done)
 **Current Branch:** master
 
 ---
 
 ## 🎯 Active Work
 
-### MCP-60: Configuration Flag to Hide Legacy LifeOS MCP Tools
+**No active feature work** - Ready to pick up next priority item.
 
-**Branch:** `feature/mcp-60-add-configuration-flag-to-hide-legacy-lifeos-mcp-tools`  
-**Priority:** High  
-**Status:** In Progress
-
-**Problem:** MCP clients see both consolidated and legacy tool aliases, causing confusion
-
-**Solution:** Add config flag to hide legacy aliases without code changes
-
-**Tasks:**
-
-1. Implement server flag (env var/config option)
-2. Wire config through `.env`, `config.ts`, Codex `config.toml`
-3. Update README + release notes with flag documentation
-4. Define acceptance tests for both modes (legacy visible/hidden)
-5. Verify with MCP clients (Codex, Claude Desktop)
-
-**Note:** MCP-4 (Analytics) deferred pending test infrastructure decision
+**Recently Completed:**
+- **MCP-60** (2025-10-24) - Tool Mode Configuration System
+  - Added TOOL_MODE environment variable (3 modes)
+  - Breaking change: Default 34→12 tools (ADR-005)
+  - Tool renaming: create_note_smart → create_note
+  - PR #97 merged to master (commit history preserved)
 
 ---
 
