@@ -2,6 +2,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamablehttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -19,11 +20,17 @@ import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { ResponseTruncator } from './response-truncator.js';
 import { validateMaxResults, DEFAULT_TOKEN_BUDGET, TruncationMetadata } from '../dev/contracts/MCP-38-contracts.js';
+import {
+  HttpTransportConfig,
+  DEFAULT_HTTP_CONFIG,
+  HttpTransportInitError,
+  DnsRebindingError,
+} from '../dev/contracts/MCP-85-contracts.js';
 import { format } from 'date-fns';
-import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
 import { statSync } from 'fs';
 import packageJson from '../package.json' with { type: 'json' };
+import Fastify from 'fastify';
 
 // Server version - sourced from package.json (single source of truth)
 export const SERVER_VERSION = packageJson.version;
@@ -161,6 +168,38 @@ if (toolModeConfig.usedLegacyFlag) {
     '[DEPRECATED] CONSOLIDATED_TOOLS_ENABLED will be removed in Cycle 10. Use TOOL_MODE instead.'
   );
 }
+
+// ============================================================================
+// HTTP TRANSPORT CONFIGURATION (MCP-85)
+// ============================================================================
+
+/**
+ * Parse HTTP transport configuration from environment variables
+ * Implements configuration contract from dev/contracts/MCP-85-contracts.ts
+ *
+ * @see ADR-007: Streamable HTTP SDK Implementation
+ */
+function parseHttpConfig(env: NodeJS.ProcessEnv): HttpTransportConfig {
+  const enabled = env.ENABLE_HTTP_TRANSPORT === 'true';
+  const host = env.HTTP_HOST || DEFAULT_HTTP_CONFIG.host;
+  const port = parseInt(env.HTTP_PORT || String(DEFAULT_HTTP_CONFIG.port), 10);
+  const enableDnsRebindingProtection = env.ENABLE_DNS_REBINDING_PROTECTION !== 'false'; // true by default
+  const allowedHostsRaw = env.ALLOWED_HOSTS || DEFAULT_HTTP_CONFIG.allowedHosts.join(',');
+  const allowedHosts = allowedHostsRaw.split(',').map(h => h.trim());
+  const enableJsonResponse = env.ENABLE_JSON_RESPONSE !== 'false'; // true by default
+
+  return {
+    enabled,
+    host,
+    port,
+    enableDnsRebindingProtection,
+    allowedHosts,
+    enableJsonResponse,
+  };
+}
+
+// Parse HTTP transport configuration
+const httpConfig = parseHttpConfig(process.env);
 
 // Define available tools
 const tools: Tool[] = [
@@ -2596,8 +2635,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // Start the server
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  // ========================================
+  // STDIO TRANSPORT (always enabled)
+  // ========================================
+  const stdioTransport = new StdioServerTransport();
+  await server.connect(stdioTransport);
 
   // Log tool mode configuration
   console.error(`Tool Mode: ${toolModeConfig.mode}`);
@@ -2617,19 +2659,86 @@ async function main() {
     );
   }
 
-  // Start HTTP server if web interface is explicitly enabled
-  const enableWebInterface = process.env.ENABLE_WEB_INTERFACE === 'true';
-  if (enableWebInterface) {
+  // ========================================
+  // HTTP TRANSPORT (conditional, MCP-85)
+  // ========================================
+  // Implements Streamable HTTP transport following ADR-007
+  // Uses Fastify (already installed) with per-request transport pattern
+  
+  if (httpConfig.enabled) {
     try {
-      const httpServer = new MCPHttpServer({
-        host: process.env.WEB_HOST || '0.0.0.0',
-        port: parseInt(process.env.WEB_PORT || '19831'),
-      }, server); // Pass the MCP server instance
-      await httpServer.start();
+      const app = Fastify({ logger: false });
+
+      // POST /mcp endpoint - Streamable HTTP transport (MCP protocol)
+      // Per-request transport instantiation for stateless mode (prevents request ID collisions)
+      app.post('/mcp', async (req, reply) => {
+        try {
+          // DNS rebinding protection
+          if (httpConfig.enableDnsRebindingProtection) {
+            const hostHeader = req.headers.host || '';
+            const allowedHost = httpConfig.allowedHosts.some(allowed => 
+              hostHeader === allowed || hostHeader.startsWith(`${allowed}:`)
+            );
+            
+            if (!allowedHost) {
+              throw new DnsRebindingError(
+                `Host header '${hostHeader}' not in allowed list: ${httpConfig.allowedHosts.join(', ')}`,
+                hostHeader
+              );
+            }
+          }
+
+          // Create new transport instance for this request (stateless mode)
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined, // stateless mode
+            enableJsonResponse: httpConfig.enableJsonResponse,
+          });
+
+          // Close transport when response completes
+          reply.raw.on('close', () => {
+            transport.close();
+          });
+
+          // Connect transport to MCP server and delegate request handling to SDK
+          await server.connect(transport);
+          await transport.handleRequest(req.raw, reply.raw, req.body);
+        } catch (error) {
+          if (error instanceof DnsRebindingError) {
+            reply.code(403).send({ error: error.message });
+            return;
+          }
+          // Generic error handling
+          console.error('[HTTP Transport] Request error:', error);
+          reply.code(500).send({ error: 'Internal server error' });
+        }
+      });
+
+      // Start Fastify server
+      await app.listen({ 
+        host: httpConfig.host, 
+        port: httpConfig.port 
+      });
+      
+      console.error(`[HTTP Transport] Listening on http://${httpConfig.host}:${httpConfig.port}/mcp`);
+      console.error(`[HTTP Transport] DNS rebinding protection: ${httpConfig.enableDnsRebindingProtection ? 'enabled' : 'disabled'}`);
+      if (httpConfig.enableDnsRebindingProtection) {
+        console.error(`[HTTP Transport] Allowed hosts: ${httpConfig.allowedHosts.join(', ')}`);
+      }
     } catch (error) {
-      // Silently continue without web interface
+      throw new HttpTransportInitError(
+        `Failed to start HTTP transport on ${httpConfig.host}:${httpConfig.port}`,
+        error as Error
+      );
     }
   }
+
+  // ========================================
+  // LEGACY WEB INTERFACE - REMOVED (MCP-85)
+  // ========================================
+  // Legacy web interface (MCPHttpServer) removed during MCP-85 implementation
+  // to eliminate port conflict with new HTTP transport and simplify codebase.
+  // The new HTTP transport (lines 2666-2740) replaces this functionality.
+  // See Linear issue MCP-86 for complete removal of src/server/http-server.ts
 }
 
 // Graceful shutdown handler for analytics

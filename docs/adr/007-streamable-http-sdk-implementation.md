@@ -30,7 +30,7 @@ Following ADR-006's decision to implement HTTP transport with Cloudflare Tunnel 
 ### Technical Constraints
 
 - Current SDK version: `@modelcontextprotocol/sdk@^1.0.0` (already installed)
-- Server framework: Express already in use for analytics dashboard
+- Server framework: Fastify v5.3.3 (already installed, see Framework Decision section)
 - Deployment: Cloudflare Tunnel pointing to `localhost:19831` (from ADR-006)
 - No persistent session requirements for vault operations
 - Must work with claude.ai Custom Connectors (HTTP-based)
@@ -234,43 +234,58 @@ ALLOWED_HOSTS=127.0.0.1,localhost
 ```typescript
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import express from 'express';
+import Fastify from 'fastify';
 
 const server = new McpServer({ name: 'lifeos-mcp', version: '2.0.0' });
 
 // Register all tools, resources, prompts...
 
 // Stdio transport (existing, for Claude Desktop)
-if (process.env.ENABLE_STDIO_TRANSPORT !== 'false') {
-    const stdioTransport = new StdioServerTransport();
-    await server.connect(stdioTransport);
-}
+const stdioTransport = new StdioServerTransport();
+await server.connect(stdioTransport);
 
 // HTTP transport (new, for claude.ai and remote clients)
-if (process.env.ENABLE_HTTP_TRANSPORT === 'true') {
-    const app = express();
-    app.use(express.json());
+if (httpConfig.enabled) {
+    const app = Fastify({ logger: false });
 
-    app.post('/mcp', async (req, res) => {
+    // POST /mcp endpoint - Streamable HTTP transport (MCP protocol)
+    app.post('/mcp', async (req, reply) => {
+        // DNS rebinding protection
+        if (httpConfig.enableDnsRebindingProtection) {
+            const hostHeader = req.headers.host || '';
+            const allowedHost = httpConfig.allowedHosts.some(allowed =>
+                hostHeader === allowed || hostHeader.startsWith(`${allowed}:`)
+            );
+
+            if (!allowedHost) {
+                reply.code(403).send({ error: 'Forbidden' });
+                return;
+            }
+        }
+
+        // Create new transport instance for this request (stateless mode)
         const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: undefined, // Stateless mode
-            enableJsonResponse: true,
-            enableDnsRebindingProtection: true,
-            allowedHosts: (process.env.ALLOWED_HOSTS || '127.0.0.1,localhost').split(',')
+            sessionIdGenerator: undefined, // stateless mode
+            enableJsonResponse: httpConfig.enableJsonResponse,
         });
 
-        res.on('close', () => transport.close());
+        // Close transport when response completes
+        reply.raw.on('close', () => {
+            transport.close();
+        });
 
+        // Connect transport to MCP server and delegate request handling to SDK
         await server.connect(transport);
-        await transport.handleRequest(req, res, req.body);
+        await transport.handleRequest(req.raw, reply.raw, req.body);
     });
 
-    const port = parseInt(process.env.HTTP_PORT || '19831');
-    const host = process.env.HTTP_HOST || 'localhost';
-
-    app.listen(port, host, () => {
-        console.log(`HTTP transport listening on http://${host}:${port}/mcp`);
+    // Start Fastify server
+    await app.listen({
+        host: httpConfig.host,
+        port: httpConfig.port
     });
+
+    console.error(`[HTTP Transport] Listening on http://${httpConfig.host}:${httpConfig.port}/mcp`);
 }
 ```
 
@@ -293,7 +308,7 @@ if (process.env.ENABLE_HTTP_TRANSPORT === 'true') {
 
 - **Limited Customization**: Cannot modify transport layer behavior
 - **SDK Dependency**: Tied to SDK release cycle for updates
-- **Framework Pattern**: Must follow Express integration approach
+- **Framework Integration**: Must follow Fastify integration patterns for SDK compatibility
 - **No Stateful Features**: Cannot add conversation memory later without refactor
 
 ### Trade-offs
@@ -301,6 +316,40 @@ if (process.env.ENABLE_HTTP_TRANSPORT === 'true') {
 - **Simplicity vs Control**: Accepted limited customization for simpler implementation
 - **SDK Dependency vs Custom Code**: Chose SDK dependency over maintaining custom transport
 - **Stateless vs Stateful**: Stateless chosen based on vault operation characteristics
+
+## Framework Decision
+
+### Why Fastify Over Express
+
+The implementation uses **Fastify** instead of Express, even though MCP SDK examples typically show Express:
+
+**Rationale**:
+
+- **Already Installed**: Fastify v5.3.3 already present in dependencies (`@fastify/cors`, `@fastify/static`)
+- **No Express Dependency**: Express is not installed in package.json, would require adding new dependency
+- **Better TypeScript Support**: Fastify has first-class TypeScript support with comprehensive type definitions
+- **Performance**: Fastify ~2-3x faster than Express for JSON-heavy workloads (relevant for MCP protocol)
+- **Modern API**: Async/await native, better error handling patterns
+- **Existing Patterns**: Project already uses Fastify patterns in other components
+
+**Key Integration Differences from Express**:
+
+```typescript
+// Express pattern (SDK examples)
+app.use(express.json());           // Middleware for JSON parsing
+app.post('/mcp', async (req, res) => {
+    await transport.handleRequest(req, res, req.body);
+});
+
+// Fastify pattern (actual implementation)
+// No JSON middleware needed - Fastify auto-parses
+app.post('/mcp', async (req, reply) => {
+    // Access raw Node.js request/response via .raw
+    await transport.handleRequest(req.raw, reply.raw, req.body);
+});
+```
+
+**Compatibility**: The MCP SDK `StreamableHTTPServerTransport.handleRequest()` method accepts raw Node.js `IncomingMessage` and `ServerResponse` objects, making it framework-agnostic. Both Express and Fastify expose these via `req`/`res` (Express) or `req.raw`/`reply.raw` (Fastify).
 
 ## Security Considerations
 
