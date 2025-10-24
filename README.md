@@ -1,6 +1,6 @@
 # LifeOS MCP Server
 
-**Last updated: 2025-10-24 00:23**
+**Last updated: 2025-10-24 16:34**
 
 A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Provides AI assistants with structured access to create, read, and search notes while maintaining YAML compliance and organizational standards.
 
@@ -13,6 +13,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Pr
 - **Search Engine**: Full-text search with relevance scoring and context extraction
 - **Obsidian Integration**: Clickable links that open notes directly in Obsidian
 - **Daily Notes Management**: Create and manage daily journal entries
+- **HTTP Transport**: Network-accessible endpoint for remote clients via Cloudflare Tunnel
 - **Analytics Dashboard**: Zero-maintenance telemetry with visual insights (default enabled)
 - **Universal Tools**: Consolidates 6 search tools into 1, with auto-routing
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS

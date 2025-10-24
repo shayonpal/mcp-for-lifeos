@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **HTTP Transport Research** (MCP-42, 2025-10-24 16:34): Completed research and architecture decision for Streamable HTTP transport implementation
+  - Analyzed official MCP SDK StreamableHTTPServerTransport class for HTTP transport capability
+  - Decision: Use SDK's native stateless mode (no session management) for LifeOS vault operations
+  - Researched 15+ official examples and SDK documentation via Context7 and GitHub
+  - Architecture: Dual transport support (stdio + HTTP) with single POST /mcp endpoint
+  - Security: Localhost-only binding by default, DNS rebinding protection, allowed hosts whitelist
+  - Configuration: 5 new environment variables (ENABLE_HTTP_TRANSPORT, HTTP_PORT, HTTP_HOST, ENABLE_DNS_REBINDING_PROTECTION, ALLOWED_HOSTS)
+  - Impact: Unblocks 13 HTTP Transport issues, closes 3 as not needed (session management, event store)
+  - Implementation plan: Use @modelcontextprotocol/sdk@1.0.0 (already installed, no new dependencies)
+  - Stateless mode rationale: Vault operations are inherently stateless, better scalability, simpler deployment
+  - Documentation: Created ADR-007 documenting SDK usage decision and architectural considerations
+  - Next: Ready for MCP-85 implementation of core Streamable HTTP transport with SDK
+
 ### Changed
 
 - **Server Version Single Source of Truth** (MCP-82, 2025-10-24 02:02): Centralized version management to package.json to eliminate manual synchronization and version drift risk
