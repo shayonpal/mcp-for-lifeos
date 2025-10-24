@@ -45,7 +45,7 @@
 
 **Reality:**
 
-- ✅ **Overdelivered on MCP Improvements:** 10 issues completed (MCP-35 through MCP-40, MCP-59, MCP-60, MCP-61, MCP-82)
+- ✅ **Overdelivered on MCP Improvements:** 10 issues completed (MCP-35, MCP-36, MCP-37, MCP-38, MCP-39, MCP-40, MCP-59, MCP-60, MCP-61, MCP-82)
 - ✅ **HTTP Transport Research Complete:** MCP-42, ADR-006, ADR-007 created
 - ✅ **Architecture Decisions Made:** Stateless SDK approach, closed 7 issues as duplicates
 - 🔄 **HTTP Transport Implementation:** Starting MCP-85 (foundation for 13 blocked issues)

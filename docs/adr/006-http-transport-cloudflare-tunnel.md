@@ -499,7 +499,7 @@ This decision should be reconsidered if:
 
 ## Links
 
-- **MCP Streamable HTTP Spec**: <https://spec.modelcontextprotocol.io/specification/basic/transports/#http-with-sse>
+- **MCP Streamable HTTP Spec**: <https://spec.modelcontextprotocol.io/specification/basic/transports/#streamable-http>
 - **Cloudflare Tunnel Docs**: <https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/>
 - **Implementation**: `src/transports/http-transport.ts` (to be created)
 - **Deployment Guide**: `docs/guides/DEPLOYMENT-GUIDE.md` (to be updated)
