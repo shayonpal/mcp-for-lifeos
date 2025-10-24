@@ -102,6 +102,42 @@ export class VaultUtils {
   }
 
   /**
+   * Normalize a file path by handling escaped spaces and resolving relative paths
+   * @param path - The path to normalize (can be relative or absolute)
+   * @returns Absolute path with escaped spaces handled
+   */
+  static normalizePath(path: string): string {
+    // Handle escaped spaces
+    let normalizedPath = path.replace(/\\ /g, ' ');
+
+    // Resolve relative paths to absolute paths
+    if (!normalizedPath.startsWith('/')) {
+      normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
+    }
+
+    return normalizedPath;
+  }
+
+  /**
+   * Find a note by title using search
+   * @param title - The title to search for
+   * @returns The path of the found note
+   * @throws Error if no note found with the given title
+   */
+  static async findNoteByTitle(title: string): Promise<string> {
+    // Import SearchEngine dynamically to avoid circular dependency
+    const { SearchEngine } = await import('./search-engine.js');
+
+    const searchResults = await SearchEngine.quickSearch(title, 1);
+
+    if (searchResults.length === 0) {
+      throw new Error(`No note found with title: ${title}`);
+    }
+
+    return searchResults[0].note.path;
+  }
+
+  /**
    * Sleep for specified milliseconds
    */
   private static sleep(ms: number): Promise<void> {

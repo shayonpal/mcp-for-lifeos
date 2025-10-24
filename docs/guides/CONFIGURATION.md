@@ -1,5 +1,7 @@
 # Configuration Guide
 
+**Last updated:** 2025-10-24 00:23
+
 Complete guide for configuring the LifeOS MCP server for your Obsidian vault.
 
 ## Table of Contents
@@ -106,6 +108,67 @@ When set, AI assistants can reference your YAML rules using the `get_yaml_rules`
 ```
 
 Helps maintain consistent people tagging across notes.
+
+### TOOL_MODE
+
+Controls which MCP tools are registered and visible to AI clients. This allows you to customize the tool interface without code changes.
+
+**Available Modes:**
+
+1. **`consolidated-only`** (default, 12 tools)
+   - Only modern consolidated tools (search, create_note, list)
+   - Always-available tools (get_server_version, get_yaml_rules, read_note, edit_note, get_daily_note, diagnose_vault, move_items, insert_content, list_yaml_property_values)
+   - Cleaner MCP client interface, recommended for most users
+   - Hides 11 legacy tool aliases
+
+2. **`legacy-only`** (20 tools)
+   - All original legacy tools without consolidated versions
+   - Useful for backward compatibility testing
+   - Hides 3 consolidated tools
+
+3. **`consolidated-with-aliases`** (34 tools)
+   - Both consolidated tools AND legacy aliases
+   - Maximum compatibility mode
+   - Shows all tools (12 consolidated-only + 22 legacy)
+
+**Configuration Examples:**
+
+```bash
+# Default mode (no configuration needed)
+# Shows 12 tools - recommended for most users
+# (no TOOL_MODE set defaults to consolidated-only)
+
+# Legacy-only mode (20 tools)
+TOOL_MODE=legacy-only
+
+# Maximum compatibility mode (34 tools)
+TOOL_MODE=consolidated-with-aliases
+```
+
+**Backward Compatibility:**
+
+The deprecated `CONSOLIDATED_TOOLS_ENABLED` flag is still supported for backward compatibility:
+- `CONSOLIDATED_TOOLS_ENABLED=false` maps to `TOOL_MODE=legacy-only`
+- Console warning logged when using deprecated flag
+- Scheduled for removal in Cycle 10
+
+**Tool Renaming:**
+- `create_note_smart` has been renamed to `create_note`
+- Smart functionality (template auto-detection) is now the default create_note behavior
+- Legacy `create_note_smart` alias available in consolidated-with-aliases mode
+
+**Default Mode Change:**
+- Previous default: `consolidated-with-aliases` (34 tools)
+- New default: `consolidated-only` (12 tools)
+- **Upgrade impact**: Users upgrading will see 12 tools instead of 34
+- **Restoration**: Set `TOOL_MODE=consolidated-with-aliases` to restore previous behavior
+
+**Validation:**
+- Invalid TOOL_MODE values fallback to `consolidated-only` with error log
+- Server logs tool count at startup for verification
+- All MCP responses include `toolMode` field in metadata
+
+For complete tool mapping and migration guide, see [ADR-005: Default Tool Mode](../adr/005-default-tool-mode-consolidated-only.md).
 
 ---
 

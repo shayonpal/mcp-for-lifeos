@@ -1,10 +1,33 @@
 # create_note_smart Tool Documentation
 
+**Last updated: 2025-10-24 00:23**
+
 ## Tool Overview
 
 - **Name**: `create_note_smart`
 - **Purpose**: Smart note creation with automatic template detection and intelligent routing
-- **Status**: ✅ Active (Primary tool for template-based note creation)
+- **Status**: ⚠️ Renamed to `create_note` (MCP-60, available as alias in consolidated-with-aliases mode)
+
+---
+
+## ⚠️ Tool Name Change
+
+**This tool has been renamed to `create_note`** as of MCP-60 (2025-10-24).
+
+- **New name**: `create_note` (smart functionality is now the default behavior)
+- **Legacy name**: `create_note_smart` (available in `consolidated-with-aliases` tool mode only)
+- **No functionality changes**: All features remain identical
+- **Action required**: Update your workflows to use `create_note` instead of `create_note_smart`
+
+**Availability by tool mode:**
+
+- `consolidated-only` (default): Only `create_note` is visible
+- `legacy-only`: Legacy `create_note` without smart features
+- `consolidated-with-aliases`: Both `create_note` and `create_note_smart` aliases available
+
+For tool mode configuration, see [Configuration Guide](../guides/CONFIGURATION.md#tool-mode-configuration).
+
+---
 
 ## TL;DR
 
@@ -63,6 +86,7 @@ The tool analyzes the note title for keywords to automatically determine the app
 ### Templates Not Auto-Detected
 
 These templates are too general for reliable auto-detection and require explicit specification:
+
 - **fleeting** - Quick temporary notes
 - **moc** - Map of Content pages  
 - **reference** - Reference documentation
@@ -185,6 +209,7 @@ The tool discovers templates dynamically from the vault's templates folder. Comm
 ### From `create_note_from_template`
 
 **Old way:**
+
 ```json
 {
   "title": "Joe's Pizza",
@@ -194,6 +219,7 @@ The tool discovers templates dynamically from the vault's templates folder. Comm
 ```
 
 **New way (same parameters):**
+
 ```json
 {
   "title": "Joe's Pizza",
@@ -205,6 +231,7 @@ The tool discovers templates dynamically from the vault's templates folder. Comm
 ### From `create_note`
 
 **Old way:**
+
 ```json
 {
   "title": "Meeting Notes",
@@ -214,6 +241,7 @@ The tool discovers templates dynamically from the vault's templates folder. Comm
 ```
 
 **New way:**
+
 ```json
 {
   "title": "Meeting Notes",
@@ -228,12 +256,14 @@ The tool discovers templates dynamically from the vault's templates folder. Comm
 The tool uses intelligent routing to determine the creation method:
 
 ### With Template (Auto-detected or Explicit)
+
 - **Route**: Template Engine (`DynamicTemplateEngine`)
 - **Confidence**: 0.8 (auto-detected) / 1.0 (explicit)
 - **Process**: Template processing with variable substitution
 - **Output**: Structured note with template-specific frontmatter
 
 ### Without Template
+
 - **Route**: Basic Note Creation
 - **Confidence**: 1.0
 - **Process**: Manual frontmatter construction
@@ -249,17 +279,20 @@ The tool uses intelligent routing to determine the creation method:
 ## Implementation Details
 
 ### Handler Functions
+
 - **Primary**: `ToolRouter.routeCreateNote()` - Main routing logic
 - **Execution**: `ToolRouter.executeCreateNote()` - Internal execution
 - **Template Processing**: `DynamicTemplateEngine.createNoteFromTemplate()`
 
 ### Template Engine
+
 - **Discovery**: Automatic from vault templates folder
 - **Caching**: 30-second cache for template metadata
 - **Processing**: Templater syntax support with variable substitution
 - **Validation**: YAML frontmatter compliance checking
 
 ### File Operations
+
 - **Creation**: `VaultUtils.createNote()` - Core file creation
 - **Sanitization**: Automatic filename sanitization for Obsidian compatibility
 - **Folder Placement**: Based on template configuration or user override
@@ -301,26 +334,31 @@ The tool uses intelligent routing to determine the creation method:
 ## Best Practices
 
 ### Let Auto-Detection Work
+
 - Use descriptive titles that contain relevant keywords
 - Trust the auto-detection for common note types
 - Leverage the intelligence built into the system
 
 ### Use Explicit Templates for Edge Cases
+
 - When auto-detection might be ambiguous
 - For specialized templates not covered by auto-detection
 - When you need guaranteed template selection
 
 ### Provide Custom Data for Template Variables
+
 - Use `customData` to populate template placeholders
 - Include structured information for better organization
 - Follow template-specific data patterns
 
 ### Check Available Templates
+
 - Use `list` tool with `type="templates"` to see all available templates
 - Understand which templates are available before explicit specification
 - Keep template names consistent with your vault structure
 
 ### Optimize for Your Workflow
+
 - Customize template detection keywords if needed
 - Use consistent naming patterns for better auto-detection
 - Structure custom data to match your vault's organization
@@ -328,6 +366,7 @@ The tool uses intelligent routing to determine the creation method:
 ## Analytics and Monitoring
 
 The tool automatically tracks:
+
 - Template detection accuracy
 - Routing decisions and confidence levels
 - Creation success/failure rates
