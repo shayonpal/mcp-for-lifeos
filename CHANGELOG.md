@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Tool Mode Configuration System** (MCP-60, 2025-10-24 00:23): Added TOOL_MODE environment variable to control tool visibility and changed default from 34 tools to 12 consolidated tools
+  - New TOOL_MODE environment variable with 3 modes: consolidated-only (12 tools, new default), legacy-only (22 tools), consolidated-with-aliases (34 tools, previous default)
+  - Breaking change: Default mode now shows only 12 consolidated tools instead of 34 (users can restore previous behavior with TOOL_MODE=consolidated-with-aliases)
+  - Tool renaming: create_note_smart → create_note (smart functionality is now the default behavior)
+  - Added backward compatibility: CONSOLIDATED_TOOLS_ENABLED still works but deprecated (scheduled for removal in Cycle 10)
+  - Added VaultUtils.normalizePath() helper method for consistent path handling across tools
+  - Added VaultUtils.findNoteByTitle() helper method for title-based note lookup
+  - Fixed tool organization: moved get_daily_note, insert_content, move_items, diagnose_vault out of legacy conditional (always available)
+  - Comprehensive validation: runtime TOOL_MODE validation, startup tool count logging, error handling for invalid modes
+  - Implementation: Updated src/index.ts (tool registration logic), src/vault-utils.ts (helper methods), .env.example (documentation)
+  - Testing: Manual validation confirms 12 tools in consolidated-only mode, 34 tools in consolidated-with-aliases mode
+  - Users upgrading will see reduced tool count but can opt-in to previous behavior via environment variable
 - **TypeScript Type Safety for Tool Inputs** (MCP-40, 2025-10-23 19:48): Added TypeScript interfaces for tool input parameters to improve developer experience
   - Created EditNoteInput, InsertContentInput, and MoveItemsInput interfaces in src/types.ts
   - Applied typed casting in edit_note, move_items, and insert_content tool handlers (src/index.ts)

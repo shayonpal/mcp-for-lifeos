@@ -1,5 +1,7 @@
 # LifeOS MCP Server
 
+**Last updated: 2025-10-24 00:23**
+
 A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Provides AI assistants with structured access to create, read, and search notes while maintaining YAML compliance and organizational standards.
 
 ## Features
@@ -55,6 +57,42 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 };
 ```
 
+### Tool Mode Configuration
+
+Control which MCP tools are registered using the `TOOL_MODE` environment variable:
+
+- **`consolidated-only`** (default): Only modern consolidated tools (12 tools) - clean, focused tool list
+- **`consolidated-with-aliases`**: Both consolidated and legacy tools (34 tools) - maximum compatibility
+- **`legacy-only`**: Only legacy tools (20 tools) - for legacy integrations
+
+**Default behavior** (no configuration needed):
+
+- ✅ Modern consolidated tools (`search`, `create_note`, `list`)
+- ✅ Core utilities (9 always-available tools)
+- ❌ Legacy tool aliases hidden
+
+**Tool Name Change (MCP-60):**
+
+- `create_note_smart` has been renamed to `create_note` (smart functionality is now default)
+- Legacy `create_note_smart` alias available in `consolidated-with-aliases` mode
+
+**To restore legacy tools**, set in your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "lifeos": {
+      "command": "node",
+      "args": ["/path/to/build/index.js"],
+      "env": {
+        "VAULT_PATH": "/path/to/vault",
+        "TOOL_MODE": "consolidated-with-aliases"
+      }
+    }
+  }
+}
+```
+
 **📖 For complete configuration options, see [Configuration Guide](docs/guides/CONFIGURATION.md)**
 
 ## Available Tools
@@ -67,7 +105,7 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 - Natural language queries (e.g., "Quebec barbecue restaurants")
 - Automatic token budget management
 
-**`create_note_smart`** - Smart note creation with automatic template detection
+**`create_note`** - Smart note creation with automatic template detection
 
 - Auto-detects templates from title/content
 - Handles YAML validation and folder placement

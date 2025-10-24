@@ -1,14 +1,64 @@
 # LifeOS MCP Tools - Complete API Reference
 
+**Last updated:** 2025-10-24 00:23
+
 This document provides complete documentation for all tools available in the LifeOS MCP server.
 
 ## Table of Contents
 
+0. [Tool Visibility Modes](#tool-visibility-modes)
 1. [Recommended: Consolidated Tools](#recommended-consolidated-tools)
 2. [Core Operations](#core-operations)
 3. [Utility Tools](#utility-tools)
 4. [Search Tools](#search-tools)
 5. [YAML Property Management](#yaml-property-management)
+
+---
+
+## Tool Visibility Modes
+
+The LifeOS MCP server supports three tool visibility modes controlled by the `TOOL_MODE` environment variable. This allows you to customize which tools appear in your MCP client without code changes.
+
+### Available Modes
+
+**`consolidated-only` (Default - 12 tools)**
+- Modern consolidated tools: `search`, `create_note`, `list`
+- Always-available tools: `get_server_version`, `get_yaml_rules`, `read_note`, `edit_note`, `get_daily_note`, `diagnose_vault`, `move_items`, `insert_content`, `list_yaml_property_values`
+- Recommended for most users
+- Cleaner interface, easier navigation
+
+**`legacy-only` (20 tools)**
+- All original legacy tools without consolidated versions
+- Useful for backward compatibility testing
+- Legacy search tools, creation tools, and listing tools
+
+**`consolidated-with-aliases` (34 tools)**
+- Both consolidated AND legacy tools visible
+- Maximum compatibility mode
+- Shows all 12 consolidated-only tools + 22 additional legacy tools
+
+### Configuration
+
+```bash
+# Default mode (no configuration needed)
+# (no TOOL_MODE set defaults to consolidated-only)
+
+# Legacy-only mode
+TOOL_MODE=legacy-only
+
+# Maximum compatibility mode
+TOOL_MODE=consolidated-with-aliases
+```
+
+### Tool Name Changes
+
+- **`create_note_smart`** has been renamed to **`create_note`**
+- Smart functionality (template auto-detection) is now the default behavior
+- Legacy `create_note_smart` name available in `consolidated-with-aliases` mode only
+
+For complete configuration details, see [Configuration Guide](../guides/CONFIGURATION.md#tool-mode-configuration).
+
+For migration guidance and tool mapping, see [ADR-005: Default Tool Mode](../adr/005-default-tool-mode-consolidated-only.md).
 
 ---
 
@@ -34,6 +84,8 @@ The `search` tool automatically detects the optimal search strategy based on you
 ### `create_note_smart`
 
 Smart note creation with automatic template detection and YAML compliance
+
+**Note:** This tool has been renamed to `create_note`. The smart functionality is now the default behavior. This alias is available in `consolidated-with-aliases` mode only.
 
 **Parameters:**
 

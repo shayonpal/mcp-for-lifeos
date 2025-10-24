@@ -25,7 +25,7 @@ import { logger } from './logger.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.7.0';
+export const SERVER_VERSION = '1.8.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -65,13 +65,106 @@ server.oninitialized = () => {
   }
 };
 
-// Check if consolidated tools are enabled
-const CONSOLIDATED_TOOLS_ENABLED = process.env.CONSOLIDATED_TOOLS_ENABLED !== 'false'; // Default enabled
+// ============================================================================
+// TOOL MODE CONFIGURATION
+// ============================================================================
+
+/**
+ * Tool visibility mode controlling which MCP tools are registered
+ */
+type ToolMode = 'legacy-only' | 'consolidated-only' | 'consolidated-with-aliases';
+
+/**
+ * Valid tool mode values for runtime validation
+ */
+const VALID_TOOL_MODES: readonly ToolMode[] = [
+  'legacy-only',
+  'consolidated-only',
+  'consolidated-with-aliases'
+] as const;
+
+/**
+ * Tool mode configuration with validation
+ */
+interface ToolModeConfig {
+  mode: ToolMode;
+  usedLegacyFlag: boolean;
+  rawToolMode?: string;
+  rawConsolidatedFlag?: string;
+}
+
+/**
+ * Check if string is valid ToolMode
+ */
+function isValidToolMode(value: string | undefined): value is ToolMode {
+  return VALID_TOOL_MODES.includes(value as ToolMode);
+}
+
+/**
+ * Parse TOOL_MODE environment variable with validation and fallback
+ *
+ * Validation Rules:
+ * 1. If TOOL_MODE set and valid → use it
+ * 2. If TOOL_MODE set but invalid → log error, fallback to default
+ * 3. If TOOL_MODE unset → check CONSOLIDATED_TOOLS_ENABLED for backward compatibility
+ * 4. If both unset → use default 'consolidated-only'
+ */
+function parseToolMode(env: NodeJS.ProcessEnv): ToolModeConfig {
+  const rawToolMode = env.TOOL_MODE;
+  const rawConsolidatedFlag = env.CONSOLIDATED_TOOLS_ENABLED;
+
+  // Check if TOOL_MODE is set and valid
+  if (rawToolMode !== undefined) {
+    if (isValidToolMode(rawToolMode)) {
+      return {
+        mode: rawToolMode,
+        usedLegacyFlag: false,
+        rawToolMode
+      };
+    } else {
+      // Invalid TOOL_MODE - log error and fallback
+      console.error(
+        `Invalid TOOL_MODE: ${rawToolMode}. Valid options: ${VALID_TOOL_MODES.join(', ')}. Defaulting to 'consolidated-only'`
+      );
+      return {
+        mode: 'consolidated-only',
+        usedLegacyFlag: false,
+        rawToolMode
+      };
+    }
+  }
+
+  // TOOL_MODE not set - check CONSOLIDATED_TOOLS_ENABLED for backward compatibility
+  if (rawConsolidatedFlag !== undefined) {
+    const mode = rawConsolidatedFlag === 'false' ? 'legacy-only' : 'consolidated-only';
+    return {
+      mode,
+      usedLegacyFlag: true,
+      rawConsolidatedFlag
+    };
+  }
+
+  // Both unset - use default
+  return {
+    mode: 'consolidated-only',
+    usedLegacyFlag: false
+  };
+}
+
+// Parse tool mode configuration
+const toolModeConfig = parseToolMode(process.env);
+
+// Log deprecation warning if old flag was used
+if (toolModeConfig.usedLegacyFlag) {
+  console.error(
+    '[DEPRECATED] CONSOLIDATED_TOOLS_ENABLED will be removed in Cycle 10. Use TOOL_MODE instead.'
+  );
+}
 
 // Define available tools
 const tools: Tool[] = [
-  // Consolidated AI-Optimized Tools (when enabled)
-  ...(CONSOLIDATED_TOOLS_ENABLED ? [
+  // Consolidated AI-Optimized Tools
+  ...(toolModeConfig.mode !== 'legacy-only' ? [
     {
       name: 'search',
       description: `Universal search tool with intelligent auto-mode routing. Consolidates all search functionality: basic search, advanced search, quick search, content type search, recent search, and pattern matching.
@@ -135,8 +228,8 @@ TITLE EXTRACTION: Search result titles are determined by priority:
       }
     },
     {
-      name: 'create_note_smart',
-      description: `Smart note creation with automatic template detection. Consolidates create_note and create_note_from_template with intelligent template routing.
+      name: 'create_note',
+      description: `Create a new note in the LifeOS vault with automatic template detection and proper YAML frontmatter.
 
 WHEN TO USE:
 - Restaurant/person/article auto-detection: auto_template=true, title includes keywords
@@ -202,9 +295,9 @@ RETURNS: Type-specific arrays: folder paths, template list, daily note paths, or
       }
     }
   ] : []),
-  
-  // Backward Compatibility Aliases (when consolidated tools are enabled)
-  ...(CONSOLIDATED_TOOLS_ENABLED ? [
+
+  // Backward Compatibility Aliases (legacy tools)
+  ...(toolModeConfig.mode === 'consolidated-with-aliases' ? [
     {
       name: 'search_notes',
       description: '[LEGACY ALIAS] Use "search" tool instead. Basic search by metadata filters.',
@@ -395,7 +488,7 @@ RETURNS: Type-specific arrays: folder paths, template list, daily note paths, or
       openWorldHint: false
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         includeTools: { type: 'boolean', description: 'Include full list of available tools in the response' }
       }
@@ -410,47 +503,8 @@ RETURNS: Type-specific arrays: folder paths, template list, daily note paths, or
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {}
-    }
-  },
-  {
-    name: 'create_note',
-    description: 'Create a new note in the LifeOS vault with proper YAML frontmatter. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: 'Note title' },
-        content: { type: 'string', description: 'Note content (markdown)' },
-        template: { type: 'string', description: 'Template name to use (e.g., tpl-person, tpl-article, etc.)' },
-        useTemplate: { type: 'boolean', description: 'If true, returns available templates for selection instead of creating note' },
-        contentType: { type: 'string', description: 'Content type (Article, Daily Note, Recipe, etc.)' },
-        category: { type: 'string', description: 'Category' },
-        subCategory: { type: 'string', description: 'Sub-category' },
-        tags: { type: 'array', items: { type: 'string' }, description: 'Tags array' },
-        targetFolder: { type: 'string', description: 'Target folder path (optional)' },
-        source: { type: 'string', description: 'Source URL for articles' },
-        people: { type: 'array', items: { type: 'string' }, description: 'People mentioned' },
-        customData: { type: 'object', description: 'Custom data for template processing' }
-      },
-      required: ['title']
-    }
-  },
-  {
-    name: 'create_note_from_template',
-    description: 'Create a note using a specific LifeOS template with auto-filled metadata. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: 'Note title' },
-        template: { type: 'string', description: 'Template key (restaurant, article, person, daily, etc.)' },
-        customData: { 
-          type: 'object', 
-          description: 'Template-specific data (e.g., cuisine, location for restaurants)',
-          additionalProperties: true
-        }
-      },
-      required: ['title', 'template']
     }
   },
   {
@@ -469,7 +523,7 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
 2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
 3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
         title: { type: 'string', description: 'Note title (alternative to path)' },
@@ -515,31 +569,11 @@ TITLE EXTRACTION: Note titles are determined by priority:
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         path: { type: 'string', description: 'Full path to the note' }
       },
       required: ['path']
-    }
-  },
-  {
-    name: 'search_notes',
-    description: 'Search notes by content type, tags, category, or date range',
-    annotations: {
-      readOnlyHint: true,
-      idempotentHint: true,
-      openWorldHint: true
-    },
-    inputSchema: {
-      type: 'object',
-      properties: {
-        contentType: { type: 'string', description: 'Filter by content type' },
-        category: { type: 'string', description: 'Filter by category' },
-        tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
-        folder: { type: 'string', description: 'Filter by folder path' },
-        dateStart: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
-        dateEnd: { type: 'string', description: 'End date (YYYY-MM-DD)' }
-      }
     }
   },
   {
@@ -558,12 +592,154 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         date: { type: 'string', description: 'Date in YYYY-MM-DD format, relative date (today, yesterday, tomorrow), or natural language (optional, defaults to today)' },
         createIfMissing: { type: 'boolean', description: 'Create the daily note if it doesn\'t exist (default: true)' },
         confirmCreation: { type: 'boolean', description: 'Ask for confirmation before creating a new daily note (default: false)' }
       }
+    }
+  },
+  {
+    name: 'diagnose_vault',
+    description: 'Diagnose vault issues and check for problematic files',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        checkYaml: { type: 'boolean', description: 'Check for YAML parsing errors (default: true)' },
+        maxFiles: { type: 'number', description: 'Maximum files to check (default: 100)' }
+      }
+    }
+  },
+  {
+    name: 'move_items',
+    description: 'Move notes and/or folders to a different location in the vault. Use either "item" for single moves or "items" for batch operations.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Path to note or folder' },
+              type: { type: 'string', enum: ['note', 'folder'], description: 'Item type (auto-detected if not specified)' }
+            },
+            required: ['path']
+          },
+          description: 'Array of items to move (use this OR item, not both)'
+        },
+        item: {
+          type: 'string',
+          description: 'Single item path to move (use this OR items, not both)'
+        },
+        destination: {
+          type: 'string',
+          description: 'Target folder path (relative to vault root)'
+        },
+        createDestination: {
+          type: 'boolean',
+          description: 'Create destination folder if it doesn\'t exist (default: false)'
+        },
+        overwrite: {
+          type: 'boolean',
+          description: 'Overwrite existing files in destination (default: false)'
+        },
+        mergeFolders: {
+          type: 'boolean',
+          description: 'When moving folders, merge with existing folder of same name (default: false)'
+        }
+      },
+      required: ['destination']
+    }
+  },
+  {
+    name: 'insert_content',
+    description: `Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading "Day's Notes" (with apostrophe) to target the main content section.
+
+WHEN TO USE:
+- Append to daily notes: target={heading: "Day's Notes"}, position="end-of-section"
+- Insert after specific heading: target={heading: "## Tasks"}, position="after"
+- Target by text pattern: target={pattern: "TODO"}, position="before"
+
+RETURNS: Success message with insertion location (heading/line) and content preview
+
+TITLE EXTRACTION: Note titles in responses are determined by priority:
+1. YAML frontmatter 'title' field (if present and non-empty)
+2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
+3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
+        title: { type: 'string', description: 'Note title (alternative to path)' },
+        content: { type: 'string', description: 'Content to insert' },
+        target: {
+          type: 'object',
+          description: 'Target location for insertion',
+          properties: {
+            heading: { type: 'string', description: 'Heading text to target (e.g., "## Today\'s Tasks")' },
+            blockRef: { type: 'string', description: 'Block reference ID to target (e.g., "^block-id")' },
+            pattern: { type: 'string', description: 'Text pattern to search for' },
+            lineNumber: { type: 'number', description: 'Specific line number (1-based)' }
+          }
+        },
+        position: {
+          type: 'string',
+          enum: ['before', 'after', 'append', 'prepend', 'end-of-section'],
+          description: 'Where to insert content relative to target (default: after). Use "end-of-section" to insert at the end of a heading section.'
+        },
+        ensureNewline: {
+          type: 'boolean',
+          description: 'Ensure proper line breaks around inserted content (default: true)'
+        }
+      },
+      required: ['content', 'target']
+    }
+  },
+
+  // Legacy Tools (hidden in consolidated-only mode)
+  ...(toolModeConfig.mode !== 'consolidated-only' ? [
+  {
+    name: 'search_notes',
+    description: 'Search notes by content type, tags, category, or date range',
+    annotations: {
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contentType: { type: 'string', description: 'Filter by content type' },
+        category: { type: 'string', description: 'Filter by category' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
+        folder: { type: 'string', description: 'Filter by folder path' },
+        dateStart: { type: 'string', description: 'Start date (YYYY-MM-DD)' },
+        dateEnd: { type: 'string', description: 'End date (YYYY-MM-DD)' }
+      }
+    }
+  },
+  {
+    name: 'create_note_from_template',
+    description: 'Create a note using a specific LifeOS template with auto-filled metadata. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        title: { type: 'string', description: 'Note title' },
+        template: { type: 'string', description: 'Template key (restaurant, article, person, daily, etc.)' },
+        customData: {
+          type: 'object',
+          description: 'Template-specific data (e.g., cuisine, location for restaurants)',
+          additionalProperties: true
+        }
+      },
+      required: ['title', 'template']
     }
   },
   {
@@ -575,7 +751,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         path: { type: 'string', description: 'Folder path to list (optional, defaults to root)' }
       }
@@ -590,7 +766,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         pattern: { type: 'string', description: 'Glob pattern (e.g., "**/*recipe*.md")' }
       },
@@ -606,7 +782,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         limit: { type: 'number', description: 'Limit number of results (optional, default 10)' }
       }
@@ -621,7 +797,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         query: { type: 'string', description: 'General search query (searches title, content, and frontmatter)' },
         contentQuery: { type: 'string', description: 'Search only in note content' },
@@ -661,7 +837,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         query: { type: 'string', description: 'Search query' },
         maxResults: { type: 'number', description: 'Maximum results (default: 10)' }
@@ -678,7 +854,7 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         contentType: { type: 'string', description: 'Content type to search for' },
         maxResults: { type: 'number', description: 'Maximum results (optional)' }
@@ -695,26 +871,10 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         days: { type: 'number', description: 'Number of days back to search (default: 7)' },
         maxResults: { type: 'number', description: 'Maximum results (default: 20)' }
-      }
-    }
-  },
-  {
-    name: 'diagnose_vault',
-    description: 'Diagnose vault issues and check for problematic files',
-    annotations: {
-      readOnlyHint: true,
-      idempotentHint: true,
-      openWorldHint: true
-    },
-    inputSchema: {
-      type: 'object',
-      properties: {
-        checkYaml: { type: 'boolean', description: 'Check for YAML parsing errors (default: true)' },
-        maxFiles: { type: 'number', description: 'Maximum files to check (default: 100)' }
       }
     }
   },
@@ -727,94 +887,8 @@ RETURNS: Daily note path, creation status (created/existed), and applied templat
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {}
-    }
-  },
-  {
-    name: 'move_items',
-    description: 'Move notes and/or folders to a different location in the vault. Use either "item" for single moves or "items" for batch operations.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        items: { 
-          type: 'array', 
-          items: { 
-            type: 'object',
-            properties: {
-              path: { type: 'string', description: 'Path to note or folder' },
-              type: { type: 'string', enum: ['note', 'folder'], description: 'Item type (auto-detected if not specified)' }
-            },
-            required: ['path']
-          },
-          description: 'Array of items to move (use this OR item, not both)'
-        },
-        item: {
-          type: 'string',
-          description: 'Single item path to move (use this OR items, not both)'
-        },
-        destination: { 
-          type: 'string', 
-          description: 'Target folder path (relative to vault root)'
-        },
-        createDestination: {
-          type: 'boolean',
-          description: 'Create destination folder if it doesn\'t exist (default: false)'
-        },
-        overwrite: {
-          type: 'boolean',
-          description: 'Overwrite existing files in destination (default: false)'
-        },
-        mergeFolders: {
-          type: 'boolean',
-          description: 'When moving folders, merge with existing folder of same name (default: false)'
-        }
-      },
-      required: ['destination']
-    }
-  },
-  {
-    name: 'insert_content',
-    description: `Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading "Day's Notes" (with apostrophe) to target the main content section.
-
-WHEN TO USE:
-- Append to daily notes: target={heading: "Day's Notes"}, position="end-of-section"
-- Insert after specific heading: target={heading: "## Tasks"}, position="after"
-- Target by text pattern: target={pattern: "TODO"}, position="before"
-
-RETURNS: Success message with insertion location (heading/line) and content preview
-
-TITLE EXTRACTION: Note titles in responses are determined by priority:
-1. YAML frontmatter 'title' field (if present and non-empty)
-2. Formatted date for daily notes (e.g., "August 30, 2025" for 2025-08-30.md)
-3. Title-cased filename for regular notes (e.g., "My Project Note" for my-project-note.md)`,
-    inputSchema: {
-      type: 'object',
-      properties: {
-        path: { type: 'string', description: 'Path to the note file (absolute or relative to vault)' },
-        title: { type: 'string', description: 'Note title (alternative to path)' },
-        content: { type: 'string', description: 'Content to insert' },
-        target: { 
-          type: 'object',
-          description: 'Target location for insertion',
-          properties: {
-            heading: { type: 'string', description: 'Heading text to target (e.g., "## Today\'s Tasks")' },
-            blockRef: { type: 'string', description: 'Block reference ID to target (e.g., "^block-id")' },
-            pattern: { type: 'string', description: 'Text pattern to search for' },
-            lineNumber: { type: 'number', description: 'Specific line number (1-based)' }
-          }
-        },
-        position: {
-          type: 'string',
-          enum: ['before', 'after', 'append', 'prepend', 'end-of-section'],
-          description: 'Where to insert content relative to target (default: after). Use "end-of-section" to insert at the end of a heading section.'
-        },
-        ensureNewline: {
-          type: 'boolean',
-          description: 'Ensure proper line breaks around inserted content (default: true)'
-        }
-      },
-      required: ['content', 'target']
     }
   },
   {
@@ -826,7 +900,7 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         includeCount: { 
           type: 'boolean', 
@@ -843,7 +917,10 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
         }
       }
     }
-  },
+  }
+  ] : []),
+
+  // Always Available Tools
   {
     name: 'list_yaml_property_values',
     description: 'List all unique values used for a specific YAML property, showing which are single values vs arrays',
@@ -853,7 +930,7 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
       openWorldHint: true
     },
     inputSchema: {
-      type: 'object',
+      type: 'object' as const,
       properties: {
         property: {
           type: 'string',
@@ -901,6 +978,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
     response.metadata.version = SERVER_VERSION;
     response.metadata.serverName = 'lifeos-mcp';
+    response.metadata.toolMode = toolModeConfig.mode;
     return response;
   };
   
@@ -909,7 +987,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       // Consolidated AI-Optimized Tools
       case 'search': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
+        if (toolModeConfig.mode === 'legacy-only') {
           throw new Error('Consolidated tools are disabled. Use legacy search tools instead.');
         }
 
@@ -1017,9 +1095,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
       }
 
-      case 'create_note_smart': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
-          throw new Error('Consolidated tools are disabled. Use create_note or create_note_from_template instead.');
+      case 'create_note': {
+        if (toolModeConfig.mode === 'legacy-only') {
+          throw new Error('Consolidated tools are disabled. Use legacy create_note_from_template tool instead.');
         }
         
         const createOptions: SmartCreateNoteOptions = args as unknown as SmartCreateNoteOptions;
@@ -1055,7 +1133,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'list': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
+        if (toolModeConfig.mode === 'legacy-only') {
           throw new Error('Consolidated tools are disabled. Use specific list tools instead.');
         }
 
@@ -1293,214 +1371,211 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'search_by_content_type':
       case 'search_recent':
       case 'find_notes_by_pattern': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
-          // Fall through to original implementation when consolidated tools are disabled
-          break;
-        }
-        
-        // Map legacy parameters to universal search parameters
-        const searchOptions: UniversalSearchOptions = args as unknown as UniversalSearchOptions;
-        
-        // Determine the appropriate mode based on the legacy tool name
-        if (name === 'search_notes') {
-          searchOptions.mode = 'advanced'; // search_notes maps to advanced search
-        } else if (name === 'advanced_search') {
-          searchOptions.mode = 'advanced';
-        } else if (name === 'quick_search') {
-          searchOptions.mode = 'quick';
-        } else if (name === 'search_by_content_type') {
-          searchOptions.mode = 'content_type';
-          // Map contentType parameter to query for content_type mode
-          if (args.contentType && !searchOptions.query) {
-            searchOptions.query = args.contentType as string;
-          }
-        } else if (name === 'search_recent') {
-          searchOptions.mode = 'recent';
-        } else if (name === 'find_notes_by_pattern') {
-          searchOptions.mode = 'pattern';
-          // Map pattern parameter to query for pattern mode
-          if (args.pattern && !searchOptions.query) {
-            searchOptions.query = args.pattern as string;
-          }
-        }
-        
-        const results = await ToolRouter.routeSearch(searchOptions);
-        
-        // Add deprecation warning to response
-        const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use the \`search\` tool with mode="${searchOptions.mode}" instead for better performance and features.\n\n`;
-        
-        let interpretationText = '';
-        if (results.length > 0 && results[0].interpretation) {
-          interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
-        }
-        
-        const resultText = results.map((result, index) => {
-          const note = result.note;
-          const score = result.score.toFixed(1);
-          const matchCount = result.matches.length;
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
-          let output = ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown',
-            result.score,
-            `${matchCount} matches`
-          );
-          
-          const topMatches = result.matches.slice(0, 3);
-          if (topMatches.length > 0) {
-            output += '\n\n**Matches:**\n';
-            topMatches.forEach(match => {
-              const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
-              output += `- *${type}*: "${match.context}"\n`;
-            });
-          }
-          
-          return output;
-        }).join('\n\n---\n\n');
+        // In non-legacy-only modes, route to consolidated search tool
+        if (toolModeConfig.mode !== 'legacy-only') {
+          // Map legacy parameters to universal search parameters
+          const searchOptions: UniversalSearchOptions = args as unknown as UniversalSearchOptions;
 
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `${deprecationWarning}${interpretationText}Found ${results.length} results:\n\n${resultText}`
-          }]
-        });
+          // Determine the appropriate mode based on the legacy tool name
+          if (name === 'search_notes') {
+            searchOptions.mode = 'advanced'; // search_notes maps to advanced search
+          } else if (name === 'advanced_search') {
+            searchOptions.mode = 'advanced';
+          } else if (name === 'quick_search') {
+            searchOptions.mode = 'quick';
+          } else if (name === 'search_by_content_type') {
+            searchOptions.mode = 'content_type';
+            // Map contentType parameter to query for content_type mode
+            if (args.contentType && !searchOptions.query) {
+              searchOptions.query = args.contentType as string;
+            }
+          } else if (name === 'search_recent') {
+            searchOptions.mode = 'recent';
+          } else if (name === 'find_notes_by_pattern') {
+            searchOptions.mode = 'pattern';
+            // Map pattern parameter to query for pattern mode
+            if (args.pattern && !searchOptions.query) {
+              searchOptions.query = args.pattern as string;
+            }
+          }
+
+          const results = await ToolRouter.routeSearch(searchOptions);
+
+          // Add deprecation warning to response
+          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use the \`search\` tool with mode="${searchOptions.mode}" instead for better performance and features.\n\n`;
+
+          let interpretationText = '';
+          if (results.length > 0 && results[0].interpretation) {
+            interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
+          }
+
+          const resultText = results.map((result, index) => {
+            const note = result.note;
+            const score = result.score.toFixed(1);
+            const matchCount = result.matches.length;
+            const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
+
+            let output = ObsidianLinks.formatSearchResult(
+              index + 1,
+              title,
+              note.path,
+              note.frontmatter['content type'] || 'Unknown',
+              result.score,
+              `${matchCount} matches`
+            );
+
+            const topMatches = result.matches.slice(0, 3);
+            if (topMatches.length > 0) {
+              output += '\n\n**Matches:**\n';
+              topMatches.forEach(match => {
+                const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
+                output += `- *${type}*: "${match.context}"\n`;
+              });
+            }
+
+            return output;
+          }).join('\n\n---\n\n');
+
+          return addVersionMetadata({
+            content: [{
+              type: 'text',
+              text: `${deprecationWarning}${interpretationText}Found ${results.length} results:\n\n${resultText}`
+            }]
+          });
+        }
+        // Fall through to legacy implementation for legacy-only mode
       }
 
       case 'create_note_from_template': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
-          // Fall through to original implementation
-          break;
-        }
-        
-        const createOptions: SmartCreateNoteOptions = {
-          title: args.title as string,
-          template: args.template as string,
-          customData: args.customData as Record<string, any>,
-          auto_template: false // Explicit template specified
-        };
-        
-        const templateResult = await ToolRouter.routeCreateNote(createOptions);
-        
-        const fileName = createOptions.title
-          .replace(/[\[\]:;]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        const note = VaultUtils.createNote(
-          fileName, 
-          templateResult.frontmatter, 
-          templateResult.content, 
-          templateResult.targetFolder
-        );
+        // In non-legacy-only modes, route to consolidated create_note tool
+        if (toolModeConfig.mode !== 'legacy-only') {
+          const createOptions: SmartCreateNoteOptions = {
+            title: args.title as string,
+            template: args.template as string,
+            customData: args.customData as Record<string, any>,
+            auto_template: false // Explicit template specified
+          };
 
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, createOptions.title);
-        const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`create_note_from_template\` tool is deprecated. Please use \`create_note_smart\` instead.\n\n`;
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `${deprecationWarning}✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n🔧 Template: ${createOptions.template}`
-          }]
-        });
+          const templateResult = await ToolRouter.routeCreateNote(createOptions);
+
+          const fileName = createOptions.title
+            .replace(/[\[\]:;]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const note = VaultUtils.createNote(
+            fileName,
+            templateResult.frontmatter,
+            templateResult.content,
+            templateResult.targetFolder
+          );
+
+          const obsidianLink = ObsidianLinks.createClickableLink(note.path, createOptions.title);
+          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`create_note_from_template\` tool is deprecated. Please use \`create_note\` instead.\n\n`;
+
+          return addVersionMetadata({
+            content: [{
+              type: 'text',
+              text: `${deprecationWarning}✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n🔧 Template: ${createOptions.template}`
+            }]
+          });
+        }
+        // Fall through to legacy implementation for legacy-only mode
       }
 
       case 'list_folders':
       case 'list_daily_notes':
       case 'list_templates':
       case 'list_yaml_properties': {
-        if (!CONSOLIDATED_TOOLS_ENABLED) {
-          // Fall through to original implementation
-          break;
-        }
-        
-        // Map legacy parameters to universal list parameters
-        let listType: string = 'auto';
-        const listOptions: UniversalListOptions = { type: 'auto' };
-        
-        if (name === 'list_folders') {
-          listType = 'folders';
-          listOptions.type = 'folders';
-          if (args.path) listOptions.path = args.path as string;
-        } else if (name === 'list_daily_notes') {
-          listType = 'daily_notes';
-          listOptions.type = 'daily_notes';
-          if (args.limit) listOptions.limit = args.limit as number;
-        } else if (name === 'list_templates') {
-          listType = 'templates';
-          listOptions.type = 'templates';
-        } else if (name === 'list_yaml_properties') {
-          listType = 'yaml_properties';
-          listOptions.type = 'yaml_properties';
-          if (args.includeCount) listOptions.includeCount = args.includeCount as boolean;
-          if (args.sortBy) listOptions.sortBy = args.sortBy as string;
-          if (args.excludeStandard) listOptions.excludeStandard = args.excludeStandard as boolean;
-        }
-        
-        const results = await ToolRouter.routeList(listOptions);
-        const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use \`list\` with type="${listType}" instead.\n\n`;
-        
-        let responseText = '';
-        
-        switch (listOptions.type) {
-          case 'folders': {
-            const folders = results as string[];
-            responseText = `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
-            break;
-          }
-          
-          case 'daily_notes': {
-            const files = results as string[];
-            responseText = `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
-            break;
-          }
-          
-          case 'templates': {
-            const templates = results as any[];
-            const templateList = templates.map((template, index) => {
-              return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                     `   ${template.description}\n` +
-                     `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                     `   📄 Content Type: ${template.contentType || 'Varies'}`;
-            }).join('\n\n');
-            
-            responseText = `# Available Templates\n\n${templateList}`;
-            break;
-          }
-          
-          case 'yaml_properties': {
-            const propertiesInfo = results as any;
-            const sortedProperties = propertiesInfo.properties;
-            
-            responseText = `# YAML Properties in Vault\n\n`;
-            responseText += `Found **${sortedProperties.length}** unique properties`;
-            if (propertiesInfo.totalNotes) {
-              responseText += ` across **${propertiesInfo.totalNotes}** notes`;
-            }
-            responseText += `\n\n## Properties List\n\n`;
-            
-            if (listOptions.includeCount && propertiesInfo.counts) {
-              sortedProperties.forEach((prop: string) => {
-                const count = propertiesInfo.counts[prop] || 0;
-                responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-              });
-            } else {
-              sortedProperties.forEach((prop: string) => {
-                responseText += `- ${prop}\n`;
-              });
-            }
-            break;
-          }
-        }
+        // In non-legacy-only modes, route to consolidated list tool
+        if (toolModeConfig.mode !== 'legacy-only') {
+          // Map legacy parameters to universal list parameters
+          let listType: string = 'auto';
+          const listOptions: UniversalListOptions = { type: 'auto' };
 
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `${deprecationWarning}${responseText}`
-          }]
-        });
+          if (name === 'list_folders') {
+            listType = 'folders';
+            listOptions.type = 'folders';
+            if (args.path) listOptions.path = args.path as string;
+          } else if (name === 'list_daily_notes') {
+            listType = 'daily_notes';
+            listOptions.type = 'daily_notes';
+            if (args.limit) listOptions.limit = args.limit as number;
+          } else if (name === 'list_templates') {
+            listType = 'templates';
+            listOptions.type = 'templates';
+          } else if (name === 'list_yaml_properties') {
+            listType = 'yaml_properties';
+            listOptions.type = 'yaml_properties';
+            if (args.includeCount) listOptions.includeCount = args.includeCount as boolean;
+            if (args.sortBy) listOptions.sortBy = args.sortBy as string;
+            if (args.excludeStandard) listOptions.excludeStandard = args.excludeStandard as boolean;
+          }
+
+          const results = await ToolRouter.routeList(listOptions);
+          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use \`list\` with type="${listType}" instead.\n\n`;
+
+          let responseText = '';
+
+          switch (listOptions.type) {
+            case 'folders': {
+              const folders = results as string[];
+              responseText = `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
+              break;
+            }
+
+            case 'daily_notes': {
+              const files = results as string[];
+              responseText = `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
+              break;
+            }
+
+            case 'templates': {
+              const templates = results as any[];
+              const templateList = templates.map((template, index) => {
+                return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
+                       `   ${template.description}\n` +
+                       `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
+                       `   📄 Content Type: ${template.contentType || 'Varies'}`;
+              }).join('\n\n');
+
+              responseText = `# Available Templates\n\n${templateList}`;
+              break;
+            }
+
+            case 'yaml_properties': {
+              const propertiesInfo = results as any;
+              const sortedProperties = propertiesInfo.properties;
+
+              responseText = `# YAML Properties in Vault\n\n`;
+              responseText += `Found **${sortedProperties.length}** unique properties`;
+              if (propertiesInfo.totalNotes) {
+                responseText += ` across **${propertiesInfo.totalNotes}** notes`;
+              }
+              responseText += `\n\n## Properties List\n\n`;
+
+              if (listOptions.includeCount && propertiesInfo.counts) {
+                sortedProperties.forEach((prop: string) => {
+                  const count = propertiesInfo.counts[prop] || 0;
+                  responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
+                });
+              } else {
+                sortedProperties.forEach((prop: string) => {
+                  responseText += `- ${prop}\n`;
+                });
+              }
+              break;
+            }
+          }
+
+          return addVersionMetadata({
+            content: [{
+              type: 'text',
+              text: `${deprecationWarning}${responseText}`
+            }]
+          });
+        }
+        // Fall through to legacy implementation for legacy-only mode
       }
 
       case 'get_server_version': {
@@ -1582,80 +1657,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
       }
-      case 'create_note': {
-        const title = args.title as string;
-        if (!title) {
-          throw new Error('Title is required');
-        }
-
-        // Handle useTemplate discovery mode
-        if (args.useTemplate === true) {
-          try {
-            const templateManager = new (await import('./template-manager.js')).TemplateManager(LIFEOS_CONFIG.vaultPath);
-            const availableTemplates = await templateManager.getTemplateNames();
-            
-            return addVersionMetadata({
-              content: [{
-                type: 'text',
-                text: `Available templates:\n\n${availableTemplates.map(t => `- ${t}`).join('\n')}\n\nTo use a template, run create_note again with:\ntemplate: "template-name"`
-              }]
-            });
-          } catch (error) {
-            return addVersionMetadata({
-              content: [{
-                type: 'text',
-                text: `Error listing templates: ${error instanceof Error ? error.message : 'Unknown error'}`
-              }]
-            });
-          }
-        }
-
-        let frontmatter: any = { title };
-        let content = (args.content as string) || '';
-        let targetFolder = args.targetFolder as string | undefined;
-
-        // Check if template is specified
-        if (args.template) {
-          try {
-            const templateResult = DynamicTemplateEngine.createNoteFromTemplate(
-              args.template as string,
-              title,
-              (args.customData as Record<string, any>) || {}
-            );
-            
-            frontmatter = { ...templateResult.frontmatter };
-            content = templateResult.content + (content ? `\n\n${content}` : '');
-            targetFolder = targetFolder || templateResult.targetFolder;
-          } catch (error) {
-            console.error('Template processing failed:', error);
-            // Continue with manual frontmatter
-          }
-        }
-
-        // Override with manually specified values
-        if (args.contentType) frontmatter['content type'] = args.contentType as string;
-        if (args.category) frontmatter.category = args.category as string;
-        if (args.subCategory) frontmatter['sub-category'] = args.subCategory as string;
-        if (args.tags) frontmatter.tags = args.tags as string[];
-        if (args.source) frontmatter.source = args.source as string;
-        if (args.people) frontmatter.people = args.people as string[];
-
-        // Generate filename, removing only Obsidian-restricted characters
-        const fileName = title
-          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
-          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
-          .trim();                         // Remove leading/trailing spaces
-        const note = VaultUtils.createNote(fileName, frontmatter, content, targetFolder);
-
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `✅ Created note: **${title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\``
-          }]
-        });
-      }
 
       case 'create_note_from_template': {
         const title = args.title as string;
@@ -1699,13 +1700,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         if (!path) {
           throw new Error('Path is required');
         }
-        
-        // Normalize path - handle escaped spaces and resolve relative paths
-        let normalizedPath = path.replace(/\\ /g, ' ');
-        if (!normalizedPath.startsWith('/')) {
-          normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
-        }
-        
+
+        // Normalize path using utility method
+        const normalizedPath = VaultUtils.normalizePath(path);
+
         // Debug logging removed for MCP compatibility
         const note = VaultUtils.readNote(normalizedPath);
         const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
@@ -1726,23 +1724,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const args = request.params.arguments as unknown as EditNoteInput;
         // Get note path - either from direct path or by searching for title
         let notePath: string;
-        
+
         if (args.path) {
-          notePath = args.path as string;
-          // Normalize path - handle escaped spaces and resolve relative paths
-          notePath = notePath.replace(/\\ /g, ' ');
-          if (!notePath.startsWith('/')) {
-            notePath = `${LIFEOS_CONFIG.vaultPath}/${notePath}`;
-          }
+          // Normalize path using utility method
+          notePath = VaultUtils.normalizePath(args.path as string);
         } else if (args.title) {
-          // Search for note by title
-          const searchResults = await SearchEngine.quickSearch(args.title as string, 1);
-          
-          if (searchResults.length === 0) {
-            throw new Error(`No note found with title: ${args.title}`);
-          }
-          
-          notePath = searchResults[0].note.path;
+          // Find note by title using utility method
+          notePath = await VaultUtils.findNoteByTitle(args.title as string);
         } else {
           throw new Error('Either path or title is required');
         }
@@ -2332,21 +2320,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let notePath: string;
         
         if (args.path) {
-          notePath = args.path as string;
-          // Normalize path - handle escaped spaces and resolve relative paths
-          notePath = notePath.replace(/\\ /g, ' ');
-          if (!notePath.startsWith('/')) {
-            notePath = `${LIFEOS_CONFIG.vaultPath}/${notePath}`;
-          }
+          // Normalize path using utility method
+          notePath = VaultUtils.normalizePath(args.path as string);
         } else if (args.title) {
-          // Search for note by title
-          const searchResults = await SearchEngine.quickSearch(args.title as string, 1);
-          
-          if (searchResults.length === 0) {
-            throw new Error(`No note found with title: ${args.title}`);
-          }
-          
-          notePath = searchResults[0].note.path;
+          // Find note by title using utility method
+          notePath = await VaultUtils.findNoteByTitle(args.title as string);
         } else {
           throw new Error('Either path or title is required');
         }
@@ -2630,7 +2608,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  
+
+  // Log tool mode configuration
+  console.error(`Tool Mode: ${toolModeConfig.mode}`);
+  console.error(`Registered Tools: ${tools.length}`);
+
+  // Validate tool count matches expected count for mode
+  const EXPECTED_TOOL_COUNTS = {
+    'consolidated-only': 12,
+    'legacy-only': 20,
+    'consolidated-with-aliases': 34
+  } as const;
+
+  const expectedCount = EXPECTED_TOOL_COUNTS[toolModeConfig.mode];
+  if (tools.length !== expectedCount) {
+    console.error(
+      `[WARNING] Tool count mismatch: expected ${expectedCount} for mode '${toolModeConfig.mode}', got ${tools.length}`
+    );
+  }
+
   // Start HTTP server if web interface is explicitly enabled
   const enableWebInterface = process.env.ENABLE_WEB_INTERFACE === 'true';
   if (enableWebInterface) {

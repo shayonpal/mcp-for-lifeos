@@ -10,6 +10,7 @@ This directory contains Architecture Decision Records documenting significant ar
 | [002](./002-strategic-pivot-to-core-server.md) | Strategic Pivot to Core MCP Server Development | **Accepted** | 2025-08-29 | **Critical** - Focus shift to technical debt and server excellence |
 | [003](./003-search-tool-consolidation-fallback-strategy.md) | Search Tool Consolidation and Intelligent Fallback Strategy | **Accepted** | 2025-06-04 | **High** - AI tool optimization with 95% query success rate |
 | [004](./004-project-review-roadmap-2025.md) | Project Review and Technical Debt Roadmap | **Accepted** | 2025-08-29 | **Critical** - Comprehensive roadmap for production readiness |
+| [005](./005-default-tool-mode-consolidated-only.md) | Default TOOL_MODE Changed to 'consolidated-only' | **Accepted** | 2025-10-23 | **Medium** - Improved UX with cleaner tool list, simple migration path |
 
 ## Current Strategic Direction
 
