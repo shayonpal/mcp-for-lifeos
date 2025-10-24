@@ -1,8 +1,8 @@
 # Current Development Focus
 
-**Last Updated:** 2025-10-24
-**Cycle:** Cycle 8 (Oct 20-27, 2025)
-**Progress:** 83% complete (10/12 issues done)
+**Last Updated:** 2025-10-24  
+**Cycle:** Cycle 8 (Oct 20-27, 2025)  
+**Progress:** 83% complete (10/12 issues done)  
 **Current Branch:** master
 
 ---
@@ -10,13 +10,6 @@
 ## 🎯 Active Work
 
 **No active feature work** - Ready to pick up next priority item.
-
-**Recently Completed:**
-- **MCP-60** (2025-10-24) - Tool Mode Configuration System
-  - Added TOOL_MODE environment variable (3 modes)
-  - Breaking change: Default 34→12 tools (ADR-005)
-  - Tool renaming: create_note_smart → create_note
-  - PR #97 merged to master (commit history preserved)
 
 ---
 

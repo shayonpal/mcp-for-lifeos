@@ -25,7 +25,7 @@ import { logger } from './logger.js';
 import { statSync } from 'fs';
 
 // Server version - follow semantic versioning (MAJOR.MINOR.PATCH)
-export const SERVER_VERSION = '1.8.0';
+export const SERVER_VERSION = '2.0.0';
 
 // Initialize YAML rules manager
 const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
@@ -1597,6 +1597,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
                   `- **Obsidian Integration:** Direct vault linking\n\n` +
                   `## Version History\n` +
+                  `- **2.0.0:** BREAKING - TOOL_MODE configuration system (default: 12 tools). TypeScript interfaces for type safety. Enhanced error messages with recovery guidance. Token limit management (~25K). Format parameter for optimization. MCP protocol annotations. Multi-word search fix. Test isolation improvements.\n` +
                   `- **1.6.0:** Advanced YAML Property Search Features - includeNullValues parameter, performance caching, enhanced sorting\n` +
                   `- **1.5.0:** Natural Language YAML Query Parsing - transform conversational queries into structured searches\n` +
                   `- **1.4.0:** Added list_yaml_property_values tool for comprehensive YAML property value analysis\n` +

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-10-24
+
 ### Changed
 - **Tool Mode Configuration System** (MCP-60, 2025-10-24 00:23): Added TOOL_MODE environment variable to control tool visibility and changed default from 34 tools to 12 consolidated tools
   - New TOOL_MODE environment variable with 3 modes: consolidated-only (12 tools, new default), legacy-only (20 tools), consolidated-with-aliases (34 tools, previous default)
