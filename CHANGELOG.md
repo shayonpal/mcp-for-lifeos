@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Tool Mode Configuration System** (MCP-60, 2025-10-24 00:23): Added TOOL_MODE environment variable to control tool visibility and changed default from 34 tools to 12 consolidated tools
-  - New TOOL_MODE environment variable with 3 modes: consolidated-only (12 tools, new default), legacy-only (22 tools), consolidated-with-aliases (34 tools, previous default)
+  - New TOOL_MODE environment variable with 3 modes: consolidated-only (12 tools, new default), legacy-only (20 tools), consolidated-with-aliases (34 tools, previous default)
   - Breaking change: Default mode now shows only 12 consolidated tools instead of 34 (users can restore previous behavior with TOOL_MODE=consolidated-with-aliases)
   - Tool renaming: create_note_smart → create_note (smart functionality is now the default behavior)
   - Added backward compatibility: CONSOLIDATED_TOOLS_ENABLED still works but deprecated (scheduled for removal in Cycle 10)

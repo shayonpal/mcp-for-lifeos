@@ -11,10 +11,10 @@ Following the implementation of MCP-60, which introduced the `TOOL_MODE` configu
 
 **Key Issues**:
 
-- Default tool list showed 35 tools (24 consolidated + 11 legacy aliases) which was overwhelming in MCP clients
+- Default tool list showed 34 tools (12 consolidated + 22 legacy aliases) which was overwhelming in MCP clients
 - Legacy aliases marked with `[LEGACY ALIAS]` created confusion in tool lists
 - Users needed to add environment variable configuration for the recommended setup
-- The cleaner 24-tool experience required explicit opt-in rather than being the default
+- The cleaner 12-tool experience required explicit opt-in rather than being the default
 
 **User Feedback**:
 
@@ -109,7 +109,7 @@ return {
 
 **Opt-In to Legacy (via TOOL_MODE=consolidated-with-aliases: 34 tools)**:
 
-- Shows all tools (12 consolidated-only + 11 legacy aliases + additional legacy tools)
+- Shows all tools (12 consolidated + 22 legacy aliases and tools)
 
 ## Consequences
 
