@@ -33,13 +33,6 @@
 
 Run `/current-focus` to update this file with latest Linear cycle data.
 
-**Auto-updated sections:**
-
-- Cycle progress and dates
-- Issue statuses and counts
-- Recent completions
-- Git commit context
-
 **Manual updates when:**
 
 1. Starting new work (update Active Work section)
