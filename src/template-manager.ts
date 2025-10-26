@@ -3,6 +3,7 @@ import * as path from 'path';
 import { logger } from './logger.js';
 import { ObsidianSettings } from './obsidian-settings.js';
 import { TemplateParser, TemplateContext } from './template-parser.js';
+import { stripMdExtension } from './path-utils.js';
 
 interface TemplateData {
   name: string;
@@ -82,15 +83,6 @@ export class TemplateManager {
   }
 
   /**
-   * Normalize template name by stripping .md extension if present
-   * @param name - Template name with or without .md extension
-   * @returns Template name without .md extension
-   */
-  private normalizeTemplateName(name: string): string {
-    return name.replace(/\.md$/, '');
-  }
-
-  /**
    * Load all templates from template folder
    */
   private async loadTemplates(): Promise<Map<string, TemplateData>> {
@@ -108,7 +100,7 @@ export class TemplateManager {
         
         if (stats.isFile()) {
           const content = await fs.readFile(filePath, 'utf-8');
-          const name = this.normalizeTemplateName(file);
+          const name = stripMdExtension(file);
 
           templates.set(name, {
             name,
@@ -179,7 +171,7 @@ export class TemplateManager {
       return null;
     }
 
-    const normalizedName = this.normalizeTemplateName(templateName);
+    const normalizedName = stripMdExtension(templateName);
 
     return this.cache.templates.get(normalizedName) || null;
   }

@@ -6,6 +6,7 @@ import { QueryParser } from './query-parser.js';
 import type { QueryStrategy } from '../dev/contracts/MCP-59-contracts.js';
 import { escapeRegex } from './regex-utils.js';
 import { normalizeText } from './text-utils.js';
+import { stripMdExtension } from './path-utils.js';
 
 export interface AdvancedSearchOptions {
   // Text search
@@ -499,7 +500,7 @@ export class SearchEngine {
         if (note.frontmatter.title) titleSources.push(note.frontmatter.title);
         const pathParts = note.path.split('/');
         const filename = pathParts[pathParts.length - 1];
-        titleSources.push(filename.replace(/\.md$/, ''));
+        titleSources.push(stripMdExtension(filename));
         if (note.frontmatter.aliases) {
           const aliases = Array.isArray(note.frontmatter.aliases)
             ? note.frontmatter.aliases
@@ -538,11 +539,11 @@ export class SearchEngine {
         if (note.frontmatter.title) {
           titleSources.push(note.frontmatter.title);
         }
-        
+
         // 2. Always include filename without extension
         const pathParts = note.path.split('/');
         const filename = pathParts[pathParts.length - 1];
-        const filenameWithoutExt = filename.replace(/\.md$/, '');
+        const filenameWithoutExt = stripMdExtension(filename);
         titleSources.push(filenameWithoutExt);
         
         // 3. Check aliases

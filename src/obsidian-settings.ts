@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { logger } from './logger.js';
+import { stripMdExtension } from './path-utils.js';
 
 export interface DailyNoteSettings {
   format: string;
@@ -77,9 +78,9 @@ export class ObsidianSettings {
     if (!settings || !settings.template) {
       return null;
     }
-    
+
     // Remove .md extension if present
-    return settings.template.replace(/\.md$/, '');
+    return stripMdExtension(settings.template);
   }
 
   /**

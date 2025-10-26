@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Path Utility Consolidation** (MCP-89, 2025-10-26 19:29): Consolidated .md extension stripping logic into shared utility to eliminate code duplication
+  - Created src/path-utils.ts module with stripMdExtension() function and MD_EXTENSION_REGEX constant
+  - Refactored 5 instances across 3 files to use shared utility: template-manager.ts (2 instances), obsidian-settings.ts (1), search-engine.ts (2)
+  - Pattern: Uses regex /\.md$/ to strip only trailing .md extension while preserving directory paths and non-.md extensions
+  - Removed normalizeTemplateName() private method from TemplateManager (replaced by shared utility)
+  - Added comprehensive unit tests with 100% coverage: basic functionality, edge cases, path preservation, pure function behavior, real-world use cases
+  - Impact: Technical debt reduction, improved code maintainability, zero behavioral changes
+  - Benefits: Single source of truth for .md extension handling, consistent behavior across codebase, well-tested edge cases
+
 ### Fixed
 
 - **Template Manager Test Failures** (MCP-63, 2025-10-26 03:10): Fixed 4 failing unit tests in template manager test suite
