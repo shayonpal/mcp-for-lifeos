@@ -59,41 +59,44 @@ describe('TemplateManager', () => {
         'tpl-meeting.md',
         'not-a-template.txt'
       ]);
-      
+
       (fs.stat as jest.Mock).mockImplementation((p) => {
-        return Promise.resolve({ 
+        return Promise.resolve({
           isDirectory: () => p.includes('Templates'),
           isFile: () => p.endsWith('.md'),
-          mtime: new Date() 
+          mtime: new Date()
         });
       });
-      
+
+      (fs.readFile as jest.Mock).mockResolvedValue('# Template content');
+
       const names = await templateManager.getTemplateNames();
-      
+
       expect(names).toEqual(['tpl-daily', 'tpl-meeting']);
       expect(fs.readdir).toHaveBeenCalledTimes(1);
     });
 
     it('should refresh cache when expired', async () => {
       (fs.readdir as jest.Mock).mockResolvedValue(['tpl-daily.md']);
-      (fs.stat as jest.Mock).mockResolvedValue({ 
+      (fs.stat as jest.Mock).mockResolvedValue({
         isDirectory: () => false,
         isFile: () => true,
-        mtime: new Date() 
+        mtime: new Date()
       });
-      
+      (fs.readFile as jest.Mock).mockResolvedValue('# Template');
+
       // First call
       await templateManager.getTemplateNames();
-      
+
       // Simulate cache expiry
       const cache = (templateManager as any).cache;
       if (cache) {
-        cache.timestamp = Date.now() - 25 * 60 * 60 * 1000; // 25 hours ago
+        cache.lastRefresh = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25 hours ago
       }
-      
+
       // Second call should refresh
       await templateManager.getTemplateNames();
-      
+
       expect(fs.readdir).toHaveBeenCalledTimes(2);
     });
 
@@ -188,25 +191,28 @@ contentType: Daily Note
     it('should process template with context', async () => {
       (fs.readdir as jest.Mock).mockResolvedValue(['tpl-daily.md']);
       (fs.stat as jest.Mock).mockImplementation((p) => {
-        return Promise.resolve({ 
+        return Promise.resolve({
           isDirectory: () => p.includes('Templates'),
           isFile: () => p.endsWith('.md'),
-          mtime: new Date() 
+          mtime: new Date()
         });
       });
       (fs.readFile as jest.Mock).mockResolvedValue('# <% tp.file.title %>');
-      
-      // Mock TemplateParser
+
+      // Mock TemplateParser - need to import and mock before creating new TemplateManager
       const { TemplateParser } = await import('../../src/template-parser.js');
       (TemplateParser as jest.MockedClass<typeof TemplateParser>).mockImplementation(() => ({
         processTemplate: jest.fn().mockResolvedValue('# 2025-06-28')
       } as any));
-      
-      const result = await templateManager.processTemplate('tpl-daily', {
+
+      // Create new TemplateManager after mock is set up
+      const newManager = new TemplateManager(mockVaultPath);
+
+      const result = await newManager.processTemplate('tpl-daily', {
         title: '2025-06-28',
         date: new Date('2025-06-28')
       });
-      
+
       expect(result).toBe('# 2025-06-28');
     });
 

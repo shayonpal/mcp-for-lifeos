@@ -82,6 +82,15 @@ export class TemplateManager {
   }
 
   /**
+   * Normalize template name by stripping .md extension if present
+   * @param name - Template name with or without .md extension
+   * @returns Template name without .md extension
+   */
+  private normalizeTemplateName(name: string): string {
+    return name.replace(/\.md$/, '');
+  }
+
+  /**
    * Load all templates from template folder
    */
   private async loadTemplates(): Promise<Map<string, TemplateData>> {
@@ -99,8 +108,8 @@ export class TemplateManager {
         
         if (stats.isFile()) {
           const content = await fs.readFile(filePath, 'utf-8');
-          const name = file.replace('.md', '');
-          
+          const name = this.normalizeTemplateName(file);
+
           templates.set(name, {
             name,
             path: filePath,
@@ -108,7 +117,7 @@ export class TemplateManager {
             hasTemplater: this.hasTemplaterSyntax(content),
             lastModified: stats.mtime
           });
-          
+
           logger.debug(`Loaded template: ${name}`);
         }
       }
@@ -154,17 +163,25 @@ export class TemplateManager {
 
   /**
    * Get a specific template by name
+   *
+   * Extension-agnostic: Accepts template names with or without .md extension.
+   * Both 'tpl-daily' and 'tpl-daily.md' will retrieve the same template.
+   *
+   * @param templateName - Template name (e.g., 'tpl-daily' or 'tpl-daily.md')
+   * @returns Template data including content and metadata, or null if not found
    */
   public async getTemplate(templateName: string): Promise<TemplateData | null> {
     if (this.shouldRefreshCache()) {
       await this.refreshCache();
     }
-    
+
     if (!this.cache) {
       return null;
     }
-    
-    return this.cache.templates.get(templateName) || null;
+
+    const normalizedName = this.normalizeTemplateName(templateName);
+
+    return this.cache.templates.get(normalizedName) || null;
   }
 
   /**

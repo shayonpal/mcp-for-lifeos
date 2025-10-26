@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Template Manager Test Failures** (MCP-63, 2025-10-26 03:10): Fixed 4 failing unit tests in template manager test suite
+  - Root causes: Missing fs.readFile mock, incorrect cache property name (timestamp vs lastRefresh), missing .md extension handling, TemplateParser mock timing
+  - Added normalizeTemplateName() private method for consistent .md extension stripping using regex pattern /\.md$/
+  - Enhanced getTemplate() to accept both 'tpl-daily' and 'tpl-daily.md' (extension-agnostic API)
+  - Fixed test mocks: added missing readFile mock, corrected cache.lastRefresh property, fixed TemplateParser instantiation order
+  - Impact: Internal test infrastructure improvement, no user-facing changes
+  - All 12 template manager tests now passing
+  - Follow-up: MCP-89 created for consolidating .md extension stripping logic across codebase
+
 ### Changed
 
 - **Server Version Single Source of Truth** (MCP-82, 2025-10-24 02:02): Centralized version management to package.json to eliminate manual synchronization and version drift risk
