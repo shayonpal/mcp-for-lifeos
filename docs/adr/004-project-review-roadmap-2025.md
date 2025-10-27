@@ -22,6 +22,7 @@ The LifeOS MCP Server demonstrates solid TypeScript engineering with a well-stru
 | src/template-engine-dynamic.ts | 497   | Reasonable size, good separation                               |
 
 ### Test Suite Health
+
 - **FAILING**: 3 of 9 test suites (33% failure rate)
   - claude-desktop-integration.test.ts - Timeout issues
   - insert-content.test.ts - Logic errors
@@ -30,6 +31,7 @@ The LifeOS MCP Server demonstrates solid TypeScript engineering with a well-stru
 - **Priority**: P0 - Blocks all development
 
 ### Tool Documentation Analysis
+
 - **Total tools**: 37 tools defined in index.ts
 - **Documentation coverage**: Partial in README.md, inconsistent with code
 - **Consolidation status**: 3 consolidated tools exist but need validation
@@ -38,6 +40,7 @@ The LifeOS MCP Server demonstrates solid TypeScript engineering with a well-stru
 ## Critical Issues from Linear
 
 ### Analytics Multi-Instance Data Loss
+
 ```typescript
 // Current broken implementation
 async flush(): Promise<void> {
@@ -47,14 +50,17 @@ async flush(): Promise<void> {
 ```
 
 ### Performance - Large Note Editing
+
 Current implementation sends entire note content for edits, causing latency.
 
 ### Tool Consolidation Gaps  
+
 Consolidated tools exist but haven't been thoroughly validated against legacy equivalents.
 
 ## Vertical Slice Action Plan (Priority Order)
 
 ### Context from Documentation Review
+
 - **Tool Consolidation Initiative**: Already underway per AI-Tool-Caller-Optimization-PRD.md (21→11 tools)
 - **OpenWebUI POC**: Deprioritized in favor of LinuxServer.io Obsidian web access  
 - **Documentation Gap**: 37 tools defined but inconsistent documentation between README and code
@@ -62,10 +68,12 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
 ---
 
 ### Slice 1: Emergency Analytics Fix ⚡ **[CRITICAL - P0]**
-**Goal**: Stop data loss in production immediately
+
+**Goal**: Stop data loss in production immediately  
 **Linear Status**: ✅ **Issue created and configured**
 
 **Deliverables:**
+
 - [ ] Implement file locking in analytics-collector.ts
 - [ ] Change from overwrite to append-only operations
 - [ ] Add instance ID tracking to each metric
@@ -77,19 +85,22 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
 ---
 
 ### Slice 2: Server Decomposition + Rename Tool ⚡ **[P1 - Unblocks All Other Work]**
-**Goal**: Break up index.ts while shipping rename tool
-**Linear Status**: ✅ **Project created with 6 issues**
+
+**Goal**: Break up index.ts while shipping rename tool  
+**Linear Status**: ✅ **Project created with 6 issues**  
 **Project**: "Server Decomposition + Rename Tool"
 
 **Issue Structure:**
+
 - Extract MCP server core (sequential dependency chain)
-- Extract tool registry 
+- Extract tool registry
 - Extract request handler
 - Reorganize tool implementations (can run parallel)
 - Implement rename tool (existing issue, can run parallel)
 - Integration and cleanup (final step)
 
 **Success Metrics**:
+
 - index.ts reduced from 2,224 to < 500 lines
 - Zero regression in functionality
 - All tests passing
@@ -98,11 +109,13 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
 ---
 
 ### Slice 3: Tool Consolidation Testing ⚡ **[P1 - Must Validate Before Documentation]**
-**Goal**: Validate consolidated tools and retire legacy implementations
-**Linear Status**: ✅ **Project created with 3 issues**
+
+**Goal**: Validate consolidated tools and retire legacy implementations  
+**Linear Status**: ✅ **Project created with 3 issues**  
 **Project**: "Tool Consolidation Validation & Legacy Retirement"
 
 **Three-Issue Breakdown:**
+
 1. **Comprehensive tool audit and mapping**
    - Create detailed matrix: every legacy tool → consolidated replacement
    - Document every parameter, edge case, and behavior
@@ -120,6 +133,7 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
    - Keep rollback capability
 
 **Success Criteria**:
+
 - 100% feature parity validated through comprehensive testing
 - Zero regressions in any workflow
 - All edge cases handled by consolidated tools
@@ -128,10 +142,12 @@ Consolidated tools exist but haven't been thoroughly validated against legacy eq
 ---
 
 ### Slice 4: Tool Documentation **[P2 - Document After Tools Are Stable]**
-**Goal**: Create complete, AI-optimized tool documentation
+
+**Goal**: Create complete, AI-optimized tool documentation  
 **Linear Status**: ✅ **Issue created**
 
 **Documentation Structure Overhaul:**
+
 ```
 docs/
 ├── README.md (overview)
@@ -150,6 +166,7 @@ docs/
 ```
 
 **Content Migration Status:**
+
 - ✅ **Archived**: OpenWebUI POC docs, Legacy PWA specs, GitHub Project docs
 - ✅ **Organized**: AI Tool Optimization PRD moved to specs/features/
 - ✅ **Updated**: Integration guides paths in README
@@ -157,6 +174,7 @@ docs/
 - ❌ **Create**: Tool API reference, system overview, development guide
 
 **Success Metrics:**
+
 - All 37 tools documented with examples
 - Clear separation of current vs archived content
 - AI agents achieve >95% correct tool selection
@@ -164,10 +182,12 @@ docs/
 ---
 
 ### Slice 5: Fast Note Editing **[P2 - Performance Improvement]**
-**Goal**: Reduce latency for large note edits
+
+**Goal**: Reduce latency for large note edits  
 **Linear Status**: ✅ **Issue created**
 
 **Extract from Monolith:**
+
 ```
 src/tools/note-editor.ts (new, ~200 lines)
 src/domain/note-operations.ts (new, ~300 lines)
@@ -176,13 +196,15 @@ src/domain/note-operations.ts (new, ~300 lines)
 ```
 
 **Deliverables:**
+
 - [ ] Create patch-based editing system (JSON Patch RFC 6902)
 - [ ] Extract note operations from vault-utils.ts
 - [ ] Implement `patch_note` MCP tool
 - [ ] Fix failing insert-content.test.ts
 - [ ] Performance test: 10MB note edit < 100ms
 
-**Success Metrics**: 
+**Success Metrics**:
+
 - 10x faster edits for notes > 1MB
 - index.ts reduced by ~300 lines
 - All related tests passing
@@ -190,10 +212,12 @@ src/domain/note-operations.ts (new, ~300 lines)
 ---
 
 ### Slice 6: Obsidian Tasks Integration **[P2 - New Feature]**
-**Goal**: Query and manage tasks across vault
+
+**Goal**: Query and manage tasks across vault  
 **Linear Status**: ✅ **Issue created**
 
 **Domain Extraction:**
+
 ```
 src/domain/task-manager.ts (new, ~400 lines)
   - ObsidianTaskParser class
@@ -203,6 +227,7 @@ src/tools/tasks-tool.ts (new, ~200 lines)
 ```
 
 **Deliverables:**
+
 - [ ] Parse Obsidian Tasks syntax: `- [ ] Task ⏫ 📅 2025-08-29`
 - [ ] Implement task querying with filters (status, date, priority)
 - [ ] Create cached task index (5-minute TTL)
@@ -210,6 +235,7 @@ src/tools/tasks-tool.ts (new, ~200 lines)
 - [ ] Fix template-manager.test.ts
 
 **Success Metrics**:
+
 - Query 1000 tasks in < 500ms
 - vault-utils.ts reduced by ~400 lines
 - Support all Obsidian Tasks features
@@ -217,10 +243,12 @@ src/tools/tasks-tool.ts (new, ~200 lines)
 ---
 
 ### Slice 7: Custom Instructions + Final Decomposition **[P3 - Feature + Cleanup]**
-**Goal**: Ship custom instructions and eliminate vault-utils.ts
+
+**Goal**: Ship custom instructions and eliminate vault-utils.ts  
 **Linear Status**: ✅ **Issue created**
 
 **Final Domain Separation:**
+
 ```
 src/domain/
   ├── config-manager.ts (~200 lines) - Hot-reload instructions
@@ -232,6 +260,7 @@ src/domain/
 ```
 
 **Deliverables:**
+
 - [ ] Implement custom instruction system
 - [ ] Complete vault-utils.ts decomposition
 - [ ] Delete vault-utils.ts entirely
@@ -239,6 +268,7 @@ src/domain/
 - [ ] Full test suite passing
 
 **Success Metrics**:
+
 - vault-utils.ts eliminated (0 lines)
 - No file > 700 lines
 - Custom instructions apply to all operations
@@ -246,10 +276,12 @@ src/domain/
 ---
 
 ### Slice 8: Performance & Production Readiness **[P3 - Final Optimization]**
-**Goal**: Optimize and harden for production
+
+**Goal**: Optimize and harden for production  
 **Linear Status**: ❌ **Needs creation**
 
 **Infrastructure Improvements:**
+
 ```
 src/infrastructure/
   ├── cache-manager.ts (~200 lines) - LRU cache with TTL
@@ -263,6 +295,7 @@ src/infrastructure/
 ```
 
 **LlamaIndex Integration Details:**
+
 - **Repository**: https://github.com/run-llama/llama_index
 - **Primary LLM**: OpenAI GPT-4o-mini (~$2-5/month for 1000 queries)
 - **Embeddings**: OpenAI text-embedding-3-small ($0.00002/token)
@@ -270,6 +303,7 @@ src/infrastructure/
 - **Benefits**: Semantic search, RAG responses, large vault handling
 
 **Configuration:**
+
 ```typescript
 const searchConfig = {
   llm: {
@@ -291,6 +325,7 @@ const searchConfig = {
 ```
 
 **Deliverables:**
+
 - [ ] Convert all sync operations to async
 - [ ] Implement caching layer for frequent operations
 - [ ] Add path traversal protection
@@ -306,6 +341,7 @@ const searchConfig = {
 - [ ] Security audit
 
 **Success Metrics**:
+
 - 100% test passage
 - 95th percentile latency < 100ms (or better with LlamaIndex)
 - Zero security vulnerabilities
@@ -315,6 +351,7 @@ const searchConfig = {
 ## Technical Debt Score
 
 **Current: 7.8/10** (High debt)
+
 - File size violations: -2.0
 - Test failures: -1.5
 - Missing abstractions: -1.0
@@ -327,19 +364,22 @@ const searchConfig = {
 
 ## Documentation Cleanup Summary
 
-### What to Retire:
+### What to Retire
+
 - **OpenWebUI POC docs** (21 issues on hold, strategic pivot occurred)
 - **Legacy PWA specs** (project abandoned)
 - **GitHub Project docs** (migrated to Linear)
 - **Outdated integration guides** referencing old tool names
 
-### What to Keep & Update:
+### What to Keep & Update
+
 - **AI Tool Optimization PRD** (still relevant, needs architecture section)
 - **Deployment guides** (update with current setup)
 - **Integration guides** (update tool names and examples)
 - **Troubleshooting docs** (move to reference section)
 
-### What to Create:
+### What to Create
+
 - **Complete API reference** (missing for 37 tools)
 - **Architecture documentation** (no system overview exists)
 - **Development setup guide** (currently missing)
@@ -349,6 +389,7 @@ const searchConfig = {
 ## Conclusion
 
 The LifeOS MCP Server has a solid foundation but requires immediate attention to:
+
 1. **Critical**: Fix concurrent instance data loss
 2. **Urgent**: Decompose monolithic files  
 3. **Important**: Restore test suite health
@@ -359,6 +400,7 @@ The refactoring plan outlined above will transform this from a functional protot
 ## Linear Project Status
 
 ### ✅ **Created Projects & Issues**
+
 1. **Emergency Analytics Fix** - Single issue created and configured
 2. **Server Decomposition + Rename Tool** - Project with 6 issues created
 3. **Tool Consolidation Validation & Legacy Retirement** - Project with 3 issues created
@@ -368,6 +410,7 @@ The refactoring plan outlined above will transform this from a functional protot
 7. **Custom Instructions + Final Decomposition** - Single issue created
 
 ### ❌ **Remaining Issues to Create**
+
 - Slice 8: Performance & LlamaIndex Integration
 
 ## Metrics for Success
