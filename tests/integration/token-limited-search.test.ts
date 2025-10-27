@@ -24,7 +24,7 @@ import { basename } from 'path';
  * Compatibility helper: Bridges old API (SearchResult object) to new API (discrete fields)
  *
  * Old call: formatSearchResult(mockResult, 'concise', truncator, index)
- * New call: formatSearchResult(index, title, filePath, contentType?, score?, additionalInfo?, format, tokenBudget?)
+ * New call: formatSearchResult(index, title, filePath, contentType?, score?, additionalInfo?, format, truncator)
  */
 function formatSearchResultFromSearch(
   result: SearchResult,

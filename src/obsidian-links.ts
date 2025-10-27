@@ -107,7 +107,7 @@ export class ObsidianLinks {
     const filename = basename(filePath, '.md');
 
     // Edge case: Handle empty filename (e.g., '/vault/.md' -> basename returns '.md')
-    if (!filename || filename === '' || filename === '.md') {
+    if (!filename || filename === '.md') {
       return '';
     }
 
