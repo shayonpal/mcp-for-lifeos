@@ -18,6 +18,7 @@ import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter,
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { ResponseTruncator } from './response-truncator.js';
+import { normalizePath } from './path-utils.js';
 import { validateMaxResults, DEFAULT_TOKEN_BUDGET, TruncationMetadata } from '../dev/contracts/MCP-38-contracts.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
@@ -1691,8 +1692,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error('Path is required');
         }
 
-        // Normalize path using utility method
-        const normalizedPath = VaultUtils.normalizePath(path);
+        // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
+        const normalizedPath = normalizePath(path, LIFEOS_CONFIG.vaultPath);
 
         // Debug logging removed for MCP compatibility
         const note = VaultUtils.readNote(normalizedPath);
@@ -1716,8 +1717,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let notePath: string;
 
         if (args.path) {
-          // Normalize path using utility method
-          notePath = VaultUtils.normalizePath(args.path as string);
+          // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
+          notePath = normalizePath(args.path as string, LIFEOS_CONFIG.vaultPath);
         } else if (args.title) {
           // Find note by title using utility method
           notePath = await VaultUtils.findNoteByTitle(args.title as string);
@@ -2310,8 +2311,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         let notePath: string;
         
         if (args.path) {
-          // Normalize path using utility method
-          notePath = VaultUtils.normalizePath(args.path as string);
+          // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
+          notePath = normalizePath(args.path as string, LIFEOS_CONFIG.vaultPath);
         } else if (args.title) {
           // Find note by title using utility method
           notePath = await VaultUtils.findNoteByTitle(args.title as string);
