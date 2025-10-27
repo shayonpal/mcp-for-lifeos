@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Daily Note Task Workflow Test Failures** (MCP-64, 2025-10-26 20:58): Fixed 3 failing tests in daily note task workflow by consolidating path normalization logic
+  - Root cause: Inconsistent path normalization in VaultUtils - createNote() and moveItem() used different approaches for handling absolute vs relative paths
+  - createNote() used prefix check (startsWith(LIFEOS_CONFIG.vaultPath)) while moveItem() duplicated same logic
+  - Created normalizePath() shared utility in path-utils.ts using cross-platform path.isAbsolute() detection
+  - Replaced string prefix checks with standardized normalizePath() in both createNote() and moveItem()
+  - Handles both absolute paths (from LIFEOS_CONFIG) and relative paths (from user input/templates)
+  - Cross-platform support: POSIX (/path/to/file), Windows (C:\path\to\file), UNC (\\server\share\file)
+  - Pure function with no I/O operations - deterministic output for same input
+  - All 3 failing tests now pass: "should add tasks to existing Day's Notes section", "should fail gracefully when heading doesn't exist", "should not create duplicate files when updating daily notes"
+  - Added 69 comprehensive unit tests with 100% coverage for normalizePath() function
+  - Test coverage: absolute path handling, relative path joining, cross-platform detection, path traversal edge cases, real-world vault scenarios, pure function behavior, no I/O operations
+  - Impact: Technical debt reduction, consistent path handling across codebase, improved cross-platform compatibility
+  - Benefits: Single source of truth for path normalization, eliminated code duplication, well-tested edge cases
+
 ### Changed
 
 - **Path Utility Consolidation** (MCP-89, 2025-10-26 19:29): Consolidated .md extension stripping logic into shared utility to eliminate code duplication

@@ -24,6 +24,7 @@ import { ObsidianSettings } from "./obsidian-settings.js";
 import { DateResolver } from "./date-resolver.js";
 import { TemplateContext } from "./template-parser.js";
 import { logger } from "./logger.js";
+import { normalizePath } from "./path-utils.js";
 
 // iCloud sync retry configuration
 const ICLOUD_RETRY_CONFIG = {
@@ -102,20 +103,18 @@ export class VaultUtils {
   }
 
   /**
-   * Normalize a file path by handling escaped spaces and resolving relative paths
-   * @param path - The path to normalize (can be relative or absolute)
-   * @returns Absolute path with escaped spaces handled
+   * Normalize paths for vault operations
+   *
+   * @deprecated Use normalizePath from path-utils.ts instead
+   * This method delegates to the shared utility for consistency
+   *
+   * @param path - Path to normalize (relative or absolute)
+   * @returns Normalized absolute path
    */
   static normalizePath(path: string): string {
-    // Handle escaped spaces
-    let normalizedPath = path.replace(/\\ /g, ' ');
-
-    // Resolve relative paths to absolute paths
-    if (!normalizedPath.startsWith('/')) {
-      normalizedPath = `${LIFEOS_CONFIG.vaultPath}/${normalizedPath}`;
-    }
-
-    return normalizedPath;
+    // Delegate to shared utility for consistent cross-platform path handling
+    // This preserves backward compatibility while using the improved implementation
+    return normalizePath(path, LIFEOS_CONFIG.vaultPath);
   }
 
   /**
@@ -325,7 +324,9 @@ export class VaultUtils {
     let folderPath: string;
 
     if (targetFolder) {
-      folderPath = join(LIFEOS_CONFIG.vaultPath, targetFolder);
+      // Normalize path to handle both absolute paths (from LIFEOS_CONFIG)
+      // and relative paths (from user input or template inference)
+      folderPath = normalizePath(targetFolder, LIFEOS_CONFIG.vaultPath);
     } else {
       // Determine folder based on content type
       folderPath = this.determineFolderFromContentType(
@@ -1307,13 +1308,10 @@ export class VaultUtils {
       mergeFolders?: boolean;
     } = {},
   ): { success: boolean; newPath: string; error?: string } {
-    // Normalize paths
-    const normalizedSource = sourcePath.startsWith(LIFEOS_CONFIG.vaultPath)
-      ? sourcePath
-      : join(LIFEOS_CONFIG.vaultPath, sourcePath);
-    const normalizedDest = destinationFolder.startsWith(LIFEOS_CONFIG.vaultPath)
-      ? destinationFolder
-      : join(LIFEOS_CONFIG.vaultPath, destinationFolder);
+    // Normalize paths using shared utility (MCP-64)
+    // Replaces previous string prefix check with cross-platform path.isAbsolute()
+    const normalizedSource = normalizePath(sourcePath, LIFEOS_CONFIG.vaultPath);
+    const normalizedDest = normalizePath(destinationFolder, LIFEOS_CONFIG.vaultPath);
 
     // Validate source exists
     if (!existsSync(normalizedSource)) {
