@@ -377,8 +377,8 @@ describe('JSONL Analytics Stress Tests', () => {
         }
       }
       
-      // Should recover valid metrics
-      expect(validMetrics.length).toBe(5);
+      // Should recover valid metrics (4 valid entries in corrupted content)
+      expect(validMetrics.length).toBe(4);
       expect(validMetrics.map(m => m.valid)).toEqual([1, 3, 4, 5]);
       
       // Should track errors

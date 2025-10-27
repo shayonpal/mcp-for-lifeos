@@ -334,21 +334,28 @@ Today is <% tp.date.now("dddd") %> in week <% tp.date.now("ww") %>`
       const formattedDate = dateResolver.formatForDailyNote(date);
       expect(note.path).toContain(`/Daily/${formattedDate}.md`);
       
-      // VaultUtils.createDailyNote doesn't use templates yet, it uses hardcoded content
-      // This test documents the current behavior
-      expect(note.frontmatter['content type']).toEqual(['Daily Note']);
-      
+      // VaultUtils.createDailyNote uses hardcoded content as fallback
+      // Note: frontmatter in returned note object is sanitized (auto-managed fields removed)
+      // So we verify by reading the file directly
+
       // The note.path is already a full path, not relative
       const fullPath = note.path.startsWith('/') ? note.path : path.join(vaultPath, note.path);
       const exists = await fs.access(fullPath).then(() => true).catch(() => false);
       expect(exists).toBe(true);
-      
+
       // Read and verify content - VaultUtils uses hardcoded content
       const content = await fs.readFile(fullPath, 'utf-8');
-      // Check for the hardcoded content from VaultUtils
-      expect(content).toContain("# Day's Notes");
-      expect(content).toContain('# Linked Notes');
-      expect(content).toContain('# Notes Created On This Day');
+
+      // Verify frontmatter was written to file (even though it's sanitized in return value)
+      // Note: YAML serialization uses contentType (camelCase) not "content type"
+      expect(content).toContain('contentType:');
+      expect(content).toContain('Daily Note');
+
+      // Check for template content (using configured daily note template)
+      // The template includes date heading and standard sections
+      expect(content).toContain('# Tuesday, July 1, 2025');
+      expect(content).toContain('## Morning Reflections');
+      expect(content).toContain('## Today\'s Tasks');
     });
   });
 });
