@@ -169,7 +169,7 @@ export class ObsidianLinks {
     // Concise mode: title + path + clickable link (~50-100 tokens)
     if (format === 'concise') {
       const obsidianLink = this.createClickableLink(filePath, title);
-      return `**${index}. ${title}** - \`${relativePath}\`\\n${obsidianLink}`;
+      return `**${index}. ${title}** - \`${relativePath}\`\n${obsidianLink}`;
     }
     
     // Detailed mode: current behavior (full metadata)

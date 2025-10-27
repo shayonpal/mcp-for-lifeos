@@ -32,10 +32,8 @@ function formatSearchResultFromSearch(
   truncator: ResponseTruncator | undefined,
   index: number
 ): string {
-  // Extract title from frontmatter or derive from filename
-  const title = result.frontmatter?.title || basename(result.path, '.md').split('-').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
+  // Extract title using ObsidianLinks utility (avoids code duplication)
+  const title = ObsidianLinks.extractNoteTitle(result.path, result.frontmatter);
 
   // Extract contentType (may be string or string[])
   const contentType = result.frontmatter?.contentType;
