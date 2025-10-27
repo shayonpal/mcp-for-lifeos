@@ -167,7 +167,12 @@ export function normalizePath(
     const resolvedPath = path.resolve(normalizedPath);
     const resolvedBase = path.resolve(basePath);
 
-    if (!resolvedPath.startsWith(resolvedBase)) {
+    // Use path.relative() for secure confinement check
+    // This properly handles case-insensitive filesystems and trailing slashes
+    // If the path escapes the vault, relative path will start with '..' or be absolute
+    const relativePath = path.relative(resolvedBase, resolvedPath);
+
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
       throw new Error(
         `Path traversal detected: '${inputPath}' resolves to '${resolvedPath}' which escapes vault boundary '${resolvedBase}'`
       );

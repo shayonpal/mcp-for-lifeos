@@ -417,9 +417,14 @@ describe('path-utils', () => {
       test('should provide detailed error message for path traversal', () => {
         const traversalPath = '../../outside';
         const basePath = '/Users/shayon/vault';
+
+        expect(() => {
+          normalizePath(traversalPath, basePath, { validateVaultConfinement: true });
+        }).toThrow(/Path traversal detected/);
+
+        // Verify error message content
         try {
           normalizePath(traversalPath, basePath, { validateVaultConfinement: true });
-          fail('Expected error to be thrown');
         } catch (error) {
           expect(error).toBeInstanceOf(Error);
           expect((error as Error).message).toMatch(/Path traversal detected/);
@@ -440,6 +445,24 @@ describe('path-utils', () => {
         const basePath = '/Users/shayon/vault';
         const result = normalizePath(currentDir, basePath, { validateVaultConfinement: true });
         expect(result).toBe(path.join(basePath, currentDir));
+      });
+
+      test('should detect sibling directory attack with absolute path', () => {
+        const maliciousPath = '/Users/shayon/vaultmalicious/evil.md';
+        const basePath = '/Users/shayon/vault';
+
+        expect(() => {
+          normalizePath(maliciousPath, basePath, { validateVaultConfinement: true });
+        }).toThrow(/Path traversal detected/);
+      });
+
+      test('should detect vault prefix attack without separator', () => {
+        const maliciousPath = '/Users/shayon/vault-evil/file.md';
+        const basePath = '/Users/shayon/vault';
+
+        expect(() => {
+          normalizePath(maliciousPath, basePath, { validateVaultConfinement: true });
+        }).toThrow(/Path traversal detected/);
       });
     });
 
