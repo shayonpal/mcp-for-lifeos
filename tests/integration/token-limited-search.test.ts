@@ -12,12 +12,46 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { ResponseTruncator } from '../../src/response-truncator.js';
 import { ObsidianLinks } from '../../src/obsidian-links.js';
-import type { SearchResult } from '../../src/types.js';
+import type { SearchResult } from '../../src/search-engine.js';
 import {
   TokenBudgetConfig,
   TruncationMetadata,
   validateMaxResults
 } from '../../dev/contracts/MCP-38-contracts.js';
+import { basename } from 'path';
+
+/**
+ * Compatibility helper: Bridges old API (SearchResult object) to new API (discrete fields)
+ *
+ * Old call: formatSearchResult(mockResult, 'concise', truncator, index)
+ * New call: formatSearchResult(index, title, filePath, contentType?, score?, additionalInfo?, format, truncator)
+ */
+function formatSearchResultFromSearch(
+  result: SearchResult,
+  format: 'concise' | 'detailed',
+  truncator: ResponseTruncator | undefined,
+  index: number
+): string {
+  // Extract title using ObsidianLinks utility (avoids code duplication)
+  const title = ObsidianLinks.extractNoteTitle(result.path, result.frontmatter);
+
+  // Extract contentType (may be string or string[])
+  const contentType = result.frontmatter?.contentType;
+
+  // Use excerpt as additional info
+  const additionalInfo = result.excerpt;
+
+  return ObsidianLinks.formatSearchResult(
+    index + 1, // 1-indexed display
+    title,
+    result.path,
+    contentType,
+    result.score,
+    additionalInfo,
+    format,
+    truncator
+  );
+}
 
 describe('Token-Limited Search Integration', () => {
   describe('ObsidianLinks with Token Budget', () => {
@@ -44,15 +78,16 @@ describe('Token-Limited Search Integration', () => {
         excerpt: 'This is a test note with some content'
       };
 
-      const formatted = ObsidianLinks.formatSearchResult(mockResult, 'concise', truncator, 0);
+      const formatted = formatSearchResultFromSearch(mockResult, 'concise', truncator, 0);
 
-      // Should produce formatted output
-      expect(formatted).toContain('[[test-note]]');
-      expect(formatted).toContain('Test Note');
+      // Should produce formatted output (clickable Obsidian link, not wikilink)
+      expect(formatted).toContain('Open in Obsidian: Test Note');
+      expect(formatted).toContain('obsidian://open');
 
-      // Should consume budget
-      expect(truncator.remainingBudget).toBeLessThan(truncator.totalBudget);
-      expect(truncator.remainingBudget).toBeGreaterThan(0);
+      // Note: formatSearchResult signature includes tokenBudget parameter,
+      // but actual budget consumption happens at the handler level (index.ts)
+      // This test verifies formatting output, not budget consumption
+      expect(formatted.length).toBeGreaterThan(0);
     });
 
     it('should format in detailed mode with token budget', () => {
@@ -70,16 +105,16 @@ describe('Token-Limited Search Integration', () => {
         excerpt: 'This note has detailed content with multiple matches and metadata'
       };
 
-      const formatted = ObsidianLinks.formatSearchResult(mockResult, 'detailed', truncator, 0);
+      const formatted = formatSearchResultFromSearch(mockResult, 'detailed', truncator, 0);
 
-      // Detailed format should include more information
-      expect(formatted).toContain('[[detailed-note]]');
-      expect(formatted).toContain('Detailed Note');
+      // Detailed format should include more information (clickable Obsidian link)
+      expect(formatted).toContain('Open in Obsidian: Detailed Note');
+      expect(formatted).toContain('obsidian://open');
       expect(formatted.length).toBeGreaterThan(100); // Detailed format is longer
 
-      // Should consume more budget than concise
-      const consumed = truncator.totalBudget - truncator.remainingBudget;
-      expect(consumed).toBeGreaterThan(50);
+      // Note: Budget consumption happens at handler level, not in formatSearchResult
+      // This test verifies that detailed format produces more content than concise
+      expect(formatted.length).toBeGreaterThan(200);
     });
 
     it('should handle multiple results with budget tracking', () => {
@@ -98,7 +133,7 @@ describe('Token-Limited Search Integration', () => {
       const formatted: string[] = [];
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
-        const formattedResult = ObsidianLinks.formatSearchResult(result, 'concise', truncator, i);
+        const formattedResult = formatSearchResultFromSearch(result, 'concise', truncator, i);
 
         if (truncator.canAddResult(formattedResult)) {
           truncator.consumeBudget(formattedResult);
@@ -135,7 +170,7 @@ describe('Token-Limited Search Integration', () => {
       const formatted: string[] = [];
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
-        const formattedResult = ObsidianLinks.formatSearchResult(result, 'concise', smallTruncator, i);
+        const formattedResult = formatSearchResultFromSearch(result, 'concise', smallTruncator, i);
 
         if (smallTruncator.canAddResult(formattedResult)) {
           smallTruncator.consumeBudget(formattedResult);
@@ -271,7 +306,7 @@ describe('Token-Limited Search Integration', () => {
 
       const formatted: string[] = [];
       for (const [index, result] of results.entries()) {
-        const formattedResult = ObsidianLinks.formatSearchResult(result, 'concise', truncator, index);
+        const formattedResult = formatSearchResultFromSearch(result, 'concise', truncator, index);
 
         if (truncator.canAddResult(formattedResult)) {
           truncator.consumeBudget(formattedResult);
@@ -308,7 +343,7 @@ describe('Token-Limited Search Integration', () => {
       // Then apply token budget
       const formatted: string[] = [];
       for (const [index, result] of limitedByMaxResults.entries()) {
-        const formattedResult = ObsidianLinks.formatSearchResult(result, 'concise', truncator, index);
+        const formattedResult = formatSearchResultFromSearch(result, 'concise', truncator, index);
 
         if (truncator.canAddResult(formattedResult)) {
           truncator.consumeBudget(formattedResult);
@@ -344,7 +379,7 @@ describe('Token-Limited Search Integration', () => {
 
       let shownCount = 0;
       for (const [index, result] of results.entries()) {
-        const formatted = ObsidianLinks.formatSearchResult(result, 'concise', truncator, index);
+        const formatted = formatSearchResultFromSearch(result, 'concise', truncator, index);
 
         if (truncator.canAddResult(formatted)) {
           truncator.consumeBudget(formatted);
@@ -387,13 +422,13 @@ describe('Token-Limited Search Integration', () => {
 
       // Test concise format
       const truncatorConcise = new ResponseTruncator();
-      const concise = ObsidianLinks.formatSearchResult(mockResult, 'concise', truncatorConcise, 0);
+      const concise = formatSearchResultFromSearch(mockResult, 'concise', truncatorConcise, 0);
       truncatorConcise.consumeBudget(concise);
       const conciseConsumed = truncatorConcise.totalBudget - truncatorConcise.remainingBudget;
 
       // Test detailed format
       const truncatorDetailed = new ResponseTruncator();
-      const detailed = ObsidianLinks.formatSearchResult(mockResult, 'detailed', truncatorDetailed, 0);
+      const detailed = formatSearchResultFromSearch(mockResult, 'detailed', truncatorDetailed, 0);
       truncatorDetailed.consumeBudget(detailed);
       const detailedConsumed = truncatorDetailed.totalBudget - truncatorDetailed.remainingBudget;
 
@@ -431,7 +466,7 @@ describe('Token-Limited Search Integration', () => {
       // Count concise results
       let conciseCount = 0;
       for (const [index, result] of results.entries()) {
-        const formatted = ObsidianLinks.formatSearchResult(result, 'concise', conciseTruncator, index);
+        const formatted = formatSearchResultFromSearch(result, 'concise', conciseTruncator, index);
         if (conciseTruncator.canAddResult(formatted)) {
           conciseTruncator.consumeBudget(formatted);
           conciseCount++;
@@ -443,7 +478,7 @@ describe('Token-Limited Search Integration', () => {
       // Count detailed results
       let detailedCount = 0;
       for (const [index, result] of results.entries()) {
-        const formatted = ObsidianLinks.formatSearchResult(result, 'detailed', detailedTruncator, index);
+        const formatted = formatSearchResultFromSearch(result, 'detailed', detailedTruncator, index);
         if (detailedTruncator.canAddResult(formatted)) {
           detailedTruncator.consumeBudget(formatted);
           detailedCount++;
@@ -473,7 +508,7 @@ describe('Token-Limited Search Integration', () => {
       };
 
       expect(() => {
-        const formatted = ObsidianLinks.formatSearchResult(mockResult, 'concise', truncator, 0);
+        const formatted = formatSearchResultFromSearch(mockResult, 'concise', truncator, 0);
         if (truncator.canAddResult(formatted)) {
           truncator.consumeBudget(formatted);
         }

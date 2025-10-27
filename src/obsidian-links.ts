@@ -106,6 +106,12 @@ export class ObsidianLinks {
 
     const filename = basename(filePath, '.md');
 
+    // Edge case: Handle empty filename (e.g., '/vault/.md' -> basename returns '.md')
+    if (!filename || filename === '.md') {
+      console.warn(`[ObsidianLinks] extractNoteTitle: Invalid or empty filename for path "${filePath}". Returning empty string as title.`);
+      return '';
+    }
+
     // Priority 2: Handle daily notes (YYYY-MM-DD format)
     if (/^\d{4}-\d{2}-\d{2}$/.test(filename)) {
       // MCP-31 Timezone Fix: Use parseISO() instead of new Date() to prevent day shift
@@ -160,10 +166,11 @@ export class ObsidianLinks {
     tokenBudget?: import('./response-truncator.js').ResponseTruncator
   ): string {
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
-    
-    // Concise mode: title + path only (~50-100 tokens)
+
+    // Concise mode: title + path + clickable link (~50-100 tokens)
     if (format === 'concise') {
-      return `**${index}. ${title}** - \`${relativePath}\``;
+      const obsidianLink = this.createClickableLink(filePath, title);
+      return `**${index}. ${title}** - \`${relativePath}\`\n${obsidianLink}`;
     }
     
     // Detailed mode: current behavior (full metadata)

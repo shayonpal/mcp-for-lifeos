@@ -13,7 +13,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Pr
 - **Search Engine**: Full-text search with relevance scoring and context extraction
 - **Obsidian Integration**: Clickable links that open notes directly in Obsidian
 - **Daily Notes Management**: Create and manage daily journal entries
-- **Analytics Dashboard**: Zero-maintenance telemetry with visual insights (default enabled)
+- **Analytics Dashboard**: Telemetry with visual insights (⚠️ currently buggy, not recommended for use)
 - **Universal Tools**: Consolidates 6 search tools into 1, with auto-routing
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
 - **Backward Compatibility**: All legacy tools continue to work with deprecation warnings
@@ -191,17 +191,23 @@ create_note_smart title: "My Article" template: "article"
 
 ## Analytics Dashboard
 
-The server includes a lightweight analytics system for tracking tool usage patterns and performance insights.
+⚠️ **IMPORTANT: The analytics dashboard is currently buggy and should not be used.**
 
-**Quick Start:**
+The analytics system has known issues affecting data collection and visualization. Work is underway to fix these issues. Until then, we recommend disabling analytics:
 
-```bash
-# Start the analytics dashboard (default port 19832)
-node scripts/start-analytics-dashboard.js
-# Visit http://localhost:19832
+```json
+{
+  "mcpServers": {
+    "lifeos": {
+      "env": {
+        "DISABLE_USAGE_ANALYTICS": "true"
+      }
+    }
+  }
+}
 ```
 
-**Features:** Tool usage tracking, performance insights, cache hit rates, visual charts, and daily trends.
+**Status:** Analytics collection and dashboard temporarily unreliable. Use with caution or disable entirely.
 
 **📊 For complete analytics documentation, see [analytics/README.md](analytics/README.md)**
 
@@ -281,15 +287,6 @@ Notes use natural file naming that preserves readability:
 - **Preserves**: Spaces, punctuation, numbers, parentheses
 - **Removes**: Square brackets `[]`, colons `:`, semicolons `;`
 - **Example**: "Book Review - The 48 Laws of Power" → "Book Review - The 48 Laws of Power.md"
-
-## Folder Structure (PARA Method)
-
-- **00 - Meta**: System files, templates, MOCs
-- **05 - Fleeting Notes**: Quick captures
-- **10 - Projects**: Active work
-- **20 - Areas**: Life management
-- **30 - Resources**: Reference materials
-- **40 - Archives**: Completed items
 
 ## Support and Contributing
 
