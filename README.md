@@ -13,7 +13,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Pr
 - **Search Engine**: Full-text search with relevance scoring and context extraction
 - **Obsidian Integration**: Clickable links that open notes directly in Obsidian
 - **Daily Notes Management**: Create and manage daily journal entries
-- **Analytics Dashboard**: Zero-maintenance telemetry with visual insights (⚠️ currently buggy, not recommended for use)
+- **Analytics Dashboard**: Telemetry with visual insights (⚠️ currently buggy, not recommended for use)
 - **Universal Tools**: Consolidates 6 search tools into 1, with auto-routing
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
 - **Backward Compatibility**: All legacy tools continue to work with deprecation warnings

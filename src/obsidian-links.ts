@@ -108,6 +108,7 @@ export class ObsidianLinks {
 
     // Edge case: Handle empty filename (e.g., '/vault/.md' -> basename returns '.md')
     if (!filename || filename === '.md') {
+      console.warn(`[ObsidianLinks] extractNoteTitle: Invalid or empty filename for path "${filePath}". Returning empty string as title.`);
       return '';
     }
 

@@ -3,9 +3,6 @@
  * Tests multiple MCP server instances running concurrently
  */
 
-// MCP-65: Opt out of global analytics mock to allow real JSONL writes
-jest.unmock('../../src/analytics/analytics-collector.js');
-
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';

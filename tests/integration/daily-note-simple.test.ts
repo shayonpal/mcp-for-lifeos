@@ -353,7 +353,14 @@ Today is <% tp.date.now("dddd") %> in week <% tp.date.now("ww") %>`
 
       // Check for template content (using configured daily note template)
       // The template includes date heading and standard sections
-      expect(content).toContain('# Tuesday, July 1, 2025');
+      // Dynamically generate expected heading for test date
+      const expectedHeading = '# ' + date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      expect(content).toContain(expectedHeading);
       expect(content).toContain('## Morning Reflections');
       expect(content).toContain('## Today\'s Tasks');
     });
