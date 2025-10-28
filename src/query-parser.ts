@@ -5,7 +5,7 @@
  * @since MCP-59
  */
 
-import type { QueryStrategy, ParsedQuery } from '../dev/contracts/MCP-59-contracts';
+import type { QueryStrategy, ConcreteQueryStrategy, ParsedQuery } from '../dev/contracts/MCP-59-contracts';
 import { escapeRegex } from './regex-utils.js';
 import { normalizeText } from './text-utils.js';
 
@@ -127,7 +127,7 @@ export class QueryParser {
    * @param query - Raw query string
    * @returns Detected strategy based on query characteristics
    */
-  static detectStrategy(query: string): QueryStrategy {
+  static detectStrategy(query: string): ConcreteQueryStrategy {
     // Priority 1: Quoted strings
     if (this.isQuoted(query)) {
       return 'exact_phrase';
