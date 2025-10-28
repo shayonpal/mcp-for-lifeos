@@ -1,10 +1,23 @@
 # Current Development Focus
 
-**Last Updated:** 2025-10-27 21:45 UTC  
+**Last Updated:** 2025-10-28 12:24 UTC  
 **Cycle:** Cycle 8 (Oct 20-29, 2025)  
 **Progress:** 27/27 issues complete (100%)  
-**Current Branch:** master  
-**Phase:** Ready for Release
+**Current Branch:** refactor/mcp-6-extract-server-factory  
+**Phase:** Post-Cycle Refactoring
+
+---
+
+## 🔧 Active Work
+
+**MCP-6: Extract MCP Server Core** (refactor/mcp-6-extract-server-factory)
+
+- Status: Implementation complete, PR #104 in review
+- Type: Technical debt reduction / Code organization
+- Changes: Created src/server/mcp-server.ts factory (237 lines), reduced src/index.ts by 109 lines
+- Testing: 22 unit tests added, all passing (289/290 total)
+- Next: Merge to master, continue decomposition (MCP-7, MCP-8)
+- PR: https://github.com/shayonpal/mcp-for-lifeos/pull/104
 
 ---
 
@@ -52,10 +65,11 @@
 
 ## 📌 Notes for Claude
 
-- **Current branch:** master (no active feature branches)
+- **Current branch:** refactor/mcp-6-extract-server-factory
 - **Linear Team:** MCP for LifeOS
 - **Linear Team ID:** `d1aae15e-d5b9-418d-a951-adcf8c7e39a8`
 - **Latest release:** v2.0.0 (TOOL_MODE configuration system)
+- Post-Cycle 8 refactoring: MCP-6 (server factory extraction) is first in planned decomposition series (MCP-7: tool registration, MCP-8: request handlers)
 
 ---
 

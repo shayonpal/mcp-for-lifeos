@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -15,7 +13,6 @@ import { DynamicTemplateEngine } from './template-engine-dynamic.js';
 import { YamlRulesManager } from './yaml-rules-manager.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
-import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { ResponseTruncator } from './response-truncator.js';
 import { normalizePath } from './path-utils.js';
@@ -24,144 +21,56 @@ import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
 import { statSync } from 'fs';
-import packageJson from '../package.json' with { type: 'json' };
-
-// Server version - sourced from package.json (single source of truth)
-export const SERVER_VERSION = packageJson.version;
-
-// Initialize YAML rules manager
-const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
-
-// Initialize analytics collector
-const analytics = AnalyticsCollector.getInstance();
-
-// Client tracking
-let clientInfo: { name?: string; version?: string } = {};
-let sessionId = `session-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-const server = new Server(
-  {
-    name: 'lifeos-mcp',
-    version: SERVER_VERSION,
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-// Capture client info when initialized
-server.oninitialized = () => {
-  const clientImplementation = server.getClientVersion();
-  if (clientImplementation) {
-    clientInfo = {
-      name: clientImplementation.name,
-      version: clientImplementation.version
-    };
-    // Log client info for debugging
-    console.error(`[Analytics] Client connected: ${clientInfo.name} v${clientInfo.version} (session: ${sessionId})`);
-    
-    // Set client info in ToolRouter for analytics
-    ToolRouter.setClientInfo(clientInfo, sessionId);
-  }
-};
+import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
+import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';
 
 // ============================================================================
-// TOOL MODE CONFIGURATION
+// MCP SERVER INITIALIZATION - LAZY PATTERN
 // ============================================================================
 
-/**
- * Tool visibility mode controlling which MCP tools are registered
- */
-type ToolMode = 'legacy-only' | 'consolidated-only' | 'consolidated-with-aliases';
-
-/**
- * Valid tool mode values for runtime validation
- */
-const VALID_TOOL_MODES: readonly ToolMode[] = [
-  'legacy-only',
-  'consolidated-only',
-  'consolidated-with-aliases'
-] as const;
-
-/**
- * Tool mode configuration with validation
- */
-interface ToolModeConfig {
-  mode: ToolMode;
-  usedLegacyFlag: boolean;
-  rawToolMode?: string;
-  rawConsolidatedFlag?: string;
-}
-
-/**
- * Check if string is valid ToolMode
- */
-function isValidToolMode(value: string | undefined): value is ToolMode {
-  return VALID_TOOL_MODES.includes(value as ToolMode);
-}
-
-/**
- * Parse TOOL_MODE environment variable with validation and fallback
- *
- * Validation Rules:
- * 1. If TOOL_MODE set and valid → use it
- * 2. If TOOL_MODE set but invalid → log error, fallback to default
- * 3. If TOOL_MODE unset → check CONSOLIDATED_TOOLS_ENABLED for backward compatibility
- * 4. If both unset → use default 'consolidated-only'
- */
-function parseToolMode(env: NodeJS.ProcessEnv): ToolModeConfig {
-  const rawToolMode = env.TOOL_MODE;
-  const rawConsolidatedFlag = env.CONSOLIDATED_TOOLS_ENABLED;
-
-  // Check if TOOL_MODE is set and valid
-  if (rawToolMode !== undefined) {
-    if (isValidToolMode(rawToolMode)) {
-      return {
-        mode: rawToolMode,
-        usedLegacyFlag: false,
-        rawToolMode
-      };
-    } else {
-      // Invalid TOOL_MODE - log error and fallback
-      console.error(
-        `Invalid TOOL_MODE: ${rawToolMode}. Valid options: ${VALID_TOOL_MODES.join(', ')}. Defaulting to 'consolidated-only'`
-      );
-      return {
-        mode: 'consolidated-only',
-        usedLegacyFlag: false,
-        rawToolMode
-      };
-    }
-  }
-
-  // TOOL_MODE not set - check CONSOLIDATED_TOOLS_ENABLED for backward compatibility
-  if (rawConsolidatedFlag !== undefined) {
-    const mode = rawConsolidatedFlag === 'false' ? 'legacy-only' : 'consolidated-only';
-    return {
-      mode,
-      usedLegacyFlag: true,
-      rawConsolidatedFlag
-    };
-  }
-
-  // Both unset - use default
-  return {
-    mode: 'consolidated-only',
-    usedLegacyFlag: false
-  };
-}
-
-// Parse tool mode configuration
+// Parse tool mode early (lightweight, no server instantiation)
 const toolModeConfig = parseToolMode(process.env);
 
-// Log deprecation warning if old flag was used
+// Log deprecation warning if legacy flag was used
 if (toolModeConfig.usedLegacyFlag) {
   console.error(
     '[DEPRECATED] CONSOLIDATED_TOOLS_ENABLED will be removed in Cycle 10. Use TOOL_MODE instead.'
   );
 }
+
+// Lazy server instantiation - created on first access
+let mcpInstance: McpServerInstance | null = null;
+let handlersRegistered = false;
+
+/**
+ * Lazy initialization of MCP server instance
+ * Creates server on first access and registers handlers once
+ */
+function initializeMcpInstance(): McpServerInstance {
+  if (!mcpInstance) {
+    mcpInstance = createMcpServer({
+      vaultPath: LIFEOS_CONFIG.vaultPath,
+      toolMode: toolModeConfig.mode // Use pre-parsed tool mode
+    });
+
+    // Register handlers once after server creation
+    if (!handlersRegistered) {
+      registerHandlers(mcpInstance);
+      handlersRegistered = true;
+    }
+  }
+  return mcpInstance;
+}
+
+/**
+ * Get MCP server instance (convenience accessor)
+ */
+function getMcpInstance(): McpServerInstance {
+  return initializeMcpInstance();
+}
+
+// Initialize YAML rules manager
+const yamlRulesManager = new YamlRulesManager(LIFEOS_CONFIG);
 
 // Define available tools
 const tools: Tool[] = [
@@ -961,12 +870,19 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
   }
 ];
 
-// Tool handlers
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return { tools };
-});
+/**
+ * Register MCP tool handlers
+ * Called once during server initialization
+ */
+function registerHandlers(instance: McpServerInstance): void {
+  const { server, analytics, sessionId } = instance;
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // Tool handlers
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return { tools };
+  });
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   if (!args) {
@@ -1838,8 +1754,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
 
           const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
-          
+
           // Record analytics
+          const clientInfo = extractClientInfo(server);
           analytics.recordUsage({
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
@@ -1848,7 +1765,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             clientVersion: clientInfo.version,
             sessionId
           });
-          
+
           return addVersionMetadata({
             content: [{
               type: 'text',
@@ -1857,6 +1774,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           });
         } catch (error) {
           // Record failed analytics
+          const clientInfo = extractClientInfo(server);
           analytics.recordUsage({
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
@@ -2593,12 +2511,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       isError: true
     });
   }
-});
+  });
+}
 
 // Start the server
 async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  // Initialize server and register handlers
+  const instance = getMcpInstance();
+  const { server } = instance;
+
+  // Connect server to stdio transport (handled by factory)
+  await instance.connect();
 
   // Log tool mode configuration
   console.error(`Tool Mode: ${toolModeConfig.mode}`);
@@ -2633,10 +2556,13 @@ async function main() {
   }
 }
 
-// Graceful shutdown handler for analytics
+// Graceful shutdown handlers
 process.on('SIGINT', async () => {
   try {
-    await analytics.shutdown();
+    // Only shutdown if server was initialized (don't create on exit)
+    if (mcpInstance) {
+      await mcpInstance.shutdown();
+    }
   } catch (error) {
     // Silently continue
   }
@@ -2645,7 +2571,10 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   try {
-    await analytics.shutdown();
+    // Only shutdown if server was initialized (don't create on exit)
+    if (mcpInstance) {
+      await mcpInstance.shutdown();
+    }
   } catch (error) {
     // Silently continue
   }

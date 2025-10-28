@@ -120,14 +120,22 @@ export class ToolRouter {
   private static readonly ENABLE_TELEMETRY = process.env.TOOL_ROUTER_TELEMETRY === 'true';
   private static analytics = AnalyticsCollector.getInstance();
   private static clientInfo: { name?: string; version?: string } = {};
-  private static sessionId: string = '';
+  private static sessionIdProvider: (() => string) | null = null;
 
   /**
-   * Set client information for analytics tracking
+   * Set client information and session ID provider for analytics tracking
+   * Session ID is provided via function to avoid duplication with factory-managed session ID
    */
-  static setClientInfo(info: { name?: string; version?: string }, sessionId: string): void {
+  static setClientInfo(info: { name?: string; version?: string }, sessionIdProvider: () => string): void {
     this.clientInfo = info;
-    this.sessionId = sessionId;
+    this.sessionIdProvider = sessionIdProvider;
+  }
+
+  /**
+   * Get current session ID from provider
+   */
+  private static get sessionId(): string {
+    return this.sessionIdProvider?.() || '';
   }
 
   /**
