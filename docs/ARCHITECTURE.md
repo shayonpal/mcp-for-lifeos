@@ -29,22 +29,55 @@ Reusable factory module for MCP server instantiation and configuration. Centrali
 function createMcpServer(config: McpServerConfig): McpServerInstance
 ```
 
-**Created:** 2025-10-28 (MCP-6) - 238 lines  
-**Status:** Foundation for future decomposition (MCP-7: tool registration, MCP-8: request handlers)
+**Created:** 2025-10-28 (MCP-6) - 238 lines
+**Status:** Foundation for future decomposition (MCP-8: request handlers)
 
-### MCP Server Entry Point (`src/index.ts`)
+### Tool Registry (`src/server/tool-registry.ts`)
 
-Main entry point implementing Model Context Protocol server. Handles tool registration, request routing, and client communication.
+Pure function module that centralizes tool registration, configuration, and mode-based assembly. Provides catalog of all MCP tools with metadata, organized by operational mode.
 
 **Key Responsibilities:**
 
-- Tool registration and MCP protocol implementation
-- Request/response handling for 20+ MCP tools
-- Uses server factory for instantiation
+- Tool configuration management (3 consolidated + 11 legacy + 11 aliases)
+- Mode-based tool assembly (legacy-only, consolidated-only, consolidated-with-aliases)
+- Tool count validation per mode (12/20/34 tools)
+- Version metadata injection into server responses
+- Backward compatibility alias management
+- Pure functions with explicit dependency injection
+
+**Exported Functions:**
+
+- `getConsolidatedTools()` - Returns 3 universal AI-optimized tools
+- `getLegacyTools()` - Returns 11 legacy tools for backward compatibility
+- `getLegacyAliases()` - Returns 11 backward compatibility aliases
+- `getAlwaysAvailableTools()` - Returns 9 core tools available in all modes
+- `getToolsForMode(config)` - Assembles tools based on mode with validation
+- `addVersionMetadata(response, config)` - Injects version metadata into responses
+
+**Design Patterns:**
+
+- Pure functions (no module state)
+- Explicit dependency injection via ToolRegistryConfig
+- Contract-driven development with TypeScript interfaces
+- Shared constants to eliminate duplication (LEGACY_TOOL_DEFINITIONS)
+
+**Created:** 2025-10-28 (MCP-7) - 856 lines
+**Test Coverage:** 100% (17 unit tests)
+**Status:** Complete, enables final decomposition phase (MCP-8: request handlers)
+
+### MCP Server Entry Point (`src/index.ts`)
+
+Main entry point implementing Model Context Protocol server. Coordinates server factory, tool registry, and request routing to deliver MCP functionality.
+
+**Key Responsibilities:**
+
+- MCP protocol implementation and request routing
+- Request/response handling for all MCP tools
+- Integration of server factory and tool registry
 - Server lifecycle management
 
-**Status:** Reduced from 2,659 to 2,550 lines (-109 lines) after factory extraction  
-**Next:** Scheduled for further decomposition (tool registration and request handlers)
+**Status:** Reduced from 2,659 lines (pre-MCP-6) to 1,797 lines (post-MCP-7), total reduction of 862 lines (-32.4%)
+**Next:** Final decomposition phase (MCP-8: extract request handlers)
 
 ### Tool Router (`src/tool-router.ts`)
 

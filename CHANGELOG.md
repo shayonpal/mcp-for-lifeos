@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Tool Registry Extraction** (MCP-7, 2025-10-28 16:50): Extracted tool registration logic into dedicated pure function module
+  - Created src/server/tool-registry.ts (856 lines) with 6 pure functions for tool configuration and assembly
+  - Reduced src/index.ts from 2,588 to 1,797 lines (-791 lines, -30.5%)
+  - Eliminated 400 lines of code duplication through shared constants
+  - Tool registry provides mode-based assembly (legacy-only: 20 tools, consolidated-only: 12 tools, consolidated-with-aliases: 34 tools)
+  - Contract-driven development with explicit TypeScript interfaces and dependency injection
+  - Created comprehensive test suite: 17 unit tests achieving 100% coverage
+  - No breaking changes: All existing functionality preserved
+  - Foundation for future decomposition: Next phase is MCP-8 (request handlers)
+
 - **MCP Server Factory Extraction** (MCP-6, 2025-10-28 12:13): Extracted server bootstrap logic into reusable factory module
   - Created src/server/mcp-server.ts (238 lines) with createMcpServer() factory function
   - Reduced src/index.ts from 2,659 to 2,550 lines (-109 lines)
