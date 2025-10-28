@@ -88,17 +88,25 @@ export class ResponseTruncator implements IResponseTruncator {
     const truncated = shownCount < totalCount;
 
     // Determine limit type
-    let limitType: 'token' | 'result' | 'both' = 'token';
-    if (!truncated) {
-      limitType = 'result'; // maxResults limit only
-    } else if (this.consumed >= this.config.maxCharacters * 0.95) {
-      limitType = 'both'; // Token budget was primary constraint
+    let limitType: 'token' | 'result' | 'both' = 'result';
+    if (truncated) {
+      const budgetUsageRatio = this.consumed / this.config.maxCharacters;
+      if (budgetUsageRatio >= 0.9) {
+        // High budget usage - token budget was the primary constraint
+        limitType = 'token';
+      } else if (budgetUsageRatio >= 0.05) {
+        // Moderate budget usage - both limits were factors
+        limitType = 'both';
+      } else {
+        // Low budget usage - maxResults was the primary constraint
+        limitType = 'result';
+      }
     }
 
     // Generate appropriate suggestion message
     let suggestion: string;
     if (autoDowngraded) {
-      suggestion = TRUNCATION_MESSAGES.autoDowngraded(shownCount, totalCount);
+      suggestion = TRUNCATION_MESSAGES.autoDowngraded(shownCount, totalCount, formatUsed);
     } else {
       suggestion = TRUNCATION_MESSAGES.standard(shownCount, totalCount);
     }
