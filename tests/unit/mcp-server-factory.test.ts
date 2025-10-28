@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { createMcpServer, isValidToolMode, parseToolMode, generateSessionId, SERVER_VERSION } from '../../src/server/mcp-server.js';
+import { createMcpServer, isValidToolMode, parseToolMode, generateSessionId, extractClientInfo, SERVER_VERSION } from '../../src/server/mcp-server.js';
 import type { ToolMode, ToolModeConfig } from '../../dev/contracts/MCP-6-contracts.js';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -78,6 +78,95 @@ describe('MCP Server Factory', () => {
       const id1 = generateSessionId();
       const id2 = generateSessionId();
       expect(id1).not.toBe(id2);
+    });
+  });
+
+  describe('extractClientInfo', () => {
+    it('should extract client name and version from server', () => {
+      const mockServer = {
+        getClientVersion: () => ({ name: 'test-client', version: '1.0.0' })
+      };
+
+      const result = extractClientInfo(mockServer as any);
+
+      expect(result).toEqual({
+        name: 'test-client',
+        version: '1.0.0'
+      });
+    });
+
+    it('should handle undefined client version', () => {
+      const mockServer = {
+        getClientVersion: () => undefined
+      };
+
+      const result = extractClientInfo(mockServer as any);
+
+      expect(result).toEqual({
+        name: undefined,
+        version: undefined
+      });
+    });
+
+    it('should handle partial client info (missing version)', () => {
+      const mockServer = {
+        getClientVersion: () => ({ name: 'test-client', version: undefined })
+      };
+
+      const result = extractClientInfo(mockServer as any);
+
+      expect(result).toEqual({
+        name: 'test-client',
+        version: undefined
+      });
+    });
+
+    it('should handle partial client info (missing name)', () => {
+      const mockServer = {
+        getClientVersion: () => ({ name: undefined, version: '2.0.0' })
+      };
+
+      const result = extractClientInfo(mockServer as any);
+
+      expect(result).toEqual({
+        name: undefined,
+        version: '2.0.0'
+      });
+    });
+
+    it('should extract info from multiple server instances consistently', () => {
+      const mockServer1 = {
+        getClientVersion: () => ({ name: 'client-a', version: '1.0.0' })
+      };
+      const mockServer2 = {
+        getClientVersion: () => ({ name: 'client-b', version: '2.0.0' })
+      };
+
+      const result1 = extractClientInfo(mockServer1 as any);
+      const result2 = extractClientInfo(mockServer2 as any);
+
+      expect(result1.name).toBe('client-a');
+      expect(result1.version).toBe('1.0.0');
+      expect(result2.name).toBe('client-b');
+      expect(result2.version).toBe('2.0.0');
+    });
+
+    it('should handle real-world client names', () => {
+      const testCases = [
+        { name: 'Claude Desktop', version: '0.7.3' },
+        { name: 'Raycast', version: '1.0.0' },
+        { name: 'custom-mcp-client', version: '2.5.1' }
+      ];
+
+      testCases.forEach(testCase => {
+        const mockServer = {
+          getClientVersion: () => testCase
+        };
+
+        const result = extractClientInfo(mockServer as any);
+
+        expect(result).toEqual(testCase);
+      });
     });
   });
 
