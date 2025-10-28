@@ -59,7 +59,6 @@ export async function executeSearch(
   for (let index = 0; index < allResults.length; index++) {
     const result = allResults[index];
     const note = result.note;
-    const score = result.score.toFixed(1);
     const matchCount = result.matches.length;
     const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
 
