@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP Server Factory Extraction** (MCP-6, 2025-10-28 12:13): Extracted server bootstrap logic into reusable factory module
+  - Created src/server/mcp-server.ts (238 lines) with createMcpServer() factory function
+  - Reduced src/index.ts from 2,659 to 2,550 lines (-109 lines)
+  - Factory handles server instantiation, analytics initialization, session ID generation, and stdio transport
+  - Created comprehensive test suite: 22 unit tests covering all factory capabilities
+  - No breaking changes: All existing functionality maintained
+  - Foundation for future decomposition: MCP-7 (tool registration) and MCP-8 (request handlers)
+
 ## [2.0.1] - 2025-10-27
 
 ### Fixed
