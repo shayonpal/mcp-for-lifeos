@@ -1,50 +1,68 @@
 # Current Development Focus
 
-**Last Updated:** 2025-10-28 1:15 PM (EST)  
-**Current Branch:** master  
+**Last Updated:** 2025-10-28 4:45 PM (EST)
+**Current Branch:** master
 **Phase:** Post-Cycle 8 - Technical Debt Reduction
 
 ---
 
 ## 🔧 Active Work
 
-**MCP-6: Extract MCP Server Core** (COMPLETED - merged to master)
+**MCP-7: Extract Tool Registry** (COMPLETED - merged to master)
 
 Context:
 
-- Decomposing monolithic index.ts (2,224 lines) to improve maintainability
-- Extracting MCP server initialization logic into dedicated factory module
-- Part of larger refactoring effort to reduce technical debt
+- Continuation of index.ts decomposition (MCP-6 → MCP-7 → MCP-8)
+- Extracting tool registration logic into dedicated pure function module
+- Second phase of modular architecture transformation
 
-- Status: ✅ PR #104 merged to master (52 minutes ago)
-- Testing: 22 unit tests added, all passing (365/369 total, 4 skipped)
-- Recent commits (3d):
-  - `0fb3d41` Merge pull request #104 (52 mins ago)
-  - `e67cb91` docs: update CURRENT-FOCUS.md with MCP-6 status (53 mins ago)
-  - `e0633de` Update src/server/mcp-server.ts (54 mins ago)
-  - `8bdb487` test: add unit tests for extractClientInfo (62 mins ago)
-  - `4e95309` fix: extract client info helper to eliminate duplication (65 mins ago)
-  - `ce5e5ae` refactor: extract MCP server bootstrap factory (79 mins ago)
-- Outcome: Foundation for future decomposition work (MCP-7, MCP-8)
-- PR: https://github.com/shayonpal/mcp-for-lifeos/pull/104
+- Status: ✅ PR #107 merged to master (just now)
+- Testing: 17 unit tests added, all passing (382/386 total, 4 skipped)
+- Key achievements:
+  - Created src/server/tool-registry.ts (856 lines) with 6 exported pure functions
+  - Reduced src/index.ts from 2,588 to 1,797 lines (-791 lines, -30.5%)
+  - Eliminated 400 lines of duplication via shared constants
+  - Added 17 contract files for type safety across MCP issues
+  - 100% test coverage for new module
+- Recent commits:
+  - `3d61b6a` Merge pull request #107 (just now)
+  - `abf7485` docs: address Copilot review suggestions (5 mins ago)
+  - `905c213` chore: add contract files to version control (15 mins ago)
+  - `b750dfe` refactor: extract tool registry from index.ts (3 hours ago)
+- Outcome: Foundation for final decomposition phase (MCP-8)
+- PR: https://github.com/shayonpal/mcp-for-lifeos/pull/107
+- Linear: https://linear.app/agilecode-studio/issue/MCP-7
 
 ---
 
 ## 📋 Next Up (Technical Debt Series)
 
-Based on MCP-6 success, next decomposition targets:
+Based on MCP-7 completion, final decomposition target:
 
-- **MCP-7**: Decompose tool definitions from index.ts (P1)
-  - Extract tool registration logic
-  - Continue modular architecture pattern
-
-- **MCP-8**: Extract tool handlers to separate modules (P1)
+- **MCP-8**: Extract request handlers to separate modules (P1)
   - Move handler implementations out of index.ts
   - Complete index.ts decomposition series
+  - Finalize modular architecture transformation
 
 ---
 
 ## ✅ Recent Completions (Last 3 Days)
+
+**Decomposition Series:**
+
+- **MCP-7**: Extract tool registry from monolithic index.ts
+  - PR #107 merged today
+  - Created tool-registry.ts module (856 lines, 6 functions)
+  - Reduced index.ts by 791 lines (-30.5%)
+  - 17 unit tests, 100% coverage
+  - Added 17 contract files for type safety
+
+- **MCP-6**: Extract MCP server factory
+  - PR #104 merged earlier today
+  - Created mcp-server.ts factory module (238 lines)
+  - Reduced index.ts by 109 lines
+  - 22 unit tests covering all factory capabilities
+  - Foundation for MCP-7 and MCP-8
 
 **Cycle 8 Completion** (100% issue resolution):
 
@@ -72,22 +90,22 @@ Based on MCP-6 success, next decomposition targets:
 
 ---
 
-## ✅ All Tests Passing (365/369)
+## ✅ All Tests Passing (382/386)
 
-**Last Run:** Oct 28, 2025 1:00 PM EST
+**Last Run:** Oct 28, 2025 4:45 PM EST
 
 **Status:**
 
-- 365 tests passing
+- 382 tests passing
 - 4 tests skipped (intentional):
   - 3 analytics infrastructure issues (documented, non-blocking)
   - 1 timezone edge case test
 
 **Test Suites:**
 
-- 21/21 test suites passing
+- 22/22 test suites passing
 - Coverage: unit tests, integration tests, stress tests
-- Run time: ~18 seconds
+- Run time: ~17 seconds
 
 **Core Functionality:** ✅ All validated
 
@@ -96,6 +114,7 @@ Based on MCP-6 success, next decomposition targets:
 - Search engine
 - JSONL analytics
 - MCP server factory
+- Tool registry
 - Path utilities
 - Concurrent operations
 
@@ -105,20 +124,20 @@ Based on MCP-6 success, next decomposition targets:
 
 **Code Quality:**
 
-- Technical debt actively being reduced
-- Modular architecture emerging (MCP-6 foundation)
-- Test coverage comprehensive
+- Technical debt actively being reduced (MCP-6, MCP-7 complete)
+- Modular architecture established (server factory + tool registry)
+- Test coverage comprehensive (382/386 passing)
 - Zero known blocking bugs
 
 **Development Velocity:**
 
 - Cycle 8: 100% completion (all issues resolved)
-- Post-cycle: Proactive refactoring in progress
+- Post-cycle: Decomposition series 67% complete (MCP-6✅ MCP-7✅ MCP-8⏳)
 - PR workflow: Review → Test → Merge pattern established
 
 **Next Phase Focus:**
 
-- Continue index.ts decomposition (MCP-7, MCP-8)
+- Complete index.ts decomposition (MCP-8: request handlers)
 - Maintain test coverage
 - Monitor for regressions
 
@@ -132,5 +151,5 @@ Run `/current-focus` to update this file with latest Linear cycle data.
 
 ---
 
-_Last git sync: 52 minutes ago (master branch)_  
-_Test validation: 1:00 PM EST (365/369 passing)_
+_Last git sync: just now (master branch - MCP-7 merged)_
+_Test validation: 4:45 PM EST (382/386 passing)_
