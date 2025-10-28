@@ -88,7 +88,7 @@ This document tracks the migration of tool implementations from `src/index.ts` t
 3. **Phase 3**: Testing and validation
    - Add unit tests for each extracted tool
    - Add integration tests for complex workflows
-   - Verify all 369 tests pass
+   - Verify all tests pass (current: 331 passing, 34 failing, 4 skipped)
    - Run linter and typecheck
 
 4. **Phase 4**: Documentation and cleanup

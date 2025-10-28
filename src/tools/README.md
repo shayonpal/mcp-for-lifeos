@@ -196,5 +196,5 @@ tests/
 
 - [ADR 003: Search Tool Consolidation](../../docs/adr/003-search-tool-consolidation-fallback-strategy.md)
 - [ADR 005: Default Tool Mode](../../docs/adr/005-default-tool-mode-consolidated-only.md)
-- [MCP-6: Server Factory](../../dev/contracts/MCP-6-contracts.ts)
-- [MCP-38: Token Budget Management](../../dev/contracts/MCP-38-contracts.ts)
+- [MCP-6 Contracts Documentation](../../dev/contracts/MCP-6-contracts.ts)
+- [MCP-38 Contracts Documentation](../../dev/contracts/MCP-38-contracts.ts)
