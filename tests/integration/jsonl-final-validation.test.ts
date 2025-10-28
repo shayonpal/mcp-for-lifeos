@@ -101,44 +101,127 @@ describe('JSONL Analytics Final Validation', () => {
   });
 
   describe('Instance Identification', () => {
-    // TODO: Re-enable after analytics implementation is fixed
-    // Analytics feature is currently broken, preventing these spawned-process tests from working
-    // Tracked in MCP-65
-    it.skip('should generate unique instance IDs for each server start', async () => {
-      const instanceIds = new Set<string>();
+    let testAnalyticsFiles: string[] = [];
+    let testVaultPath: string;
+    
+    beforeEach(() => {
+      // Create a temporary vault for testing
+      testVaultPath = path.join(os.tmpdir(), `test-vault-${Date.now()}`);
+      fs.mkdirSync(testVaultPath, { recursive: true });
+      
+      // Create a dummy note for search to find
+      const dummyNote = path.join(testVaultPath, 'test-note.md');
+      fs.writeFileSync(dummyNote, '# Test Note\nThis is a test note for analytics testing.');
+    });
+    
+    afterEach(() => {
+      // Clean up test analytics files
+      testAnalyticsFiles.forEach(file => {
+        if (fs.existsSync(file)) {
+          try {
+            fs.unlinkSync(file);
+          } catch (error) {
+            console.warn(`Failed to cleanup ${file}:`, error);
+          }
+        }
+      });
+      testAnalyticsFiles = [];
+      
+      // Clean up test vault
+      if (testVaultPath && fs.existsSync(testVaultPath)) {
+        try {
+          fs.rmSync(testVaultPath, { recursive: true, force: true });
+        } catch (error) {
+          console.warn(`Failed to cleanup vault ${testVaultPath}:`, error);
+        }
+      }
+    });
+
+    it('should generate unique instance IDs for each server start', async () => {
+      const instanceData: Array<{
+        instanceId: string;
+        pid: number;
+        hostname: string;
+        sessionStart: string;
+      }> = [];
+      
+      const numIterations = 5;
       
       // Start and stop server multiple times
-      for (let i = 0; i < 3; i++) {
-        const testOutput = path.join(os.tmpdir(), `test-instance-${i}.jsonl`);
+      for (let i = 0; i < numIterations; i++) {
+        const testOutput = path.join(os.tmpdir(), `test-instance-${Date.now()}-${i}.jsonl`);
+        testAnalyticsFiles.push(testOutput);
+        
+        // Ensure output directory exists
+        const outputDir = path.dirname(testOutput);
+        if (!fs.existsSync(outputDir)) {
+          fs.mkdirSync(outputDir, { recursive: true });
+        }
         
         const server = spawn('node', [
-          path.join(process.cwd(), 'dist', 'index.js')
+          path.join(process.cwd(), 'dist', 'src', 'index.js')
         ], {
           env: {
             ...process.env,
+            LIFEOS_VAULT_PATH: testVaultPath, // Set vault path for the test (correct environment variable)
+            DISABLE_USAGE_ANALYTICS: 'false', // Explicitly enable analytics
             ENABLE_WEB_INTERFACE: 'false',
-            ANALYTICS_OUTPUT: testOutput
+            // Override the analytics output path via config if supported
+            ANALYTICS_OUTPUT_PATH: testOutput
           },
           stdio: ['pipe', 'pipe', 'pipe']
         });
         
-        // Send a test request
+        let serverOutput = '';
+        let serverError = '';
+        
+        // Capture server output for debugging
+        server.stdout?.on('data', (data) => {
+          serverOutput += data.toString();
+        });
+        
+        server.stderr?.on('data', (data) => {
+          serverError += data.toString();
+        });
+        
+        // Wait for server to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Send a test request to trigger analytics (use 'search' tool to ensure analytics is recorded)
         const request = JSON.stringify({
           jsonrpc: '2.0',
-          method: 'tools/list',
+          method: 'tools/call',
+          params: {
+            name: 'search',
+            arguments: {
+              query: 'test',
+              mode: 'quick'
+            }
+          },
           id: `instance-test-${i}`
         }) + '\n';
         
-        server.stdin!.write(request);
+        server.stdin?.write(request);
         
-        // Wait for response
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for response and analytics to be written
+        await new Promise(resolve => setTimeout(resolve, 2500));
         
-        // Kill server
+        // Gracefully shutdown server
         server.kill('SIGTERM');
-        await new Promise(resolve => server.on('exit', resolve));
         
-        // Check for instance ID in output (if file was created)
+        // Wait for server to exit
+        await new Promise<void>((resolve) => {
+          server.on('exit', () => resolve());
+          // Timeout after 3 seconds
+          setTimeout(() => {
+            if (!server.killed) {
+              server.kill('SIGKILL');
+            }
+            resolve();
+          }, 3000);
+        });
+        
+        // Check for instance ID in output file
         if (fs.existsSync(testOutput)) {
           const content = fs.readFileSync(testOutput, 'utf8');
           const lines = content.split('\n').filter(l => l.trim());
@@ -146,24 +229,66 @@ describe('JSONL Analytics Final Validation', () => {
           for (const line of lines) {
             try {
               const metric = JSON.parse(line);
-              if (metric.instanceId) {
-                instanceIds.add(metric.instanceId);
+              if (metric.instanceId && metric.pid && metric.hostname) {
+                // Store complete instance data
+                instanceData.push({
+                  instanceId: metric.instanceId,
+                  pid: metric.pid,
+                  hostname: metric.hostname,
+                  sessionStart: metric.sessionStart
+                });
+                // Only need one metric per server instance
+                break;
               }
-            } catch {}
+            } catch (error) {
+              console.warn(`Failed to parse metric line: ${line.substring(0, 100)}`);
+            }
           }
-          
-          // Clean up
-          fs.unlinkSync(testOutput);
+        } else {
+          console.warn(`Analytics file not created for iteration ${i}: ${testOutput}`);
+          console.warn(`Server output: ${serverOutput.substring(0, 500)}`);
+          console.warn(`Server error: ${serverError.substring(0, 500)}`);
         }
       }
       
-      // Each server start should have unique instance ID
-      // Note: May not create files if analytics disabled, so check if we got any
-      if (instanceIds.size > 0) {
-        expect(instanceIds.size).toBeGreaterThanOrEqual(1);
-        console.log(`Generated ${instanceIds.size} unique instance IDs`);
+      // Validate we collected data from all iterations
+      expect(instanceData.length).toBe(numIterations);
+      
+      // Validate instance ID uniqueness
+      const uniqueInstanceIds = new Set(instanceData.map(d => d.instanceId));
+      expect(uniqueInstanceIds.size).toBe(numIterations);
+      
+      // Validate instance ID format (UUID v4)
+      instanceData.forEach(data => {
+        expect(data.instanceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      });
+      
+      // Validate that each instance has required fields
+      instanceData.forEach(data => {
+        expect(data.pid).toBeGreaterThan(0);
+        expect(data.hostname).toBeTruthy();
+        expect(data.hostname.length).toBeGreaterThan(0);
+        expect(data.sessionStart).toBeTruthy();
+        // Validate sessionStart is a valid ISO timestamp
+        expect(() => new Date(data.sessionStart)).not.toThrow();
+        expect(new Date(data.sessionStart).toISOString()).toBe(data.sessionStart);
+      });
+      
+      // Validate PIDs are different (each server start gets new process)
+      const uniquePids = new Set(instanceData.map(d => d.pid));
+      expect(uniquePids.size).toBe(numIterations);
+      
+      // Validate sessionStart times are different and increasing
+      const sessionStarts = instanceData.map(d => new Date(d.sessionStart).getTime());
+      for (let i = 1; i < sessionStarts.length; i++) {
+        expect(sessionStarts[i]).toBeGreaterThanOrEqual(sessionStarts[i - 1]);
       }
-    }, 10000);
+      
+      console.log(`✓ Validated ${numIterations} unique instance IDs`);
+      console.log(`✓ All instance IDs are valid UUID v4 format`);
+      console.log(`✓ All ${numIterations} PIDs are unique`);
+      console.log(`✓ All sessionStart timestamps are valid and sequential`);
+    }, 30000); // Increased timeout for multiple server starts
   });
 
   describe('Concurrent Safety', () => {
