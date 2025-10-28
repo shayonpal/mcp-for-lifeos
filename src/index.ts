@@ -24,9 +24,13 @@ import { statSync } from 'fs';
 import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
 import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';
 // Tool handlers
-import { executeSearch } from './tools/search.js';
-import { executeCreateNote } from './tools/create-note.js';
-import { executeList } from './tools/list.js';
+import { 
+  executeSearch, 
+  executeCreateNote, 
+  executeList,
+  executeDiagnoseVault,
+  executeMoveItems
+} from './tools/index.js';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -1681,69 +1685,8 @@ function registerHandlers(instance: McpServerInstance): void {
       }
 
       case 'diagnose_vault': {
-        const checkYaml = (args.checkYaml as boolean) !== false; // Default true
-        const maxFiles = (args.maxFiles as number) || 100;
-        
-        const files = await VaultUtils.findNotes('**/*.md');
-        const filesToCheck = files.slice(0, maxFiles);
-        
-        let totalFiles = filesToCheck.length;
-        let successfulFiles = 0;
-        let problematicFiles: string[] = [];
-        let yamlErrors: { file: string, error: string }[] = [];
-        
-        for (const file of filesToCheck) {
-          try {
-            const note = VaultUtils.readNote(file);
-            successfulFiles++;
-            
-            // Check for common YAML issues
-            if (checkYaml && note.frontmatter) {
-              const frontmatterStr = JSON.stringify(note.frontmatter);
-              if (frontmatterStr.includes('undefined') || frontmatterStr.includes('null')) {
-                yamlErrors.push({ file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), error: 'Contains undefined/null values' });
-              }
-            }
-          } catch (error) {
-            problematicFiles.push(file.replace(LIFEOS_CONFIG.vaultPath + '/', ''));
-            yamlErrors.push({ 
-              file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), 
-              error: error instanceof Error ? error.message : String(error) 
-            });
-          }
-        }
-        
-        let diagnosticText = `# Vault Diagnostic Report\n\n`;
-        diagnosticText += `**Files Checked:** ${totalFiles}\n`;
-        diagnosticText += `**Successfully Parsed:** ${successfulFiles}\n`;
-        diagnosticText += `**Problematic Files:** ${problematicFiles.length}\n\n`;
-        
-        if (problematicFiles.length > 0) {
-          diagnosticText += `## Problematic Files\n\n`;
-          yamlErrors.slice(0, 10).forEach((error, index) => {
-            diagnosticText += `${index + 1}. **${error.file}**\n   Error: ${error.error}\n\n`;
-          });
-          
-          if (yamlErrors.length > 10) {
-            diagnosticText += `... and ${yamlErrors.length - 10} more files with issues.\n\n`;
-          }
-        }
-        
-        diagnosticText += `## Recommendations\n\n`;
-        if (problematicFiles.length > 0) {
-          diagnosticText += `- Fix YAML frontmatter in problematic files\n`;
-          diagnosticText += `- Check for unescaped special characters in YAML\n`;
-          diagnosticText += `- Ensure proper indentation and syntax\n`;
-        } else {
-          diagnosticText += `✅ All checked files are parsing correctly!\n`;
-        }
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: diagnosticText
-          }]
-        });
+        const response = await executeDiagnoseVault(args);
+        return addVersionMetadata(response);
       }
 
       case 'list_templates': {
@@ -1769,99 +1712,8 @@ function registerHandlers(instance: McpServerInstance): void {
       }
 
       case 'move_items': {
-        const args = request.params.arguments as unknown as MoveItemsInput;
-        const destination = args.destination as string;
-        if (!destination) {
-          throw new Error('Destination is required');
-        }
-
-        // Collect items to move
-        const itemsToMove: MoveItemType[] = [];
-
-        if (args.item) {
-          itemsToMove.push({ path: args.item });
-        } else if (args.items && Array.isArray(args.items)) {
-          itemsToMove.push(...args.items);
-        } else {
-          throw new Error('Either item or items must be provided');
-        }
-
-        if (itemsToMove.length === 0) {
-          throw new Error('No items specified to move');
-        }
-
-        const options = {
-          createDestination: args.createDestination as boolean || false,
-          overwrite: args.overwrite as boolean || false,
-          mergeFolders: args.mergeFolders as boolean || false
-        };
-
-        const results = {
-          moved: { notes: [] as string[], folders: [] as string[] },
-          failed: [] as Array<{ path: string; type: string; reason: string }>
-        };
-
-        for (const item of itemsToMove) {
-          const result = VaultUtils.moveItem(item.path, destination, options);
-          
-          if (result.success) {
-            const relativePath = result.newPath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
-            
-            try {
-              const isDirectory = statSync(result.newPath).isDirectory();
-              if (isDirectory) {
-                results.moved.folders.push(relativePath);
-              } else {
-                results.moved.notes.push(relativePath);
-              }
-            } catch (error) {
-              // If we can't stat the file, assume it's a note
-              results.moved.notes.push(relativePath);
-            }
-          } else {
-            results.failed.push({
-              path: item.path,
-              type: item.type || 'unknown',
-              reason: result.error || 'Unknown error'
-            });
-          }
-        }
-
-        // Generate response
-        let response = `# Move Operation Results\n\n`;
-        
-        if (results.moved.notes.length > 0 || results.moved.folders.length > 0) {
-          response += `## ✅ Successfully Moved\n\n`;
-          
-          if (results.moved.folders.length > 0) {
-            response += `**Folders (${results.moved.folders.length}):**\n`;
-            results.moved.folders.forEach(f => response += `- 📁 ${f}\n`);
-            response += '\n';
-          }
-          
-          if (results.moved.notes.length > 0) {
-            response += `**Notes (${results.moved.notes.length}):**\n`;
-            results.moved.notes.forEach(n => response += `- 📄 ${n}\n`);
-            response += '\n';
-          }
-        }
-        
-        if (results.failed.length > 0) {
-          response += `## ❌ Failed Moves\n\n`;
-          results.failed.forEach(f => {
-            response += `- **${f.path}**: ${f.reason}\n`;
-          });
-          response += '\n';
-        }
-        
-        response += `**Destination:** \`${destination}\``;
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: response
-          }]
-        });
+        const response = await executeMoveItems(args);
+        return addVersionMetadata(response);
       }
 
       case 'insert_content': {
