@@ -46,6 +46,17 @@ Based on MCP-7 completion, final decomposition target:
 
 ---
 
+## 🚫 Blocked/Deferred
+
+- **MCP-9**: Reorganize tool implementations (Deferred)
+  - Status: Blocked pending MCP-8 completion
+  - Reason: PR #105 conflicts with MCP-7 (tool registry extraction)
+  - Decision: Close PR #105, reassess after MCP-8
+  - Linear: https://linear.app/agilecode-studio/issue/MCP-9
+  - See PR #105 comments for full context
+
+---
+
 ## ✅ Recent Completions (Last 3 Days)
 
 **Decomposition Series:**
