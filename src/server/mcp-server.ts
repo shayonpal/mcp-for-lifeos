@@ -105,6 +105,23 @@ export const generateSessionId: GenerateSessionIdFunction = () => {
 };
 
 /**
+ * Extract client information from MCP server instance
+ *
+ * Centralizes client info extraction to avoid duplication across analytics call sites.
+ * Returns client name and version from MCP SDK's ClientVersion interface.
+ *
+ * @param server - MCP Server instance
+ * @returns ClientInfo object with name and version (may be undefined if client not initialized)
+ */
+export function extractClientInfo(server: Server): ClientInfo {
+  const clientImplementation = server.getClientVersion();
+  return {
+    name: clientImplementation?.name,
+    version: clientImplementation?.version
+  };
+}
+
+/**
  * Factory function for creating MCP server instances
  *
  * Creates configured MCP server with:
@@ -176,12 +193,9 @@ export const createMcpServer: CreateMcpServerFunction = (config) => {
 
   // Setup client info tracking callback
   server.oninitialized = () => {
-    const clientImplementation = server.getClientVersion();
-    if (clientImplementation) {
-      clientInfo = {
-        name: clientImplementation.name,
-        version: clientImplementation.version
-      };
+    const extractedClientInfo = extractClientInfo(server);
+    if (extractedClientInfo.name && extractedClientInfo.version) {
+      clientInfo = extractedClientInfo;
       // Log client info for debugging
       console.error(`[Analytics] Client connected: ${clientInfo.name} v${clientInfo.version} (session: ${sessionId})`);
 

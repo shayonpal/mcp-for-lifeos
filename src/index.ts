@@ -21,7 +21,7 @@ import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
 import { statSync } from 'fs';
-import { createMcpServer, SERVER_VERSION, parseToolMode } from './server/mcp-server.js';
+import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
 import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';
 
 // ============================================================================
@@ -1756,11 +1756,7 @@ function registerHandlers(instance: McpServerInstance): void {
           const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
 
           // Record analytics
-          const clientImplementation = server.getClientVersion();
-          const clientInfo = {
-            name: clientImplementation?.name,
-            version: clientImplementation?.version
-          };
+          const clientInfo = extractClientInfo(server);
           analytics.recordUsage({
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
@@ -1778,11 +1774,7 @@ function registerHandlers(instance: McpServerInstance): void {
           });
         } catch (error) {
           // Record failed analytics
-          const clientImplementation = server.getClientVersion();
-          const clientInfo = {
-            name: clientImplementation?.name,
-            version: clientImplementation?.version
-          };
+          const clientInfo = extractClientInfo(server);
           analytics.recordUsage({
             toolName: 'get_daily_note',
             executionTime: Date.now() - startTime,
