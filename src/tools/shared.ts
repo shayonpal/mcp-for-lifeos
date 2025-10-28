@@ -18,24 +18,6 @@ export interface ToolResponse {
 }
 
 /**
- * Version metadata helper
- * Adds server version and tool mode to tool responses
- */
-export function addVersionMetadata(
-  response: ToolResponse,
-  serverVersion: string,
-  toolMode: ToolMode
-): ToolResponse {
-  if (!response.metadata) {
-    response.metadata = {};
-  }
-  response.metadata.version = serverVersion;
-  response.metadata.serverName = 'lifeos-mcp';
-  response.metadata.toolMode = toolMode;
-  return response;
-}
-
-/**
  * Validate tool availability based on tool mode
  */
 export function validateToolMode(
