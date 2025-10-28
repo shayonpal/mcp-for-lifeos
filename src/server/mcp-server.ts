@@ -134,6 +134,23 @@ export function extractClientInfo(server: Server): ClientInfo {
  *
  * @param config - Server configuration
  * @returns Server instance with metadata and lifecycle methods
+ *
+ * @example
+ * // Basic usage with stdio transport (default)
+ * const server = createMcpServer({
+ *   vaultPath: '/path/to/vault',
+ *   serverName: 'my-mcp-server',
+ *   enableStdio: true
+ * });
+ * server.start();
+ *
+ * @example
+ * // Usage for testing (stdio transport disabled)
+ * const server = createMcpServer({
+ *   vaultPath: '/tmp/test-vault',
+ *   enableStdio: false // disables stdio transport for test environments
+ * });
+ * // Use server instance methods directly in tests
  */
 export const createMcpServer: CreateMcpServerFunction = (config) => {
   // Validate required configuration
