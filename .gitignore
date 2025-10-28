@@ -8,9 +8,6 @@ yarn-error.log*
 dist/
 build/
 
-# Development artifacts
-dev/
-
 # Environment variables
 .env
 .env.local
