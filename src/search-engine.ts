@@ -473,12 +473,14 @@ export class SearchEngine {
         allTermsPrefilterCaseSensitive = processedOptions.caseSensitive || false;
         allTermsPrefilterWords = allTermsPrefilterCaseSensitive
           ? parsed.terms
-          : parsed.normalizedTerms;
+          : (parsed.normalizedTerms ?? null);
 
         // Pre-compile regexes to avoid recompilation in the loop (performance optimization)
-        allTermsPrefilterRegexes = allTermsPrefilterWords.map(word =>
-          new RegExp(`\\b${escapeRegex(word)}\\b`, allTermsPrefilterCaseSensitive ? '' : 'i')
-        );
+        if (allTermsPrefilterWords) {
+          allTermsPrefilterRegexes = allTermsPrefilterWords.map(word =>
+            new RegExp(`\\b${escapeRegex(word)}\\b`, allTermsPrefilterCaseSensitive ? '' : 'i')
+          );
+        }
       }
     }
 
