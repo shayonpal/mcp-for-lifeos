@@ -30,7 +30,7 @@ function createMcpServer(config: McpServerConfig): McpServerInstance
 ```
 
 **Created:** 2025-10-28 (MCP-6) - 238 lines
-**Status:** Foundation for future decomposition (MCP-8: request handlers)
+**Status:** MCP-7 (tool registration) complete; foundation for final phase (MCP-8: request handlers)
 
 ### Tool Registry (`src/server/tool-registry.ts`)
 
