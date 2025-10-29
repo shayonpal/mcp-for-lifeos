@@ -14,17 +14,20 @@ import { YamlRulesManager } from './yaml-rules-manager.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
 import { LIFEOS_CONFIG } from './config.js';
-import { ResponseTruncator } from './response-truncator.js';
 import { normalizePath } from './path-utils.js';
-import { validateMaxResults, DEFAULT_TOKEN_BUDGET, TruncationMetadata } from '../dev/contracts/MCP-38-contracts.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './logger.js';
 import { statSync } from 'fs';
 import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
 import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';
+import { createRequestHandler } from './server/request-handler.js';
 import { getToolsForMode, addVersionMetadata as addToolVersionMetadata } from './server/tool-registry.js';
 import type { ToolRegistryConfig } from '../dev/contracts/MCP-7-contracts.js';
+import type { ToolHandlerContext } from '../dev/contracts/MCP-8-contracts.js';
+import type { RequestHandlerWithClientContext } from '../dev/contracts/MCP-96-contracts.js';
+import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MCP-96-contracts.js';
+import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -92,405 +95,86 @@ const tools: Tool[] = getToolsForMode(registryConfig);
 function registerHandlers(instance: McpServerInstance): void {
   const { server, analytics, sessionId } = instance;
 
+  const initialClientInfo = extractClientInfo(server);
+  const consolidatedRequestHandler = createRequestHandler({
+    toolMode: toolModeConfig.mode,
+    registryConfig,
+    analytics,
+    sessionId,
+    router: ToolRouter,
+    clientName: initialClientInfo.name ?? 'unknown-client',
+    clientVersion: initialClientInfo.version ?? '0.0.0'
+  }) as RequestHandlerWithClientContext;
+
+  const consolidatedToolNames = new Set<string>(CONSOLIDATED_TOOL_NAMES);
+
   // Tool handlers
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+    const { name, arguments: args } = request.params;
 
-  if (!args) {
-    throw new Error('Missing arguments');
-  }
+    if (!args) {
+      throw new Error('Missing arguments');
+    }
 
-  // Add version metadata to all responses using registry function
-  const addVersionMetadata = (response: any) => {
-    return addToolVersionMetadata(response, registryConfig);
-  };
-  
-  try {
+    const addVersionMetadata = (response: any) => addToolVersionMetadata(response, registryConfig);
+
+    const clientInfo = extractClientInfo(server);
+    consolidatedRequestHandler.updateClientContext(clientInfo);
+
+    if (consolidatedToolNames.has(name)) {
+      try {
+        return await consolidatedRequestHandler(request);
+      } catch (error) {
+        if (!isUnknownToolError(error)) {
+          throw error;
+        }
+
+        logger.warn(`hybrid-dispatch fallback engaged for consolidated tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
+
+        const fallbackHandler = getConsolidatedHandler(name);
+        if (fallbackHandler) {
+          const fallbackContext: ToolHandlerContext = {
+            toolMode: toolModeConfig.mode,
+            registryConfig,
+            analytics,
+            sessionId,
+            router: ToolRouter,
+            clientName: clientInfo.name ?? 'unknown-client',
+            clientVersion: clientInfo.version ?? '0.0.0'
+          };
+
+          return await analytics.recordToolExecution(
+            name,
+            async () => fallbackHandler(args as Record<string, unknown>, fallbackContext),
+            {
+              clientName: fallbackContext.clientName,
+              clientVersion: fallbackContext.clientVersion,
+              sessionId
+            }
+          );
+        }
+
+        throw error;
+      }
+    }
+
+    try {
 
     switch (name) {
       // Consolidated AI-Optimized Tools
       case 'search': {
-        if (toolModeConfig.mode === 'legacy-only') {
-          throw new Error('Consolidated tools are disabled. Use legacy search tools instead.');
-        }
-
-        // Validate and apply maxResults constraints
-        const validatedMaxResults = validateMaxResults(
-          typeof args.maxResults === 'number' ? args.maxResults : undefined,
-          'search'
-        );
-
-        const searchOptions: UniversalSearchOptions = {
-          ...args as unknown as UniversalSearchOptions,
-          maxResults: validatedMaxResults.value
-        };
-
-        // Note: OR queries are now handled in the ToolRouter by splitting into multiple searches
-        const allResults = await ToolRouter.routeSearch(searchOptions);
-
-        // Extract format parameter (default: detailed for backward compatibility)
-        const format = (args.format === 'concise' || args.format === 'detailed')
-          ? args.format
-          : 'detailed';
-
-        // Initialize token budget tracker
-        const tokenBudget = new ResponseTruncator(DEFAULT_TOKEN_BUDGET);
-
-        // Check if we have natural language interpretation to display
-        let interpretationText = '';
-        if (allResults.length > 0 && allResults[0].interpretation) {
-          interpretationText = NaturalLanguageProcessor.formatInterpretation(allResults[0].interpretation) + '\n\n';
-          // Account for interpretation text in budget
-          tokenBudget.consumeBudget(interpretationText);
-        }
-
-        // Track results that fit within budget
-        const includedResults: string[] = [];
-        let truncated = false;
-
-        for (let index = 0; index < allResults.length; index++) {
-          const result = allResults[index];
-          const note = result.note;
-          const score = result.score.toFixed(1);
-          const matchCount = result.matches.length;
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-
-          let output = ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown',
-            result.score,
-            `${matchCount} matches`,
-            format,
-            tokenBudget  // Pass truncator for potential future use
-          );
-
-          // Show top 3 matches with context (only in detailed mode for performance)
-          if (format === 'detailed') {
-            const topMatches = result.matches.slice(0, 3);
-            if (topMatches.length > 0) {
-              output += '\n\n**Matches:**\n';
-              topMatches.forEach(match => {
-                const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
-                output += `- *${type}*: "${match.context}"\n`;
-              });
-            }
-          }
-
-          // Check if adding this result would exceed budget
-          if (!tokenBudget.canAddResult(output + '\n\n---\n\n')) {
-            truncated = true;
-            break;  // Stop adding results (early termination)
-          }
-
-          // Consume budget for this result
-          tokenBudget.consumeBudget(output + '\n\n---\n\n');
-          includedResults.push(output);
-        }
-
-        const resultText = includedResults.join('\n\n---\n\n');
-
-        // Generate truncation metadata
-        const truncationInfo = tokenBudget.getTruncationInfo(
-          includedResults.length,
-          allResults.length,
-          format,
-          false  // autoDowngraded not implemented yet
-        );
-
-        // Build response text with truncation notice if applicable
-        let responseText = `${interpretationText}Found ${allResults.length} results`;
-        if (truncationInfo.truncated) {
-          responseText += ` (showing ${truncationInfo.shownCount})\n\n${truncationInfo.suggestion}`;
-        } else {
-          responseText += ':';
-        }
-        responseText += `\n\n${resultText}`;
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: responseText
-          }],
-          // Add truncation metadata for debugging/telemetry
-          truncation: truncationInfo.truncated ? truncationInfo : undefined
-        });
+        throw new Error('search handler should be resolved by consolidated registry');
       }
-
       case 'create_note': {
-        if (toolModeConfig.mode === 'legacy-only') {
-          throw new Error('Consolidated tools are disabled. Use legacy create_note_from_template tool instead.');
-        }
-        
-        const createOptions: SmartCreateNoteOptions = args as unknown as SmartCreateNoteOptions;
-        const templateResult = await ToolRouter.routeCreateNote(createOptions);
-        
-        // Generate filename, removing only Obsidian-restricted characters
-        const fileName = createOptions.title
-          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
-          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
-          .trim();                         // Remove leading/trailing spaces
-        
-        const note = VaultUtils.createNote(
-          fileName, 
-          templateResult.frontmatter, 
-          templateResult.content, 
-          templateResult.targetFolder
-        );
-
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, createOptions.title);
-        
-        // Determine if template was used - check templateResult structure
-        const usedTemplate = createOptions.template || 
-          (typeof templateResult === 'object' && templateResult.frontmatter && 
-           (templateResult.frontmatter.category?.includes?.('Restaurant') || 
-            templateResult.frontmatter.tags?.includes?.('restaurant'))) ? 'restaurant' : null;
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`
-          }]
-        });
+        throw new Error('create_note handler should be resolved by consolidated registry');
       }
-
       case 'list': {
-        if (toolModeConfig.mode === 'legacy-only') {
-          throw new Error('Consolidated tools are disabled. Use specific list tools instead.');
-        }
-
-        const listOptions: UniversalListOptions = args as unknown as UniversalListOptions;
-        const results = await ToolRouter.routeList(listOptions);
-
-        // Extract format parameter (default: detailed for backward compatibility)
-        const format = (args.format === 'concise' || args.format === 'detailed')
-          ? args.format
-          : 'detailed';
-
-        // Initialize token budget tracker
-        const tokenBudget = new ResponseTruncator(DEFAULT_TOKEN_BUDGET);
-
-        let responseText = '';
-        let truncated = false;
-        let totalItems = 0;
-        let shownItems = 0;
-
-        switch (listOptions.type) {
-          case 'folders': {
-            const folders = results as string[];
-            totalItems = folders.length;
-
-            if (format === 'concise') {
-              // Build response incrementally with budget tracking
-              const includedFolders: string[] = [];
-              for (const folder of folders) {
-                const formattedItem = `📁 ${folder}\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedFolders.push(folder);
-              }
-              shownItems = includedFolders.length;
-              responseText = includedFolders.map(f => `📁 ${f}`).join('\n');
-            } else {
-              const header = `Folders in ${listOptions.path || 'vault root'}:\n\n`;
-              tokenBudget.consumeBudget(header);
-              responseText = header;
-
-              const includedFolders: string[] = [];
-              for (const folder of folders) {
-                const formattedItem = `📁 ${folder}\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedFolders.push(folder);
-              }
-              shownItems = includedFolders.length;
-              responseText += includedFolders.map(f => `📁 ${f}`).join('\n');
-            }
-            break;
-          }
-
-          case 'daily_notes': {
-            const files = results as string[];
-            totalItems = files.length;
-
-            if (format === 'concise') {
-              const includedFiles: string[] = [];
-              for (const file of files) {
-                const formattedItem = `${file}\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedFiles.push(file);
-              }
-              shownItems = includedFiles.length;
-              responseText = includedFiles.join('\n');
-            } else {
-              const header = `Latest ${files.length} daily notes:\n\n`;
-              tokenBudget.consumeBudget(header);
-              responseText = header;
-
-              const includedFiles: string[] = [];
-              for (const file of files) {
-                const formattedItem = `**${file}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${file}\`\n\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedFiles.push(file);
-              }
-              shownItems = includedFiles.length;
-              responseText += includedFiles.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n');
-            }
-            break;
-          }
-
-          case 'templates': {
-            const templates = results as any[];
-            totalItems = templates.length;
-
-            if (format === 'concise') {
-              const includedTemplates: any[] = [];
-              for (const template of templates) {
-                const formattedItem = `**${template.key}**: ${template.name}\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedTemplates.push(template);
-              }
-              shownItems = includedTemplates.length;
-              responseText = includedTemplates.map(t => `**${t.key}**: ${t.name}`).join('\n');
-            } else {
-              const header = `# Available Templates\n\n`;
-              tokenBudget.consumeBudget(header);
-              responseText = header;
-
-              const includedTemplates: any[] = [];
-              for (let index = 0; index < templates.length; index++) {
-                const template = templates[index];
-                const formattedItem =
-                  `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                  `   ${template.description}\n` +
-                  `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                  `   📄 Content Type: ${template.contentType || 'Varies'}\n\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedTemplates.push(template);
-              }
-              shownItems = includedTemplates.length;
-              responseText += includedTemplates.map((template, index) => {
-                return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                       `   ${template.description}\n` +
-                       `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                       `   📄 Content Type: ${template.contentType || 'Varies'}`;
-              }).join('\n\n');
-            }
-            break;
-          }
-
-          case 'yaml_properties': {
-            const propertiesInfo = results as any;
-            const sortedProperties = propertiesInfo.properties;
-            totalItems = sortedProperties.length;
-
-            if (format === 'concise') {
-              const includedProperties: string[] = [];
-              for (const prop of sortedProperties) {
-                const formattedItem = `${prop}\n`;
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedProperties.push(prop);
-              }
-              shownItems = includedProperties.length;
-              responseText = includedProperties.join('\n');
-            } else {
-              const header = `# YAML Properties in Vault\n\n` +
-                           `Found **${sortedProperties.length}** unique properties` +
-                           (propertiesInfo.totalNotes ? ` across **${propertiesInfo.totalNotes}** notes` : '') +
-                           `\n\n## Properties List\n\n`;
-              tokenBudget.consumeBudget(header);
-              responseText = header;
-
-              const includedProperties: string[] = [];
-              for (const prop of sortedProperties) {
-                let formattedItem: string;
-                if (listOptions.includeCount && propertiesInfo.counts) {
-                  const count = propertiesInfo.counts[prop] || 0;
-                  formattedItem = `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-                } else {
-                  formattedItem = `- ${prop}\n`;
-                }
-                if (!tokenBudget.canAddResult(formattedItem)) {
-                  truncated = true;
-                  break;
-                }
-                tokenBudget.consumeBudget(formattedItem);
-                includedProperties.push(prop);
-              }
-              shownItems = includedProperties.length;
-
-              if (listOptions.includeCount && propertiesInfo.counts) {
-                responseText += includedProperties.map((prop: string) => {
-                  const count = propertiesInfo.counts[prop] || 0;
-                  return `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})`;
-                }).join('\n');
-              } else {
-                responseText += includedProperties.map((prop: string) => `- ${prop}`).join('\n');
-              }
-            }
-            break;
-          }
-
-          default:
-            responseText = `Listed ${Array.isArray(results) ? results.length : 'unknown'} items`;
-            totalItems = Array.isArray(results) ? results.length : 0;
-            shownItems = totalItems;
-        }
-
-        // Generate truncation metadata
-        const truncationInfo = tokenBudget.getTruncationInfo(
-          shownItems,
-          totalItems,
-          format,
-          false  // autoDowngraded not implemented yet
-        );
-
-        // Add truncation notice if applicable
-        if (truncationInfo.truncated) {
-          responseText = `Showing ${truncationInfo.shownCount} of ${truncationInfo.totalCount} items (limit reached)\n\n${truncationInfo.suggestion}\n\n---\n\n${responseText}`;
-        }
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: responseText
-          }],
-          // Add truncation metadata for debugging/telemetry
-          truncation: truncationInfo.truncated ? truncationInfo : undefined
-        });
+        throw new Error('list handler should be resolved by consolidated registry');
       }
-
       // Legacy Tool Aliases (redirect to consolidated tools)
       case 'search_notes':
       case 'advanced_search':
