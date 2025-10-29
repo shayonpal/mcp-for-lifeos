@@ -126,7 +126,7 @@ function registerHandlers(instance: McpServerInstance): void {
 
         const searchOptions: UniversalSearchOptions = {
           ...args as unknown as UniversalSearchOptions,
-          maxResults: validatedMaxResults
+          maxResults: validatedMaxResults.value
         };
 
         // Note: OR queries are now handled in the ToolRouter by splitting into multiple searches

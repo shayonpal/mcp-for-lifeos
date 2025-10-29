@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last Updated:** 2025-10-28  
+**Last Updated:** 2025-10-29  
 **Version:** 2.0.1
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
@@ -30,7 +30,7 @@ function createMcpServer(config: McpServerConfig): McpServerInstance
 ```
 
 **Created:** 2025-10-28 (MCP-6) - 238 lines
-**Status:** MCP-7 (tool registration) complete; foundation for final phase (MCP-8: request handlers)
+**Status:** MCP-7 (tool registration) complete; request handler infrastructure landed in MCP-95
 
 ### Tool Registry (`src/server/tool-registry.ts`)
 
@@ -63,7 +63,25 @@ Pure function module that centralizes tool registration, configuration, and mode
 
 **Created:** 2025-10-28 (MCP-7) - 856 lines
 **Test Coverage:** 100% (17 unit tests)
-**Status:** Complete, enables final decomposition phase (MCP-8: request handlers)
+**Status:** Complete, supports request handler infrastructure (MCP-95) and upcoming handler extraction
+
+### Request Handler Infrastructure (`src/server/request-handler.ts`)
+
+Dedicated module introduced in MCP-95 that centralizes request handling concerns ahead of handler extraction.
+
+**Key Responsibilities:**
+
+- Provide `createRequestHandler()` factory that compiles shared context once, enforces an empty registry during the infrastructure phase, and validates requests before dispatch.
+- Offer `isToolAllowed()` utility with cached tool-name sets per mode, replacing scattered availability checks.
+- Wrap future tool handlers with analytics logging via `wrapHandlerWithAnalytics()` to maintain telemetry parity.
+- Define structural contracts in `dev/contracts/MCP-95-contracts.ts` and align `validateMaxResults()` to return structured metadata.
+
+**Current Behavior (MCP-95):**
+
+- Registry intentionally empty; guard rails prevent premature handler registration until MCP-96 (consolidated handlers) and MCP-97 (legacy handlers) populate it.
+- Runtime remains routed through `src/index.ts`, but validation and analytics scaffolding live in the new module for seamless adoption.
+
+**Test Coverage:** Unit and integration suites validate tool-mode enforcement, empty-registry behavior, and the enhanced max-results validation contract.
 
 ### MCP Server Entry Point (`src/index.ts`)
 
@@ -77,7 +95,7 @@ Main entry point implementing Model Context Protocol server. Coordinates server 
 - Server lifecycle management
 
 **Status:** Reduced from 2,659 lines (pre-MCP-6) to 1,797 lines (post-MCP-7), total reduction of 862 lines (-32.4%)
-**Next:** Final decomposition phase (MCP-8: extract request handlers)
+**Next:** MCP-96 (consolidated handlers) and MCP-97 (legacy handlers) to populate request handler registry
 
 ### Tool Router (`src/tool-router.ts`)
 
