@@ -36,6 +36,12 @@ export interface RequestHandlerConfig {
 
   /** Tool router for business logic delegation */
   router: typeof ToolRouter;
+
+  /** Client name for analytics (e.g., "Claude Desktop", "Raycast") */
+  clientName: string;
+
+  /** Client version for analytics */
+  clientVersion: string;
 }
 
 /**
@@ -57,6 +63,12 @@ export interface ToolHandlerContext {
 
   /** Router for business logic */
   router: typeof ToolRouter;
+
+  /** Client name for analytics (e.g., "Claude Desktop", "Raycast") */
+  clientName: string;
+
+  /** Client version for analytics */
+  clientVersion: string;
 }
 
 /**

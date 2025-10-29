@@ -187,24 +187,30 @@ describe('Token-Limited Search Integration', () => {
   });
 
   describe('maxResults Parameter Validation', () => {
-    it('should enforce minimum maxResults=1', () => {
-      expect(() => validateMaxResults(0, 'search')).toThrow(/must be between 1 and 100/);
+    it('should constrain minimum maxResults to 1', () => {
+      const result = validateMaxResults(0, 'search');
+      expect(result.value).toBe(1);
+      expect(result.adjusted).toBe(true);
+      expect(result.originalValue).toBe(0);
     });
 
-    it('should enforce maximum maxResults=100', () => {
-      expect(() => validateMaxResults(101, 'search')).toThrow(/must be between 1 and 100/);
+    it('should constrain maximum maxResults to 100', () => {
+      const result = validateMaxResults(101, 'search');
+      expect(result.value).toBe(100);
+      expect(result.adjusted).toBe(true);
+      expect(result.originalValue).toBe(101);
     });
 
     it('should accept valid range 1-100', () => {
-      expect(validateMaxResults(1, 'search')).toBe(1);
-      expect(validateMaxResults(25, 'search')).toBe(25);
-      expect(validateMaxResults(100, 'search')).toBe(100);
+      expect(validateMaxResults(1, 'search').value).toBe(1);
+      expect(validateMaxResults(25, 'search').value).toBe(25);
+      expect(validateMaxResults(100, 'search').value).toBe(100);
     });
 
     it('should return default when undefined', () => {
-      expect(validateMaxResults(undefined, 'search')).toBe(25);
-      expect(validateMaxResults(undefined, 'list')).toBe(10);
-      expect(validateMaxResults(undefined, 'yaml_properties')).toBe(50);
+      expect(validateMaxResults(undefined, 'search').value).toBe(25);
+      expect(validateMaxResults(undefined, 'list').value).toBe(10);
+      expect(validateMaxResults(undefined, 'yaml_properties').value).toBe(50);
     });
   });
 

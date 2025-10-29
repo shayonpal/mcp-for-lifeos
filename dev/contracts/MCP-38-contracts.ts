@@ -489,33 +489,72 @@ export const TRUNCATION_MESSAGES = {
 // ============================================================================
 
 /**
+ * Max results validation result (MCP-95 enhancement)
+ * Validated and constrained maxResults parameter
+ */
+export interface MaxResultsValidation {
+  /** Validated maxResults value (constrained to limits) */
+  value: number;
+
+  /** Whether value was adjusted from input */
+  adjusted: boolean;
+
+  /** Original input value (if adjusted) */
+  originalValue?: number;
+}
+
+/**
  * Validate maxResults parameter
+ * Enhanced in MCP-95 to return validation result instead of throwing
+ *
  * @param value - maxResults value to validate
  * @param toolType - Tool type for appropriate constraints
- * @throws InvalidTokenConfigError if validation fails
+ * @returns Validation result with constrained value and adjustment metadata
  */
 export function validateMaxResults(
   value: number | undefined,
   toolType: 'search' | 'list' | 'yaml_properties'
-): number {
-  if (value === undefined) {
-    // Default values by tool type
-    if (toolType === 'search') return MAX_RESULTS_CONSTRAINTS.search.default;
-    if (toolType === 'list') return MAX_RESULTS_CONSTRAINTS.list.daily_notes.default;
-    return MAX_RESULTS_CONSTRAINTS.yaml_properties.values.default;
-  }
-
+): MaxResultsValidation {
   // Validation constraints
   const min = 1;
   const max = 100;
 
-  if (value < min || value > max) {
-    throw new InvalidTokenConfigError(
-      `maxResults must be between ${min} and ${max}, got ${value}`
-    );
+  // Default value if not provided
+  if (value === undefined) {
+    let defaultValue: number;
+    if (toolType === 'search') defaultValue = MAX_RESULTS_CONSTRAINTS.search.default;
+    else if (toolType === 'list') defaultValue = MAX_RESULTS_CONSTRAINTS.list.daily_notes.default;
+    else defaultValue = MAX_RESULTS_CONSTRAINTS.yaml_properties.values.default;
+
+    return {
+      value: defaultValue,
+      adjusted: false
+    };
   }
 
-  return value;
+  // Constrain to minimum
+  if (value < min) {
+    return {
+      value: min,
+      adjusted: true,
+      originalValue: value
+    };
+  }
+
+  // Constrain to maximum
+  if (value > max) {
+    return {
+      value: max,
+      adjusted: true,
+      originalValue: value
+    };
+  }
+
+  // Value within range
+  return {
+    value,
+    adjusted: false
+  };
 }
 
 /**

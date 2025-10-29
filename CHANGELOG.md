@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Request Handler Infrastructure** (MCP-95, 2025-10-29 15:40): Established dedicated request handler factory module with infrastructure-only guardrails
+  - Added `src/server/request-handler.ts` providing `createRequestHandler`, cached `isToolAllowed` validation, and analytics wrapper utilities
+  - Created contracts in `dev/contracts/MCP-95-contracts.ts` and enhanced MCP-38 contracts so `validateMaxResults` returns structured metadata instead of throwing
+  - Introduced unit and integration coverage (`tests/unit/server/request-handler.test.ts`, `tests/integration/request-handler-empty-registry.test.ts`) plus updated token-limit suites to assert new validation result shape
+  - Registry remains intentionally empty pending MCP-96/97; guard prevents premature handler registration while maintaining existing runtime behavior
+
 - **Tool Registry Extraction** (MCP-7, 2025-10-28 16:50): Extracted tool registration logic into dedicated pure function module
   - Created src/server/tool-registry.ts (856 lines) with 6 exported pure functions (public API: getConsolidatedTools, getLegacyTools, getLegacyAliases, getAlwaysAvailableTools, getToolsForMode, addVersionMetadata) plus internal helpers (validateToolCount)
   - Reduced src/index.ts from 2,588 to 1,797 lines (-791 lines, -30.5%)

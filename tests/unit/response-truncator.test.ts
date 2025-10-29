@@ -482,41 +482,47 @@ describe('Configuration Validation', () => {
   describe('validateMaxResults()', () => {
     it('should return default for undefined value (search)', () => {
       const result = validateMaxResults(undefined, 'search');
-      expect(result).toBe(25);
+      expect(result.value).toBe(25);
+      expect(result.adjusted).toBe(false);
     });
 
     it('should return default for undefined value (list)', () => {
       const result = validateMaxResults(undefined, 'list');
-      expect(result).toBe(10);
+      expect(result.value).toBe(10);
+      expect(result.adjusted).toBe(false);
     });
 
     it('should return default for undefined value (yaml_properties)', () => {
       const result = validateMaxResults(undefined, 'yaml_properties');
-      expect(result).toBe(50);
+      expect(result.value).toBe(50);
+      expect(result.adjusted).toBe(false);
     });
 
     it('should accept valid value within range', () => {
-      expect(validateMaxResults(50, 'search')).toBe(50);
-      expect(validateMaxResults(1, 'search')).toBe(1);
-      expect(validateMaxResults(100, 'search')).toBe(100);
+      expect(validateMaxResults(50, 'search').value).toBe(50);
+      expect(validateMaxResults(1, 'search').value).toBe(1);
+      expect(validateMaxResults(100, 'search').value).toBe(100);
     });
 
-    it('should reject value below minimum', () => {
-      expect(() => validateMaxResults(0, 'search')).toThrow(
-        /maxResults must be between 1 and 100/
-      );
+    it('should constrain value below minimum', () => {
+      const result = validateMaxResults(0, 'search');
+      expect(result.value).toBe(1);
+      expect(result.adjusted).toBe(true);
+      expect(result.originalValue).toBe(0);
     });
 
-    it('should reject value above maximum', () => {
-      expect(() => validateMaxResults(101, 'search')).toThrow(
-        /maxResults must be between 1 and 100/
-      );
+    it('should constrain value above maximum', () => {
+      const result = validateMaxResults(101, 'search');
+      expect(result.value).toBe(100);
+      expect(result.adjusted).toBe(true);
+      expect(result.originalValue).toBe(101);
     });
 
-    it('should reject negative values', () => {
-      expect(() => validateMaxResults(-5, 'search')).toThrow(
-        InvalidTokenConfigError
-      );
+    it('should constrain negative values', () => {
+      const result = validateMaxResults(-5, 'search');
+      expect(result.value).toBe(1);
+      expect(result.adjusted).toBe(true);
+      expect(result.originalValue).toBe(-5);
     });
   });
 });
