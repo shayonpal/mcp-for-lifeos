@@ -248,6 +248,22 @@ describe('Request Handler - createRequestHandler', () => {
     routeList: jest.fn()
   };
 
+  const mockServer = {
+    _options: {
+      clientInfo: {
+        name: 'test-client',
+        version: '1.0.0'
+      }
+    }
+  } as any;
+
+  const mockYamlRulesManager = {
+    isConfigured: jest.fn(() => false),
+    validateRulesFile: jest.fn(),
+    getRules: jest.fn(),
+    getRulesPath: jest.fn(() => '/test/rules.md')
+  } as any;
+
   const mockConfig: RequestHandlerConfig = {
     toolMode: 'consolidated-only',
     registryConfig: {
@@ -259,7 +275,9 @@ describe('Request Handler - createRequestHandler', () => {
     sessionId: 'test-session-123',
     router: mockRouter as any,
     clientName: 'test-client',
-    clientVersion: '1.0.0'
+    clientVersion: '1.0.0',
+    server: mockServer,
+    yamlRulesManager: mockYamlRulesManager
   };
 
   const mockVaultNote = {
@@ -399,12 +417,12 @@ describe('Request Handler - createRequestHandler', () => {
       const request = {
         method: 'tools/call',
         params: {
-          name: 'read_note',
+          name: 'nonexistent_tool',
           arguments: { path: 'test.md' }
         }
       } as any;
 
-      await expect(handler(request)).rejects.toThrow('Unknown tool: read_note');
+      await expect(handler(request)).rejects.toThrow("Tool 'nonexistent_tool' is not available in mode 'consolidated-only'");
     });
 
     it('validates tool mode before registry lookup', async () => {

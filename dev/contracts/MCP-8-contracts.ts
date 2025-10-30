@@ -8,10 +8,12 @@
  */
 
 import type { CallToolRequest, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { ToolMode } from './MCP-6-contracts.js';
 import type { ToolRegistryConfig } from './MCP-7-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import type { ToolRouter } from '../../src/tool-router.js';
+import type { YamlRulesManager } from '../../src/yaml-rules-manager.js';
 
 // ============================================================================
 // INPUT CONTRACTS
@@ -42,6 +44,12 @@ export interface RequestHandlerConfig {
 
   /** Client version for analytics */
   clientVersion: string;
+
+  /** MCP Server instance for extractClientInfo and other server operations */
+  server: Server;
+
+  /** YAML rules manager for metadata handlers */
+  yamlRulesManager: YamlRulesManager;
 }
 
 /**
@@ -69,6 +77,12 @@ export interface ToolHandlerContext {
 
   /** Client version for analytics */
   clientVersion: string;
+
+  /** MCP Server instance for extractClientInfo and other server operations (required for get_daily_note analytics) */
+  server: Server;
+
+  /** YAML rules manager for metadata handlers (required for get_yaml_rules, list_yaml_property_values) */
+  yamlRulesManager: YamlRulesManager;
 }
 
 /**

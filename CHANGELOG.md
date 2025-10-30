@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Always-Available Handler Extraction** (MCP-98, 2025-10-30 18:08): Extracted 9 always-available tool handlers with independent implementations into 3 logically-organized modules
+  - Added `src/server/handlers/note-handlers.ts` (254 lines) with read_note, edit_note, and insert_content handlers for note CRUD operations
+  - Added `src/server/handlers/utility-handlers.ts` (359 lines) with get_server_version, get_daily_note, diagnose_vault, and move_items handlers for server utilities
+  - Added `src/server/handlers/metadata-handlers.ts` (224 lines) with get_yaml_rules and list_yaml_property_values handlers for YAML/metadata operations
+  - Introduced `registerNoteHandlers()`, `registerUtilityHandlers()`, and `registerMetadataHandlers()` APIs for registry integration with lazy initialization
+  - Integrated handler modules into request handler registry chain in `src/server/request-handler.ts` with special analytics exemption for get_daily_note
+  - Reduced `src/index.ts` by 591 lines (39% reduction) while preserving analytics tracking, path normalization, and error handling
+  - Extended `VaultUtils.moveItem()` to return itemType for type-safe handler implementations, eliminating direct fs.statSync calls
+  - Created TypeScript contracts in `dev/contracts/MCP-98-contracts.ts` (377 lines) defining handler signatures and behavioral requirements
+  - Applied 7 code review fixes including version metadata consistency, duplicate code removal, double analytics prevention, and type safety improvements
+  - All 450/454 existing tests passing (99.1% pass rate) with manual verification of all 9 extracted handlers
+  - Technical debt: Unit test coverage for extracted handlers recommended in follow-up cycle (~150-200 lines per handler)
+
 - **Legacy Alias Handler Extraction** (MCP-97, 2025-10-30 09:11): Extracted 11 legacy tool alias handlers into dedicated module following established factory pattern
   - Added `src/server/handlers/legacy-alias-handlers.ts` (401 lines) with individual handler factories for backward compatibility
   - Introduced `registerLegacyAliasHandlers()` and `getLegacyAliasHandler()` public APIs for registry integration and hybrid dispatch

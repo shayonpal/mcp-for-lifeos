@@ -31,6 +31,22 @@ describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
     routeList: jest.fn()
   };
 
+  const mockServer = {
+    _options: {
+      clientInfo: {
+        name: 'test-client',
+        version: '1.0.0'
+      }
+    }
+  } as any;
+
+  const mockYamlRulesManager = {
+    isConfigured: jest.fn(() => false),
+    validateRulesFile: jest.fn(),
+    getRules: jest.fn(),
+    getRulesPath: jest.fn(() => '/test/rules.md')
+  } as any;
+
   const baseConfig: RequestHandlerConfig = {
     toolMode: 'consolidated-only',
     registryConfig: {
@@ -42,7 +58,9 @@ describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
     sessionId: 'integration-session',
     router: mockRouter as any,
     clientName: 'test-client',
-    clientVersion: '1.0.0'
+    clientVersion: '1.0.0',
+    server: mockServer,
+    yamlRulesManager: mockYamlRulesManager
   };
 
   beforeEach(() => {
@@ -138,10 +156,10 @@ describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
       await expect(handler({
         method: 'tools/call',
         params: {
-          name: 'read_note',
+          name: 'nonexistent_tool',
           arguments: { path: 'test.md' }
         }
-      } as any)).rejects.toThrow('Unknown tool: read_note');
+      } as any)).rejects.toThrow("Tool 'nonexistent_tool' is not available in mode 'consolidated-only'");
     });
 
     it('blocks consolidated tools in legacy-only mode before lookup', async () => {

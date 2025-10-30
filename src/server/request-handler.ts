@@ -34,6 +34,9 @@ import {
 } from './tool-registry.js';
 import { registerConsolidatedHandlers } from './handlers/consolidated-handlers.js';
 import { registerLegacyAliasHandlers } from './handlers/legacy-alias-handlers.js';
+import { registerNoteHandlers } from './handlers/note-handlers.js';
+import { registerUtilityHandlers } from './handlers/utility-handlers.js';
+import { registerMetadataHandlers } from './handlers/metadata-handlers.js';
 
 // ============================================================================
 // VALIDATION UTILITIES
@@ -210,12 +213,20 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
     sessionId: config.sessionId,
     router: config.router,
     clientName: config.clientName,
-    clientVersion: config.clientVersion
+    clientVersion: config.clientVersion,
+    server: config.server,
+    yamlRulesManager: config.yamlRulesManager
   };
 
-  const handlerRegistry = registerLegacyAliasHandlers(
-    registerConsolidatedHandlers(
-      new Map<string, ToolHandler>()
+  const handlerRegistry = registerMetadataHandlers(
+    registerUtilityHandlers(
+      registerNoteHandlers(
+        registerLegacyAliasHandlers(
+          registerConsolidatedHandlers(
+            new Map<string, ToolHandler>()
+          )
+        )
+      )
     )
   ) as MutableToolHandlerRegistry;
 
@@ -240,10 +251,14 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
     }
 
     // Wrap handler with analytics (used by MCP-96 consolidated handlers)
-    const wrappedHandler = wrapHandlerWithAnalytics(toolName, handler, context);
+    // Exception: get_daily_note has manual analytics tracking in handler
+    const shouldWrapAnalytics = toolName !== 'get_daily_note';
+    const finalHandler = shouldWrapAnalytics
+      ? wrapHandlerWithAnalytics(toolName, handler, context)
+      : handler;
 
     // Execute handler with context
-    return await wrappedHandler(args, context);
+    return await finalHandler(args, context);
   };
 
   const requestHandler = executeRequest as RequestHandlerWithClientContext;

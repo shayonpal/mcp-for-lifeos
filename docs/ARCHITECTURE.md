@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last Updated:** 2025-10-29  
+**Last Updated:** 2025-10-30
 **Version:** 2.0.1
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
@@ -67,21 +67,65 @@ Pure function module that centralizes tool registration, configuration, and mode
 
 ### Request Handler Infrastructure (`src/server/request-handler.ts`)
 
-Dedicated module introduced in MCP-95 that centralizes request handling concerns ahead of handler extraction.
+Factory module for MCP request handling with registry-based tool dispatch. Introduced in MCP-95 and fully populated in MCP-96, MCP-97, and MCP-98.
 
 **Key Responsibilities:**
 
-- Provide `createRequestHandler()` factory that compiles shared context once, enforces an empty registry during the infrastructure phase, and validates requests before dispatch.
-- Offer `isToolAllowed()` utility with cached tool-name sets per mode, replacing scattered availability checks.
-- Wrap future tool handlers with analytics logging via `wrapHandlerWithAnalytics()` to maintain telemetry parity.
-- Define structural contracts in `dev/contracts/MCP-95-contracts.ts` and align `validateMaxResults()` to return structured metadata.
+- Provide `createRequestHandler()` factory that compiles shared context once and dispatches tool requests via handler registry
+- Offer `isToolAllowed()` utility with cached tool-name sets per mode, replacing scattered availability checks
+- Wrap tool handlers with analytics logging via `wrapHandlerWithAnalytics()` to maintain telemetry parity (with exemptions for handlers with manual tracking)
+- Define structural contracts in `dev/contracts/MCP-95-contracts.ts` and align `validateMaxResults()` to return structured metadata
 
-**Current Behavior (MCP-95):**
+**Handler Registration Chain:**
 
-- Registry intentionally empty; guard rails prevent premature handler registration until MCP-96 (consolidated handlers) and MCP-97 (legacy handlers) populate it.
-- Runtime remains routed through `src/index.ts`, but validation and analytics scaffolding live in the new module for seamless adoption.
+1. **Consolidated Handlers** (MCP-96): search, create_note, list
+2. **Legacy Alias Handlers** (MCP-97): 11 backward compatibility aliases
+3. **Note Handlers** (MCP-98): read_note, edit_note, insert_content
+4. **Utility Handlers** (MCP-98): get_server_version, get_daily_note, diagnose_vault, move_items
+5. **Metadata Handlers** (MCP-98): get_yaml_rules, list_yaml_property_values
 
-**Test Coverage:** Unit and integration suites validate tool-mode enforcement, empty-registry behavior, and the enhanced max-results validation contract.
+**Status:** Complete with 26 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 9 always-available + 3 in-switch routing)
+
+**Test Coverage:** Unit and integration suites validate tool-mode enforcement, registry dispatch, and analytics wrapping
+
+### Handler Modules (`src/server/handlers/`)
+
+Extracted handler implementations organized by functional responsibility. Introduced across MCP-96, MCP-97, and MCP-98 to decompose monolithic switch statement.
+
+**Consolidated Handlers** (`consolidated-handlers.ts` - MCP-96):
+- `search` - Universal search with auto-routing (replaces 6 legacy search tools)
+- `create_note` - Smart note creation with template auto-detection
+- `list` - Universal listing with auto-type detection
+
+**Legacy Alias Handlers** (`legacy-alias-handlers.ts` - MCP-97):
+- 11 backward compatibility aliases for deprecated tool names
+- Parameter translation (contentType→query, pattern→query)
+- Deprecation warnings in responses
+- Hybrid dispatch fallback pattern
+
+**Note Handlers** (`note-handlers.ts` - MCP-98):
+- `read_note` - Read notes with formatted content and metadata
+- `edit_note` - Update note frontmatter and/or content (merge/replace modes)
+- `insert_content` - Insert content at specific locations (heading, blockRef, pattern, lineNumber)
+
+**Utility Handlers** (`utility-handlers.ts` - MCP-98):
+- `get_server_version` - Server information and capabilities
+- `get_daily_note` - Daily note handling with auto-creation and analytics tracking
+- `diagnose_vault` - Vault health diagnostics and YAML validation
+- `move_items` - Move notes/folders with various options
+
+**Metadata Handlers** (`metadata-handlers.ts` - MCP-98):
+- `get_yaml_rules` - YAML frontmatter rules document
+- `list_yaml_property_values` - Property value analysis with usage statistics
+
+**Design Patterns:**
+- Lazy initialization via `ensureHandlersInitialized()`
+- Chaining registration pattern: `registry => populate => return`
+- Hybrid dependency injection: Context for runtime state, imports for stateless utilities
+- Analytics exemptions for handlers with manual tracking (get_daily_note)
+- Version metadata injection for MCP compliance
+
+**Total Lines:** 1,638 across 5 modules (consolidated: 401, legacy: 401, note: 254, utility: 359, metadata: 224)
 
 ### MCP Server Entry Point (`src/index.ts`)
 
@@ -90,12 +134,12 @@ Main entry point implementing Model Context Protocol server. Coordinates server 
 **Key Responsibilities:**
 
 - MCP protocol implementation and request routing
-- Request/response handling for all MCP tools
+- Request/response handling via handler registry
 - Integration of server factory and tool registry
 - Server lifecycle management
 
-**Status:** Reduced from 2,659 lines (pre-MCP-6) to 1,797 lines (post-MCP-7), total reduction of 862 lines (-32.4%)
-**Next:** MCP-96 (consolidated handlers) and MCP-97 (legacy handlers) to populate request handler registry
+**Status:** Reduced from 2,659 lines (pre-MCP-6) to 1,060 lines (post-MCP-98), total reduction of 1,599 lines (-60.1%)
+**Decomposition Progress:** Handler extraction complete (MCP-96, MCP-97, MCP-98); 3 handlers remain in-switch (create_note_smart routing)
 
 ### Tool Router (`src/tool-router.ts`)
 
