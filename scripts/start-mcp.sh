@@ -8,5 +8,5 @@ export NVM_DIR="$HOME/.nvm"
 # Change to the project directory
 cd "/Users/shayon/DevProjects/mcp-for-lifeos"
 
-# Start the MCP server
-exec node dist/index.js "$@"
+# Start the MCP server (compiled entry lives under dist/src/index.js)
+exec node dist/src/index.js "$@"
