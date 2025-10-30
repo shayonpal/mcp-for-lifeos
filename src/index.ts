@@ -28,6 +28,7 @@ import type { ToolHandlerContext } from '../dev/contracts/MCP-8-contracts.js';
 import type { RequestHandlerWithClientContext } from '../dev/contracts/MCP-96-contracts.js';
 import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MCP-96-contracts.js';
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
+import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -136,6 +137,47 @@ function registerHandlers(instance: McpServerInstance): void {
         logger.warn(`hybrid-dispatch fallback engaged for consolidated tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
 
         const fallbackHandler = getConsolidatedHandler(name);
+        if (fallbackHandler) {
+          const fallbackContext: ToolHandlerContext = {
+            toolMode: toolModeConfig.mode,
+            registryConfig,
+            analytics,
+            sessionId,
+            router: ToolRouter,
+            clientName: clientInfo.name ?? 'unknown-client',
+            clientVersion: clientInfo.version ?? '0.0.0'
+          };
+
+          return await analytics.recordToolExecution(
+            name,
+            async () => fallbackHandler(args as Record<string, unknown>, fallbackContext),
+            {
+              clientName: fallbackContext.clientName,
+              clientVersion: fallbackContext.clientVersion,
+              sessionId
+            }
+          );
+        }
+
+        throw error;
+      }
+    }
+
+    // Create Set of legacy alias tool names for efficient lookup
+    const legacyAliasToolNames = new Set<string>(LEGACY_ALIAS_TOOL_NAMES);
+
+    // Hybrid dispatch for legacy alias tools (non-legacy-only mode)
+    if (legacyAliasToolNames.has(name) && toolModeConfig.mode !== 'legacy-only') {
+      try {
+        return await consolidatedRequestHandler(request);
+      } catch (error) {
+        if (!isUnknownToolError(error)) {
+          throw error;
+        }
+
+        logger.warn(`hybrid-dispatch fallback engaged for legacy alias tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
+
+        const fallbackHandler = getLegacyAliasHandler(name);
         if (fallbackHandler) {
           const fallbackContext: ToolHandlerContext = {
             toolMode: toolModeConfig.mode,

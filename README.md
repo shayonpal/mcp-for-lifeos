@@ -1,6 +1,6 @@
 # LifeOS MCP Server
 
-**Last updated: 2025-10-24 00:23**
+**Last updated: 2025-10-30**
 
 A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Provides AI assistants with structured access to create, read, and search notes while maintaining YAML compliance and organizational standards.
 
@@ -16,7 +16,7 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Pr
 - **Analytics Dashboard**: Telemetry with visual insights (⚠️ currently buggy, not recommended for use)
 - **Universal Tools**: Consolidates 6 search tools into 1, with auto-routing
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
-- **Backward Compatibility**: All legacy tools continue to work with deprecation warnings
+- **Backward Compatibility**: All 11 legacy tool aliases continue to work with deprecation warnings via dedicated handler module (MCP-97) and hybrid dispatch fallback
 
 ## Quick Start
 
@@ -181,10 +181,10 @@ Templates automatically process Templater syntax and place notes in correct PARA
 
 ```bash
 # Auto-detect template from title
-create_note_smart title: "Pizza Palace"  # → restaurant template
+create_note title: "Pizza Palace"  # → restaurant template
 
 # Explicit template
-create_note_smart title: "My Article" template: "article"
+create_note title: "My Article" template: "article"
 ```
 
 **📖 For template system details, see [Templates Guide](docs/guides/TEMPLATES.md)**
