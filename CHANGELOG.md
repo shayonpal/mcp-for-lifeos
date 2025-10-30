@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Legacy Alias Handler Extraction** (MCP-97, 2025-10-30 09:11): Extracted 11 legacy tool alias handlers into dedicated module following established factory pattern
+  - Added `src/server/handlers/legacy-alias-handlers.ts` (401 lines) with individual handler factories for backward compatibility
+  - Introduced `registerLegacyAliasHandlers()` and `getLegacyAliasHandler()` public APIs for registry integration and hybrid dispatch
+  - Integrated legacy alias handlers into request handler registry chain in `src/server/request-handler.ts`
+  - Reduced `src/index.ts` by ~212 lines while preserving deprecation warnings and parameter mapping logic (contentType→query, pattern→query)
+  - Added hybrid dispatch fallback pattern for legacy aliases mirroring consolidated tools (MCP-96)
+  - Created comprehensive test coverage: 17 unit tests and 11 integration tests validating parameter mapping, mode guards, and deprecation warnings
+  - All 11 legacy aliases (6 search, 1 template, 4 list) redirect to consolidated tools with backward-compatible parameter translation
+
 - **Consolidated Handler Registry** (MCP-96, 2025-10-29 19:10): Populated the request-handler map with consolidated tool implementations and hybrid dispatch safeguards
   - Added `dev/contracts/MCP-96-contracts.ts` exposing `MutableToolHandlerRegistry`, `RequestHandlerWithClientContext`, and `UnknownToolError` for legacy fallback detection
   - Introduced `src/server/handlers/consolidated-handlers.ts` and refactored `src/server/request-handler.ts` to register `search`, `create_note`, and `list` through analytics-aware wrappers

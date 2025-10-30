@@ -28,6 +28,7 @@ import type { ToolHandlerContext } from '../dev/contracts/MCP-8-contracts.js';
 import type { RequestHandlerWithClientContext } from '../dev/contracts/MCP-96-contracts.js';
 import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MCP-96-contracts.js';
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
+import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -162,6 +163,47 @@ function registerHandlers(instance: McpServerInstance): void {
       }
     }
 
+    // Create Set of legacy alias tool names for efficient lookup
+    const legacyAliasToolNames = new Set<string>(LEGACY_ALIAS_TOOL_NAMES);
+
+    // Hybrid dispatch for legacy alias tools (non-legacy-only mode)
+    if (legacyAliasToolNames.has(name) && toolModeConfig.mode !== 'legacy-only') {
+      try {
+        return await consolidatedRequestHandler(request);
+      } catch (error) {
+        if (!isUnknownToolError(error)) {
+          throw error;
+        }
+
+        logger.warn(`hybrid-dispatch fallback engaged for legacy alias tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
+
+        const fallbackHandler = getLegacyAliasHandler(name);
+        if (fallbackHandler) {
+          const fallbackContext: ToolHandlerContext = {
+            toolMode: toolModeConfig.mode,
+            registryConfig,
+            analytics,
+            sessionId,
+            router: ToolRouter,
+            clientName: clientInfo.name ?? 'unknown-client',
+            clientVersion: clientInfo.version ?? '0.0.0'
+          };
+
+          return await analytics.recordToolExecution(
+            name,
+            async () => fallbackHandler(args as Record<string, unknown>, fallbackContext),
+            {
+              clientName: fallbackContext.clientName,
+              clientVersion: fallbackContext.clientVersion,
+              sessionId
+            }
+          );
+        }
+
+        throw error;
+      }
+    }
+
     try {
 
     switch (name) {
@@ -175,219 +217,25 @@ function registerHandlers(instance: McpServerInstance): void {
       case 'list': {
         throw new Error('list handler should be resolved by consolidated registry');
       }
-      // Legacy Tool Aliases (redirect to consolidated tools)
+
+      // Legacy Tool Aliases - handled by registry in non-legacy-only modes
+      // Fall through to legacy implementations for legacy-only mode
       case 'search_notes':
       case 'advanced_search':
       case 'quick_search':
       case 'search_by_content_type':
       case 'search_recent':
-      case 'find_notes_by_pattern': {
-        // In non-legacy-only modes, route to consolidated search tool
-        if (toolModeConfig.mode !== 'legacy-only') {
-          // Map legacy parameters to universal search parameters
-          const searchOptions: UniversalSearchOptions = args as unknown as UniversalSearchOptions;
+      case 'find_notes_by_pattern':
+        throw new Error(`${name} handler should be resolved by legacy alias registry`);
 
-          // Determine the appropriate mode based on the legacy tool name
-          if (name === 'search_notes') {
-            searchOptions.mode = 'advanced'; // search_notes maps to advanced search
-          } else if (name === 'advanced_search') {
-            searchOptions.mode = 'advanced';
-          } else if (name === 'quick_search') {
-            searchOptions.mode = 'quick';
-          } else if (name === 'search_by_content_type') {
-            searchOptions.mode = 'content_type';
-            // Map contentType parameter to query for content_type mode
-            if (args.contentType && !searchOptions.query) {
-              searchOptions.query = args.contentType as string;
-            }
-          } else if (name === 'search_recent') {
-            searchOptions.mode = 'recent';
-          } else if (name === 'find_notes_by_pattern') {
-            searchOptions.mode = 'pattern';
-            // Map pattern parameter to query for pattern mode
-            if (args.pattern && !searchOptions.query) {
-              searchOptions.query = args.pattern as string;
-            }
-          }
-
-          const results = await ToolRouter.routeSearch(searchOptions);
-
-          // Add deprecation warning to response
-          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use the \`search\` tool with mode="${searchOptions.mode}" instead for better performance and features.\n\n`;
-
-          let interpretationText = '';
-          if (results.length > 0 && results[0].interpretation) {
-            interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
-          }
-
-          const resultText = results.map((result, index) => {
-            const note = result.note;
-            const score = result.score.toFixed(1);
-            const matchCount = result.matches.length;
-            const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-
-            let output = ObsidianLinks.formatSearchResult(
-              index + 1,
-              title,
-              note.path,
-              note.frontmatter['content type'] || 'Unknown',
-              result.score,
-              `${matchCount} matches`
-            );
-
-            const topMatches = result.matches.slice(0, 3);
-            if (topMatches.length > 0) {
-              output += '\n\n**Matches:**\n';
-              topMatches.forEach(match => {
-                const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
-                output += `- *${type}*: "${match.context}"\n`;
-              });
-            }
-
-            return output;
-          }).join('\n\n---\n\n');
-
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `${deprecationWarning}${interpretationText}Found ${results.length} results:\n\n${resultText}`
-            }]
-          });
-        }
-        // Fall through to legacy implementation for legacy-only mode
-      }
-
-      case 'create_note_from_template': {
-        // In non-legacy-only modes, route to consolidated create_note tool
-        if (toolModeConfig.mode !== 'legacy-only') {
-          const createOptions: SmartCreateNoteOptions = {
-            title: args.title as string,
-            template: args.template as string,
-            customData: args.customData as Record<string, any>,
-            auto_template: false // Explicit template specified
-          };
-
-          const templateResult = await ToolRouter.routeCreateNote(createOptions);
-
-          const fileName = createOptions.title
-            .replace(/[\[\]:;]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-          const note = VaultUtils.createNote(
-            fileName,
-            templateResult.frontmatter,
-            templateResult.content,
-            templateResult.targetFolder
-          );
-
-          const obsidianLink = ObsidianLinks.createClickableLink(note.path, createOptions.title);
-          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`create_note_from_template\` tool is deprecated. Please use \`create_note\` instead.\n\n`;
-
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `${deprecationWarning}✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n🔧 Template: ${createOptions.template}`
-            }]
-          });
-        }
-        // Fall through to legacy implementation for legacy-only mode
-      }
+      case 'create_note_from_template':
+        throw new Error('create_note_from_template handler should be resolved by legacy alias registry');
 
       case 'list_folders':
       case 'list_daily_notes':
       case 'list_templates':
-      case 'list_yaml_properties': {
-        // In non-legacy-only modes, route to consolidated list tool
-        if (toolModeConfig.mode !== 'legacy-only') {
-          // Map legacy parameters to universal list parameters
-          let listType: string = 'auto';
-          const listOptions: UniversalListOptions = { type: 'auto' };
-
-          if (name === 'list_folders') {
-            listType = 'folders';
-            listOptions.type = 'folders';
-            if (args.path) listOptions.path = args.path as string;
-          } else if (name === 'list_daily_notes') {
-            listType = 'daily_notes';
-            listOptions.type = 'daily_notes';
-            if (args.limit) listOptions.limit = args.limit as number;
-          } else if (name === 'list_templates') {
-            listType = 'templates';
-            listOptions.type = 'templates';
-          } else if (name === 'list_yaml_properties') {
-            listType = 'yaml_properties';
-            listOptions.type = 'yaml_properties';
-            if (args.includeCount) listOptions.includeCount = args.includeCount as boolean;
-            if (args.sortBy) listOptions.sortBy = args.sortBy as string;
-            if (args.excludeStandard) listOptions.excludeStandard = args.excludeStandard as boolean;
-          }
-
-          const results = await ToolRouter.routeList(listOptions);
-          const deprecationWarning = `⚠️ **DEPRECATION NOTICE**: The \`${name}\` tool is deprecated. Please use \`list\` with type="${listType}" instead.\n\n`;
-
-          let responseText = '';
-
-          switch (listOptions.type) {
-            case 'folders': {
-              const folders = results as string[];
-              responseText = `Folders in ${listOptions.path || 'vault root'}:\n\n${folders.map(f => `📁 ${f}`).join('\n')}`;
-              break;
-            }
-
-            case 'daily_notes': {
-              const files = results as string[];
-              responseText = `Latest ${files.length} daily notes:\n\n${files.map(f => `**${f}**\n\`${LIFEOS_CONFIG.dailyNotesPath}/${f}\``).join('\n\n')}`;
-              break;
-            }
-
-            case 'templates': {
-              const templates = results as any[];
-              const templateList = templates.map((template, index) => {
-                return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                       `   ${template.description}\n` +
-                       `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                       `   📄 Content Type: ${template.contentType || 'Varies'}`;
-              }).join('\n\n');
-
-              responseText = `# Available Templates\n\n${templateList}`;
-              break;
-            }
-
-            case 'yaml_properties': {
-              const propertiesInfo = results as any;
-              const sortedProperties = propertiesInfo.properties;
-
-              responseText = `# YAML Properties in Vault\n\n`;
-              responseText += `Found **${sortedProperties.length}** unique properties`;
-              if (propertiesInfo.totalNotes) {
-                responseText += ` across **${propertiesInfo.totalNotes}** notes`;
-              }
-              responseText += `\n\n## Properties List\n\n`;
-
-              if (listOptions.includeCount && propertiesInfo.counts) {
-                sortedProperties.forEach((prop: string) => {
-                  const count = propertiesInfo.counts[prop] || 0;
-                  responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-                });
-              } else {
-                sortedProperties.forEach((prop: string) => {
-                  responseText += `- ${prop}\n`;
-                });
-              }
-              break;
-            }
-          }
-
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `${deprecationWarning}${responseText}`
-            }]
-          });
-        }
-        // Fall through to legacy implementation for legacy-only mode
-      }
+      case 'list_yaml_properties':
+        throw new Error(`${name} handler should be resolved by legacy alias registry`);
 
       case 'get_server_version': {
         const includeTools = args.includeTools as boolean;

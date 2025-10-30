@@ -33,6 +33,7 @@ import {
   getLegacyAliases
 } from './tool-registry.js';
 import { registerConsolidatedHandlers } from './handlers/consolidated-handlers.js';
+import { registerLegacyAliasHandlers } from './handlers/legacy-alias-handlers.js';
 
 // ============================================================================
 // VALIDATION UTILITIES
@@ -212,8 +213,10 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
     clientVersion: config.clientVersion
   };
 
-  const handlerRegistry = registerConsolidatedHandlers(
-    new Map<string, ToolHandler>()
+  const handlerRegistry = registerLegacyAliasHandlers(
+    registerConsolidatedHandlers(
+      new Map<string, ToolHandler>()
+    )
   ) as MutableToolHandlerRegistry;
 
   const executeRequest: RequestHandler = async (request: CallToolRequest): Promise<CallToolResult> => {
