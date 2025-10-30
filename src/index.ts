@@ -260,7 +260,6 @@ function registerHandlers(instance: McpServerInstance): void {
       case 'move_items':
       case 'insert_content':
       case 'list_yaml_property_values':
-      case 'create_note_from_template':
         throw new Error(`${name} handler should be registered in handler registry`);
 
       case 'search_notes': {
