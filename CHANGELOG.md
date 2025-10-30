@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Consolidated Handler Registry** (MCP-96, 2025-10-29 19:10): Populated the request-handler map with consolidated tool implementations and hybrid dispatch safeguards
+  - Added `dev/contracts/MCP-96-contracts.ts` exposing `MutableToolHandlerRegistry`, `RequestHandlerWithClientContext`, and `UnknownToolError` for legacy fallback detection
+  - Introduced `src/server/handlers/consolidated-handlers.ts` and refactored `src/server/request-handler.ts` to register `search`, `create_note`, and `list` through analytics-aware wrappers
+  - Simplified `src/index.ts` to delegate tool execution to the registry, enabling client-context updates before each request
+  - Expanded Jest coverage (unit and integration suites) to assert consolidated execution paths, mode gating, and fallback error propagation
+
 - **Request Handler Infrastructure** (MCP-95, 2025-10-29 15:40): Established dedicated request handler factory module with infrastructure-only guardrails
   - Added `src/server/request-handler.ts` providing `createRequestHandler`, cached `isToolAllowed` validation, and analytics wrapper utilities
   - Created contracts in `dev/contracts/MCP-95-contracts.ts` and enhanced MCP-38 contracts so `validateMaxResults` returns structured metadata instead of throwing

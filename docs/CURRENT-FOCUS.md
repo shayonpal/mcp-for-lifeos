@@ -1,39 +1,35 @@
 # Current Development Focus
 
-**Last Updated:** 2025-10-29 3:40 PM (EDT)  
-**Current Branch:** master  
-**Phase:** Request Handler Decomposition – Infrastructure Delivered
+**Last Updated:** 2025-10-29 7:10 PM (EDT)  
+**Current Branch:** feature/mcp-96-consolidated-handler-registry  
+**Phase:** Request Handler Decomposition – Consolidated Handlers In Progress
 
 ---
 
 ## 🔧 Active Work
 
-**MCP-95: Request Handler Infrastructure** (Code complete – infrastructure-only)
+**MCP-96: Consolidated Handler Registry** (In review/testing)
 
 Context:
 
-- Continuation of the decomposition series (MCP-6 server factory → MCP-7 tool registry → MCP-95 infrastructure) to pull request handling out of `src/index.ts`.
-- Establishes `src/server/request-handler.ts` with factory, cached `isToolAllowed` validator, analytics wrapper, and an explicit empty-registry guard ahead of MCP-96/97.
-- Updates contracts (`dev/contracts/MCP-95-contracts.ts`, MCP-38 max-results return type) and expands Jest coverage so downstream issues inherit the scaffolding.
+- Populates the request-handler factory with consolidated tools (`search`, `create_note`, `list`) via `registerConsolidatedHandlers`.
+- Moves consolidated implementations into `src/server/handlers/consolidated-handlers.ts` and adds `UnknownToolError` contracts for hybrid fallback.
+- Updates `src/index.ts` to delegate execution through the registry while refreshing analytics client context per request.
 
-- Status: ✅ Implementation staged on current branch; documentation updates in progress before merge.
-- Testing: Jest 24 suites / 434 tests (4 skipped) passing locally (`npm test -- --watch=false`, Oct 29 2025 3:35 PM EDT).
+- Status: 🚧 Code + tests staged on feature branch; wrapping documentation before review.
+- Testing: `npm run lint`, `npm run typecheck`, `npm run test -- request-handler` (2 suites / 38 tests) all green as of Oct 29 2025 7:10 PM EDT.
 - Key achievements:
-  - Created dedicated request handler module and analytics wrapper with zero runtime regressions.
-  - Introduced structured `ToolAvailabilityResult` usage via cached tool name sets per mode.
-  - Added targeted unit/integration suites covering empty registry behavior and validation contract changes.
+  - Consolidated tool requests now execute through analytics-aware handlers registered at factory creation.
+  - Added `dev/contracts/MCP-96-contracts.ts` with `MutableToolHandlerRegistry`, `RequestHandlerWithClientContext`, and `UnknownToolError`.
+  - Simplified `src/index.ts` hybrid dispatch, ensuring client metadata stays in sync for analytics.
 - Follow-up actions:
-  - MCP-96 will populate consolidated handlers and relax the empty-registry guard.
-  - MCP-97 will migrate legacy handlers and aliases into the new registry.
+  - Validate legacy fallback path once MCP-97 migrates classic handlers and aliases.
+  - Address ts-jest `isolatedModules` warning post-merge (tsconfig update) ahead of v30 release.
+  - Coordinate release notes for consolidated handler milestone.
 
 ---
 
 ## 📋 Next Up (Technical Debt Series)
-
-- **MCP-96**: Populate request handler registry with consolidated tool implementations
-  - Move `search`, `create_note`, and `list` handlers into `src/server/request-handler.ts`
-  - Remove MCP-95 empty-registry guard once handlers are wired
-  - Ensure analytics wrapper and version metadata integration remain intact
 
 - **MCP-97**: Add legacy handlers and aliases to the registry
   - Preserve backward-compatible behavior for legacy tools and alias names
@@ -58,10 +54,10 @@ Context:
 
 **Decomposition Series:**
 
-- **MCP-95**: Request handler infrastructure (current branch)
+- **MCP-95**: Request handler infrastructure (merged)
+  - PR #108 merged (squash) with new module, contracts, tests, and documentation package
   - Created `src/server/request-handler.ts` with factory, analytics wrapper, and cached `isToolAllowed`
-  - Added `dev/contracts/MCP-95-contracts.ts` and updated MCP-38 max-results return shape
-  - Introduced focused unit & integration tests (registry remains empty by design)
+  - Added `dev/contracts/MCP-95-contracts.ts`, updated MCP-38 max-results return shape, and shipped baseline `.eslintrc.cjs`
 
 - **MCP-7**: Extract tool registry from monolithic index.ts
   - PR #107 merged earlier this week
@@ -99,31 +95,24 @@ Context:
 
 ---
 
-## ✅ All Tests Passing (430/434)
+## ✅ Test & Quality Snapshot
 
-**Last Run:** Oct 29, 2025 3:35 PM EDT (`npm test -- --watch=false`)
+**Last Run:** Oct 29, 2025 7:10 PM EDT (`npm run lint`, `npm run typecheck`, `npm run test -- request-handler`)
 
 **Status:**
 
-- 430 tests passing, 4 intentionally skipped (analytics long-tail + timezone edge case)
-- Request handler unit/integration suites cover empty-registry behavior and mode validation
+- Targeted request-handler suites (2/2) green; consolidated registry scenarios validated end-to-end.
+- `npm run lint` and `npm run typecheck` remain clean; npm vs. Node version warning acknowledged.
+- Prior full-suite picture (Oct 29 2025 4:20 PM EDT) still shows one failing JSONL stress harness; no change pending legacy handler work.
 
 **Test Suites:**
 
-- 24/24 test suites passing
-- Mix of unit, integration, and stress coverage
-- Run time: ~16 seconds on Mac mini dev hardware
+- Request-handler focus: 38 tests passing (unit + integration), 0 failures.
+- Full suite baseline unchanged: JSONL stress harness continues to exceed memory guard; revisit post-MCP-97.
 
-**Core Functionality:** ✅ All validated
+**Core Functionality:** ✅ Daily note workflows, template processing, search engine, analytics logging, MCP server factory, tool registry, request handler infrastructure
 
-- Daily note workflows
-- Template processing
-- Search engine
-- JSONL analytics
-- MCP server factory
-- Tool registry
-- Path utilities
-- Concurrent operations
+**Known exception:** 🟥 JSONL stress harness currently exceeds memory guard threshold; investigation deferred until consolidated handler rollout (MCP-96/97) completes.
 
 ---
 
@@ -158,5 +147,5 @@ Run `/current-focus` to update this file with latest Linear cycle data.
 
 ---
 
-_Last git sync: Oct 29 2025 afternoon (master branch + MCP-95 staging)_  
-_Test validation: 3:35 PM EDT (430/434 passing)_
+_Last git sync: Oct 29 2025 4:30 PM EDT (master @ PR #108 merged)_  
+_Quality snapshot: 4:20 PM EDT (429/434 passing, lint + typecheck green)_

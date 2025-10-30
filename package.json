@@ -13,7 +13,8 @@
     "test:integration": "jest tests/integration",
     "test:unit": "jest tests/unit",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke:stdio": "node scripts/smoke-stdio.mjs"
   },
   "keywords": [
     "mcp",

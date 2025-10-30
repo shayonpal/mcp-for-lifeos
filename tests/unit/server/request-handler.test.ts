@@ -21,6 +21,9 @@ import type {
 } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { MaxResultsValidation } from '../../../dev/contracts/MCP-38-contracts.js';
 import type { AnalyticsCollector } from '../../../src/analytics/analytics-collector.js';
+import { ObsidianLinks } from '../../../src/obsidian-links.js';
+import { VaultUtils } from '../../../src/vault-utils.js';
+import { NaturalLanguageProcessor } from '../../../src/natural-language-processor.js';
 
 // ============================================================================
 // TEST SUITE: isToolAllowed Validation
@@ -259,6 +262,44 @@ describe('Request Handler - createRequestHandler', () => {
     clientVersion: '1.0.0'
   };
 
+  const mockVaultNote = {
+    path: '/mock/vault/Test Note.md'
+  } as const;
+
+  const mockSearchResult = [{
+    note: {
+      path: '/mock/vault/Test Note.md',
+      frontmatter: { 'content type': 'Test' }
+    },
+    score: 0.98,
+    matches: [{ type: 'content' as const, context: 'example', field: 'body' }],
+    interpretation: null
+  }];
+
+  const mockListResult = ['Folder A', 'Folder B'];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockRouter.routeSearch.mockResolvedValue(mockSearchResult);
+    mockRouter.routeCreateNote.mockResolvedValue({
+      frontmatter: { title: 'Test Note' },
+      content: '# Test',
+      targetFolder: 'Test'
+    });
+    mockRouter.routeList.mockResolvedValue(mockListResult);
+
+    jest.spyOn(VaultUtils, 'createNote').mockReturnValue(mockVaultNote);
+    jest.spyOn(ObsidianLinks, 'formatSearchResult').mockReturnValue('• Result');
+    jest.spyOn(ObsidianLinks, 'extractNoteTitle').mockReturnValue('Test Note');
+    jest.spyOn(ObsidianLinks, 'createClickableLink').mockReturnValue('[Test](Test)');
+    jest.spyOn(NaturalLanguageProcessor, 'formatInterpretation').mockReturnValue('Interpretation');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('Factory creation', () => {
     it('creates handler function', () => {
       const handler = createRequestHandler(mockConfig);
@@ -272,7 +313,7 @@ describe('Request Handler - createRequestHandler', () => {
     });
   });
 
-  describe('Empty registry behavior (MCP-95)', () => {
+  describe('Registry population (MCP-96)', () => {
     it('throws "Missing arguments" for request without arguments', async () => {
       const handler = createRequestHandler(mockConfig);
       const request = {
@@ -286,11 +327,76 @@ describe('Request Handler - createRequestHandler', () => {
       await expect(handler(request)).rejects.toThrow('Missing arguments');
     });
 
-    it('throws "Unknown tool" for any tool (empty registry)', async () => {
+    it('executes consolidated tools via registry', async () => {
       const handler = createRequestHandler(mockConfig);
 
-      // Test with always-available tool
-      const request1 = {
+      const searchRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'search',
+          arguments: { query: 'registry test' }
+        }
+      } as any;
+
+      const result = await handler(searchRequest);
+
+      expect(mockRouter.routeSearch).toHaveBeenCalledWith(expect.objectContaining({
+        query: 'registry test',
+        maxResults: expect.any(Number)
+      }));
+      expect(result.content?.[0]?.type).toBe('text');
+      expect(result.content?.[0]?.text).toContain('• Result');
+      expect(mockAnalytics.recordToolExecution).toHaveBeenCalledWith(
+        'search',
+        expect.any(Function),
+        expect.objectContaining({ clientName: 'test-client' })
+      );
+    });
+
+    it('creates notes via consolidated registry handler', async () => {
+      const handler = createRequestHandler(mockConfig);
+
+      const createRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'create_note',
+          arguments: { title: 'Registry Test Note' }
+        }
+      } as any;
+
+      const result = await handler(createRequest);
+
+      expect(mockRouter.routeCreateNote).toHaveBeenCalledWith({ title: 'Registry Test Note' });
+      expect(VaultUtils.createNote).toHaveBeenCalledWith(
+        'Registry Test Note',
+        expect.any(Object),
+        expect.any(String),
+        expect.any(String)
+      );
+      expect(result.content?.[0]?.text).toContain('Registry Test Note');
+    });
+
+    it('lists data via consolidated registry handler', async () => {
+      const handler = createRequestHandler(mockConfig);
+
+      const listRequest = {
+        method: 'tools/call',
+        params: {
+          name: 'list',
+          arguments: { type: 'folders', format: 'concise' }
+        }
+      } as any;
+
+      const result = await handler(listRequest);
+
+      expect(mockRouter.routeList).toHaveBeenCalledWith({ type: 'folders', format: 'concise' });
+      expect(result.content?.[0]?.text).toContain('Folder A');
+    });
+
+    it('throws "Unknown tool" when registry lacks tool', async () => {
+      const handler = createRequestHandler(mockConfig);
+
+      const request = {
         method: 'tools/call',
         params: {
           name: 'read_note',
@@ -298,18 +404,7 @@ describe('Request Handler - createRequestHandler', () => {
         }
       } as any;
 
-      await expect(handler(request1)).rejects.toThrow('Unknown tool: read_note');
-
-      // Test with consolidated tool
-      const request2 = {
-        method: 'tools/call',
-        params: {
-          name: 'search',
-          arguments: { query: 'test' }
-        }
-      } as any;
-
-      await expect(handler(request2)).rejects.toThrow('Unknown tool: search');
+      await expect(handler(request)).rejects.toThrow('Unknown tool: read_note');
     });
 
     it('validates tool mode before registry lookup', async () => {

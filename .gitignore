@@ -15,6 +15,7 @@ build/
 .env.test.local
 .env.production.local
 .claude/
+.codex/
 .serena/
 
 # Personal Documents

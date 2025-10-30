@@ -19,6 +19,12 @@ import type {
   CreateRequestHandlerFunction,
   IsToolAllowedFunction
 } from '../../dev/contracts/MCP-8-contracts.js';
+import type { ClientInfo } from '../../dev/contracts/MCP-6-contracts.js';
+import {
+  MutableToolHandlerRegistry,
+  RequestHandlerWithClientContext,
+  UnknownToolError
+} from '../../dev/contracts/MCP-96-contracts.js';
 import type { ToolMode } from '../../dev/contracts/MCP-6-contracts.js';
 import {
   getConsolidatedTools,
@@ -26,6 +32,7 @@ import {
   getAlwaysAvailableTools,
   getLegacyAliases
 } from './tool-registry.js';
+import { registerConsolidatedHandlers } from './handlers/consolidated-handlers.js';
 
 // ============================================================================
 // VALIDATION UTILITIES
@@ -183,10 +190,7 @@ function wrapHandlerWithAnalytics(
 // ============================================================================
 
 /**
- * Create request handler with empty registry
- *
- * MCP-95 infrastructure phase - creates factory skeleton with empty handler map.
- * Registry will be populated in subsequent sub-issues (MCP-96/97).
+ * Create request handler populated with consolidated tool handlers.
  *
  * Factory compiles handler registry once during creation (not per-request).
  * Returns async handler function that processes CallToolRequests.
@@ -208,18 +212,11 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
     clientVersion: config.clientVersion
   };
 
-  // MCP-95: Empty registry pattern - no handlers extracted yet
-  // Will be populated in MCP-96 (consolidated tools) and MCP-97 (legacy tools)
-  const handlerRegistry: ToolHandlerRegistry = new Map();
+  const handlerRegistry = registerConsolidatedHandlers(
+    new Map<string, ToolHandler>()
+  ) as MutableToolHandlerRegistry;
 
-  // MCP-95 GUARD: Ensure registry remains empty during infrastructure phase
-  // Remove this assertion in MCP-96 when populating registry
-  if (handlerRegistry.size !== 0) {
-    throw new Error('MCP-95: Handler registry must be empty (infrastructure phase only)');
-  }
-
-  // Return request handler function
-  return async (request: CallToolRequest): Promise<CallToolResult> => {
+  const executeRequest: RequestHandler = async (request: CallToolRequest): Promise<CallToolResult> => {
     const { name: toolName, arguments: args } = request.params;
 
     // Validate arguments present
@@ -236,15 +233,31 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
     // Lookup handler in registry
     const handler = handlerRegistry.get(toolName);
     if (!handler) {
-      // MCP-95: Expected behavior - registry is empty
-      // Will return actual handlers in MCP-96/97
-      throw new Error(`Unknown tool: ${toolName}`);
+      throw new UnknownToolError(toolName);
     }
 
-    // Wrap handler with analytics (will be used in MCP-96/97)
+    // Wrap handler with analytics (used by MCP-96 consolidated handlers)
     const wrappedHandler = wrapHandlerWithAnalytics(toolName, handler, context);
 
     // Execute handler with context
     return await wrappedHandler(args, context);
   };
+
+  const requestHandler = executeRequest as RequestHandlerWithClientContext;
+
+  requestHandler.updateClientContext = (info: ClientInfo): void => {
+    if (!info) {
+      return;
+    }
+
+    if (info.name) {
+      context.clientName = info.name;
+    }
+
+    if (info.version) {
+      context.clientVersion = info.version;
+    }
+  };
+
+  return requestHandler;
 };
