@@ -65,7 +65,6 @@ function ensureHandlersInitialized(): void {
     }
 
     const includedResults: string[] = [];
-    let truncated = false;
 
     for (let index = 0; index < allResults.length; index++) {
       const result = allResults[index];
@@ -99,7 +98,6 @@ function ensureHandlersInitialized(): void {
 
       const resultSeparator = '\n\n---\n\n';
       if (!tokenBudget.canAddResult(output + resultSeparator)) {
-        truncated = true;
         break;
       }
 
@@ -189,7 +187,6 @@ function ensureHandlersInitialized(): void {
 
     const tokenBudget = new ResponseTruncator(DEFAULT_TOKEN_BUDGET);
     let responseText = '';
-    let truncated = false;
     let totalItems = 0;
     let shownItems = 0;
 
@@ -202,7 +199,6 @@ function ensureHandlersInitialized(): void {
           for (const folder of folders) {
             const formattedItem = `📁 ${folder}\n`;
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);
@@ -219,7 +215,6 @@ function ensureHandlersInitialized(): void {
           for (const folder of folders) {
             const formattedItem = `📁 ${folder}\n`;
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);
@@ -238,7 +233,6 @@ function ensureHandlersInitialized(): void {
         for (const note of dailyNotes) {
           const formattedItem = `🗓️ ${note}\n`;
           if (!tokenBudget.canAddResult(formattedItem)) {
-            truncated = true;
             break;
           }
           tokenBudget.consumeBudget(formattedItem);
@@ -258,7 +252,6 @@ function ensureHandlersInitialized(): void {
           for (const template of templates) {
             const formattedItem = `🧩 ${template.name}\n`;
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);
@@ -275,7 +268,6 @@ function ensureHandlersInitialized(): void {
           for (const template of templates) {
             const formattedItem = `### ${template.name}\n📍 ${template.path}` + (template.description ? `\n📝 ${template.description}` : '') + '\n\n';
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);
@@ -303,7 +295,6 @@ function ensureHandlersInitialized(): void {
           for (const prop of sortedProperties) {
             const formattedItem = `${prop}\n`;
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);
@@ -326,7 +317,6 @@ function ensureHandlersInitialized(): void {
               ? `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`
               : `- ${prop}\n`;
             if (!tokenBudget.canAddResult(formattedItem)) {
-              truncated = true;
               break;
             }
             tokenBudget.consumeBudget(formattedItem);

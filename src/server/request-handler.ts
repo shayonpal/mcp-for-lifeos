@@ -236,7 +236,7 @@ export const createRequestHandler: CreateRequestHandlerFunction = (
       throw new UnknownToolError(toolName);
     }
 
-    // Wrap handler with analytics (will be used in MCP-96/97)
+    // Wrap handler with analytics (used by MCP-96 consolidated handlers)
     const wrappedHandler = wrapHandlerWithAnalytics(toolName, handler, context);
 
     // Execute handler with context
