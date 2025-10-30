@@ -1307,7 +1307,7 @@ export class VaultUtils {
       overwrite?: boolean;
       mergeFolders?: boolean;
     } = {},
-  ): { success: boolean; newPath: string; error?: string } {
+  ): { success: boolean; newPath: string; itemType: 'note' | 'folder'; error?: string } {
     // Normalize paths using shared utility (MCP-64)
     // Replaces previous string prefix check with cross-platform path.isAbsolute()
     const normalizedSource = normalizePath(sourcePath, LIFEOS_CONFIG.vaultPath);
@@ -1315,7 +1315,7 @@ export class VaultUtils {
 
     // Validate source exists
     if (!existsSync(normalizedSource)) {
-      return { success: false, newPath: "", error: "Source item not found" };
+      return { success: false, newPath: "", itemType: 'note', error: "Source item not found" };
     }
 
     // Check if source is file or folder
@@ -1326,6 +1326,7 @@ export class VaultUtils {
       return {
         success: false,
         newPath: "",
+        itemType: 'folder',
         error: "Cannot move folder into itself or its subdirectories",
       };
     }
@@ -1338,6 +1339,7 @@ export class VaultUtils {
         return {
           success: false,
           newPath: "",
+          itemType: isDirectory ? 'folder' : 'note',
           error: "Destination folder does not exist",
         };
       }
@@ -1348,6 +1350,7 @@ export class VaultUtils {
       return {
         success: false,
         newPath: "",
+        itemType: isDirectory ? 'folder' : 'note',
         error: "Destination must be a folder",
       };
     }
@@ -1364,6 +1367,7 @@ export class VaultUtils {
         return {
           success: false,
           newPath: "",
+          itemType: isDirectory ? 'folder' : 'note',
           error: "Item already exists in destination",
         };
       } else if (!isDirectory) {
@@ -1377,16 +1381,16 @@ export class VaultUtils {
 
     try {
       renameSync(normalizedSource, newPath);
-      return { success: true, newPath };
+      return { success: true, newPath, itemType: isDirectory ? 'folder' : 'note' };
     } catch (error) {
-      return { success: false, newPath: "", error: String(error) };
+      return { success: false, newPath: "", itemType: isDirectory ? 'folder' : 'note', error: String(error) };
     }
   }
 
   private static mergeFolders(
     source: string,
     destination: string,
-  ): { success: boolean; newPath: string; error?: string } {
+  ): { success: boolean; newPath: string; itemType: 'note' | 'folder'; error?: string } {
     try {
       const items = readdirSync(source, { withFileTypes: true });
 
@@ -1416,11 +1420,12 @@ export class VaultUtils {
 
       // Remove the now-empty source directory
       rmSync(source, { recursive: true });
-      return { success: true, newPath: destination };
+      return { success: true, newPath: destination, itemType: 'folder' };
     } catch (error) {
       return {
         success: false,
         newPath: "",
+        itemType: 'folder',
         error: `Failed to merge folders: ${String(error)}`,
       };
     }

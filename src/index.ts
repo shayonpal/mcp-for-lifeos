@@ -29,6 +29,7 @@ import type { RequestHandlerWithClientContext } from '../dev/contracts/MCP-96-co
 import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MCP-96-contracts.js';
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
 import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
+import { ALWAYS_AVAILABLE_TOOL_NAMES } from '../dev/contracts/MCP-98-contracts.js';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -104,7 +105,9 @@ function registerHandlers(instance: McpServerInstance): void {
     sessionId,
     router: ToolRouter,
     clientName: initialClientInfo.name ?? 'unknown-client',
-    clientVersion: initialClientInfo.version ?? '0.0.0'
+    clientVersion: initialClientInfo.version ?? '0.0.0',
+    server,
+    yamlRulesManager
   }) as RequestHandlerWithClientContext;
 
   const consolidatedToolNames = new Set<string>(CONSOLIDATED_TOOL_NAMES);
@@ -145,7 +148,9 @@ function registerHandlers(instance: McpServerInstance): void {
             sessionId,
             router: ToolRouter,
             clientName: clientInfo.name ?? 'unknown-client',
-            clientVersion: clientInfo.version ?? '0.0.0'
+            clientVersion: clientInfo.version ?? '0.0.0',
+            server,
+            yamlRulesManager
           };
 
           return await analytics.recordToolExecution(
@@ -186,7 +191,9 @@ function registerHandlers(instance: McpServerInstance): void {
             sessionId,
             router: ToolRouter,
             clientName: clientInfo.name ?? 'unknown-client',
-            clientVersion: clientInfo.version ?? '0.0.0'
+            clientVersion: clientInfo.version ?? '0.0.0',
+            server,
+            yamlRulesManager
           };
 
           return await analytics.recordToolExecution(
@@ -202,6 +209,12 @@ function registerHandlers(instance: McpServerInstance): void {
 
         throw error;
       }
+    }
+
+    // MCP-98: Route always-available tools through request handler
+    const alwaysAvailableToolNames = new Set<string>(ALWAYS_AVAILABLE_TOOL_NAMES);
+    if (alwaysAvailableToolNames.has(name)) {
+      return await consolidatedRequestHandler(request);
     }
 
     try {
@@ -237,192 +250,18 @@ function registerHandlers(instance: McpServerInstance): void {
       case 'list_yaml_properties':
         throw new Error(`${name} handler should be resolved by legacy alias registry`);
 
-      case 'get_server_version': {
-        const includeTools = args.includeTools as boolean;
-        const templateCount = DynamicTemplateEngine.getAllTemplates().length;
-        
-        let response = {
-          content: [{
-            type: 'text',
-            text: `# LifeOS MCP Server v${SERVER_VERSION}\n\n` +
-                  `## Server Information\n` +
-                  `- **Version:** ${SERVER_VERSION}\n` +
-                  `- **Templates Available:** ${templateCount}\n` +
-                  `- **Vault Path:** ${LIFEOS_CONFIG.vaultPath.replace(/^.*[\\\/]/, '')}\n\n` +
-                  `## Capabilities\n` +
-                  `- **Template System:** Dynamic with Templater syntax support\n` +
-                  `- **Search:** Advanced full-text with metadata filtering\n` +
-                  `- **Daily Notes:** Supported with auto-creation\n` +
-                  `- **YAML Validation:** Strict compliance with LifeOS standards\n` +
-                  `- **Obsidian Integration:** Direct vault linking`
-          }]
-        };
-        
-        if (includeTools) {
-          const toolsList = tools.map(tool => 
-            `- **${tool.name}:** ${tool.description}`
-          ).join('\n');
-          
-          response.content[0].text += `\n\n## Available Tools\n${toolsList}`;
-        }
-        
-        return addVersionMetadata(response);
-      }
-      case 'get_yaml_rules': {
-        if (!yamlRulesManager.isConfigured()) {
-          return {
-            content: [{
-              type: 'text',
-              text: 'YAML rules are not configured. Set the yamlRulesPath in your config to enable this feature.'
-            }]
-          };
-        }
-
-        try {
-          const isValid = await yamlRulesManager.validateRulesFile();
-          if (!isValid) {
-            return {
-              content: [{
-                type: 'text',
-                text: `YAML rules file not found or not accessible at: ${yamlRulesManager.getRulesPath()}`
-              }]
-            };
-          }
-
-          const rules = await yamlRulesManager.getRules();
-          return {
-            content: [{
-              type: 'text',
-              text: `# YAML Frontmatter Rules\n\n${rules}`
-            }]
-          };
-        } catch (error) {
-          return {
-            content: [{
-              type: 'text',
-              text: `Error reading YAML rules: ${error instanceof Error ? error.message : 'Unknown error'}`
-            }]
-          };
-        }
-      }
-
-      case 'create_note_from_template': {
-        const title = args.title as string;
-        const template = args.template as string;
-        
-        if (!title || !template) {
-          throw new Error('Title and template are required');
-        }
-
-        const templateResult = DynamicTemplateEngine.createNoteFromTemplate(
-          template,
-          title,
-          (args.customData as Record<string, any>) || {}
-        );
-
-        // Generate filename, removing only Obsidian-restricted characters
-        const fileName = title
-          .replace(/[\[\]:;]/g, '')        // Remove square brackets, colons, and semicolons (Obsidian limitations)
-          .replace(/\s+/g, ' ')            // Normalize multiple spaces to single space
-          .trim();                         // Remove leading/trailing spaces
-        const note = VaultUtils.createNote(
-          fileName, 
-          templateResult.frontmatter, 
-          templateResult.content, 
-          templateResult.targetFolder
-        );
-
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, title);
-        const templateInfo = DynamicTemplateEngine.getTemplate(template);
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `✅ Created **${title}** using **${templateInfo?.name || template}** template\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📋 Template: ${templateInfo?.description || 'Custom template'}`
-          }]
-        });
-      }
-
-      case 'read_note': {
-        const path = args.path as string;
-        if (!path) {
-          throw new Error('Path is required');
-        }
-
-        // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
-        const normalizedPath = normalizePath(path, LIFEOS_CONFIG.vaultPath);
-
-        // Debug logging removed for MCP compatibility
-        const note = VaultUtils.readNote(normalizedPath);
-        const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
-        
-        // Normalize tags to array format
-        const tags = VaultUtils.normalizeTagsToArray(note.frontmatter.tags);
-        const tagsDisplay = tags.length > 0 ? tags.join(', ') : 'None';
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `# ${ObsidianLinks.extractNoteTitle(note.path, note.frontmatter)}\n\n**Path:** ${note.path}\n**Content Type:** ${note.frontmatter['content type']}\n**Tags:** ${tagsDisplay}\n\n${obsidianLink}\n\n---\n\n${note.content}`
-          }]
-        });
-      }
-
-      case 'edit_note': {
-        const args = request.params.arguments as unknown as EditNoteInput;
-        // Get note path - either from direct path or by searching for title
-        let notePath: string;
-
-        if (args.path) {
-          // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
-          notePath = normalizePath(args.path as string, LIFEOS_CONFIG.vaultPath);
-        } else if (args.title) {
-          // Find note by title using utility method
-          notePath = await VaultUtils.findNoteByTitle(args.title as string);
-        } else {
-          throw new Error('Either path or title is required');
-        }
-
-        // Prepare update object
-        const updates: any = {
-          mode: args.mode as 'merge' | 'replace' || 'merge'
-        };
-
-        if (args.content !== undefined) {
-          updates.content = args.content as string;
-        }
-
-        if (args.frontmatter) {
-          const fm = args.frontmatter;
-          updates.frontmatter = {};
-
-          // Map from API field names to YAML field names
-          if (fm.contentType) updates.frontmatter['content type'] = fm.contentType;
-          if (fm.category) updates.frontmatter.category = fm.category;
-          if (fm.subCategory) updates.frontmatter['sub-category'] = fm.subCategory;
-          if (fm.tags) updates.frontmatter.tags = fm.tags;
-          if (fm.source) updates.frontmatter.source = fm.source;
-          if (fm.people) updates.frontmatter.people = fm.people;
-
-          // Allow any other custom fields
-          Object.keys(fm).forEach(key => {
-            if (!['contentType', 'category', 'subCategory', 'tags', 'source', 'people'].includes(key)) {
-              updates.frontmatter[key] = fm[key];
-            }
-          });
-        }
-
-        // Update the note
-        const updatedNote = VaultUtils.updateNote(notePath, updates);
-        const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `✅ Updated note: **${ObsidianLinks.extractNoteTitle(updatedNote.path, updatedNote.frontmatter)}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
-          }]
-        });
-      }
+      // MCP-98: Always-available handlers extracted to dedicated modules
+      case 'get_server_version':
+      case 'get_yaml_rules':
+      case 'read_note':
+      case 'edit_note':
+      case 'get_daily_note':
+      case 'diagnose_vault':
+      case 'move_items':
+      case 'insert_content':
+      case 'list_yaml_property_values':
+      case 'create_note_from_template':
+        throw new Error(`${name} handler should be registered in handler registry`);
 
       case 'search_notes': {
         const searchOptions: any = {};
@@ -450,84 +289,6 @@ function registerHandlers(instance: McpServerInstance): void {
         });
       }
 
-      case 'get_daily_note': {
-        const startTime = Date.now();
-        try {
-          // Import DateResolver at the top of the file if not already
-          const dateResolver = new (await import('./date-resolver.js')).DateResolver();
-          
-          // Parse the date input using DateResolver
-          const dateInput = args.date as string || 'today';
-          logger.info(`[get_daily_note] Processing date input: "${dateInput}"`);
-          
-          const resolvedDateStr = dateResolver.resolveDailyNoteDate(dateInput);
-          logger.info(`[get_daily_note] DateResolver output: ${resolvedDateStr}`);
-          
-          const date = VaultUtils.getLocalDate(resolvedDateStr);
-          logger.info(`[get_daily_note] Final Date object: ${date.toISOString()} (${format(date, 'yyyy-MM-dd')})`);
-          
-          // Check parameters with defaults
-          const createIfMissing = args.createIfMissing !== false;  // default true
-          const confirmCreation = args.confirmCreation === true;   // default false
-          
-          let note = await VaultUtils.getDailyNote(date);
-          
-          if (!note) {
-            if (!createIfMissing) {
-              return addVersionMetadata({
-                content: [{
-                  type: 'text',
-                  text: `Daily note for ${format(date, 'MMMM dd, yyyy')} does not exist.\n\nUse createIfMissing: true to create it automatically.`
-                }]
-              });
-            }
-            
-            if (confirmCreation) {
-              return addVersionMetadata({
-                content: [{
-                  type: 'text',
-                  text: `Daily note for ${format(date, 'MMMM dd, yyyy')} does not exist.\n\nWould you like to create it? Please confirm by running the command again with confirmCreation: false or createIfMissing: true.`
-                }]
-              });
-            }
-            
-            note = await VaultUtils.createDailyNote(date);
-          }
-
-          const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
-
-          // Record analytics
-          const clientInfo = extractClientInfo(server);
-          analytics.recordUsage({
-            toolName: 'get_daily_note',
-            executionTime: Date.now() - startTime,
-            success: true,
-            clientName: clientInfo.name,
-            clientVersion: clientInfo.version,
-            sessionId
-          });
-
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `# Daily Note: ${format(date, 'MMMM dd, yyyy')}\n\n**Path:** ${note.path}\n\n${obsidianLink}\n\n---\n\n${note.content}`
-            }]
-          });
-        } catch (error) {
-          // Record failed analytics
-          const clientInfo = extractClientInfo(server);
-          analytics.recordUsage({
-            toolName: 'get_daily_note',
-            executionTime: Date.now() - startTime,
-            success: false,
-            errorType: error instanceof Error ? error.constructor.name : 'Unknown',
-            clientName: clientInfo.name,
-            clientVersion: clientInfo.version,
-            sessionId
-          });
-          throw error;
-        }
-      }
 
       case 'list_folders': {
         const basePath = (args.path as string) || '';
@@ -780,71 +541,6 @@ function registerHandlers(instance: McpServerInstance): void {
         });
       }
 
-      case 'diagnose_vault': {
-        const checkYaml = (args.checkYaml as boolean) !== false; // Default true
-        const maxFiles = (args.maxFiles as number) || 100;
-        
-        const files = await VaultUtils.findNotes('**/*.md');
-        const filesToCheck = files.slice(0, maxFiles);
-        
-        let totalFiles = filesToCheck.length;
-        let successfulFiles = 0;
-        let problematicFiles: string[] = [];
-        let yamlErrors: { file: string, error: string }[] = [];
-        
-        for (const file of filesToCheck) {
-          try {
-            const note = VaultUtils.readNote(file);
-            successfulFiles++;
-            
-            // Check for common YAML issues
-            if (checkYaml && note.frontmatter) {
-              const frontmatterStr = JSON.stringify(note.frontmatter);
-              if (frontmatterStr.includes('undefined') || frontmatterStr.includes('null')) {
-                yamlErrors.push({ file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), error: 'Contains undefined/null values' });
-              }
-            }
-          } catch (error) {
-            problematicFiles.push(file.replace(LIFEOS_CONFIG.vaultPath + '/', ''));
-            yamlErrors.push({ 
-              file: file.replace(LIFEOS_CONFIG.vaultPath + '/', ''), 
-              error: error instanceof Error ? error.message : String(error) 
-            });
-          }
-        }
-        
-        let diagnosticText = `# Vault Diagnostic Report\n\n`;
-        diagnosticText += `**Files Checked:** ${totalFiles}\n`;
-        diagnosticText += `**Successfully Parsed:** ${successfulFiles}\n`;
-        diagnosticText += `**Problematic Files:** ${problematicFiles.length}\n\n`;
-        
-        if (problematicFiles.length > 0) {
-          diagnosticText += `## Problematic Files\n\n`;
-          yamlErrors.slice(0, 10).forEach((error, index) => {
-            diagnosticText += `${index + 1}. **${error.file}**\n   Error: ${error.error}\n\n`;
-          });
-          
-          if (yamlErrors.length > 10) {
-            diagnosticText += `... and ${yamlErrors.length - 10} more files with issues.\n\n`;
-          }
-        }
-        
-        diagnosticText += `## Recommendations\n\n`;
-        if (problematicFiles.length > 0) {
-          diagnosticText += `- Fix YAML frontmatter in problematic files\n`;
-          diagnosticText += `- Check for unescaped special characters in YAML\n`;
-          diagnosticText += `- Ensure proper indentation and syntax\n`;
-        } else {
-          diagnosticText += `✅ All checked files are parsing correctly!\n`;
-        }
-        
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: diagnosticText
-          }]
-        });
-      }
 
       case 'list_templates': {
         const templates = DynamicTemplateEngine.getAllTemplates();
@@ -868,186 +564,7 @@ function registerHandlers(instance: McpServerInstance): void {
         });
       }
 
-      case 'move_items': {
-        const args = request.params.arguments as unknown as MoveItemsInput;
-        const destination = args.destination as string;
-        if (!destination) {
-          throw new Error('Destination is required');
-        }
 
-        // Collect items to move
-        const itemsToMove: MoveItemType[] = [];
-
-        if (args.item) {
-          itemsToMove.push({ path: args.item });
-        } else if (args.items && Array.isArray(args.items)) {
-          itemsToMove.push(...args.items);
-        } else {
-          throw new Error('Either item or items must be provided');
-        }
-
-        if (itemsToMove.length === 0) {
-          throw new Error('No items specified to move');
-        }
-
-        const options = {
-          createDestination: args.createDestination as boolean || false,
-          overwrite: args.overwrite as boolean || false,
-          mergeFolders: args.mergeFolders as boolean || false
-        };
-
-        const results = {
-          moved: { notes: [] as string[], folders: [] as string[] },
-          failed: [] as Array<{ path: string; type: string; reason: string }>
-        };
-
-        for (const item of itemsToMove) {
-          const result = VaultUtils.moveItem(item.path, destination, options);
-          
-          if (result.success) {
-            const relativePath = result.newPath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
-            
-            try {
-              const isDirectory = statSync(result.newPath).isDirectory();
-              if (isDirectory) {
-                results.moved.folders.push(relativePath);
-              } else {
-                results.moved.notes.push(relativePath);
-              }
-            } catch (error) {
-              // If we can't stat the file, assume it's a note
-              results.moved.notes.push(relativePath);
-            }
-          } else {
-            results.failed.push({
-              path: item.path,
-              type: item.type || 'unknown',
-              reason: result.error || 'Unknown error'
-            });
-          }
-        }
-
-        // Generate response
-        let response = `# Move Operation Results\n\n`;
-        
-        if (results.moved.notes.length > 0 || results.moved.folders.length > 0) {
-          response += `## ✅ Successfully Moved\n\n`;
-          
-          if (results.moved.folders.length > 0) {
-            response += `**Folders (${results.moved.folders.length}):**\n`;
-            results.moved.folders.forEach(f => response += `- 📁 ${f}\n`);
-            response += '\n';
-          }
-          
-          if (results.moved.notes.length > 0) {
-            response += `**Notes (${results.moved.notes.length}):**\n`;
-            results.moved.notes.forEach(n => response += `- 📄 ${n}\n`);
-            response += '\n';
-          }
-        }
-        
-        if (results.failed.length > 0) {
-          response += `## ❌ Failed Moves\n\n`;
-          results.failed.forEach(f => {
-            response += `- **${f.path}**: ${f.reason}\n`;
-          });
-          response += '\n';
-        }
-        
-        response += `**Destination:** \`${destination}\``;
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: response
-          }]
-        });
-      }
-
-      case 'insert_content': {
-        const args = request.params.arguments as unknown as InsertContentInput;
-        // Get note path - either from direct path or by searching for title
-        let notePath: string;
-        
-        if (args.path) {
-          // Normalize path using shared utility (cross-platform, escaped spaces, path traversal safe)
-          notePath = normalizePath(args.path as string, LIFEOS_CONFIG.vaultPath);
-        } else if (args.title) {
-          // Find note by title using utility method
-          notePath = await VaultUtils.findNoteByTitle(args.title as string);
-        } else {
-          throw new Error('Either path or title is required');
-        }
-
-        // Validate required parameters
-        const content = args.content;
-        const target = args.target;
-
-        if (!content) {
-          throw new Error('Content is required');
-        }
-        
-        if (!target || typeof target !== 'object') {
-          throw new Error('Target is required and must be an object');
-        }
-        
-        // Validate target has at least one valid field
-        if (!target.heading && !target.blockRef && !target.pattern && !target.lineNumber) {
-          throw new Error('Target must specify at least one of: heading, blockRef, pattern, or lineNumber');
-        }
-        
-        // Get optional parameters
-        const position = (args.position as 'before' | 'after' | 'append' | 'prepend' | 'end-of-section') || 'after';
-        const ensureNewline = args.ensureNewline !== false; // Default true
-        
-        logger.info(`[insert_content] Inserting content into ${notePath}`);
-        logger.info(`[insert_content] Target: ${JSON.stringify(target)}`);
-        logger.info(`[insert_content] Position: ${position}`);
-        
-        // Perform the insertion
-        let updatedNote;
-        try {
-          updatedNote = VaultUtils.insertContent(
-            notePath,
-            content,
-            target,
-            position,
-            ensureNewline
-          );
-        } catch (insertError) {
-          logger.error(`[insert_content] Failed to insert content: ${insertError}`);
-          throw insertError;
-        }
-        
-        try {
-          const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
-          
-          // Build target description
-          let targetDesc = '';
-          if (target.heading) targetDesc = `heading "${target.heading}"`;
-          else if (target.blockRef) targetDesc = `block reference "${target.blockRef}"`;
-          else if (target.pattern) targetDesc = `pattern "${target.pattern}"`;
-          else if (target.lineNumber) targetDesc = `line ${target.lineNumber}`;
-          
-          const formattedDate = format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss');
-          
-          const response = addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `✅ Inserted content in **${ObsidianLinks.extractNoteTitle(updatedNote.path, updatedNote.frontmatter)}**\n\n` +
-                    `${obsidianLink}\n\n` +
-                    `📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n` +
-                    `🎯 Target: ${targetDesc}\n` +
-                    `📍 Position: ${position}\n` +
-                    `⏰ Modified: ${formattedDate}`
-            }]
-          });
-          
-          return response;
-        } catch (responseError) {
-          throw new Error(`Failed to generate response: ${responseError instanceof Error ? responseError.message : String(responseError)}`);
-        }
-      }
 
       case 'list_yaml_properties': {
         const includeCount = args.includeCount as boolean || false;
@@ -1117,128 +634,6 @@ function registerHandlers(instance: McpServerInstance): void {
         return response;
       }
 
-      case 'list_yaml_property_values': {
-        const property = args.property as string;
-        if (!property) {
-          throw new Error('Property is required');
-        }
-
-        // Get options
-        const options = {
-          includeCount: args.includeCount as boolean || false,
-          includeExamples: args.includeExamples as boolean || false,
-          sortBy: args.sortBy as 'alphabetical' | 'usage' | 'type' || 'alphabetical',
-          maxExamples: args.maxExamples as number || 3
-        };
-
-        // Get all values for the specified property
-        const propertyInfo = VaultUtils.getYamlPropertyValues(property, options);
-
-        // Format the response
-        let responseText = `# YAML Property Values: "${property}"\n\n`;
-        
-        if (propertyInfo.totalNotes === 0) {
-          responseText += `**No notes found** using property "${property}"\n\n`;
-        } else {
-          responseText += `Found property "${property}" in **${propertyInfo.totalNotes}** notes\n\n`;
-        }
-
-        // Show scan statistics
-        responseText += `## Scan Statistics\n`;
-        responseText += `- **Files scanned**: ${propertyInfo.scannedFiles}\n`;
-        if (propertyInfo.skippedFiles > 0) {
-          responseText += `- **Files skipped**: ${propertyInfo.skippedFiles} (malformed YAML or read errors)\n`;
-        }
-        responseText += `- **Notes with "${property}"**: ${propertyInfo.totalNotes}\n\n`;
-
-        if (propertyInfo.totalNotes > 0) {
-          // Show value analysis
-          responseText += `## Value Type Analysis\n\n`;
-
-          // Single values
-          if (propertyInfo.values.single.length > 0) {
-            const uniqueSingleValues = Array.from(new Set(propertyInfo.values.single.map(v => String(v))));
-            responseText += `**Single Values** (${uniqueSingleValues.length} unique, ${propertyInfo.values.single.length} total uses):\n`;
-            
-            uniqueSingleValues.forEach(value => {
-              const count = propertyInfo.values.single.filter(v => String(v) === value).length;
-              responseText += `- "${value}" (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-              
-              // Add examples if requested
-              if (options.includeExamples && propertyInfo.valueExamples && propertyInfo.valueExamples[value]) {
-                const examples = propertyInfo.valueExamples[value];
-                responseText += `  Examples: ${examples.map(e => `"${e}"`).join(', ')}\n`;
-              }
-            });
-            responseText += '\n';
-          }
-
-          // Array values
-          if (propertyInfo.values.array.length > 0) {
-            const uniqueArrayValues = Array.from(new Set(propertyInfo.values.array.map(arr => JSON.stringify(arr))));
-            responseText += `**Array Values** (${uniqueArrayValues.length} unique combinations, ${propertyInfo.values.array.length} total uses):\n`;
-            
-            uniqueArrayValues.forEach(arrayStr => {
-              const arrayValue = JSON.parse(arrayStr);
-              const count = propertyInfo.values.array.filter(arr => JSON.stringify(arr) === arrayStr).length;
-              responseText += `- [${arrayValue.map((v: any) => `"${v}"`).join(', ')}] (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-              
-              // Add examples if requested
-              if (options.includeExamples && propertyInfo.valueExamples && propertyInfo.valueExamples[arrayStr]) {
-                const examples = propertyInfo.valueExamples[arrayStr];
-                responseText += `  Examples: ${examples.map(e => `"${e}"`).join(', ')}\n`;
-              }
-            });
-            responseText += '\n';
-          }
-
-          // Unique individual values across all formats
-          if (propertyInfo.values.uniqueValues.length > 0) {
-            responseText += `**All Unique Values** (across single and array formats):\n`;
-            
-            if (options.sortBy === 'usage' && options.includeCount && propertyInfo.valueCounts) {
-              // Already sorted by usage if that option was selected
-              propertyInfo.values.uniqueValues.forEach(value => {
-                const totalCount = propertyInfo.valueCounts![value] || 0;
-                const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
-                const arrayCount = totalCount - singleCount;
-                
-                let usageDetails = [];
-                if (singleCount > 0) usageDetails.push(`${singleCount} single`);
-                if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
-                
-                responseText += `- "${value}" (${totalCount} total uses: ${usageDetails.join(', ')})\n`;
-              });
-            } else {
-              propertyInfo.values.uniqueValues.forEach(value => {
-                const singleCount = propertyInfo.values.single.filter(v => String(v) === value).length;
-                const arrayCount = propertyInfo.values.array.filter(arr => arr.some(item => String(item) === value)).length;
-                const totalUses = singleCount + arrayCount;
-                
-                let usageDetails = [];
-                if (singleCount > 0) usageDetails.push(`${singleCount} single`);
-                if (arrayCount > 0) usageDetails.push(`${arrayCount} in arrays`);
-                
-                responseText += `- "${value}" (${totalUses} total uses: ${usageDetails.join(', ')})\n`;
-              });
-            }
-            
-            // Add sorting information
-            if (options.sortBy !== 'alphabetical') {
-              responseText += `\n*Sorted by: ${options.sortBy}*\n`;
-            }
-          }
-        }
-
-        const response = addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: responseText
-          }]
-        });
-
-        return response;
-      }
 
       default:
         throw new Error(`Unknown tool: ${name}`);
