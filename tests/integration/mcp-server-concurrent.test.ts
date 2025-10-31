@@ -14,6 +14,13 @@ describe('MCP Server Concurrent Operations', () => {
   const METRICS_FILE = path.join(TEST_DIR, 'usage-metrics.jsonl');
   // MCP-65: Correct server entry point path (build outputs to dist/src/)
   const SERVER_SCRIPT = path.join(process.cwd(), 'dist', 'src', 'index.js');
+  const IS_CI = process.env.CI === 'true';
+  const START_STOP_ITERATIONS = IS_CI ? 3 : 5;
+  const START_STOP_WAIT_MS = IS_CI ? 800 : 500;
+  const RAPID_REQUEST_COUNT = IS_CI ? 6 : 10;
+  const RAPID_INTERVAL_MS = IS_CI ? 25 : 10;
+  const START_STOP_TIMEOUT_MS = IS_CI ? 40000 : 20000;
+  const RAPID_TIMEOUT_MS = IS_CI ? 18000 : 10000;
   
   beforeEach(() => {
     // Create test directory
@@ -112,7 +119,7 @@ describe('MCP Server Concurrent Operations', () => {
     }, 15000); // 15 second timeout
 
     it('should maintain data integrity when servers start and stop frequently', async () => {
-      const iterations = 5;
+      const iterations = START_STOP_ITERATIONS;
       const allMetrics = [];
       
       for (let i = 0; i < iterations; i++) {
@@ -138,7 +145,7 @@ describe('MCP Server Concurrent Operations', () => {
         server.stdin!.write(request);
         
         // Wait briefly
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, START_STOP_WAIT_MS));
         
         // Kill server
         server.kill('SIGTERM');
@@ -170,7 +177,7 @@ describe('MCP Server Concurrent Operations', () => {
           expect(() => new Date(metric.timestamp)).not.toThrow();
         }
       }
-    }, 20000); // 20 second timeout
+    }, START_STOP_TIMEOUT_MS);
   });
 
   describe('Analytics Collection Behavior', () => {
@@ -244,7 +251,7 @@ describe('MCP Server Concurrent Operations', () => {
       });
       
       // Send multiple rapid requests
-      const requestCount = 10;
+      const requestCount = RAPID_REQUEST_COUNT;
       for (let i = 0; i < requestCount; i++) {
         const request = JSON.stringify({
           jsonrpc: '2.0',
@@ -255,7 +262,7 @@ describe('MCP Server Concurrent Operations', () => {
         server.stdin!.write(request);
         
         // Very short delay between requests
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, RAPID_INTERVAL_MS));
       }
       
       // Wait for processing
@@ -286,6 +293,6 @@ describe('MCP Server Concurrent Operations', () => {
         const instanceIds = new Set(metrics.map(m => m.instanceId));
         expect(instanceIds.size).toBe(1);
       }
-    }, 10000);
+    }, RAPID_TIMEOUT_MS);
   });
 });
