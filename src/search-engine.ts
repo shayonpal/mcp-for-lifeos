@@ -666,7 +666,7 @@ export class SearchEngine {
     return results;
   }
 
-  private static async getAllNotes(): Promise<LifeOSNote[]> {
+  public static async getAllNotes(): Promise<LifeOSNote[]> {
     const files = await VaultUtils.findNotes('**/*.md');
     const notes: LifeOSNote[] = [];
     let skippedCount = 0;

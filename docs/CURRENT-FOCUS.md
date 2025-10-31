@@ -1,33 +1,39 @@
 # Current Development Focus
 
-**Last Updated:** October 30, 2025 (11:40 PM EDT)
+**Last Updated:** October 31, 2025 (7:45 AM EDT)
 **Cycle:** Cycle 9 (Oct 28 - Nov 3, 2025)
-**Progress:** 22% complete (4/18 issues)
-**Current Branch:** master
+**Progress:** 33% complete (6/18 issues)
+**Current Branch:** feature/MCP-106-link-detection-infrastructure
 
 ---
 
 ## 🔧 Active Work
 
-### MCP-94: Integration Test for Unique Instance ID Generation (Quick Win)
+### MCP-107: Link Update Implementation (Phase 3 of MCP-2)
 
-**Branch:** feature/mcp-94-integration-test-for-unique-instance-id-generation-across
-**Project:** Test Infrastructure Stabilization
-**Priority:** Low
-**Status:** PR #106 ready for review
+**Branch:** TBD (next after MCP-106 merge)
+**Project:** Server Decomposition + Rename Tool
+**Priority:** High
+**Status:** Queued - blocked by MCP-106 PR merge
 **Assignee:** Shayon Pal
-**Delegate:** GitHub Copilot
 
 **Context:**
 
-- Create comprehensive integration test validating that each MCP server instance generates a unique instance ID on startup
-- Currently skipped test in tests/integration/jsonl-final-validation.test.ts needs implementation
+- Implement link update functionality using LinkScanner infrastructure from MCP-106
+- Update all wikilinks that reference renamed notes across the vault
+- Handle all Obsidian link formats: basic, alias, heading, block reference, embeds
+- Maintain backward compatibility with Phase 1 rename_note tool
 
-**Status:** GitHub Copilot completed implementation on Oct 28. PR #106 created and ready for review.
+**Prerequisites:**
+- ✅ MCP-105 Complete: Basic rename tool without link updates
+- ✅ MCP-106 Complete: Link detection infrastructure ready
+- ⏭️ Awaiting MCP-106 PR merge to master
 
-**PR:** https://github.com/shayonpal/mcp-for-lifeos/pull/106
-
-**Action:** Code review and merge - quick win to close out
+**Next Steps:**
+1. Merge MCP-106 PR
+2. Create feature branch for MCP-107
+3. Implement link update logic using LinkScanner
+4. Add comprehensive tests for link update scenarios
 
 ---
 
@@ -41,16 +47,13 @@
 
 ### Immediate Queue (Recommended Order)
 
-1. **MCP-2**: Add rename_note tool for changing note titles and filenames
+1. **MCP-107**: Link update implementation (Phase 3 of MCP-2)
    - Priority: High
    - Project: Server Decomposition + Rename Tool
-   - Includes link-update infrastructure
-   - Builds on modular architecture from MCP-8
-
-2. **MCP-94**: Review and merge PR #106 (integration test)
-   - Priority: Low (but quick win)
-   - Already implemented by GitHub Copilot
-   - Close out test infrastructure work
+   - Phase 1 (MCP-105) complete ✅
+   - Phase 2 (MCP-106) complete ✅
+   - Next: Implement link updates using LinkScanner infrastructure
+   - Blocked by: MCP-106 PR merge
 
 ### Integration & Cleanup
 
@@ -60,6 +63,11 @@
   - Wait until tool reorganization complete
 
 ### Medium Priority
+
+- **MCP-94**: Reimplement integration test for unique instance ID generation
+  - Previous PR #106 closed due to code quality issues
+  - Needs proper implementation approach
+  - Currently skipped test in jsonl-final-validation.test.ts
 
 - **MCP-100**: Investigate intermittent memory spike in jsonl-stress integration test
   - Surfaced during MCP-95 validation
@@ -91,6 +99,93 @@
 ---
 
 ## ✅ Recent Completions (Last 3 Days)
+
+### MCP-106: Link Detection Infrastructure (Phase 2 of MCP-2) ✅
+
+**Completed:** October 31, 2025 (4:49 AM EDT)
+**Branch:** feature/MCP-106-link-detection-infrastructure
+**Project:** Server Decomposition + Rename Tool
+**Priority:** High
+**PR:** TBD (pending merge)
+
+**Achievement:**
+
+- Created `src/link-scanner.ts` (426 lines) with LinkScanner class and 3 static methods
+- Added centralized WIKILINK_PATTERN constant to `src/regex-utils.ts`
+- Made SearchEngine.getAllNotes() public for efficient cache-based vault access
+- Regex-based wikilink parsing approach (2.5x faster than AST, zero dependencies)
+- 42 comprehensive tests (30 unit, 12 integration) - 100% passing
+- Performance target achieved: <5000ms for 1000+ notes
+
+**Implementation Details:**
+
+- Supports all Obsidian link formats: basic `[[Note]]`, alias `[[Note|Alias]]`, heading `[[Note#Heading]]`, block reference `[[Note^block]]`, embed `![[Note]]`
+- Code block and frontmatter filtering to avoid false positives
+- Ambiguous target detection for notes with same name in different folders
+- TypeScript contracts in `dev/contracts/MCP-106-contracts.ts`
+- Files changed: 11 files (+1,557 insertions, -14 deletions)
+- Test suite: 517/521 tests passing (99.2% success rate, 4 skipped)
+
+**Documentation:**
+
+- `docs/adr/006-regex-based-wikilink-parsing.md` - ADR documenting regex approach decision
+- `docs/tools/rename_note.md` - updated with Phase 2 completion status
+- `docs/adr/README.md` - ADR-006 added to index
+- `CHANGELOG.md` - Phase 2 implementation documented
+
+**Next Steps:**
+
+- Phase 3: MCP-107 (Implement Link Updates using LinkScanner)
+- Phase 4: MCP-108 (Folder Rename Support)
+- Phase 5: MCP-109 (Implement Dry-Run Mode)
+
+**Linear Issue:** https://linear.app/agilecode-studio/issue/MCP-106/link-detection-infrastructure
+
+---
+
+### MCP-105: Basic Rename Tool (Phase 1 of MCP-2) ✅
+
+**Completed:** October 31, 2025 (2:40 AM EDT)
+**Branch:** feature/mcp-105-basic-rename-tool-without-link-updates
+**Project:** Server Decomposition + Rename Tool
+**Priority:** High
+**PR:** #113 (merged to master)
+
+**Achievement:**
+
+- Implemented `rename_note` tool with comprehensive validation and error handling
+- Enhanced `VaultUtils.moveItem()` with optional `newFilename` parameter (zero code duplication)
+- 18 comprehensive tests (10 unit, 8 integration) - 100% passing
+- 618-line tool documentation with usage examples and best practices
+- Forward-compatible API design accepts `updateLinks` and `dryRun` parameters for future phases
+
+**Implementation Details:**
+
+- 5 structured error codes with actionable messages (FILE_NOT_FOUND, FILE_EXISTS, INVALID_PATH, PERMISSION_DENIED, UNKNOWN_ERROR)
+- Path validation, extension enforcement (.md), overwrite prevention
+- Files changed: 16 files (+2,025 insertions, -67 deletions)
+- Test suite: 475/475 tests passing (100% success rate)
+- Manual validation in Claude Desktop confirmed
+
+**Documentation:**
+
+- `docs/tools/rename_note.md` - comprehensive 618-line tool guide
+- `docs/api/TOOLS.md` - updated API reference (now 13 tools in consolidated mode)
+- `docs/ARCHITECTURE.md` - architecture documentation updated
+- `CHANGELOG.md` - version 2.0.1 release notes
+
+**Next Steps:**
+
+- Phase 2: MCP-106 (Link Detection Infrastructure)
+- Phase 3: MCP-107 (Implement Link Updates)
+- Phase 4: MCP-108 (Folder Rename Support)
+- Phase 5: MCP-109 (Implement Dry-Run Mode)
+
+**Merge Commit:** 1603c1ea77c3a84508709df5d937ea3e8686ab40
+
+**Linear Issue:** https://linear.app/agilecode-studio/issue/MCP-105/basic-rename-tool-without-link-updates
+
+---
 
 ### Decomposition Series Complete ✅
 
@@ -168,13 +263,13 @@
 
 ## ✅ Test Status
 
-**Last Run:** October 30, 2025 (12:20 AM EDT)
+**Last Run:** October 31, 2025 (4:45 AM EDT)
 
 **Status:** ✅ All tests passing
 
-**Test Suites:** 26 passed, 26 total  
-**Tests:** 450 passed, 4 skipped, 454 total  
-**Time:** 16.85 seconds
+**Test Suites:** 28 passed, 28 total
+**Tests:** 517 passed, 4 skipped, 521 total
+**Time:** ~19 seconds
 
 **Core Functionality Validated:**
 
@@ -185,6 +280,8 @@
 - MCP server factory ✅
 - Tool registry ✅
 - Request handler infrastructure ✅
+- Rename note tool (Phase 1) ✅
+- Link detection infrastructure (Phase 2) ✅
 
 **Skipped Tests:** 4 tests (optional enhancements, not blockers)
 
@@ -196,24 +293,27 @@
 
 **Code Quality:**
 
-- Technical debt burn-down progressing well (MCP-6 ✅, MCP-7 ✅, MCP-95 ✅)
+- Technical debt burn-down progressing well (MCP-6 ✅, MCP-7 ✅, MCP-95 ✅, MCP-105 ✅)
 - Modular architecture established: server factory, tool registry, request handler infrastructure
-- Test coverage: 450/454 tests passing (99.1%)
+- Test coverage: 475/479 tests passing (99.2%)
 - Zero blocking bugs
+- Zero code duplication via optional parameter pattern (VaultUtils.moveItem enhancement)
 
 **Development Velocity:**
 
-- Cycle 9: 22% complete (4/18 issues) with 4 days remaining
+- Cycle 9: 33% complete (6/18 issues) with 3 days remaining
 - Decomposition series: 100% complete (MCP-6 ✅, MCP-7 ✅, MCP-8 ✅, MCP-9 ✅)
 - Request handler extraction: 100% complete (MCP-95 ✅, MCP-96 ✅, MCP-97 ✅, MCP-98 ✅, MCP-99 ✅)
+- Rename tool Phase 1: Complete (MCP-105 ✅)
+- Rename tool Phase 2: Complete (MCP-106 ✅)
 - Exceeded target: 338 lines achieved vs 500-line target (32% under target)
 - Scope growth: Started at 12 issues, now 18 (6 added mid-cycle)
 
 **Next Phase Focus:**
 
-- MCP-2: rename_note tool with link updates
-- MCP-94: Review and merge PR #106
-- MCP-10: Integration cleanup (after MCP-2)
+- MCP-2 Phase 3: Link update implementation (MCP-107) - top priority
+- MCP-10: Integration cleanup (after MCP-2 complete)
+- MCP-94: Reimplement unique instance ID test (when prioritized)
 
 ---
 
@@ -223,7 +323,7 @@ Run `/current-focus` to update this file with latest Linear cycle data.
 
 ---
 
-_Last git sync: Oct 30, 2025 11:40 PM EDT (master branch)_
-_Linear cycle sync: Cycle 9 - 4/18 issues complete (22%)_
-_Git commits analyzed: Last 3 days (18 commits, including MCP-99 merge)_
-_Test suite: 26/26 suites passing, 450/454 tests passing (99.1%)_
+_Last git sync: Oct 31, 2025 7:45 AM EDT (feature/MCP-106-link-detection-infrastructure branch)_
+_Linear cycle sync: Cycle 9 - 6/18 issues complete (33%)_
+_Git commits analyzed: Last 3 days (22+ commits, including MCP-105 merge and MCP-106 completion)_
+_Test suite: 28/28 suites passing, 517/521 tests passing (99.2%)_
