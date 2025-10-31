@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Link Detection Infrastructure** (MCP-106, 2025-10-31 04:49): Implemented read-only link scanner for vault-wide wikilink detection (Phase 2 of rename_note tool)
+  - Created `src/link-scanner.ts` (426 lines) with LinkScanner class providing 3 static methods for vault-wide link scanning
+  - Added centralized `WIKILINK_PATTERN` constant to `src/regex-utils.ts` supporting all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
+  - Made `SearchEngine.getAllNotes()` public for efficient cache-based vault access (eliminates unnecessary search scoring overhead)
+  - Regex-based approach (simpler and faster than AST parsing) with comprehensive filtering options (code blocks, frontmatter, embeds, case sensitivity)
+  - Performance targets: <5000ms for 1000+ notes, <50ms per note, <10ms per 1000 lines
+  - Comprehensive TypeScript contracts in `dev/contracts/MCP-106-contracts.ts` defining input/output schemas and error handling
+  - Test coverage: 42 new tests (30 unit, 12 integration) with 100% pass rate, all existing tests passing
+  - Fixed regex instantiation bug (preserves global flag for multi-link detection on same line)
+  - Applied code review optimizations: direct cache access via getAllNotes(), regex flag preservation, accurate cache documentation
+  - Foundation for Phase 3 (MCP-107: Link Updates) - no MCP tool exposure yet, internal infrastructure only
+
 - **Basic Rename Tool** (MCP-105, 2025-10-31 02:40): Added rename_note tool (Phase 1: basic rename without link updates)
   - Implemented rename_note handler in `src/server/handlers/note-handlers.ts` following established note handler patterns
   - Enhanced `VaultUtils.moveItem()` with optional `newFilename` parameter for zero-duplication architecture (adds 1 line, maintains backward compatibility)

@@ -11,6 +11,7 @@ This directory contains Architecture Decision Records documenting significant ar
 | [003](./003-search-tool-consolidation-fallback-strategy.md) | Search Tool Consolidation and Intelligent Fallback Strategy | **Accepted** | 2025-06-04 | **High** - AI tool optimization with 95% query success rate |
 | [004](./004-project-review-roadmap-2025.md) | Project Review and Technical Debt Roadmap | **Accepted** | 2025-08-29 | **Critical** - Comprehensive roadmap for production readiness |
 | [005](./005-default-tool-mode-consolidated-only.md) | Default TOOL_MODE Changed to 'consolidated-only' | **Accepted** | 2025-10-23 | **Medium** - Improved UX with cleaner tool list, simple migration path |
+| [006](./006-regex-based-wikilink-parsing.md) | Regex-Based Wikilink Parsing Over AST Libraries | **Accepted** | 2025-10-31 | **Medium** - Performance and simplicity for rename tool link detection |
 
 ## Current Strategic Direction
 

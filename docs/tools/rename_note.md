@@ -4,13 +4,14 @@
 
 - **Name**: `rename_note`
 - **Purpose**: Rename note files in the vault with path validation and error handling
-- **Status**: ✅ Active (Phase 1: Basic rename without link updates)
+- **Status**: ✅ Active (Phase 1: Basic rename without link updates; Phase 2: Link detection infrastructure complete)
 - **Created**: 2025-10-31
-- **MCP Issue**: MCP-105
+- **Last Updated**: 2025-10-31 04:49
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2)
 
 ## TL;DR
 
-Rename note files in your vault with comprehensive error handling and validation. Phase 1 implementation provides basic file rename functionality. Link detection and updates will be added in future phases (MCP-106, MCP-107).
+Rename note files in your vault with comprehensive error handling and validation. Phase 1 provides basic file rename functionality. Phase 2 (MCP-106) completed internal link detection infrastructure. Link updates will be added in Phase 3 (MCP-107).
 
 ## Key Features
 
@@ -22,11 +23,21 @@ Rename note files in your vault with comprehensive error handling and validation
 - **Obsidian Filename Compliance**: Validates against Obsidian naming restrictions
 - **Zero Code Duplication**: Leverages existing VaultUtils.moveItem() infrastructure
 
-## Phase 1 Limitations
+## Implementation Status
 
-⚠️ **Important**: This is Phase 1 of the rename tool implementation. The following features are NOT yet implemented:
+### ✅ Phase 2 Complete (MCP-106, 2025-10-31)
 
-- **Link Detection** (Phase 2 - MCP-106): Tool does not detect wikilinks pointing to the renamed note
+Internal link detection infrastructure is now in place:
+- **LinkScanner Module** (`src/link-scanner.ts`): Vault-wide wikilink detection with regex-based approach
+- **Performance**: <5000ms for 1000+ notes, <50ms per note
+- **Supported Formats**: All Obsidian wikilink formats (basic, alias, heading, block reference, embed)
+- **Filtering Options**: Code block exclusion, frontmatter exclusion, embed control, case sensitivity
+- **Status**: Internal infrastructure only - not exposed as MCP tool yet
+
+### ⚠️ Current Limitations
+
+The following features are NOT yet user-facing:
+
 - **Link Updates** (Phase 3 - MCP-107): Existing links to renamed notes are NOT automatically updated
 - **Dry-Run Mode** (Phase 5 - MCP-109): Preview mode to see changes before applying them
 
@@ -546,12 +557,13 @@ Since Phase 1 does not update links automatically:
 
 ## Future Phases
 
-### Phase 2: Link Detection (MCP-106)
-- Detect wikilinks pointing to renamed note
-- Identify affected notes before rename
-- Provide preview of link update scope
+### ✅ Phase 2: Link Detection (MCP-106) - Complete
+- ✅ Detect wikilinks pointing to renamed note
+- ✅ Vault-wide link scanning with regex-based approach
+- ✅ Comprehensive wikilink format support
+- ✅ Internal infrastructure ready for Phase 3
 
-### Phase 3: Link Updates (MCP-107)
+### Phase 3: Link Updates (MCP-107) - Next
 - Automatically update wikilinks after rename
 - Handle both `[[note]]` and `[[note|alias]]` formats
 - Preserve link aliases during updates
@@ -568,6 +580,14 @@ Since Phase 1 does not update links automatically:
 
 ## Version History
 
+### Phase 2 - v1.1.0 (2025-10-31)
+- Link detection infrastructure (MCP-106)
+- Created LinkScanner module for vault-wide wikilink scanning
+- Regex-based approach with comprehensive format support
+- Performance targets: <5000ms for 1000+ notes
+- 42 additional tests (30 unit, 12 integration) with 100% pass rate
+- Internal infrastructure only - no user-facing changes yet
+
 ### Phase 1 - v1.0.0 (2025-10-31)
 - Initial implementation (MCP-105)
 - Basic file rename functionality
@@ -577,8 +597,7 @@ Since Phase 1 does not update links automatically:
 - 18 tests (10 unit, 8 integration) with 100% pass rate
 
 ### Future Releases
-- Phase 2: Link detection (MCP-106)
-- Phase 3: Link updates (MCP-107)
+- Phase 3: Link updates (MCP-107) - Next
 - Phase 4: Folder support (MCP-108)
 - Phase 5: Dry-run mode (MCP-109)
 
@@ -607,7 +626,7 @@ Since Phase 1 does not update links automatically:
 ## Support
 
 ### Questions or Issues
-- Check Linear issue MCP-105 for implementation details
+- Check Linear issues MCP-105 (Phase 1) and MCP-106 (Phase 2) for implementation details
 - Review error codes and suggestions in error responses
 - Use `diagnose_vault` for vault-level issues
 
