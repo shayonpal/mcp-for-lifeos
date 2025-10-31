@@ -24,7 +24,7 @@ import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contrac
 import { createRequestHandler } from './server/request-handler.js';
 import { getToolsForMode, addVersionMetadata as addToolVersionMetadata } from './server/tool-registry.js';
 import type { ToolRegistryConfig } from '../dev/contracts/MCP-7-contracts.js';
-import type { ToolHandlerContext } from '../dev/contracts/MCP-8-contracts.js';
+import type { ToolHandlerContext, ToolHandler } from '../dev/contracts/MCP-8-contracts.js';
 import type { RequestHandlerWithClientContext } from '../dev/contracts/MCP-96-contracts.js';
 import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MCP-96-contracts.js';
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
@@ -90,6 +90,88 @@ const registryConfig: ToolRegistryConfig = {
 // Get tools for current mode from registry
 const tools: Tool[] = getToolsForMode(registryConfig);
 
+// Module-level tool name sets for efficient lookup (built once at module load)
+const consolidatedToolNames = new Set<string>(CONSOLIDATED_TOOL_NAMES);
+const legacyAliasToolNames = new Set<string>(LEGACY_ALIAS_TOOL_NAMES);
+const alwaysAvailableToolNames = new Set<string>(ALWAYS_AVAILABLE_TOOL_NAMES);
+
+// Tools that have manual analytics tracking in their handlers (exempt from fallback analytics wrapping)
+const ANALYTICS_EXEMPT_TOOLS = new Set<string>(['get_daily_note']);
+
+/**
+ * Execute tool with hybrid dispatch fallback pattern
+ * Provides resilience during handler extraction transition
+ *
+ * @param toolName - Name of the tool to execute
+ * @param request - MCP tool request
+ * @param primaryHandler - Primary request handler (registry-based)
+ * @param getFallbackHandler - Function to retrieve individual fallback handler
+ * @param context - Shared handler execution context
+ * @returns Tool execution result
+ */
+async function executeWithHybridFallback(
+  toolName: string,
+  request: any,
+  primaryHandler: RequestHandlerWithClientContext,
+  getFallbackHandler: (name: string) => ToolHandler | undefined,
+  context: {
+    toolMode: ToolMode;
+    registryConfig: ToolRegistryConfig;
+    analytics: any;
+    sessionId: string;
+    router: typeof ToolRouter;
+    server: any;
+    yamlRulesManager: YamlRulesManager;
+    clientInfo: { name?: string; version?: string };
+  }
+): Promise<any> {
+  try {
+    return await primaryHandler(request);
+  } catch (error) {
+    if (!isUnknownToolError(error)) {
+      throw error;
+    }
+
+    logger.warn(`hybrid-dispatch fallback engaged for "${toolName}": ${error instanceof Error ? error.message : String(error)}`);
+
+    const fallbackHandler = getFallbackHandler(toolName);
+    if (!fallbackHandler) {
+      throw error;
+    }
+
+    const fallbackContext: ToolHandlerContext = {
+      toolMode: context.toolMode,
+      registryConfig: context.registryConfig,
+      analytics: context.analytics,
+      sessionId: context.sessionId,
+      router: context.router,
+      clientName: context.clientInfo.name ?? 'unknown-client',
+      clientVersion: context.clientInfo.version ?? '0.0.0',
+      server: context.server,
+      yamlRulesManager: context.yamlRulesManager
+    };
+
+    // Exception: Some tools have manual analytics tracking in their handlers
+    // Avoid double-counting by checking exemption list
+    const shouldWrapAnalytics = !ANALYTICS_EXEMPT_TOOLS.has(toolName);
+
+    if (shouldWrapAnalytics) {
+      return await context.analytics.recordToolExecution(
+        toolName,
+        async () => fallbackHandler(request.params.arguments as Record<string, unknown>, fallbackContext),
+        {
+          clientName: fallbackContext.clientName,
+          clientVersion: fallbackContext.clientVersion,
+          sessionId: context.sessionId
+        }
+      );
+    } else {
+      // Tool has manual analytics - call handler directly
+      return await fallbackHandler(request.params.arguments as Record<string, unknown>, fallbackContext);
+    }
+  }
+}
+
 /**
  * Register MCP tool handlers
  * Called once during server initialization
@@ -110,8 +192,6 @@ function registerHandlers(instance: McpServerInstance): void {
     yamlRulesManager
   }) as RequestHandlerWithClientContext;
 
-  const consolidatedToolNames = new Set<string>(CONSOLIDATED_TOOL_NAMES);
-
   // Tool handlers
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools };
@@ -129,514 +209,48 @@ function registerHandlers(instance: McpServerInstance): void {
     const clientInfo = extractClientInfo(server);
     consolidatedRequestHandler.updateClientContext(clientInfo);
 
+    // Shared context for fallback execution
+    const fallbackContext = {
+      toolMode: toolModeConfig.mode,
+      registryConfig,
+      analytics,
+      sessionId,
+      router: ToolRouter,
+      server,
+      yamlRulesManager,
+      clientInfo
+    };
+
+    // Hybrid dispatch for consolidated tools
     if (consolidatedToolNames.has(name)) {
-      try {
-        return await consolidatedRequestHandler(request);
-      } catch (error) {
-        if (!isUnknownToolError(error)) {
-          throw error;
-        }
-
-        logger.warn(`hybrid-dispatch fallback engaged for consolidated tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
-
-        const fallbackHandler = getConsolidatedHandler(name);
-        if (fallbackHandler) {
-          const fallbackContext: ToolHandlerContext = {
-            toolMode: toolModeConfig.mode,
-            registryConfig,
-            analytics,
-            sessionId,
-            router: ToolRouter,
-            clientName: clientInfo.name ?? 'unknown-client',
-            clientVersion: clientInfo.version ?? '0.0.0',
-            server,
-            yamlRulesManager
-          };
-
-          return await analytics.recordToolExecution(
-            name,
-            async () => fallbackHandler(args as Record<string, unknown>, fallbackContext),
-            {
-              clientName: fallbackContext.clientName,
-              clientVersion: fallbackContext.clientVersion,
-              sessionId
-            }
-          );
-        }
-
-        throw error;
-      }
+      return await executeWithHybridFallback(
+        name,
+        request,
+        consolidatedRequestHandler,
+        getConsolidatedHandler,
+        fallbackContext
+      );
     }
 
-    // Create Set of legacy alias tool names for efficient lookup
-    const legacyAliasToolNames = new Set<string>(LEGACY_ALIAS_TOOL_NAMES);
-
-    // Hybrid dispatch for legacy alias tools (non-legacy-only mode)
-    if (legacyAliasToolNames.has(name) && toolModeConfig.mode !== 'legacy-only') {
-      try {
-        return await consolidatedRequestHandler(request);
-      } catch (error) {
-        if (!isUnknownToolError(error)) {
-          throw error;
-        }
-
-        logger.warn(`hybrid-dispatch fallback engaged for legacy alias tool "${name}": ${error instanceof Error ? error.message : String(error)}`);
-
-        const fallbackHandler = getLegacyAliasHandler(name);
-        if (fallbackHandler) {
-          const fallbackContext: ToolHandlerContext = {
-            toolMode: toolModeConfig.mode,
-            registryConfig,
-            analytics,
-            sessionId,
-            router: ToolRouter,
-            clientName: clientInfo.name ?? 'unknown-client',
-            clientVersion: clientInfo.version ?? '0.0.0',
-            server,
-            yamlRulesManager
-          };
-
-          return await analytics.recordToolExecution(
-            name,
-            async () => fallbackHandler(args as Record<string, unknown>, fallbackContext),
-            {
-              clientName: fallbackContext.clientName,
-              clientVersion: fallbackContext.clientVersion,
-              sessionId
-            }
-          );
-        }
-
-        throw error;
-      }
+    // Hybrid dispatch for legacy alias tools
+    if (legacyAliasToolNames.has(name)) {
+      return await executeWithHybridFallback(
+        name,
+        request,
+        consolidatedRequestHandler,
+        getLegacyAliasHandler,
+        fallbackContext
+      );
     }
 
     // MCP-98: Route always-available tools through request handler
-    const alwaysAvailableToolNames = new Set<string>(ALWAYS_AVAILABLE_TOOL_NAMES);
     if (alwaysAvailableToolNames.has(name)) {
       return await consolidatedRequestHandler(request);
     }
 
     try {
-
-    switch (name) {
-      // Consolidated AI-Optimized Tools
-      case 'search': {
-        throw new Error('search handler should be resolved by consolidated registry');
-      }
-      case 'create_note': {
-        throw new Error('create_note handler should be resolved by consolidated registry');
-      }
-      case 'list': {
-        throw new Error('list handler should be resolved by consolidated registry');
-      }
-
-      // Legacy Tool Aliases - handled by registry in non-legacy-only modes
-      // Fall through to legacy implementations for legacy-only mode
-      case 'search_notes':
-      case 'advanced_search':
-      case 'quick_search':
-      case 'search_by_content_type':
-      case 'search_recent':
-      case 'find_notes_by_pattern':
-        throw new Error(`${name} handler should be resolved by legacy alias registry`);
-
-      case 'create_note_from_template':
-        throw new Error('create_note_from_template handler should be resolved by legacy alias registry');
-
-      case 'list_folders':
-      case 'list_daily_notes':
-      case 'list_templates':
-      case 'list_yaml_properties':
-        throw new Error(`${name} handler should be resolved by legacy alias registry`);
-
-      // MCP-98: Always-available handlers extracted to dedicated modules
-      case 'get_server_version':
-      case 'get_yaml_rules':
-      case 'read_note':
-      case 'edit_note':
-      case 'get_daily_note':
-      case 'diagnose_vault':
-      case 'move_items':
-      case 'insert_content':
-      case 'list_yaml_property_values':
-        throw new Error(`${name} handler should be registered in handler registry`);
-
-      case 'search_notes': {
-        const searchOptions: any = {};
-        
-        if (args.contentType) searchOptions.contentType = args.contentType as string;
-        if (args.category) searchOptions.category = args.category as string;
-        if (args.tags) searchOptions.tags = args.tags as string[];
-        if (args.folder) searchOptions.folder = args.folder as string;
-        if (args.dateStart || args.dateEnd) {
-          searchOptions.dateRange = {};
-          if (args.dateStart) searchOptions.dateRange.start = new Date(args.dateStart as string);
-          if (args.dateEnd) searchOptions.dateRange.end = new Date(args.dateEnd as string);
-        }
-
-        const results = VaultUtils.searchNotes(searchOptions);
-        const resultText = results.map(note =>
-          `**${ObsidianLinks.extractNoteTitle(note.path, note.frontmatter)}** (${note.frontmatter['content type']})\n${note.path}`
-        ).join('\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Found ${results.length} notes:\n\n${resultText}`
-          }]
-        });
-      }
-
-
-      case 'list_folders': {
-        const basePath = (args.path as string) || '';
-        const fullPath = basePath ? 
-          `${LIFEOS_CONFIG.vaultPath}/${basePath}` : 
-          LIFEOS_CONFIG.vaultPath;
-
-        const { readdirSync, statSync } = await import('fs');
-        const items = readdirSync(fullPath)
-          .filter(item => statSync(`${fullPath}/${item}`).isDirectory())
-          .map(item => `📁 ${item}`)
-          .join('\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Folders in ${basePath || 'vault root'}:\n\n${items}`
-          }]
-        });
-      }
-
-      case 'find_notes_by_pattern': {
-        const pattern = args.pattern as string;
-        if (!pattern) {
-          throw new Error('Pattern is required');
-        }
-        const files = await VaultUtils.findNotes(pattern);
-        const fileList = files.map(file => file.replace(LIFEOS_CONFIG.vaultPath + '/', '')).join('\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Found ${files.length} files matching "${args.pattern}":\n\n${fileList}`
-          }]
-        });
-      }
-
-      case 'list_daily_notes': {
-        const limit = (args.limit as number) || 10;
-        const { readdirSync } = await import('fs');
-        
-        try {
-          const files = readdirSync(LIFEOS_CONFIG.dailyNotesPath)
-            .filter(file => file.endsWith('.md'))
-            .sort()
-            .slice(-limit)
-            .map(file => {
-              const fullPath = `${LIFEOS_CONFIG.dailyNotesPath}/${file}`;
-              return `**${file}**\n\`${fullPath}\``;
-            });
-
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `Latest ${files.length} daily notes:\n\n${files.join('\n\n')}`
-            }]
-          });
-        } catch (error) {
-          return addVersionMetadata({
-            content: [{
-              type: 'text',
-              text: `Error accessing daily notes directory: ${error}`
-            }],
-            isError: true
-          });
-        }
-      }
-
-      case 'advanced_search': {
-        const searchOptions: AdvancedSearchOptions = {};
-        
-        // Text queries - handle OR operations
-        if (args.query) {
-          const query = args.query as string;
-          // Convert OR operations to regex for better handling
-          if (query.toLowerCase().includes(' or ')) {
-            const orTerms = query.split(/\s+or\s+/i).map(term => term.trim().replace(/"/g, ''));
-            searchOptions.query = orTerms.join('|');
-            searchOptions.useRegex = true;
-          } else {
-            searchOptions.query = query;
-          }
-        }
-        if (args.contentQuery) searchOptions.contentQuery = args.contentQuery as string;
-        if (args.titleQuery) searchOptions.titleQuery = args.titleQuery as string;
-        if (args.naturalLanguage) searchOptions.naturalLanguage = args.naturalLanguage as string;
-        
-        // Metadata filters
-        if (args.contentType) searchOptions.contentType = args.contentType as string;
-        if (args.category) searchOptions.category = args.category as string;
-        if (args.subCategory) searchOptions.subCategory = args.subCategory as string;
-        if (args.tags) searchOptions.tags = args.tags as string[];
-        if (args.author) searchOptions.author = args.author as string[];
-        if (args.people) searchOptions.people = args.people as string[];
-        if (args.yamlProperties) searchOptions.yamlProperties = args.yamlProperties as Record<string, any>;
-        if (args.matchMode) searchOptions.matchMode = args.matchMode as 'all' | 'any';
-        if (args.arrayMode) searchOptions.arrayMode = args.arrayMode as 'exact' | 'contains' | 'any';
-        if (args.includeNullValues !== undefined) searchOptions.includeNullValues = args.includeNullValues as boolean;
-        
-        // Location filters
-        if (args.folder) searchOptions.folder = args.folder as string;
-        if (args.excludeFolders) searchOptions.excludeFolders = args.excludeFolders as string[];
-        
-        // Date filters
-        if (args.createdAfter) searchOptions.createdAfter = new Date(args.createdAfter as string);
-        if (args.createdBefore) searchOptions.createdBefore = new Date(args.createdBefore as string);
-        if (args.modifiedAfter) searchOptions.modifiedAfter = new Date(args.modifiedAfter as string);
-        if (args.modifiedBefore) searchOptions.modifiedBefore = new Date(args.modifiedBefore as string);
-        
-        // Search options
-        if (args.caseSensitive) searchOptions.caseSensitive = args.caseSensitive as boolean;
-        if (args.useRegex) searchOptions.useRegex = args.useRegex as boolean;
-        if (args.includeContent !== undefined) searchOptions.includeContent = args.includeContent as boolean;
-        if (args.maxResults) searchOptions.maxResults = args.maxResults as number;
-        if (args.sortBy) searchOptions.sortBy = args.sortBy as any;
-        if (args.sortOrder) searchOptions.sortOrder = args.sortOrder as any;
-
-        const results = await SearchEngine.search(searchOptions);
-        
-        // Check if we have natural language interpretation to display
-        let interpretationText = '';
-        if (results.length > 0 && results[0].interpretation) {
-          interpretationText = NaturalLanguageProcessor.formatInterpretation(results[0].interpretation) + '\n\n';
-        }
-        
-        const resultText = results.map((result, index) => {
-          const note = result.note;
-          const score = result.score.toFixed(1);
-          const matchCount = result.matches.length;
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
-          let output = ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown',
-            result.score,
-            `${matchCount} matches`
-          );
-          
-          // Show top 3 matches with context
-          const topMatches = result.matches.slice(0, 3);
-          if (topMatches.length > 0) {
-            output += '\n\n**Matches:**\n';
-            topMatches.forEach(match => {
-              const type = match.type === 'frontmatter' ? `${match.type} (${match.field})` : match.type;
-              output += `- *${type}*: "${match.context}"\n`;
-            });
-          }
-          
-          return output;
-        }).join('\n\n---\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `${interpretationText}Found ${results.length} results:\n\n${resultText}`
-          }]
-        });
-      }
-
-      case 'quick_search': {
-        const query = args.query as string;
-        const maxResults = (args.maxResults as number) || 10;
-        
-        const results = await SearchEngine.quickSearch(query, maxResults);
-        
-        const resultText = results.map((result, index) => {
-          const note = result.note;
-          const topMatch = result.matches[0];
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
-          let output = ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown'
-          );
-          
-          if (topMatch) {
-            output += `\n\n**Preview:** "${topMatch.context}"`;
-          }
-          
-          return output;
-        }).join('\n\n---\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Quick search results for "${query}":\n\n${resultText}`
-          }]
-        });
-      }
-
-      case 'search_by_content_type': {
-        const contentType = args.contentType as string;
-        const maxResults = args.maxResults as number | undefined;
-        
-        const results = await SearchEngine.searchByContentType(contentType, maxResults);
-        
-        const resultText = results.map((result, index) => {
-          const note = result.note;
-          const modifiedDate = format(note.modified, 'MMM dd, yyyy');
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
-          return ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown',
-            undefined,
-            `Modified: ${modifiedDate}`
-          );
-        }).join('\n\n---\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Found ${results.length} notes with content type "${contentType}":\n\n${resultText}`
-          }]
-        });
-      }
-
-      case 'search_recent': {
-        const days = (args.days as number) || 7;
-        const maxResults = (args.maxResults as number) || 20;
-        
-        const results = await SearchEngine.searchRecent(days, maxResults);
-        
-        const resultText = results.map((result, index) => {
-          const note = result.note;
-          const modifiedDate = format(note.modified, 'MMM dd, yyyy HH:mm');
-          const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
-          
-          return ObsidianLinks.formatSearchResult(
-            index + 1,
-            title,
-            note.path,
-            note.frontmatter['content type'] || 'Unknown',
-            undefined,
-            `Modified: ${modifiedDate}`
-          );
-        }).join('\n\n---\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `Found ${results.length} notes modified in the last ${days} days:\n\n${resultText}`
-          }]
-        });
-      }
-
-
-      case 'list_templates': {
-        const templates = DynamicTemplateEngine.getAllTemplates();
-        
-        const templateList = templates.map((template, index) => {
-          return `**${index + 1}. ${template.name}** (\`${template.key}\`)\n` +
-                 `   ${template.description}\n` +
-                 `   📁 Target: \`${template.targetFolder || 'Auto-detect'}\`\n` +
-                 `   📄 Content Type: ${template.contentType || 'Varies'}`;
-        }).join('\n\n');
-
-        return addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: `# Available Templates\n\n${templateList}\n\n## Usage Examples\n\n` +
-                  `• \`create_note_from_template\` with template: "restaurant"\n` +
-                  `• \`create_note\` with template: "article"\n` +
-                  `• \`create_note_from_template\` with template: "person"\n\n` +
-                  `**Pro tip:** I can auto-detect the right template based on your note title and content!`
-          }]
-        });
-      }
-
-
-
-      case 'list_yaml_properties': {
-        const includeCount = args.includeCount as boolean || false;
-        const sortBy = args.sortBy as 'alphabetical' | 'usage' || 'alphabetical';
-        const excludeStandard = args.excludeStandard as boolean || false;
-
-        // Get all YAML properties from the vault
-        const propertiesInfo = VaultUtils.getAllYamlProperties({
-          includeCount,
-          excludeStandard
-        });
-
-        // Sort the properties
-        let sortedProperties = propertiesInfo.properties;
-        if (sortBy === 'usage' && includeCount) {
-          sortedProperties = sortedProperties.sort((a, b) => 
-            (propertiesInfo.counts?.[b] || 0) - (propertiesInfo.counts?.[a] || 0)
-          );
-        } else {
-          sortedProperties = sortedProperties.sort((a, b) => 
-            a.toLowerCase().localeCompare(b.toLowerCase())
-          );
-        }
-
-        // Format the response
-        let responseText = `# YAML Properties in Vault\n\n`;
-        responseText += `Found **${sortedProperties.length}** unique properties`;
-        if (propertiesInfo.totalNotes) {
-          responseText += ` across **${propertiesInfo.totalNotes}** notes`;
-        }
-        responseText += `\n\n`;
-
-        // Show scan statistics
-        responseText += `## Scan Statistics\n`;
-        responseText += `- **Files scanned**: ${propertiesInfo.scannedFiles || 0}\n`;
-        if (propertiesInfo.skippedFiles && propertiesInfo.skippedFiles > 0) {
-          responseText += `- **Files skipped**: ${propertiesInfo.skippedFiles} (malformed YAML or read errors)\n`;
-        }
-        responseText += `- **Notes with frontmatter**: ${propertiesInfo.totalNotes || 0}\n\n`;
-
-        if (excludeStandard) {
-          responseText += `*Standard LifeOS properties excluded*\n\n`;
-        }
-
-        responseText += `## Properties List\n\n`;
-
-        if (includeCount && propertiesInfo.counts) {
-          // Show properties with usage counts
-          sortedProperties.forEach(prop => {
-            const count = propertiesInfo.counts![prop] || 0;
-            responseText += `- **${prop}** (used in ${count} note${count !== 1 ? 's' : ''})\n`;
-          });
-        } else {
-          // Simple list
-          sortedProperties.forEach(prop => {
-            responseText += `- ${prop}\n`;
-          });
-        }
-
-        const response = addVersionMetadata({
-          content: [{
-            type: 'text',
-            text: responseText
-          }]
-        });
-
-        return response;
-      }
-
-
-      default:
-        throw new Error(`Unknown tool: ${name}`);
-    }
+      // All tools now handled by consolidated request handler through registry
+      throw new Error(`Unknown tool: ${name}`);
   } catch (error) {
     return addVersionMetadata({
       content: [{

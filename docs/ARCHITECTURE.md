@@ -84,24 +84,26 @@ Factory module for MCP request handling with registry-based tool dispatch. Intro
 4. **Utility Handlers** (MCP-98): get_server_version, get_daily_note, diagnose_vault, move_items
 5. **Metadata Handlers** (MCP-98): get_yaml_rules, list_yaml_property_values
 
-**Status:** Complete with 26 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 9 always-available + 3 in-switch routing)
+**Status:** Complete with 29 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 9 always-available + 6 remaining in hybrid dispatch)
+
+**Switch Statement Removal (MCP-99):** Completed 2025-10-30 - All inline tool logic removed from index.ts, achieving pure factory pattern with 100% registry-based routing
 
 **Test Coverage:** Unit and integration suites validate tool-mode enforcement, registry dispatch, and analytics wrapping
 
 ### Handler Modules (`src/server/handlers/`)
 
-Extracted handler implementations organized by functional responsibility. Introduced across MCP-96, MCP-97, and MCP-98 to decompose monolithic switch statement.
+Extracted handler implementations organized by functional responsibility. Introduced across MCP-96, MCP-97, MCP-98, and finalized in MCP-99 with complete switch statement removal.
 
 **Consolidated Handlers** (`consolidated-handlers.ts` - MCP-96):
 - `search` - Universal search with auto-routing (replaces 6 legacy search tools)
 - `create_note` - Smart note creation with template auto-detection
 - `list` - Universal listing with auto-type detection
 
-**Legacy Alias Handlers** (`legacy-alias-handlers.ts` - MCP-97):
+**Legacy Alias Handlers** (`legacy-alias-handlers.ts` - MCP-97, updated MCP-99):
 - 11 backward compatibility aliases for deprecated tool names
 - Parameter translation (contentType→query, pattern→query)
 - Deprecation warnings in responses
-- Hybrid dispatch fallback pattern
+- Mode guard removal (MCP-99): Legacy aliases now work in all tool modes including legacy-only
 
 **Note Handlers** (`note-handlers.ts` - MCP-98):
 - `read_note` - Read notes with formatted content and metadata
@@ -129,17 +131,34 @@ Extracted handler implementations organized by functional responsibility. Introd
 
 ### MCP Server Entry Point (`src/index.ts`)
 
-Main entry point implementing Model Context Protocol server. Coordinates server factory, tool registry, and request routing to deliver MCP functionality.
+Main entry point implementing Model Context Protocol server. Coordinates server factory, tool registry, and request routing via pure factory pattern.
 
 **Key Responsibilities:**
 
 - MCP protocol implementation and request routing
-- Request/response handling via handler registry
+- Request/response handling via handler registry factory
+- Hybrid dispatch fallback for resilience during transitions
 - Integration of server factory and tool registry
 - Server lifecycle management
 
-**Status:** Reduced from 2,659 lines (pre-MCP-6) to 1,060 lines (post-MCP-98), total reduction of 1,599 lines (-60.1%)
-**Decomposition Progress:** Handler extraction complete (MCP-96, MCP-97, MCP-98); 3 handlers remain in-switch (create_note_smart routing)
+**Hybrid Dispatch Pattern:**
+
+- **Primary Path:** Registry-based dispatch via `createRequestHandler()`
+- **Fallback Path:** Individual handler execution with `executeWithHybridFallback()`
+- **Analytics Exemptions:** Tools with manual tracking (get_daily_note) excluded from automatic wrapping
+- **Module-Level Sets:** Tool name sets cached at module load for O(1) lookup performance
+- **Error Recovery:** `UnknownToolError` detection triggers fallback with logging
+
+**Design Patterns:**
+
+- Pure factory pattern (switch statement completely removed)
+- O(1) registry-based dispatch via Map.get()
+- Cached tool name sets (built once at module load)
+- Helper function consolidation (`executeWithHybridFallback()`)
+- Analytics double-counting prevention via exemption list
+
+**Status:** Reduced from 1,797 lines (baseline) → 724 lines (pre-MCP-99) → 307 lines (post-MCP-99), total reduction of 1,490 lines (-83% from baseline)
+**Decomposition Progress:** Complete as of 2025-10-30 - all 35+ handlers extracted to dedicated modules, 418-line switch statement removed (MCP-99), achieved pure factory pattern with 100% registry-based routing
 
 ### Tool Router (`src/tool-router.ts`)
 
