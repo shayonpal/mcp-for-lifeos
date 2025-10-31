@@ -33,4 +33,4 @@ jobs:
         run: npm run typecheck
 
       - name: Integration tests
-        run: npm run test:integration
+        run: node --expose-gc ./node_modules/.bin/jest tests/integration
