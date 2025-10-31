@@ -73,11 +73,6 @@ function createSearchAliasHandler(
   paramMapper?: (args: Record<string, unknown>) => Partial<UniversalSearchOptions>
 ): ToolHandler {
   return async (args, context) => {
-    // Mode guard: only redirect if not in legacy-only mode
-    if (context.toolMode === 'legacy-only') {
-      throw new Error('This handler should only be called in non-legacy modes');
-    }
-
     // Build search options with mode
     const searchOptions: UniversalSearchOptions = {
       ...(args as unknown as UniversalSearchOptions),
@@ -144,11 +139,6 @@ function createSearchAliasHandler(
  */
 function createTemplateAliasHandler(): ToolHandler {
   return async (args, context) => {
-    // Mode guard: only redirect if not in legacy-only mode
-    if (context.toolMode === 'legacy-only') {
-      throw new Error('This handler should only be called in non-legacy modes');
-    }
-
     // Map to SmartCreateNoteOptions with explicit template
     const createOptions: SmartCreateNoteOptions = {
       title: args.title as string,
@@ -201,11 +191,6 @@ function createListAliasHandler(
   paramMapper?: (args: Record<string, unknown>) => Partial<UniversalListOptions>
 ): ToolHandler {
   return async (args, context) => {
-    // Mode guard: only redirect if not in legacy-only mode
-    if (context.toolMode === 'legacy-only') {
-      throw new Error('This handler should only be called in non-legacy modes');
-    }
-
     // Build list options with type
     const listOptions: UniversalListOptions = {
       type: listType

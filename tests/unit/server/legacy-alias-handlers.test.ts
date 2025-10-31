@@ -138,7 +138,7 @@ describe('Legacy Alias Handlers Module', () => {
   });
 
   describe('Mode Guards', () => {
-    it('should throw error when called in legacy-only mode (search aliases)', async () => {
+    it('should work in legacy-only mode (search aliases)', async () => {
       const handler = getLegacyAliasHandler('search_notes');
       expect(handler).toBeDefined();
 
@@ -147,12 +147,14 @@ describe('Legacy Alias Handlers Module', () => {
         toolMode: 'legacy-only'
       };
 
-      await expect(
-        handler!({ query: 'test' }, legacyOnlyContext)
-      ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      // Should now route successfully through registry instead of throwing
+      const result = await handler!({ query: 'test' }, legacyOnlyContext);
+      expect(result).toBeDefined();
+      expect(result.content).toBeDefined();
+      expect(result.content[0]).toHaveProperty('text');
     });
 
-    it('should throw error when called in legacy-only mode (template alias)', async () => {
+    it('should work in legacy-only mode (template alias)', async () => {
       const handler = getLegacyAliasHandler('create_note_from_template');
       expect(handler).toBeDefined();
 
@@ -161,12 +163,14 @@ describe('Legacy Alias Handlers Module', () => {
         toolMode: 'legacy-only'
       };
 
-      await expect(
-        handler!({ title: 'Test', template: 'default' }, legacyOnlyContext)
-      ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      // Should now route successfully through registry instead of throwing
+      const uniqueTitle = `Test-MCP99-${Date.now()}`;
+      const result = await handler!({ title: uniqueTitle, template: 'default' }, legacyOnlyContext);
+      expect(result).toBeDefined();
+      expect(result.content).toBeDefined();
     });
 
-    it('should throw error when called in legacy-only mode (list aliases)', async () => {
+    it('should work in legacy-only mode (list aliases)', async () => {
       const handler = getLegacyAliasHandler('list_folders');
       expect(handler).toBeDefined();
 
@@ -175,9 +179,10 @@ describe('Legacy Alias Handlers Module', () => {
         toolMode: 'legacy-only'
       };
 
-      await expect(
-        handler!({}, legacyOnlyContext)
-      ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      // Should now route successfully through registry instead of throwing
+      const result = await handler!({}, legacyOnlyContext);
+      expect(result).toBeDefined();
+      expect(result.content).toBeDefined();
     });
   });
 

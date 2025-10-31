@@ -1,0 +1,875 @@
+
+> lifeos-mcp@2.0.1 test
+> jest
+
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /Users/shayon/DevProjects/mcp-for-lifeos/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+PASS tests/integration/jsonl-stress.test.ts (8.18 s)
+  JSONL Analytics Stress Tests
+    Memory Usage Tests
+      ✓ should maintain stable memory usage during continuous writes (72 ms)
+      ✓ should not leak memory when reading large JSONL files (469 ms)
+    Data Integrity Under Load
+      ✓ should maintain data integrity with 10 concurrent processes (1601 ms)
+      ✓ should handle rapid write bursts without data corruption (795 ms)
+    Performance Benchmarks
+      ✓ should achieve > 1000 writes per second (5027 ms)
+      ✓ should handle mixed read/write operations efficiently (61 ms)
+    Error Recovery
+      ✓ should recover from corrupted JSONL files (3 ms)
+      ✓ should handle file system errors gracefully (2 ms)
+
+PASS tests/integration/mcp-server-concurrent.test.ts
+  MCP Server Concurrent Operations
+    Multiple Server Instances
+      ✓ should maintain data integrity when servers start and stop frequently (2543 ms)
+      ○ skipped should handle multiple MCP server instances writing analytics concurrently
+    Analytics Collection Behavior
+      ✓ should handle rapid sequential writes without data loss (2127 ms)
+      ○ skipped should append to existing JSONL file
+
+  console.warn
+    Warning: Metric exceeds PIPE_BUF size, atomicity not guaranteed
+
+      557 |       // Warn if over PIPE_BUF (4096 on most systems)
+      558 |       if (jsonLine.length > 4096) {
+    > 559 |         console.warn('Warning: Metric exceeds PIPE_BUF size, atomicity not guaranteed');
+          |                 ^
+      560 |       }
+      561 |     });
+      562 |   });
+
+      at Object.<anonymous> (tests/integration/concurrent-jsonl.test.ts:559:17)
+
+PASS tests/integration/concurrent-jsonl.test.ts
+  Concurrent JSONL Integration Tests
+    Concurrent Process Writes
+      ✓ should handle 3 concurrent processes with zero data loss (1069 ms)
+      ✓ should maintain line atomicity (no interleaved writes) (624 ms)
+      ✓ should handle process crashes gracefully (490 ms)
+    Format Migration
+      ✓ should read existing JSON format while writing JSONL (2 ms)
+      ✓ should auto-detect format based on file extension (1 ms)
+    Performance Validation
+      ✓ should complete append operations within 5ms (10 ms)
+      ✓ should handle high-frequency writes efficiently (1019 ms)
+    Edge Cases
+      ✓ should handle disk full scenarios gracefully (1 ms)
+      ✓ should handle permission denied errors (1 ms)
+      ✓ should handle very large individual metrics (18 ms)
+
+PASS tests/unit/jsonl-analytics.test.ts
+  JSONL Analytics Unit Tests
+    Atomic Append Operations
+      ✓ should use fs.appendFileSync for atomic writes (1 ms)
+      ✓ should ensure line size stays under PIPE_BUF (4096 bytes) (1 ms)
+      ✓ should handle write errors gracefully (1 ms)
+    JSONL Line Formatting
+      ✓ should format each metric as a single JSON line
+      ✓ should not include multi-line JSON formatting (1 ms)
+      ✓ should escape special characters properly
+    Instance ID Generation
+      ✓ should generate unique UUID v4 instance IDs (4 ms)
+      ✓ should include process ID and hostname (1 ms)
+      ✓ should maintain instance ID throughout session
+    Malformed Line Parsing
+      ✓ should skip malformed JSON lines (2 ms)
+      ✓ should handle partial lines from process crashes (1 ms)
+      ✓ should handle empty lines and whitespace
+    Format Detection (JSON vs JSONL)
+      ✓ should detect format by file extension (1 ms)
+      ✓ should detect format by content structure
+      ✓ should support reading both formats during migration (1 ms)
+    Buffer Management
+      ✓ should flush buffer when size limit reached
+      ✓ should flush buffer on timer interval (256 ms)
+
+PASS tests/unit/server/request-handler.test.ts
+  Request Handler - isToolAllowed
+    Always-available tools
+      ✓ allows always-available tools in legacy-only mode (4 ms)
+      ✓ allows always-available tools in consolidated-only mode
+      ✓ allows always-available tools in consolidated-with-aliases mode (1 ms)
+    Consolidated tools
+      ✓ allows consolidated tools in consolidated-only mode
+      ✓ allows consolidated tools in consolidated-with-aliases mode
+      ✓ blocks consolidated tools in legacy-only mode
+    Legacy tools
+      ✓ allows legacy tools in legacy-only mode (3 ms)
+      ✓ allows legacy tools in consolidated-with-aliases mode (1 ms)
+      ✓ blocks legacy tools in consolidated-only mode (1 ms)
+    Unknown tools
+      ✓ blocks unknown tools in legacy-only mode
+      ✓ blocks unknown tools in consolidated-only mode
+      ✓ blocks unknown tools in consolidated-with-aliases mode (1 ms)
+    Edge cases
+      ✓ handles empty tool name
+      ✓ handles case-sensitive tool names
+      ✓ returns structured error message for invalid mode (1 ms)
+  Request Handler - validateMaxResults
+    Default behavior
+      ✓ returns default value (25) when undefined
+    Valid range (1-100)
+      ✓ accepts value within range without adjustment (1 ms)
+    Constraint to minimum (1)
+      ✓ constrains negative values to minimum
+      ✓ constrains zero to minimum
+    Constraint to maximum (100)
+      ✓ constrains values above 100 (1 ms)
+      ✓ constrains very large values
+    Tool name parameter (MCP-95)
+      ✓ accepts any tool name without tool-specific constraints (1 ms)
+  Request Handler - createRequestHandler
+    Factory creation
+      ✓ creates handler function (1 ms)
+      ✓ creates handler without executing side effects (3 ms)
+    Registry population (MCP-96)
+      ✓ throws "Missing arguments" for request without arguments (7 ms)
+      ✓ executes consolidated tools via registry (1 ms)
+      ✓ creates notes via consolidated registry handler (1 ms)
+      ✓ lists data via consolidated registry handler (1 ms)
+      ✓ throws "Unknown tool" when registry lacks tool
+      ✓ validates tool mode before registry lookup
+    Tool mode validation
+      ✓ validates tool availability in legacy-only mode (1 ms)
+      ✓ validates tool availability in consolidated-only mode (1 ms)
+    Handler context
+      ✓ builds context with provided configuration
+
+PASS tests/unit/task-formatting.test.ts
+  Task Formatting with Obsidian Tasks Plugin
+    Task Creation Date Formatting
+      ✓ should add creation date to tasks without one (10 ms)
+      ✓ should not add creation date to tasks that already have one (2 ms)
+      ✓ should handle multiple tasks correctly (5 ms)
+      ✓ should not modify non-task list items (3 ms)
+      ✓ should work with daily note task workflow (14 ms)
+    Task Properties Formatting
+      ✓ should maintain other task properties when adding creation date (5 ms)
+
+PASS tests/integration/daily-note-task-workflow.test.ts
+  Daily Note Task Addition Workflow
+    Reproducing Issue #88
+      ✓ should add tasks to existing Day's Notes section (6 ms)
+      ✓ should handle multiple task additions without creating duplicates (7 ms)
+      ✓ should fail gracefully when heading doesn't exist (16 ms)
+      ✓ should handle case variations in Day's Notes (4 ms)
+    Task Insertion Order (Issue #90)
+      ✓ should append new tasks at the bottom of existing task lists (4 ms)
+      ✓ should handle mixed content with tasks properly (3 ms)
+      ✓ should insert task at bottom when section has no existing tasks (6 ms)
+      ✓ should NOT insert tasks at the beginning of the section (18 ms)
+      ✓ should handle the exact scenario from issue #90 (3 ms)
+      ✓ should handle case when section has no tasks initially (4 ms)
+      ✓ should handle edge case - heading with no content (2 ms)
+    Error Scenarios from RCA
+      ✓ should not create duplicate files when updating daily notes (8 ms)
+
+PASS tests/unit/insert-content.test.ts
+  VaultUtils.insertContent
+    Heading-based insertion
+      ✓ should insert content after a heading (3 ms)
+      ✓ should insert content before a heading (4 ms)
+      ✓ should handle headings without hash prefix in target (4 ms)
+      ✓ should throw error if heading not found (16 ms)
+    Block reference insertion
+      ✓ should insert content after a block reference (2 ms)
+      ✓ should handle block ref without caret prefix (2 ms)
+    Pattern-based insertion
+      ✓ should insert content after a text pattern (4 ms)
+      ✓ should throw error if pattern not found (2 ms)
+    Line number insertion
+      ✓ should insert content at specific line number (2 ms)
+      ✓ should throw error if line number out of range (2 ms)
+    Position options
+      ✓ should append to end of target line (2 ms)
+      ✓ should prepend to beginning of target line (6 ms)
+    Newline handling
+      ✓ should ensure newlines by default (3 ms)
+      ✓ should not add newlines when disabled (2 ms)
+
+PASS tests/unit/response-truncator.test.ts
+  ResponseTruncator
+    Constructor and Initialization
+      ✓ should create with default configuration (1 ms)
+      ✓ should create with custom configuration (1 ms)
+      ✓ should merge custom config with defaults (3 ms)
+      ✓ should validate configuration on creation (7 ms)
+    Budget Tracking
+      ✓ should track remaining budget correctly
+      ✓ should never return negative remaining budget
+      ✓ should accumulate consumed budget across multiple calls (1 ms)
+      ✓ should reset budget to initial state
+    canAddResult()
+      ✓ should return true when result fits within budget
+      ✓ should return false when result exceeds budget (1 ms)
+      ✓ should return true when result exactly fits budget
+      ✓ should account for already consumed budget
+      ✓ should handle empty string (1 ms)
+    consumeBudget()
+      ✓ should consume budget for valid result
+      ✓ should throw error when result would exceed budget (1 ms)
+      ✓ should throw error with accurate exceeded amount
+      ✓ should not modify budget if consumption throws
+      ✓ should handle empty string without error
+    estimateTokens()
+      ✓ should estimate tokens using configured ratio
+      ✓ should round up fractional tokens (5 ms)
+      ✓ should handle custom estimation ratios
+      ✓ should handle empty string
+      ✓ should handle unicode characters correctly (1 ms)
+    getTruncationInfo()
+      ✓ should generate metadata when not truncated
+      ✓ should generate metadata when truncated by token budget (1 ms)
+      ✓ should include standard suggestion message
+      ✓ should include auto-downgrade suggestion when applicable
+      ✓ should calculate estimated tokens correctly (1 ms)
+      ✓ should set limitType to "token" when token was constraint
+    Edge Cases and Boundary Conditions
+      ✓ should handle maxResults=1 (minimum)
+      ✓ should handle maxResults=100 (maximum)
+      ✓ should handle single result exceeding budget
+      ✓ should handle exactly at budget boundary
+    Factory Functions
+      ✓ should create default truncator via factory (1 ms)
+      ✓ should create custom truncator via factory
+  Configuration Validation
+    validateTokenBudgetConfig()
+      ✓ should accept valid configuration
+      ✓ should reject negative maxTokens (1 ms)
+      ✓ should reject zero maxTokens
+      ✓ should reject negative maxCharacters
+      ✓ should reject negative estimationRatio (3 ms)
+      ✓ should reject inconsistent maxCharacters and maxTokens
+      ✓ should allow reasonable tolerance in consistency check (1 ms)
+    validateMaxResults()
+      ✓ should return default for undefined value (search)
+      ✓ should return default for undefined value (list)
+      ✓ should return default for undefined value (yaml_properties)
+      ✓ should accept valid value within range (1 ms)
+      ✓ should constrain value below minimum
+      ✓ should constrain value above maximum
+      ✓ should constrain negative values (1 ms)
+  Real-World Scenarios
+    Incremental Result Accumulation
+      ✓ should simulate typical search result accumulation (1 ms)
+      ✓ should handle very large result that fits exactly
+      ✓ should prevent adding second result after budget consumed (1 ms)
+    Performance Characteristics
+      ✓ should handle character estimation efficiently (1 ms)
+      ✓ should track budget for many small results efficiently (1 ms)
+
+PASS tests/integration/daily-note-simple.test.ts
+  Daily Note Template Integration (Direct)
+    Daily note creation with templates
+      ✓ should create daily note using configured template (13 ms)
+      ✓ should handle different date formats (9 ms)
+      ✓ should create weekly template when specified (8 ms)
+      ✓ should handle missing template gracefully (13 ms)
+      ✓ should apply template caching (5 ms)
+    Template processing edge cases
+      ✓ should handle malformed template syntax (7 ms)
+      ✓ should handle complex date formatting (5 ms)
+      ✓ should handle nested folders in template path (5 ms)
+    VaultUtils integration
+      ✓ should create daily note with VaultUtils (9 ms)
+
+PASS tests/unit/insert-content-sections.test.ts
+  Insert Content - Section Targeting
+    Daily Note - Day's Notes Section
+      ✓ should find "Day's Notes" heading correctly (28 ms)
+      ✓ should handle exact heading matching with hash prefix (8 ms)
+      ✓ should add multiple tasks to the same section (12 ms)
+      ✓ should throw error for non-existent heading (46 ms)
+      ✓ should handle case sensitivity correctly (71 ms)
+    Template Variations
+      ✓ should handle template with "Days Notes" (no apostrophe) (12 ms)
+      ✓ should handle template with different heading levels (13 ms)
+
+PASS tests/unit/mcp-server-factory.test.ts
+  MCP Server Factory
+    isValidToolMode
+      ✓ should return true for valid tool modes (4 ms)
+      ✓ should return false for invalid tool modes (2 ms)
+    parseToolMode
+      ✓ should use TOOL_MODE when set to valid value
+      ✓ should fallback to default when TOOL_MODE is invalid (1 ms)
+      ✓ should use CONSOLIDATED_TOOLS_ENABLED for backward compatibility (1 ms)
+      ✓ should prefer TOOL_MODE over CONSOLIDATED_TOOLS_ENABLED (1 ms)
+      ✓ should default to consolidated-only when no env vars set (1 ms)
+    generateSessionId
+      ✓ should generate valid UUID (1 ms)
+      ✓ should generate unique IDs (1 ms)
+    extractClientInfo
+      ✓ should extract client name and version from server
+      ✓ should handle undefined client version
+      ✓ should handle partial client info (missing version) (1 ms)
+      ✓ should handle partial client info (missing name)
+      ✓ should extract info from multiple server instances consistently
+      ✓ should handle real-world client names (3 ms)
+    createMcpServer
+      ✓ should create server with minimal config (6 ms)
+      ✓ should throw error for invalid vaultPath (19 ms)
+      ✓ should throw error for non-existent vaultPath (2 ms)
+      ✓ should throw error for inaccessible vaultPath
+      ✓ should use provided server name and version (1 ms)
+      ✓ should use default server name and version (3 ms)
+      ✓ should accept explicit tool mode (1 ms)
+      ✓ should parse tool mode from environment (4 ms)
+      ✓ should accept custom session ID (1 ms)
+      ✓ should generate session ID if not provided
+      ✓ should create stdio transport by default (7 ms)
+      ✓ should not create stdio transport when disabled (3 ms)
+      ✓ should return instance with lifecycle methods (2 ms)
+    Server Factory Integration
+      ✓ should create server instance conforming to McpServerInstance contract (3 ms)
+      ✓ should share analytics singleton across instances (1 ms)
+
+PASS tests/unit/path-utils.test.ts
+  path-utils
+    MD_EXTENSION_REGEX constant
+      ✓ should match .md extension at end of string (1 ms)
+      ✓ should not match .md in middle of filename
+      ✓ should match only final .md in double extension (1 ms)
+    stripMdExtension
+      basic functionality
+        ✓ should strip .md extension from filename (2 ms)
+        ✓ should return filename unchanged when no .md extension
+      edge cases
+        ✓ should handle empty string (1 ms)
+        ✓ should strip only final .md from double extension
+        ✓ should preserve .md in middle of filename
+        ✓ should not strip non-.md extensions (1 ms)
+        ✓ should handle multiple dots in filename
+      path preservation
+        ✓ should preserve relative directory paths (2 ms)
+        ✓ should preserve absolute directory paths
+        ✓ should preserve paths with multiple dots
+        ✓ should handle paths with no extension
+      pure function behavior
+        ✓ should not modify input parameter (1 ms)
+        ✓ should return consistent results for same input
+        ✓ should work with const inputs
+      real-world use cases
+        ✓ should handle daily note filenames
+        ✓ should handle template filenames (1 ms)
+        ✓ should handle vault paths
+        ✓ should handle special characters in filenames (1 ms)
+    normalizePath
+      absolute path handling
+        ✓ should return absolute POSIX path as-is
+        ✓ should return absolute Windows path as-is (Windows only)
+        ✓ should return UNC network path as-is (Windows only) (1 ms)
+        ✓ should not modify absolute paths regardless of basePath
+      relative path handling
+        ✓ should join relative POSIX path with basePath
+        ✓ should join relative Windows path with basePath
+        ✓ should handle simple relative paths (1 ms)
+      cross-platform path detection
+        ✓ should correctly identify POSIX absolute paths
+        ✓ should correctly identify Windows absolute paths
+        ✓ should correctly identify relative paths (1 ms)
+      path traversal edge cases
+        ✓ should handle path traversal attempts
+        ✓ should preserve path traversal in relative paths
+      real-world vault scenarios
+        ✓ should handle absolute dailyNotesPath from LIFEOS_CONFIG
+        ✓ should handle relative template inference paths
+        ✓ should handle relative user input paths (4 ms)
+        ✓ should handle paths with spaces
+      pure function behavior
+        ✓ should not modify input parameters (1 ms)
+        ✓ should return consistent results for same input
+        ✓ should be deterministic
+      no I/O operations
+        ✓ should not check if paths exist
+        ✓ should work with invalid paths (1 ms)
+      escaped space handling (MCP-64)
+        ✓ should convert escaped spaces to regular spaces
+        ✓ should handle multiple escaped spaces (1 ms)
+        ✓ should handle escaped spaces in absolute paths
+        ✓ should preserve regular spaces (non-escaped)
+        ✓ should handle CLI compatibility scenario
+        ✓ should not affect paths without escaped spaces (1 ms)
+      path traversal validation (MCP-64)
+        ✓ should allow paths within vault when validation disabled (default)
+        ✓ should allow paths within vault when validation enabled
+        ✓ should throw error for path traversal when validation enabled (8 ms)
+        ✓ should throw error for absolute path outside vault when validation enabled
+        ✓ should allow path traversal when validation disabled (default)
+        ✓ should provide detailed error message for path traversal
+        ✓ should handle vault root path correctly
+        ✓ should handle current directory reference
+        ✓ should detect sibling directory attack with absolute path (3 ms)
+        ✓ should detect vault prefix attack without separator
+      combined features (MCP-64)
+        ✓ should handle escaped spaces with path traversal validation (3 ms)
+        ✓ should detect traversal even with escaped spaces
+        ✓ should handle complex real-world path with all features
+
+FAIL tests/unit/server/legacy-alias-handlers.test.ts
+  Legacy Alias Handlers Module
+    LEGACY_ALIAS_TOOL_NAMES constant
+      ✓ should export exactly 11 legacy alias tool names (1 ms)
+      ✓ should include all search aliases (6 total) (3 ms)
+      ✓ should include template alias
+      ✓ should include all list aliases (4 total) (1 ms)
+    registerLegacyAliasHandlers()
+      ✓ should register all 11 legacy alias handlers into the registry
+      ✓ should register handlers for each tool in LEGACY_ALIAS_TOOL_NAMES (1 ms)
+      ✓ should support chaining pattern (1 ms)
+      ✓ should be idempotent (multiple calls don't duplicate handlers)
+    getLegacyAliasHandler()
+      ✓ should return handler for valid legacy alias tool names (1 ms)
+      ✓ should return undefined for unknown tool names (1 ms)
+      ✓ should return the same handler instance on multiple calls
+    Mode Guards
+      ✕ should throw error when called in legacy-only mode (search aliases) (712 ms)
+      ✕ should throw error when called in legacy-only mode (template alias) (3 ms)
+      ✕ should throw error when called in legacy-only mode (list aliases) (6 ms)
+    Handler Factory Initialization
+      ✓ should initialize handlers lazily (only on first access) (1 ms)
+      ✓ should create separate handler instances for each tool
+    Deprecation Warning Generation
+      ✓ should include deprecation notice in handler response structure (1 ms)
+
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (search aliases)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [[Object]], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      148 |       };
+      149 |
+    > 150 |       await expect(
+          |             ^
+      151 |         handler!({ query: 'test' }, legacyOnlyContext)
+      152 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      153 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:150:13)
+
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (template alias)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [{"text": "⚠️ **DEPRECATION NOTICE**: The `create_note_from_template` tool is deprecated. Please use `create_note` instead.·
+    ✅ Created note: **Test**·
+    🔗 [Open in Obsidian: Test](obsidian://open?vault=LifeOS%20(iCloud)&file=05%20-%20Fleeting%20Notes%2FTest.md)·
+    📁 Location: `05 - Fleeting Notes/Test.md`
+    🔧 Template: default", "type": "text"}], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      162 |       };
+      163 |
+    > 164 |       await expect(
+          |             ^
+      165 |         handler!({ title: 'Test', template: 'default' }, legacyOnlyContext)
+      166 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      167 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:164:13)
+
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (list aliases)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [{"text": "⚠️ **DEPRECATION NOTICE**: The `list_folders` tool is deprecated. Please use `list` with type=\"folders\" instead.·
+    Folders in vault root:·
+    📁 .claude
+    📁 .copilot
+    📁 .git
+    📁 .github
+    📁 .iPhone
+    📁 .obsidian
+    📁 .smtcmp_json_db
+    📁 .trash
+    📁 .vscode
+    📁 00 - Meta
+    📁 05 - Fleeting Notes
+    📁 10 - Projects
+    📁 20 - Areas
+    📁 30 - Resources
+    📁 40 - Archives
+    📁 copilot", "type": "text"}], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      176 |       };
+      177 |
+    > 178 |       await expect(
+          |             ^
+      179 |         handler!({}, legacyOnlyContext)
+      180 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      181 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:178:13)
+
+PASS tests/unit/date-resolver.test.ts
+  DateResolver
+    resolveDailyNoteDate
+      ✓ should handle "today" keyword (9 ms)
+      ✓ should handle "yesterday" keyword
+      ✓ should handle "tomorrow" keyword (1 ms)
+      ✓ should handle relative date formats (43 ms)
+      ✓ should handle weekday names (1 ms)
+      ✓ should handle YYYY-MM-DD format (1 ms)
+      ✓ should handle various date formats (1 ms)
+      ✓ should default to today for empty input (1 ms)
+      ✓ should handle invalid dates gracefully (5 ms)
+      ✓ should handle ISO date strings (1 ms)
+      ○ skipped should handle "last" weekday names
+    relative date handling through resolveDailyNoteDate
+      ✓ should handle positive relative dates (1 ms)
+      ✓ should handle negative relative dates (3 ms)
+    weekday handling through resolveDailyNoteDate
+      ✓ should find next occurrence of weekday (2 ms)
+      ✓ should handle case insensitively (1 ms)
+    timezone handling
+      ✓ should use local timezone for date resolution (2 ms)
+    edge cases
+      ✓ should handle month boundaries correctly (1 ms)
+      ✓ should handle year boundaries correctly (1 ms)
+      ✓ should handle leap years correctly (1 ms)
+
+  console.warn
+    [ObsidianLinks] extractNoteTitle: Invalid or empty filename for path "/vault/.md". Returning empty string as title.
+
+      109 |     // Edge case: Handle empty filename (e.g., '/vault/.md' -> basename returns '.md')
+      110 |     if (!filename || filename === '.md') {
+    > 111 |       console.warn(`[ObsidianLinks] extractNoteTitle: Invalid or empty filename for path "${filePath}". Returning empty string as title.`);
+          |               ^
+      112 |       return '';
+      113 |     }
+      114 |
+
+      at Function.extractNoteTitle (src/obsidian-links.ts:111:15)
+      at Object.<anonymous> (tests/unit/obsidian-links.test.ts:234:36)
+
+PASS tests/unit/obsidian-links.test.ts
+  ObsidianLinks.extractNoteTitle()
+    Priority 1: Frontmatter title field
+      ✓ should prioritize frontmatter.title when provided and non-empty (4 ms)
+      ✓ should use frontmatter.title even for daily note filenames (2 ms)
+      ✓ should handle frontmatter with Record<string, any> type (1 ms)
+      ✓ should ignore empty string frontmatter.title
+      ✓ should ignore whitespace-only frontmatter.title (1 ms)
+      ✓ should handle non-string frontmatter.title
+    Priority 2: Daily note date formatting (YYYY-MM-DD)
+      ✓ should format daily notes as "Month DD, YYYY"
+      ✓ should handle timezone correctly - MCP-31 FIX (parseISO vs new Date)
+      ✓ should handle leap year daily notes (1 ms)
+      ✓ should handle daily notes without frontmatter parameter
+      ✓ should handle daily notes with empty frontmatter object
+      ✓ should only match YYYY-MM-DD format exactly (1 ms)
+    Priority 3: Title-cased filename transformation
+      ✓ should transform dashes to spaces (1 ms)
+      ✓ should transform underscores to spaces
+      ✓ should transform mixed dashes and underscores
+      ✓ should apply title case to each word
+      ✓ should handle single word filenames (1 ms)
+      ✓ should handle filenames with numbers
+      ✓ should remove .md extension
+    Edge Cases and Error Handling
+      ✓ should handle missing frontmatter parameter (undefined) (1 ms)
+      ✓ should handle null frontmatter
+      ✓ should handle frontmatter without title field (1 ms)
+      ✓ should handle absolute paths
+      ✓ should handle relative paths (1 ms)
+      ✓ should handle paths without extension
+      ✓ should handle empty filename (edge case) (17 ms)
+      ✓ should handle paths with multiple dots
+    Backward Compatibility
+      ✓ should work without frontmatter parameter (original signature) (1 ms)
+      ✓ should work with frontmatter parameter (enhanced signature)
+    Real-World Scenarios
+      ✓ should handle typical daily note without custom title
+      ✓ should handle project note with custom title (1 ms)
+      ✓ should handle article note with title
+      ✓ should handle meeting note without custom title
+
+PASS tests/integration/claude-desktop-integration.test.ts
+  Claude Desktop Integration (Direct)
+    Core MCP-61 Test: No Production Vault Pollution
+      ✓ should create notes ONLY in temp vault, never in production (49 ms)
+    Vault Isolation Verification
+      ✓ should read/write/search only in temp vault (12 ms)
+    Config Override Verification
+      ✓ should use temp vault paths from LIFEOS_CONFIG (5 ms)
+    Cleanup Verification
+      ✓ should clean up temp vault in afterEach (10 ms)
+
+PASS tests/integration/request-handler-empty-registry.test.ts
+  Request Handler - Consolidated Registry Integration (MCP-96)
+    Consolidated execution
+      ✓ returns versioned response for consolidated search tool (3 ms)
+      ✓ updates analytics client info when updateClientContext is invoked (6 ms)
+    Availability checks
+      ✓ rejects unknown tools with descriptive error (8 ms)
+      ✓ blocks consolidated tools in legacy-only mode before lookup (1 ms)
+      ✓ blocks legacy tools in consolidated-only mode (1 ms)
+
+PASS tests/unit/template-manager.test.ts
+  TemplateManager
+    getTemplateNames
+      ✓ should return template names from cache when valid (5 ms)
+      ✓ should refresh cache when expired (1 ms)
+      ✓ should handle missing template folder gracefully (1 ms)
+    getTemplate
+      ✓ should load template content from file (1 ms)
+      ✓ should return null for non-existent template (1 ms)
+      ✓ should handle template with .md extension
+    getDailyNoteTemplate
+      ✓ should return daily note template name from settings
+      ✓ should return null when no template configured (1 ms)
+    processTemplate
+      ✓ should process template with context (1 ms)
+      ✓ should return null for non-existent template (3 ms)
+    caching behavior
+      ✓ should reuse cache within expiry period (2 ms)
+      ✓ should handle errors gracefully (5 ms)
+
+PASS tests/integration/jsonl-final-validation.test.ts
+  JSONL Analytics Final Validation
+    Production File Analysis
+      ✓ should validate existing JSONL file structure (60 ms)
+      ✓ should verify backward compatibility with JSON format (1 ms)
+    Instance Identification
+      ○ skipped should generate unique instance IDs for each server start
+    Concurrent Safety
+      ✓ should validate no data corruption in production JSONL file (2 ms)
+      ✓ should verify atomicity of recent writes (2 ms)
+    Performance Characteristics
+      ✓ should measure append performance on actual analytics file (8 ms)
+      ✓ should measure file size growth characteristics (1 ms)
+
+PASS tests/unit/date-resolver-timezone.test.ts
+  DateResolver - Timezone Edge Cases
+    midnight boundary crossing
+      ✓ should handle "today" correctly near midnight UTC (4 ms)
+      ✓ should handle "today" correctly just after midnight UTC (1 ms)
+    DST transitions
+      ✓ should handle spring forward DST transition (1 ms)
+      ✓ should handle fall back DST transition
+    extreme timezone differences
+      ✓ should handle Pacific/Kiritimati (UTC+14) (1 ms)
+      ✓ should handle Pacific/Midway (UTC-11)
+    user scenario simulations
+      ✓ should handle late night work session in EST (1 ms)
+      ✓ should handle morning work session in various timezones (1 ms)
+    relative dates across timezone boundaries
+      ✓ should calculate "yesterday" correctly across timezones
+      ✓ should calculate relative offsets correctly (1 ms)
+
+PASS tests/integration/token-limited-search.test.ts
+  Token-Limited Search Integration
+    ObsidianLinks with Token Budget
+      ✓ should format search result and consume budget (1 ms)
+      ✓ should format in detailed mode with token budget (1 ms)
+      ✓ should handle multiple results with budget tracking (2 ms)
+      ✓ should stop adding results when budget exhausted (1 ms)
+    maxResults Parameter Validation
+      ✓ should constrain minimum maxResults to 1 (1 ms)
+      ✓ should constrain maximum maxResults to 100 (1 ms)
+      ✓ should accept valid range 1-100 (1 ms)
+      ✓ should return default when undefined
+    Truncation Metadata Generation
+      ✓ should generate metadata when results truncated (1 ms)
+      ✓ should indicate no truncation when all results shown
+      ✓ should indicate auto-downgrade in suggestion (1 ms)
+    End-to-End Scenarios
+      ✓ should handle search with maxResults constraint
+      ✓ should handle search with token budget constraint (1 ms)
+      ✓ should handle combined maxResults and token budget constraints
+      ✓ should provide accurate truncation metadata after processing (1 ms)
+    Format Switching Impact
+      ✓ should show that detailed format consumes more budget than concise
+      ✓ should fit more results in concise mode than detailed mode
+    Error Handling
+      ✓ should not throw when adding results within budget (1 ms)
+      ✓ should gracefully handle empty search results
+
+PASS tests/integration/legacy-alias-handlers.test.ts
+  Legacy Alias Handlers Integration
+    Search Alias Parameter Mapping
+      ✓ search_by_content_type should map contentType to query parameter (5 ms)
+      ✓ find_notes_by_pattern should map pattern to query parameter (1 ms)
+      ✓ search_notes should use advanced mode (1 ms)
+      ✓ quick_search should use quick mode (1 ms)
+      ✓ search_recent should use recent mode
+    List Alias Parameter Mapping
+      ✓ list_folders should map path parameter
+      ✓ list_daily_notes should map limit parameter
+      ✓ list_yaml_properties should map all parameters (1 ms)
+    Template Alias Integration
+      ✓ create_note_from_template should set auto_template to false
+    Deprecation Warning Presence
+      ✓ search aliases should include deprecation warning in response (1 ms)
+      ✓ template alias should include deprecation warning in response
+      ✓ list aliases should include deprecation warning in response
+    Version Metadata Integration
+      ✓ should include version metadata when enabled in registry config
+
+PASS tests/unit/query-parser.test.ts
+  QueryParser
+    extractTerms
+      ✓ should extract single word (1 ms)
+      ✓ should extract multiple words (1 ms)
+      ✓ should handle quoted strings as single term (1 ms)
+      ✓ should handle mixed quoted and unquoted
+      ✓ should handle extra whitespace (1 ms)
+      ✓ should handle empty string
+    hasRegexChars
+      ✓ should detect regex special chars (20 ms)
+      ✓ should not flag spaces as regex chars (1 ms)
+      ✓ should not flag normal text (1 ms)
+    isQuoted
+      ✓ should detect quoted strings (1 ms)
+      ✓ should not detect unquoted strings (1 ms)
+      ✓ should not detect partial quotes
+    detectStrategy
+      ✓ should detect exact_phrase for quoted strings (1 ms)
+      ✓ should detect any_term for OR queries (1 ms)
+      ✓ should detect exact_phrase for 1-2 word queries (1 ms)
+      ✓ should detect all_terms for 3+ word queries
+      ✓ should prioritize quotes over word count
+      ✓ should prioritize OR over word count (1 ms)
+    parse
+      ✓ should parse simple query (1 ms)
+      ✓ should parse multi-word query
+      ✓ should parse quoted query (1 ms)
+      ✓ should parse OR query
+      ✓ should detect regex chars
+    createPatterns
+      exact_phrase strategy
+        ✓ should create single pattern for sequential match (1 ms)
+        ✓ should respect case sensitivity
+      all_terms strategy
+        ✓ should create lookahead pattern for all terms (2 ms)
+        ✓ should use word boundaries (1 ms)
+      any_term strategy
+        ✓ should create alternation pattern for any term (1 ms)
+        ✓ should use word boundaries
+      auto strategy
+        ✓ should fallback to exact_phrase for auto (1 ms)
+    Bug Regression: MCP-59
+      ✓ should handle "trip to india november planning" with all_terms (1 ms)
+      ✓ should maintain exact_phrase for "India trip"
+
+PASS tests/unit/server/tool-registry.test.ts
+  Tool Registry
+    getConsolidatedTools()
+      ✓ should return exactly 3 consolidated tools (1 ms)
+      ✓ should have valid tool structure (1 ms)
+    getLegacyTools()
+      ✓ should return exactly 11 legacy tools
+      ✓ should not have deprecation notices in descriptions (1 ms)
+    getLegacyAliases()
+      ✓ should return exactly 11 legacy aliases
+      ✓ should have deprecation notices in descriptions (1 ms)
+      ✓ should share schemas with legacy tools (4 ms)
+    getAlwaysAvailableTools()
+      ✓ should return exactly 9 always-available tools (1 ms)
+      ✓ should include core tools (1 ms)
+    getToolsForMode()
+      ✓ should return 12 tools for consolidated-only mode (4 ms)
+      ✓ should return 20 tools for legacy-only mode (1 ms)
+      ✓ should return 34 tools for consolidated-with-aliases mode
+      ✓ should throw error for invalid mode (10 ms)
+      ✓ should include always-available tools in all modes (1 ms)
+    addVersionMetadata()
+      ✓ should add metadata to response (1 ms)
+      ✓ should preserve existing metadata
+      ✓ should not mutate original response
+
+PASS tests/unit/search-engine.test.ts
+  SearchEngine MCP-59 regressions
+    ✓ returns matches for all_terms queries after evaluating multiple notes (4 ms)
+
+Summary of all failing tests
+FAIL tests/unit/server/legacy-alias-handlers.test.ts
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (search aliases)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [[Object]], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      148 |       };
+      149 |
+    > 150 |       await expect(
+          |             ^
+      151 |         handler!({ query: 'test' }, legacyOnlyContext)
+      152 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      153 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:150:13)
+
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (template alias)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [{"text": "⚠️ **DEPRECATION NOTICE**: The `create_note_from_template` tool is deprecated. Please use `create_note` instead.·
+    ✅ Created note: **Test**·
+    �� [Open in Obsidian: Test](obsidian://open?vault=LifeOS%20(iCloud)&file=05%20-%20Fleeting%20Notes%2FTest.md)·
+    �� Location: `05 - Fleeting Notes/Test.md`
+    �� Template: default", "type": "text"}], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      162 |       };
+      163 |
+    > 164 |       await expect(
+          |             ^
+      165 |         handler!({ title: 'Test', template: 'default' }, legacyOnlyContext)
+      166 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      167 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:164:13)
+
+  ● Legacy Alias Handlers Module › Mode Guards › should throw error when called in legacy-only mode (list aliases)
+
+    expect(received).rejects.toThrow()
+
+    Received promise resolved instead of rejected
+    Resolved to value: {"content": [{"text": "⚠️ **DEPRECATION NOTICE**: The `list_folders` tool is deprecated. Please use `list` with type=\"folders\" instead.·
+    Folders in vault root:·
+    �� .claude
+    �� .copilot
+    �� .git
+    �� .github
+    �� .iPhone
+    �� .obsidian
+    �� .smtcmp_json_db
+    �� .trash
+    �� .vscode
+    �� 00 - Meta
+    �� 05 - Fleeting Notes
+    �� 10 - Projects
+    �� 20 - Areas
+    �� 30 - Resources
+    �� 40 - Archives
+    �� copilot", "type": "text"}], "metadata": {"serverName": "lifeos-mcp", "toolMode": "consolidated-with-aliases", "version": "2.0.1"}}
+
+      176 |       };
+      177 |
+    > 178 |       await expect(
+          |             ^
+      179 |         handler!({}, legacyOnlyContext)
+      180 |       ).rejects.toThrow('This handler should only be called in non-legacy modes');
+      181 |     });
+
+      at expect (node_modules/expect/build/index.js:113:15)
+      at Object.<anonymous> (tests/unit/server/legacy-alias-handlers.test.ts:178:13)
+
+
+Test Suites: 1 failed, 25 passed, 26 total
+Tests:       3 failed, 4 skipped, 447 passed, 454 total
+Snapshots:   0 total
+Time:        20.941 s
+Ran all test suites.
