@@ -173,7 +173,7 @@ const renameNoteHandler: ToolHandler = async (
   const normalizedNewPath = normalizePath(typedArgs.newPath, LIFEOS_CONFIG.vaultPath);
 
   // Import path utilities
-  const { dirname, basename, extname, join } = await import('path');
+  const { dirname, basename, extname } = await import('path');
 
   // Validate .md extension on both paths
   if (extname(normalizedOldPath) !== '.md') {
