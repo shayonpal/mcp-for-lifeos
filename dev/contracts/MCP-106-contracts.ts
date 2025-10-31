@@ -19,22 +19,29 @@ import type { LifeOSNote } from '../../src/types.js';
 /**
  * Comprehensive wikilink regex pattern for Obsidian links
  *
- * Pattern: /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|\\]]+))?\\]\\]/g
+ * Pattern: /(!)?\[\[(.+?)(?:#(.+?))?(?:\^(.+?))?(?:\|(.+?))?\]\]/g
+ *
+ * Obsidian format: [[target#heading^block|alias]]
+ * - target comes first (required)
+ * - heading/block references come in middle (optional)
+ * - alias comes last after pipe (optional)
  *
  * Capture groups:
  * - Group 1: Embed flag (!) - optional
- * - Group 2: Alias text - optional
- * - Group 3: Target note name - required
- * - Group 4: Heading reference (#heading) - optional
- * - Group 5: Block reference (^block) - optional
+ * - Group 2: Target note name - required (actual link destination)
+ * - Group 3: Heading reference (#heading) - optional
+ * - Group 4: Block reference (^block) - optional
+ * - Group 5: Alias text - optional (display text after |)
  *
  * Supported link formats:
  * - Basic: [[Note]]
  * - Alias: [[Note|Display Text]]
  * - Heading: [[Note#Heading]]
+ * - Heading + Alias: [[Note#Heading|Alias]]
  * - Block: [[Note^blockref]]
+ * - Block + Alias: [[Note^blockref|Alias]]
  * - Embed: ![[Note]]
- * - Combined: [[Note|Alias#Heading^block]]
+ * - Combined: [[Note#Heading^block|Alias]]
  *
  * IMPLEMENTATION LOCATION: src/regex-utils.ts as WIKILINK_PATTERN constant
  */
@@ -54,10 +61,10 @@ export interface WikilinkPatternContract {
    */
   groups: {
     embedFlag: 1;     // (!) optional embed indicator
-    alias: 2;         // Display text after |
-    target: 3;        // Note name (required)
-    heading: 4;       // Text after # (heading ref)
-    blockRef: 5;      // Text after ^ (block ref)
+    target: 2;        // Note name (required) - actual link destination
+    heading: 3;       // Text after # (heading ref)
+    blockRef: 4;      // Text after ^ (block ref)
+    alias: 5;         // Display text after | (comes last)
   };
 }
 
