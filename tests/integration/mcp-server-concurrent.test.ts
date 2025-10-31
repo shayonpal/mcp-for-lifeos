@@ -121,7 +121,7 @@ describe('MCP Server Concurrent Operations', () => {
     it('should maintain data integrity when servers start and stop frequently', async () => {
       const iterations = START_STOP_ITERATIONS;
       const allMetrics = [];
-      
+
       for (let i = 0; i < iterations; i++) {
         const env = {
           ...process.env,
@@ -129,29 +129,54 @@ describe('MCP Server Concurrent Operations', () => {
           ANALYTICS_DIR: TEST_DIR,
           ENABLE_WEB_INTERFACE: 'false'
         };
-        
+
         const server = spawn('node', [SERVER_SCRIPT], {
           env,
           stdio: ['pipe', 'pipe', 'pipe']
         });
-        
+
+        // Capture stderr for debugging
+        let stderrData = '';
+        server.stderr!.on('data', (data) => {
+          stderrData += data.toString();
+        });
+
         // Send a request
         const request = JSON.stringify({
           jsonrpc: '2.0',
           method: 'tools/list',
           id: `iteration-${i}`
         }) + '\n';
-        
+
         server.stdin!.write(request);
-        
+        server.stdin!.end(); // Close stdin to signal EOF
+
         // Wait briefly
         await new Promise(resolve => setTimeout(resolve, START_STOP_WAIT_MS));
-        
-        // Kill server
+
+        // Kill server with timeout fallback
         server.kill('SIGTERM');
-        
-        // Wait for exit
-        await new Promise(resolve => server.on('exit', resolve));
+
+        // Wait for exit with timeout
+        const exitPromise = new Promise<void>((resolve) => {
+          server.on('exit', () => resolve());
+        });
+
+        const timeoutPromise = new Promise<void>((resolve) => {
+          setTimeout(() => {
+            if (!server.killed) {
+              server.kill('SIGKILL'); // Force kill if still running
+            }
+            resolve();
+          }, 2000); // 2 second timeout for graceful shutdown
+        });
+
+        await Promise.race([exitPromise, timeoutPromise]);
+
+        // Log any stderr output in CI for debugging
+        if (IS_CI && stderrData) {
+          console.log(`Server ${i} stderr:`, stderrData);
+        }
       }
       
       // Check metrics integrity
@@ -244,12 +269,18 @@ describe('MCP Server Concurrent Operations', () => {
         ANALYTICS_DIR: TEST_DIR,
         ENABLE_WEB_INTERFACE: 'false'
       };
-      
+
       const server = spawn('node', [SERVER_SCRIPT], {
         env,
         stdio: ['pipe', 'pipe', 'pipe']
       });
-      
+
+      // Capture stderr for debugging
+      let stderrData = '';
+      server.stderr!.on('data', (data) => {
+        stderrData += data.toString();
+      });
+
       // Send multiple rapid requests
       const requestCount = RAPID_REQUEST_COUNT;
       for (let i = 0; i < requestCount; i++) {
@@ -258,19 +289,42 @@ describe('MCP Server Concurrent Operations', () => {
           method: 'tools/list',
           id: `rapid-${i}`
         }) + '\n';
-        
+
         server.stdin!.write(request);
-        
+
         // Very short delay between requests
         await new Promise(resolve => setTimeout(resolve, RAPID_INTERVAL_MS));
       }
-      
+
+      // Close stdin after all requests sent
+      server.stdin!.end();
+
       // Wait for processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Kill server
+
+      // Kill server with timeout fallback
       server.kill('SIGTERM');
-      await new Promise(resolve => server.on('exit', resolve));
+
+      // Wait for exit with timeout
+      const exitPromise = new Promise<void>((resolve) => {
+        server.on('exit', () => resolve());
+      });
+
+      const timeoutPromise = new Promise<void>((resolve) => {
+        setTimeout(() => {
+          if (!server.killed) {
+            server.kill('SIGKILL'); // Force kill if still running
+          }
+          resolve();
+        }, 2000); // 2 second timeout for graceful shutdown
+      });
+
+      await Promise.race([exitPromise, timeoutPromise]);
+
+      // Log any stderr output in CI for debugging
+      if (IS_CI && stderrData) {
+        console.log('Rapid test server stderr:', stderrData);
+      }
       
       // Check metrics
       if (fs.existsSync(METRICS_FILE)) {

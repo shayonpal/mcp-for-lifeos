@@ -1,72 +1,44 @@
 # Current Development Focus
 
-**Last Updated:** October 30, 2025 (10:30 PM EDT)
+**Last Updated:** October 30, 2025 (11:45 PM EDT)
 **Cycle:** Cycle 9 (Oct 28 - Nov 3, 2025)
-**Progress:** 33% complete (6/18 issues)
+**Progress:** 17% complete (3/18 issues)
 **Current Branch:** master
 
 ---
 
 ## 🔧 Active Work
 
-### MCP-8: Extract Request Handler (Completed)
+### MCP-9: Reorganize Tool Implementations (Next Priority)
 
-**Branch:** master (merged)
+**Branch:** To be created
 **Project:** Server Decomposition + Rename Tool
 **Priority:** High
-**Status:** ✅ Complete - Pure factory pattern achieved
+**Status:** Ready to start (unblocked after MCP-8 completion)
+**Delegate:** GitHub Copilot
 
 **Context:**
 
-- Isolating request handling into src/server/request-handler.ts to centralize stdio call flow (tool dispatch, analytics, truncation, error translation)
-- Strategic pivot to incremental extraction via 5 manageable sub-issues (MCP-95 through MCP-99) for lower risk and better progress tracking
-- Using hybrid dispatch pattern during transition period
-- Target: -697 lines (-39% reduction from index.ts)
+- Consolidate extracted handler modules into proper directory structure
+- Natural follow-up to MCP-8 decomposition work
+- Organize tools by domain: metadata, notes, utility, search, etc.
+- Previously blocked pending MCP-8 sub-issue completion
 
-**Recent Progress (Last 3 Days):**
+**Why Now:**
 
-- `b8d867e` MCP-99: Merged to master - pure factory pattern achieved (just now)
-- `1f616d7` test: address Copilot review feedback for MCP-99 (30 min ago)
-- `58efd04` refactor(mcp): remove switch statement, achieve pure factory pattern (1 hour ago)
-- `7ca7e84` MCP-98: extract 9 always-available tool handlers into 3 modules (3 hours ago)
-- `f27a3b9` MCP-95: request handler infrastructure (1 day ago)
-
-**Sub-Issues Status:**
-
-- ✅ MCP-95: Infrastructure (Completed)
-- ✅ MCP-96: Consolidated Tools (Completed)
-- ✅ MCP-97: Legacy Aliases (Completed)
-- ✅ MCP-98: Always-Available Tools (Completed - 591 lines, 39% reduction)
-- ✅ MCP-99: Switch Statement Removal (Completed - 417 lines, 57% reduction, 83% total)
-
-**Achievement:**
-
-- **Target Met:** index.ts reduced from 1,797 to 307 lines (within 1 line of 306-line target!)
-- **Pure Factory Pattern:** 100% registry-based routing, zero inline tool logic
-- **All Handlers Extracted:** 35+ tool handlers now in dedicated modules
-
-**Completion Summary:**
-
-- ✅ All 5 sub-issues completed and merged to master
-- ✅ Pure factory pattern achieved (100% registry-based routing)
-- ✅ index.ts reduced from 1,797 to 307 lines (83% reduction)
-- ✅ Linear issue MCP-99 closed as Done
-
-**Next Focus:**
-
-- MCP-2: rename_note tool implementation
-- MCP-94: Integration test for unique instance ID generation
-- Continue test infrastructure improvements
+- MCP-8 and all 5 sub-issues (MCP-95 through MCP-99) completed
+- Pure factory pattern achieved - handlers are modular and ready to reorganize
+- Unblocks future tool development with clear organizational structure
 
 ---
 
-### MCP-94: Integration Test for Unique Instance ID Generation (In Progress)
+### MCP-94: Integration Test for Unique Instance ID Generation (Quick Win)
 
-**Branch:** feature/mcp-94-integration-test-for-unique-instance-id-generation-across  
-**Project:** Test Infrastructure Stabilization  
-**Priority:** Low  
-**Status:** PR #106 ready for review  
-**Assignee:** Shayon Pal  
+**Branch:** feature/mcp-94-integration-test-for-unique-instance-id-generation-across
+**Project:** Test Infrastructure Stabilization
+**Priority:** Low
+**Status:** PR #106 ready for review
+**Assignee:** Shayon Pal
 **Delegate:** GitHub Copilot
 
 **Context:**
@@ -78,6 +50,8 @@
 
 **PR:** https://github.com/shayonpal/mcp-for-lifeos/pull/106
 
+**Action:** Code review and merge - quick win to close out
+
 ---
 
 ## 🚧 Blocked/Deferred
@@ -88,17 +62,32 @@
 
 ## 📋 Planned Work (This Cycle)
 
-### High Priority
+### Immediate Queue (Recommended Order)
 
-- **MCP-2**: Add rename_note tool for changing note titles and filenames
-  - Project: Server Decomposition + Rename Tool
-  - Depends on server decomposition
-  - Includes link-update infrastructure
+1. **MCP-9**: Reorganize tool implementations
+   - Priority: High
+   - Status: Now unblocked after MCP-8 completion
+   - Project: Server Decomposition + Rename Tool
+   - Consolidate extracted handlers into proper structure
+   - Natural follow-up to decomposition work
+
+2. **MCP-2**: Add rename_note tool for changing note titles and filenames
+   - Priority: High
+   - Project: Server Decomposition + Rename Tool
+   - Includes link-update infrastructure
+   - Builds on modular architecture from MCP-8
+
+3. **MCP-94**: Review and merge PR #106 (integration test)
+   - Priority: Low (but quick win)
+   - Already implemented by GitHub Copilot
+   - Close out test infrastructure work
+
+### Integration & Cleanup
 
 - **MCP-10**: Integration and cleanup
   - Project: Server Decomposition + Rename Tool
-  - Final hardening pass after MCP-6/7/8/9 and MCP-2
-  - Target: index.ts ≤ 500 lines
+  - Final hardening pass after MCP-9 and MCP-2
+  - Wait until tool reorganization complete
 
 ### Medium Priority
 
@@ -106,31 +95,17 @@
   - Surfaced during MCP-95 validation
   - Single transient failure in jsonl-stress.test.ts
 
-- **MCP-98**: Extract always-available tool handlers (9 independent tools)
-  - Parent: MCP-8
-  - ~528 lines (32% of switch)
-  - Can work in parallel with MCP-97
-
 - **MCP-93**: Add 'last weekday' natural language date parsing support
   - Optional enhancement for date resolver
   - Currently skipped test
 
-- **MCP-91**: Decompose vault-utils into domain modules
-  - Parent: MCP-17 (Custom Instructions)
-  - Extract file ops, YAML, daily-note, search helpers
-
-- **MCP-90**: Extract config & instruction scaffolding from vault-utils
-  - Parent: MCP-17
-  - Foundation for custom instructions
-  - Create config-manager and instruction-processor
-
-- **MCP-92**: Implement hot-reload custom instructions
-  - Parent: MCP-17
-  - Final step, depends on MCP-90/91
-
 - **MCP-17**: Custom Instructions Configuration and VaultUtils Elimination
   - Parent epic for vault-utils decomposition
   - 3 sub-issues: MCP-90, MCP-91, MCP-92
+
+  - **MCP-90**: Extract config & instruction scaffolding from vault-utils
+  - **MCP-91**: Decompose vault-utils into domain modules
+  - **MCP-92**: Implement hot-reload custom instructions
 
 ### Backlog Highlights
 
@@ -147,7 +122,15 @@
 
 ## ✅ Recent Completions (Last 3 Days)
 
-### Decomposition Series
+### Decomposition Series Complete ✅
+
+**MCP-8: Extract Request Handler** (Completed - Oct 30, 2025)
+
+- **Achievement**: Pure factory pattern with 100% registry-based routing
+- **Impact**: index.ts reduced from 1,797 to 307 lines (83% reduction)
+- **Result**: Exceeded 500-line target by 39% (achieved 307 vs 500 target)
+- **All 5 sub-issues completed**: MCP-95 through MCP-99
+- **Project**: Server Decomposition + Rename Tool
 
 **MCP-99: Switch Statement Removal** (Completed - Oct 30, 2025)
 
@@ -239,16 +222,17 @@
 
 **Development Velocity:**
 
-- Cycle 9: 28% complete with 4 days remaining (on track)
+- Cycle 9: 17% complete (3/18 issues) with 4 days remaining
 - Request handler decomposition: 100% complete (MCP-95 ✅, MCP-96 ✅, MCP-97 ✅, MCP-98 ✅, MCP-99 ✅)
 - Exceeded target: 307 lines achieved vs 500-line target (39% under target)
+- Scope growth: Started at 12 issues, now 18 (6 added mid-cycle)
 
 **Next Phase Focus:**
 
-- Code review and merge MCP-99
-- Begin MCP-2: rename_note tool with link updates
-- Continue test infrastructure improvements
-- Tool file reorganization (MCP-9 unblocked)
+- MCP-9: Reorganize tool implementations (now unblocked)
+- MCP-2: rename_note tool with link updates
+- MCP-94: Review and merge PR #106
+- MCP-10: Integration cleanup (after MCP-9 and MCP-2)
 
 ---
 
@@ -258,6 +242,7 @@ Run `/current-focus` to update this file with latest Linear cycle data.
 
 ---
 
-_Last git sync: Oct 30, 2025 10:30 PM EDT (master branch)_
+_Last git sync: Oct 30, 2025 11:45 PM EDT (master branch)_
+_Linear cycle sync: Cycle 9 - 3/18 issues complete (17%)_
 _Git commits analyzed: Last 3 days (18 commits, including MCP-99 merge)_
-_Test suite: 27/27 suites passing, 457/461 tests passing (100% of non-skipped)_
+_Test suite: 26/26 suites passing, 450/454 tests passing (99.1%)_
