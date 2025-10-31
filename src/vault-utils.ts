@@ -1306,6 +1306,7 @@ export class VaultUtils {
       createDestination?: boolean;
       overwrite?: boolean;
       mergeFolders?: boolean;
+      newFilename?: string;
     } = {},
   ): { success: boolean; newPath: string; itemType: 'note' | 'folder'; error?: string } {
     // Normalize paths using shared utility (MCP-64)
@@ -1355,7 +1356,7 @@ export class VaultUtils {
       };
     }
 
-    const itemName = basename(normalizedSource);
+    const itemName = options.newFilename || basename(normalizedSource);
     const newPath = join(normalizedDest, itemName);
 
     // Handle existing items

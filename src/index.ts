@@ -278,9 +278,9 @@ async function main() {
 
   // Validate tool count matches expected count for mode
   const EXPECTED_TOOL_COUNTS = {
-    'consolidated-only': 12,
-    'legacy-only': 20,
-    'consolidated-with-aliases': 34
+    'consolidated-only': 13,
+    'legacy-only': 21,
+    'consolidated-with-aliases': 35
   } as const;
 
   const expectedCount = EXPECTED_TOOL_COUNTS[toolModeConfig.mode];

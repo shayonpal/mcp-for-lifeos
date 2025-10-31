@@ -1,6 +1,6 @@
 # LifeOS MCP Tools - Complete API Reference
 
-**Last updated:** 2025-10-24 00:23
+**Last updated:** 2025-10-31 02:40
 
 This document provides complete documentation for all tools available in the LifeOS MCP server.
 
@@ -21,9 +21,9 @@ The LifeOS MCP server supports three tool visibility modes controlled by the `TO
 
 ### Available Modes
 
-**`consolidated-only` (Default - 12 tools)**
+**`consolidated-only` (Default - 13 tools)**
 - Modern consolidated tools: `search`, `create_note`, `list`
-- Always-available tools: `get_server_version`, `get_yaml_rules`, `read_note`, `edit_note`, `get_daily_note`, `diagnose_vault`, `move_items`, `insert_content`, `list_yaml_property_values`
+- Always-available tools: `get_server_version`, `get_yaml_rules`, `read_note`, `edit_note`, `get_daily_note`, `diagnose_vault`, `move_items`, `rename_note`, `insert_content`, `list_yaml_property_values`
 - Recommended for most users
 - Cleaner interface, easier navigation
 
@@ -223,6 +223,49 @@ move_items items: [{path: "10 - Projects/Completed"}, {path: "planning-doc.md"}]
 # Merge folders
 move_items item: "20 - Areas/Old Resources" destination: "30 - Resources" mergeFolders: true
 ```
+
+### `rename_note`
+
+Rename note files in the vault with path validation and error handling (Phase 1: Basic rename without link updates)
+
+**Parameters:**
+
+- **oldPath** (required): Current path to the note file (absolute or relative to vault root)
+- **newPath** (required): New path for the note file (absolute or relative to vault root, must include .md extension)
+- **updateLinks** (optional, forward-compatible): Will update wikilinks after rename in Phase 3 (MCP-107) - currently ignored with warning
+- **dryRun** (optional, forward-compatible): Will preview changes without executing in Phase 5 (MCP-109) - currently ignored with warning
+
+**Phase 1 Limitations:**
+- Link detection NOT implemented (Phase 2 - MCP-106)
+- Link updates NOT implemented (Phase 3 - MCP-107) - existing links will NOT be updated automatically
+- Dry-run mode NOT implemented (Phase 5 - MCP-109)
+
+**Error Codes:**
+- `FILE_NOT_FOUND`: Source file does not exist (suggestion: use list tool to find correct path)
+- `FILE_EXISTS`: Destination file already exists (suggestion: choose different name)
+- `INVALID_PATH`: Invalid filename or path characters (suggestion: use valid characters and .md extension)
+- `PERMISSION_DENIED`: Filesystem permissions prevent operation (suggestion: check permissions or wait for iCloud sync)
+- `UNKNOWN_ERROR`: Unexpected error during operation
+
+**Example usage:**
+
+```bash
+# In-place rename (same folder)
+rename_note oldPath: "Projects/draft-proposal.md" newPath: "Projects/final-proposal.md"
+
+# Move and rename (different folder)
+rename_note oldPath: "Inbox/meeting-notes.md" newPath: "02-Areas/Projects/Q4-meeting-notes.md"
+
+# With forward-compatible parameters (Phase 1: ignored with warnings)
+rename_note oldPath: "Projects/old.md" newPath: "Projects/new.md" updateLinks: true dryRun: true
+```
+
+**Comparison with move_items:**
+- Use `rename_note` for renaming single note files with structured error handling
+- Use `move_items` for moving notes without renaming, batch operations, or folder moves
+- `rename_note` always operates on individual files; `move_items` supports batch and folder operations
+
+For complete documentation, see [docs/tools/rename_note.md](../tools/rename_note.md)
 
 ### `insert_content`
 

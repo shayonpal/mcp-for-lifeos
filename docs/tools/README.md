@@ -48,6 +48,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 | **get_daily_note** | Get or create daily note for specific date |
 | **diagnose_vault** | Diagnose vault issues and check for problematic files |
 | **move_items** | Move notes/folders to different locations |
+| **rename_note** | Rename note files (Phase 1: basic rename without link updates) |
 | **insert_content** | Insert content at specific locations within notes |
 | **list_yaml_property_values** | List unique values for a specific YAML property |
 

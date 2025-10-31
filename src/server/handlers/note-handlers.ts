@@ -6,6 +6,7 @@
 import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { EditNoteInput, InsertContentInput } from '../../types.js';
+import type { RenameNoteInput, RenameNoteOutput, RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
 import { VaultUtils } from '../../vault-utils.js';
@@ -59,6 +60,7 @@ function ensureNoteHandlersInitialized(): void {
   noteHandlers = new Map<string, ToolHandler>();
   noteHandlers.set('read_note', readNoteHandler);
   noteHandlers.set('edit_note', editNoteHandler);
+  noteHandlers.set('rename_note', renameNoteHandler);
   noteHandlers.set('insert_content', insertContentHandler);
 }
 
@@ -145,6 +147,141 @@ const editNoteHandler: ToolHandler = async (
       type: 'text',
       text: `✅ Updated note: **${ObsidianLinks.extractNoteTitle(updatedNote.path, updatedNote.frontmatter)}**\n\n${obsidianLink}\n\n📁 Location: \`${updatedNote.path.replace(LIFEOS_CONFIG.vaultPath + '/', '')}\`\n📝 Mode: ${updates.mode}\n⏰ Modified: ${format(updatedNote.modified, 'yyyy-MM-dd HH:mm:ss')}`
     }]
+  }, context.registryConfig) as CallToolResult;
+};
+
+/**
+ * Rename note handler
+ * Renames a note file (Phase 1: basic rename without link updates)
+ */
+const renameNoteHandler: ToolHandler = async (
+  args: Record<string, unknown>,
+  context: ToolHandlerContext
+): Promise<CallToolResult> => {
+  const typedArgs = args as unknown as RenameNoteInput;
+
+  // Validate required parameters
+  if (!typedArgs.oldPath) {
+    throw new Error('oldPath is required');
+  }
+  if (!typedArgs.newPath) {
+    throw new Error('newPath is required');
+  }
+
+  // Normalize paths
+  const normalizedOldPath = normalizePath(typedArgs.oldPath, LIFEOS_CONFIG.vaultPath);
+  const normalizedNewPath = normalizePath(typedArgs.newPath, LIFEOS_CONFIG.vaultPath);
+
+  // Import path utilities
+  const { dirname, basename, extname } = await import('path');
+
+  // Validate .md extension on both paths
+  if (extname(normalizedOldPath) !== '.md') {
+    const error: RenameNoteError = {
+      success: false,
+      error: 'Source file must have .md extension',
+      errorCode: 'INVALID_PATH'
+    };
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+
+  if (extname(normalizedNewPath) !== '.md') {
+    const error: RenameNoteError = {
+      success: false,
+      error: 'New filename must have .md extension',
+      errorCode: 'INVALID_PATH'
+    };
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+
+  // Extract destination folder and new filename from newPath
+  const destinationFolder = dirname(normalizedNewPath);
+  const newFilename = basename(normalizedNewPath);
+
+  // Validate source exists
+  const { existsSync } = await import('fs');
+  if (!existsSync(normalizedOldPath)) {
+    const fileName = basename(normalizedOldPath, '.md');
+    const error: RenameNoteError = {
+      success: false,
+      error: `Note not found: ${normalizedOldPath}. Run search(query='${fileName}') to find similar notes.`,
+      errorCode: 'FILE_NOT_FOUND'
+    };
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+
+  // Check if renaming to same name (no-op)
+  if (normalizedOldPath === normalizedNewPath) {
+    const error: RenameNoteError = {
+      success: false,
+      error: 'Old path and new path are identical - no rename needed',
+      errorCode: 'INVALID_PATH'
+    };
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+
+  // Use VaultUtils.moveItem with newFilename parameter
+  const moveResult = VaultUtils.moveItem(
+    normalizedOldPath,
+    destinationFolder,
+    { newFilename }
+  );
+
+  if (!moveResult.success) {
+    // Map VaultUtils errors to RenameNoteError codes
+    let errorCode: RenameNoteError['errorCode'] = 'UNKNOWN_ERROR';
+    if (moveResult.error?.includes('already exists')) {
+      errorCode = 'FILE_EXISTS';
+    } else if (moveResult.error?.includes('not found')) {
+      errorCode = 'FILE_NOT_FOUND';
+    } else if (moveResult.error?.includes('Permission') || moveResult.error?.includes('EACCES')) {
+      errorCode = 'PERMISSION_DENIED';
+    }
+
+    const error: RenameNoteError = {
+      success: false,
+      error: moveResult.error || 'Unknown error during rename',
+      errorCode
+    };
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+
+  // Build success response
+  const warnings: string[] = [];
+
+  // Add Phase 1 limitation warnings if flags were provided
+  if (typedArgs.updateLinks) {
+    warnings.push('Link updates not implemented yet (available in Phase 3)');
+  }
+  if (typedArgs.dryRun) {
+    warnings.push('Dry-run mode not implemented yet (available in Phase 5)');
+  }
+
+  const output: RenameNoteOutput = {
+    success: true,
+    oldPath: normalizedOldPath,
+    newPath: moveResult.newPath,
+    message: `Successfully renamed note from ${basename(normalizedOldPath)} to ${basename(moveResult.newPath)}`,
+    ...(warnings.length > 0 && { warnings })
+  };
+
+  return addVersionMetadata({
+    content: [{ type: 'text', text: JSON.stringify(output, null, 2) }]
   }, context.registryConfig) as CallToolResult;
 };
 
