@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Basic Rename Tool** (MCP-105, 2025-10-31 02:40): Added rename_note tool (Phase 1: basic rename without link updates)
+  - Implemented rename_note handler in `src/server/handlers/note-handlers.ts` following established note handler patterns
+  - Enhanced `VaultUtils.moveItem()` with optional `newFilename` parameter for zero-duplication architecture (adds 1 line, maintains backward compatibility)
+  - Registered rename_note as 13th always-available tool with proper MCP annotations (readOnly: false, idempotent: false, openWorld: true)
+  - Created comprehensive TypeScript contracts in `dev/contracts/MCP-105-contracts.ts` defining input/output schemas, error codes, and behavioral constraints
+  - Accepts forward-compatible parameters (`updateLinks`, `dryRun`) for future phases without breaking changes
+  - Implemented structured error handling with 5 error codes: FILE_NOT_FOUND, FILE_EXISTS, INVALID_PATH, PERMISSION_DENIED, UNKNOWN_ERROR
+  - Added Phase 1 limitation warnings in responses (link updates deferred to MCP-107, dry-run to MCP-109)
+  - Test coverage: 18 new tests (10 unit, 8 integration) with 100% pass rate, all 475 existing tests passing
+  - Manual verification completed in Claude Desktop live environment
+  - Updated tool count validation to 13 in `src/index.ts`
+  - Path normalization and security validation via existing `normalizePath()` utility
+
 ### Changed
 
 - **Switch Statement Removal** (MCP-99, 2025-10-30 21:39): Completed request handler extraction by removing switch statement entirely from index.ts, achieving pure factory pattern

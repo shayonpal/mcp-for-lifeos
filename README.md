@@ -124,6 +124,7 @@ Control which MCP tools are registered using the `TOOL_MODE` environment variabl
 - `edit_note` - Edit notes with frontmatter merging
 - `get_daily_note` - Get or create daily notes
 - `move_items` - Move notes and folders
+- `rename_note` - Rename note files (Phase 1: basic rename)
 - `insert_content` - Insert content at specific locations
 
 **Utilities:**

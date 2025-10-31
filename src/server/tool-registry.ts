@@ -431,7 +431,7 @@ export const getLegacyAliases: GetLegacyAliasesFunction = () => {
 };
 
 /**
- * Get always-available tools (9 tools)
+ * Get always-available tools (10 tools)
  * Core tools available in all operating modes
  *
  * Tools included:
@@ -443,9 +443,10 @@ export const getLegacyAliases: GetLegacyAliasesFunction = () => {
  * - diagnose_vault: Diagnose vault issues
  * - move_items: Move notes and folders
  * - insert_content: Insert content at specific locations
+ * - rename_note: Rename note files (Phase 1: without link updates)
  * - list_yaml_property_values: List unique YAML property values
  *
- * @returns Array of 9 always-available tool definitions
+ * @returns Array of 10 always-available tool definitions
  */
 export const getAlwaysAvailableTools: GetAlwaysAvailableToolsFunction = () => {
   return [
@@ -683,6 +684,56 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
       }
     },
     {
+      name: 'rename_note',
+      description: `Rename a note file in the vault. Phase 1: Basic rename without link updates.
+
+WHEN TO USE:
+- Rename a note to a different filename
+- Change note location within vault (if paths differ in folder)
+- Prepare for future link update functionality (Phase 3)
+
+PHASE 1 LIMITATIONS:
+- updateLinks flag accepted but IGNORED (link updates in Phase 3)
+- dryRun flag accepted but IGNORED (dry-run mode in Phase 5)
+- Both flags included for forward compatibility
+
+RETURNS: Success with old/new paths and warnings about limitations, or structured error with actionable suggestions
+
+ERROR CODES:
+- FILE_NOT_FOUND: Source file does not exist (includes search suggestion)
+- FILE_EXISTS: Destination already exists (choose different name)
+- INVALID_PATH: Invalid characters or missing .md extension
+- PERMISSION_DENIED: Filesystem permission or iCloud sync issue
+- UNKNOWN_ERROR: Unexpected error with details`,
+      annotations: {
+        readOnlyHint: false,
+        idempotentHint: false,
+        openWorldHint: true
+      },
+      inputSchema: {
+        type: 'object' as const,
+        properties: {
+          oldPath: {
+            type: 'string',
+            description: 'Current path to the note (absolute or relative to vault)'
+          },
+          newPath: {
+            type: 'string',
+            description: 'New path for the note (absolute or relative to vault)'
+          },
+          updateLinks: {
+            type: 'boolean',
+            description: 'Whether to update wikilinks after rename (Phase 1: accepted but ignored)'
+          },
+          dryRun: {
+            type: 'boolean',
+            description: 'Dry-run mode: preview changes without executing (Phase 1: accepted but ignored)'
+          }
+        },
+        required: ['oldPath', 'newPath']
+      }
+    },
+    {
       name: 'list_yaml_property_values',
       description: 'List all unique values used for a specific YAML property, showing which are single values vs arrays',
       annotations: {
@@ -759,9 +810,9 @@ export const getLegacyTools: GetLegacyToolsFunction = () => {
  */
 function validateToolCount(tools: Tool[], mode: ToolMode): void {
   const expectedCounts: Record<ToolMode, number> = {
-    'legacy-only': 20,
-    'consolidated-only': 12,
-    'consolidated-with-aliases': 34
+    'legacy-only': 21,
+    'consolidated-only': 13,
+    'consolidated-with-aliases': 35
   };
 
   const expected = expectedCounts[mode];
@@ -781,9 +832,9 @@ function validateToolCount(tools: Tool[], mode: ToolMode): void {
  * Composes tool array based on mode configuration with validation
  *
  * Mode mappings:
- * - legacy-only: 20 tools (9 always + 11 legacy)
- * - consolidated-only: 12 tools (9 always + 3 consolidated)
- * - consolidated-with-aliases: 34 tools (9 always + 3 consolidated + 11 legacy + 11 aliases)
+ * - legacy-only: 21 tools (10 always + 11 legacy)
+ * - consolidated-only: 13 tools (10 always + 3 consolidated)
+ * - consolidated-with-aliases: 35 tools (10 always + 3 consolidated + 11 legacy + 11 aliases)
  *
  * @param config - Tool registry configuration
  * @returns Composed tool array for mode

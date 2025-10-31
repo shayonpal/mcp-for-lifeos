@@ -79,9 +79,9 @@ describe('Tool Registry', () => {
   });
 
   describe('getAlwaysAvailableTools()', () => {
-    it('should return exactly 9 always-available tools', () => {
+    it('should return exactly 10 always-available tools', () => {
       const tools = getAlwaysAvailableTools();
-      expect(tools).toHaveLength(9);
+      expect(tools).toHaveLength(10);
     });
 
     it('should include core tools', () => {
@@ -103,22 +103,22 @@ describe('Tool Registry', () => {
       mode: 'consolidated-only'
     };
 
-    it('should return 12 tools for consolidated-only mode', () => {
+    it('should return 13 tools for consolidated-only mode', () => {
       const config = { ...baseConfig, mode: 'consolidated-only' as const };
       const tools = getToolsForMode(config);
-      expect(tools).toHaveLength(12); // 9 always + 3 consolidated
+      expect(tools).toHaveLength(13); // 10 always + 3 consolidated
     });
 
-    it('should return 20 tools for legacy-only mode', () => {
+    it('should return 21 tools for legacy-only mode', () => {
       const config = { ...baseConfig, mode: 'legacy-only' as const };
       const tools = getToolsForMode(config);
-      expect(tools).toHaveLength(20); // 9 always + 11 legacy
+      expect(tools).toHaveLength(21); // 10 always + 11 legacy
     });
 
-    it('should return 34 tools for consolidated-with-aliases mode', () => {
+    it('should return 35 tools for consolidated-with-aliases mode', () => {
       const config = { ...baseConfig, mode: 'consolidated-with-aliases' as const };
       const tools = getToolsForMode(config);
-      expect(tools).toHaveLength(34); // 9 always + 3 consolidated + 11 legacy + 11 aliases
+      expect(tools).toHaveLength(35); // 10 always + 3 consolidated + 11 legacy + 11 aliases
     });
 
     it('should throw error for invalid mode', () => {

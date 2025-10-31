@@ -28,12 +28,13 @@ import type { EditNoteInput, InsertContentInput, MoveItemsInput } from '../../sr
 /**
  * Tool names managed by note-handlers module
  */
-export type NoteHandlerToolName = 'read_note' | 'edit_note' | 'insert_content';
+export type NoteHandlerToolName = 'read_note' | 'edit_note' | 'insert_content' | 'rename_note';
 
 export const NOTE_HANDLER_TOOL_NAMES: readonly NoteHandlerToolName[] = [
   'read_note',
   'edit_note',
-  'insert_content'
+  'insert_content',
+  'rename_note'
 ] as const;
 
 /**

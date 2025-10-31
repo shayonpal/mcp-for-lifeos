@@ -105,9 +105,10 @@ Extracted handler implementations organized by functional responsibility. Introd
 - Deprecation warnings in responses
 - Mode guard removal (MCP-99): Legacy aliases now work in all tool modes including legacy-only
 
-**Note Handlers** (`note-handlers.ts` - MCP-98):
+**Note Handlers** (`note-handlers.ts` - MCP-98, MCP-105):
 - `read_note` - Read notes with formatted content and metadata
 - `edit_note` - Update note frontmatter and/or content (merge/replace modes)
+- `rename_note` - Rename note files with validation (Phase 1: basic rename without link updates)
 - `insert_content` - Insert content at specific locations (heading, blockRef, pattern, lineNumber)
 
 **Utility Handlers** (`utility-handlers.ts` - MCP-98):
