@@ -151,6 +151,7 @@ describe('Legacy Alias Handlers Module', () => {
       const result = await handler!({ query: 'test' }, legacyOnlyContext);
       expect(result).toBeDefined();
       expect(result.content).toBeDefined();
+      expect(result.content[0]).toHaveProperty('text');
     });
 
     it('should work in legacy-only mode (template alias)', async () => {

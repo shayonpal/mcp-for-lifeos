@@ -16,7 +16,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // Mock Analytics Collector
 // ============================================================================
 
-const mockRecordToolExecution = jest.fn(async (toolName: string, fn: () => Promise<any>) => {
+const mockRecordToolExecution = jest.fn(async (
+  toolName: string,
+  fn: () => Promise<any>,
+  metadata?: any
+) => {
   return await fn();
 });
 
@@ -31,8 +35,8 @@ const mockAnalytics = {
 // ============================================================================
 
 /**
- * Simulates the executeWithHybridFallback logic from src/index.ts
- * This is a test double that matches the actual implementation
+ * Test double matching core dispatch logic from src/index.ts:112-173
+ * Simplified for isolated unit testing without production dependencies
  */
 async function executeWithHybridFallback(
   toolName: string,
