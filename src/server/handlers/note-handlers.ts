@@ -16,6 +16,7 @@ import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../config.js';
 import { logger } from '../../logger.js';
+import { updateVaultLinks } from '../../link-updater.js';
 
 /**
  * Type-safe interface for note update operations
@@ -264,10 +265,35 @@ const renameNoteHandler: ToolHandler = async (
   // Build success response
   const warnings: string[] = [];
 
-  // Add Phase 1 limitation warnings if flags were provided
+  // Phase 3: Update links if requested
   if (typedArgs.updateLinks) {
-    warnings.push('Link updates not implemented yet (available in Phase 3)');
+    try {
+      // Extract note names from paths (strip .md extension)
+      const oldNoteName = basename(normalizedOldPath, '.md');
+      const newNoteName = basename(moveResult.newPath, '.md');
+
+      // Update all wikilinks in vault that reference the old note
+      const linkUpdateResult = await updateVaultLinks(oldNoteName, newNoteName);
+
+      // Add warnings for partial/complete failures
+      if (linkUpdateResult.partialSuccess) {
+        warnings.push(
+          `Updated ${linkUpdateResult.updatedCount} files with links, ` +
+          `${linkUpdateResult.failedFiles.length} files failed to update`
+        );
+      } else if (!linkUpdateResult.success) {
+        warnings.push(
+          `Link updates failed: ${linkUpdateResult.failedFiles.length} files could not be updated`
+        );
+      }
+    } catch (error) {
+      // Don't fail entire operation if link updates fail
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      warnings.push(`Link updates failed: ${errorMessage}`);
+    }
   }
+
+  // Add Phase 5 limitation warning if dryRun flag was provided
   if (typedArgs.dryRun) {
     warnings.push('Dry-run mode not implemented yet (available in Phase 5)');
   }

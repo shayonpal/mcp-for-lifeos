@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Link Update Implementation** (MCP-107, 2025-10-31 20:54): Implemented automatic wikilink updates after note rename (Phase 3 of rename_note tool)
+  - Created `src/link-updater.ts` (152 lines) providing `updateVaultLinks()` orchestration function for vault-wide link updates
+  - Pure orchestration layer delegating all link update logic to `VaultUtils.updateNoteLinks()` (regex-based link rewriting)
+  - Integrated with `rename_note` handler: when `updateLinks: true`, applies link updates after successful file rename
+  - Preserves all wikilink formats: basic `[[OldName]]`, alias `[[OldName|Custom]]`, heading `[[OldName#Heading]]`, embed `![[OldName]]`
+  - Graceful failure handling: continues processing remaining files on individual failures, returns partial success status
+  - Performance metrics: tracks scan time (from LinkScanner) and update time separately
+  - Sequential file updates for iCloud sync safety (no parallel writes)
+  - Comprehensive TypeScript contracts in `dev/contracts/MCP-107-contracts.ts` defining result schemas and failure handling
+  - Test coverage: 24 new tests (12 unit, 12 integration) with 100% pass rate
+  - No rollback mechanism yet (vault may be left inconsistent on link update failures) - limitation documented in tool responses
+  - Activates `updateLinks` parameter in rename_note tool (Phase 1 limitation removed)
+
 - **Link Detection Infrastructure** (MCP-106, 2025-10-31 04:49): Implemented read-only link scanner for vault-wide wikilink detection (Phase 2 of rename_note tool)
   - Created `src/link-scanner.ts` (426 lines) with LinkScanner class providing 3 static methods for vault-wide link scanning
   - Added centralized `WIKILINK_PATTERN` constant to `src/regex-utils.ts` supporting all Obsidian wikilink formats (basic, alias, heading, block reference, embed)

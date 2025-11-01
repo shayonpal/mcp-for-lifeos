@@ -4,14 +4,14 @@
 
 - **Name**: `rename_note`
 - **Purpose**: Rename note files in the vault with path validation and error handling
-- **Status**: ✅ Active (Phase 1: Basic rename without link updates; Phase 2: Link detection infrastructure complete)
+- **Status**: ✅ Active (Phase 1: Basic rename; Phase 2: Link detection; Phase 3: Link updates)
 - **Created**: 2025-10-31
-- **Last Updated**: 2025-10-31 04:49
-- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2)
+- **Last Updated**: 2025-10-31 20:54
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3)
 
 ## TL;DR
 
-Rename note files in your vault with comprehensive error handling and validation. Phase 1 provides basic file rename functionality. Phase 2 (MCP-106) completed internal link detection infrastructure. Link updates will be added in Phase 3 (MCP-107).
+Rename note files in your vault with comprehensive error handling, validation, and automatic wikilink updates. Phase 1 provides basic file rename functionality. Phase 2 (MCP-106) completed internal link detection infrastructure. Phase 3 (MCP-107) adds automatic link updates when `updateLinks: true`.
 
 ## Key Features
 
@@ -19,29 +19,37 @@ Rename note files in your vault with comprehensive error handling and validation
 - **Path Validation**: Comprehensive validation of source and destination paths
 - **Structured Error Handling**: Five specific error codes with actionable messages
 - **Cross-Platform Safety**: Proper path normalization for macOS, Windows, Linux
-- **Forward-Compatible API**: Accepts future parameters (updateLinks, dryRun) without breaking
+- **Automatic Link Updates**: Updates all wikilinks across vault when `updateLinks: true` (Phase 3)
 - **Obsidian Filename Compliance**: Validates against Obsidian naming restrictions
 - **Zero Code Duplication**: Leverages existing VaultUtils.moveItem() infrastructure
 
 ## Implementation Status
 
+### ✅ Phase 3 Complete (MCP-107, 2025-10-31)
+
+Automatic link updates are now available:
+- **Link Updater Module** (`src/link-updater.ts`): Orchestrates vault-wide link updates after rename
+- **Link Rewriting**: Preserves all wikilink formats (basic, alias, heading, embed)
+- **Graceful Failures**: Continues processing on individual file failures, reports partial success
+- **Performance Metrics**: Tracks scan time and update time separately
+- **Integration**: Activated via `updateLinks: true` parameter in rename_note tool
+- **Limitation**: No rollback mechanism - vault may be inconsistent if link updates fail
+
 ### ✅ Phase 2 Complete (MCP-106, 2025-10-31)
 
-Internal link detection infrastructure is now in place:
+Internal link detection infrastructure:
 - **LinkScanner Module** (`src/link-scanner.ts`): Vault-wide wikilink detection with regex-based approach
 - **Performance**: <5000ms for 1000+ notes, <50ms per note
 - **Supported Formats**: All Obsidian wikilink formats (basic, alias, heading, block reference, embed)
-- **Filtering Options**: Code block exclusion, frontmatter exclusion, embed control, case sensitivity
-- **Status**: Internal infrastructure only - not exposed as MCP tool yet
 
 ### ⚠️ Current Limitations
 
-The following features are NOT yet user-facing:
+The following features are NOT yet implemented:
 
-- **Link Updates** (Phase 3 - MCP-107): Existing links to renamed notes are NOT automatically updated
+- **Rollback Safety** (Phase 4 - MCP-108): No transaction safety or rollback on link update failures
 - **Dry-Run Mode** (Phase 5 - MCP-109): Preview mode to see changes before applying them
 
-The `updateLinks` and `dryRun` parameters are accepted for forward compatibility but currently ignored. Warnings are included in responses when these parameters are provided.
+The `dryRun` parameter is accepted for forward compatibility but currently ignored. Warnings are included in responses when this parameter is provided.
 
 ## Parameters
 
@@ -58,16 +66,18 @@ The `updateLinks` and `dryRun` parameters are accepted for forward compatibility
   - Can be in same directory (in-place rename) or different directory (move + rename)
   - Examples: `Projects/renamed-note.md`, `Archive/old-project.md`
 
-### Optional Parameters (Forward Compatibility)
+### Optional Parameters
 
 - **`updateLinks`** (boolean, optional, default: false)
-  - **Phase 1 Status**: Accepted but ignored
-  - **Future**: Will update wikilinks after rename (MCP-107)
-  - **Current Behavior**: Warning added to response when provided
+  - **Phase 3 Status**: ✅ Fully implemented
+  - **Behavior**: When `true`, automatically updates all wikilinks pointing to renamed note
+  - **Link Formats**: Preserves basic `[[name]]`, alias `[[name|alias]]`, heading `[[name#heading]]`, embed `![[name]]`
+  - **Failure Handling**: Continues processing on individual file failures, reports partial success
+  - **Limitation**: No rollback mechanism (vault may be inconsistent if link updates fail)
 
 - **`dryRun`** (boolean, optional, default: false)
-  - **Phase 1 Status**: Accepted but ignored
-  - **Future**: Will preview changes without executing (MCP-109)
+  - **Phase 3 Status**: Accepted but ignored
+  - **Future**: Will preview changes without executing (Phase 5 - MCP-109)
   - **Current Behavior**: Warning added to response when provided
 
 ## Usage Modes
@@ -218,22 +228,7 @@ The tool provides structured error responses with specific error codes and actio
 
 ## Response Format
 
-### Success Response
-
-```json
-{
-  "success": true,
-  "oldPath": "Projects/old-name.md",
-  "newPath": "Archive/new-name.md",
-  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md",
-  "warnings": [
-    "Phase 1: Link updates not implemented (deferred to MCP-107)",
-    "Phase 1: Dry-run mode not implemented (deferred to MCP-109)"
-  ]
-}
-```
-
-### Success Response (No Warnings)
+### Success Response (Basic Rename)
 
 ```json
 {
@@ -244,7 +239,64 @@ The tool provides structured error responses with specific error codes and actio
 }
 ```
 
-Warnings array only appears when forward-compatibility parameters are provided.
+### Success Response (With Link Updates)
+
+```json
+{
+  "success": true,
+  "oldPath": "Projects/old-name.md",
+  "newPath": "Archive/new-name.md",
+  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md"
+}
+```
+
+Note: Link update status is reported via absence of warnings. If link updates were requested and completed successfully, no warning appears.
+
+### Success Response (Partial Link Update Failure)
+
+```json
+{
+  "success": true,
+  "oldPath": "Projects/old-name.md",
+  "newPath": "Archive/new-name.md",
+  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md",
+  "warnings": [
+    "Updated 8 files with links, 2 files failed to update"
+  ]
+}
+```
+
+### Success Response (Complete Link Update Failure)
+
+```json
+{
+  "success": true,
+  "oldPath": "Projects/old-name.md",
+  "newPath": "Archive/new-name.md",
+  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md",
+  "warnings": [
+    "Link updates failed: 10 files could not be updated"
+  ]
+}
+```
+
+Note: File rename succeeds even if link updates fail. Vault may be left inconsistent.
+
+### Success Response (Dry-Run Parameter Provided)
+
+```json
+{
+  "success": true,
+  "oldPath": "Projects/old-name.md",
+  "newPath": "Projects/new-name.md",
+  "message": "Note renamed successfully from Projects/old-name.md to Projects/new-name.md",
+  "warnings": [
+    "Dry-run mode not implemented yet (available in Phase 5)"
+  ]
+}
+```
+
+Warnings array only appears when dryRun parameter is provided or link updates encounter failures.
 
 ### Error Response
 
@@ -318,7 +370,7 @@ This single-line enhancement enables rename functionality while maintaining back
 | Batch Operations | No (single file only) | Yes (via items array) |
 | Folder Support | No | Yes |
 | Rename Capability | Yes (always) | No (preserves filename) |
-| Link Updates | Future (MCP-107) | N/A |
+| Link Updates | Yes (Phase 3) | N/A |
 | Error Codes | 5 specific codes | General error handling |
 | Use Case | File renaming | Folder reorganization |
 
@@ -408,20 +460,29 @@ This single-line enhancement enables rename functionality while maintaining back
 }
 ```
 
-### Example 5: Forward-Compatible Parameters (Phase 1)
+### Example 5: Rename with Link Updates (Phase 3)
 
-**Scenario**: Using future parameters in Phase 1
+**Scenario**: Rename note and update all wikilinks
 
 ```json
 {
   "oldPath": "Projects/old-name.md",
   "newPath": "Projects/new-name.md",
-  "updateLinks": true,
-  "dryRun": true
+  "updateLinks": true
 }
 ```
 
-**Response**:
+**Response** (All links updated successfully):
+```json
+{
+  "success": true,
+  "oldPath": "Projects/old-name.md",
+  "newPath": "Projects/new-name.md",
+  "message": "Note renamed successfully"
+}
+```
+
+**Response** (Some links failed to update):
 ```json
 {
   "success": true,
@@ -429,13 +490,12 @@ This single-line enhancement enables rename functionality while maintaining back
   "newPath": "Projects/new-name.md",
   "message": "Note renamed successfully",
   "warnings": [
-    "Phase 1: Link updates not implemented (deferred to MCP-107)",
-    "Phase 1: Dry-run mode not implemented (deferred to MCP-109)"
+    "Updated 15 files with links, 2 files failed to update"
   ]
 }
 ```
 
-**Note**: File is renamed successfully, but link updates and dry-run are ignored.
+**Note**: File rename succeeds even if link updates fail. Check warnings for details.
 
 ## Best Practices
 
@@ -443,7 +503,7 @@ This single-line enhancement enables rename functionality while maintaining back
 
 1. **Verify Source Exists**: Use `read_note` or `search` to confirm file exists
 2. **Check Destination**: Ensure target filename doesn't already exist
-3. **Plan Link Updates**: Note that Phase 1 does NOT update links automatically
+3. **Enable Link Updates**: Set `updateLinks: true` to automatically update wikilinks (Phase 3)
 
 ### Filename Guidelines
 
@@ -459,14 +519,15 @@ This single-line enhancement enables rename functionality while maintaining back
 3. **INVALID_PATH**: Review Obsidian filename restrictions
 4. **PERMISSION_DENIED**: Wait for sync, close file in other apps
 
-### Link Management (Phase 1 Limitations)
+### Link Management (Phase 3)
 
-Since Phase 1 does not update links automatically:
+With automatic link updates available:
 
-1. **Search for Links**: Use `search` tool to find references before renaming
-2. **Manual Updates**: Update wikilinks manually after rename
-3. **Document Changes**: Keep track of renamed files for reference
-4. **Wait for Phase 3**: Consider deferring critical renames until MCP-107 implementation
+1. **Enable Link Updates**: Set `updateLinks: true` for most rename operations
+2. **Check Warnings**: Review response warnings for any failed link updates
+3. **Verify Results**: Use `search` to confirm all links updated correctly
+4. **Manual Fixes**: Update any files that failed during automatic link updates
+5. **Rollback Awareness**: Be aware that failed link updates cannot be rolled back (Phase 4)
 
 ## Related Tools
 
@@ -479,16 +540,17 @@ Since Phase 1 does not update links automatically:
 
 ### Typical Workflows
 
-**Workflow 1: Archive Completed Project**
+**Workflow 1: Archive Completed Project (Phase 3)**
 1. `read_note` - Review project note content
-2. `rename_note` - Move to Archive with dated name
-3. `search` - Find references to old name
-4. `edit_note` - Update references in other notes
+2. `rename_note` with `updateLinks: true` - Move to Archive with dated name, update all links
+3. `search` - Verify all links updated correctly
+4. Review warnings for any failed link updates
 
-**Workflow 2: Organize Inbox**
+**Workflow 2: Organize Inbox (Phase 3)**
 1. `list` - View inbox contents
-2. `rename_note` - Rename and categorize notes
-3. `search` - Verify no broken references
+2. `rename_note` with `updateLinks: true` - Rename and categorize notes
+3. Check response warnings for any link update failures
+4. Manually fix any files that failed to update
 
 ## Troubleshooting
 
@@ -518,14 +580,16 @@ Since Phase 1 does not update links automatically:
 
 ### Issue: Links broken after rename
 
-**Expected Behavior** (Phase 1):
-- Links are NOT automatically updated
-- This is a known Phase 1 limitation
+**Phase 3 Behavior**:
+- Links ARE automatically updated when `updateLinks: true`
+- If `updateLinks: false` (default), links are NOT updated
 
-**Workaround**:
-- Use `search` to find broken links: `search [[old-name]]`
-- Manually update links with `edit_note`
-- Wait for Phase 3 (MCP-107) for automatic link updates
+**Troubleshooting**:
+- Check if `updateLinks: true` was provided in request
+- Review response warnings for any failed link updates
+- Use `search` to find remaining broken links
+- Manually fix files that failed during automatic updates
+- Future: Rollback mechanism (Phase 4 - MCP-108)
 
 ### Issue: Cannot rename to existing filename
 
@@ -557,21 +621,23 @@ Since Phase 1 does not update links automatically:
 
 ## Future Phases
 
+### ✅ Phase 3: Link Updates (MCP-107) - Complete
+- ✅ Automatically update wikilinks after rename
+- ✅ Handle all wikilink formats: `[[note]]`, `[[note|alias]]`, `[[note#heading]]`, `![[note]]`
+- ✅ Preserve link aliases, headings, and embeds during updates
+- ✅ Activate `updateLinks` parameter
+- ✅ Graceful failure handling with partial success reporting
+
 ### ✅ Phase 2: Link Detection (MCP-106) - Complete
 - ✅ Detect wikilinks pointing to renamed note
 - ✅ Vault-wide link scanning with regex-based approach
 - ✅ Comprehensive wikilink format support
-- ✅ Internal infrastructure ready for Phase 3
 
-### Phase 3: Link Updates (MCP-107) - Next
-- Automatically update wikilinks after rename
-- Handle both `[[note]]` and `[[note|alias]]` formats
-- Preserve link aliases during updates
-- Activate `updateLinks` parameter
-
-### Phase 4: Folder Detection (MCP-108)
-- Support renaming folders (with file propagation)
-- Update links in all files within renamed folder
+### Phase 4: Atomic Operations & Rollback (MCP-108) - Next
+- Add transaction safety for rename + link update operations
+- Rollback mechanism if link updates fail
+- Atomic vault state management
+- All-or-nothing guarantee for critical operations
 
 ### Phase 5: Dry-Run Mode (MCP-109)
 - Preview rename operation without executing
@@ -579,6 +645,16 @@ Since Phase 1 does not update links automatically:
 - Activate `dryRun` parameter
 
 ## Version History
+
+### Phase 3 - v1.2.0 (2025-10-31)
+- Link update implementation (MCP-107)
+- Created link-updater module for vault-wide link updates
+- Automatic wikilink updates via `updateLinks: true` parameter
+- Preserves all wikilink formats (basic, alias, heading, embed)
+- Graceful failure handling with partial success reporting
+- Performance metrics: separate scan time and update time tracking
+- 24 additional tests (12 unit, 12 integration) with 100% pass rate
+- Limitation: No rollback mechanism (deferred to Phase 4)
 
 ### Phase 2 - v1.1.0 (2025-10-31)
 - Link detection infrastructure (MCP-106)
@@ -597,8 +673,7 @@ Since Phase 1 does not update links automatically:
 - 18 tests (10 unit, 8 integration) with 100% pass rate
 
 ### Future Releases
-- Phase 3: Link updates (MCP-107) - Next
-- Phase 4: Folder support (MCP-108)
+- Phase 4: Atomic operations & rollback (MCP-108) - Next
 - Phase 5: Dry-run mode (MCP-109)
 
 ## Testing
