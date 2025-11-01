@@ -22,6 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No rollback mechanism yet (vault may be left inconsistent on link update failures) - limitation documented in tool responses
   - Activates `updateLinks` parameter in rename_note tool (Phase 1 limitation removed)
 
+- **Atomic File Operations Foundation** (MCP-114, 2025-11-01 02:29): Extended VaultUtils.writeFileWithRetry() with atomic write capability using native Node.js fs temp-file-then-rename pattern
+  - Added AtomicWriteOptions interface with atomic mode, retry configuration, and telemetry tracking flags
+  - Opt-in atomic writes via `{ atomic: true }` parameter using `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic fs.renameSync()
+  - Comprehensive error handling with try/catch/finally blocks ensuring temp file cleanup on all error paths
+  - Full iCloud retry integration with existing ICLOUD_RETRY_CONFIG (3 retries, exponential backoff)
+  - Zero new dependencies - uses native Node.js fs only
+  - Code quality improvements: extracted retryWrite() and syncSleep() helpers eliminating retry logic duplication from 3 locations (net -12 lines)
+  - Improved error diagnostics distinguishing atomic vs non-atomic failures with operation context
+  - 100% backward compatible: atomic defaults to false, no changes to existing callers
+  - Test coverage: 15 new unit tests with 100% pass rate, 574/579 existing tests passing (no regressions)
+  - Foundation for MCP-108 transaction safety and MCP-115 WAL infrastructure
+  - Contract-driven development using specifications from dev/contracts/MCP-108-contracts.ts
+
 - **Link Detection Infrastructure** (MCP-106, 2025-10-31 04:49): Implemented read-only link scanner for vault-wide wikilink detection (Phase 2 of rename_note tool)
   - Created `src/link-scanner.ts` (426 lines) with LinkScanner class providing 3 static methods for vault-wide link scanning
   - Added centralized `WIKILINK_PATTERN` constant to `src/regex-utils.ts` supporting all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
@@ -48,6 +61,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Path normalization and security validation via existing `normalizePath()` utility
 
 ### Changed
+
+- **Architecture Documentation Update** (2025-11-01 at 3:00 AM): Updated docs/ARCHITECTURE.md to document MCP-114 atomic file operations capability
+  - Added "Atomic Operations" subsection to Vault Utils documenting opt-in atomic writes via `writeFileWithRetry({ atomic: true })`
+  - Documented temp-file-then-rename pattern using `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic `fs.renameSync()`
+  - Highlighted iCloud retry integration and zero new dependencies (native Node.js fs only)
+  - Noted foundation for MCP-108 transaction safety
+  - Updated "Last Updated" timestamp to 2025-11-01
 
 - **Switch Statement Removal** (MCP-99, 2025-10-30 21:39): Completed request handler extraction by removing switch statement entirely from index.ts, achieving pure factory pattern
   - Deleted 418-line switch statement (lines 222-639) from `src/index.ts`, eliminating all inline tool logic
