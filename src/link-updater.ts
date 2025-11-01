@@ -134,7 +134,6 @@ export async function updateVaultLinks(
 
   // Step 4: Calculate result metrics
   const updateTimeMs = Date.now() - updateStartTime;
-  const totalFiles = fileGroups.size;
   const success = failedFiles.length === 0;
   const partialSuccess = updatedCount > 0 && failedFiles.length > 0;
 

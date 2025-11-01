@@ -17,7 +17,6 @@ import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import { updateVaultLinks } from '../../src/link-updater.js';
 import { VaultUtils } from '../../src/vault-utils.js';
-import { SearchEngine } from '../../src/search-engine.js';
 
 describe('Link Updater Integration', () => {
   let vaultPath: string;
@@ -153,7 +152,7 @@ See [[OldNote]] for more info.`
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Update links (case-insensitive)
-      const result = await updateVaultLinks('OldNote', 'NewNote');
+      await updateVaultLinks('OldNote', 'NewNote');
 
       // Verify all variants updated
       const ref1Content = await fs.readFile(ref1Path, 'utf-8');
@@ -174,7 +173,7 @@ See [[OldNote]] for more info.`
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Update only OldNote links
-      const result = await updateVaultLinks('OldNote', 'NewNote');
+      await updateVaultLinks('OldNote', 'NewNote');
 
       // Verify selective update
       const refContent = await fs.readFile(refPath, 'utf-8');
@@ -444,7 +443,7 @@ No links in content - only frontmatter.`);
       await new Promise(resolve => setTimeout(resolve, 200));
 
       try {
-        const result = await updateVaultLinks('MCP-107-Test-Old', 'MCP-107-Test-New');
+        await updateVaultLinks('MCP-107-Test-Old', 'MCP-107-Test-New');
 
         const refContent = await fs.readFile(refNote, 'utf-8');
 
@@ -487,7 +486,7 @@ Embed: ![[MCP-107-Test-Old]]`);
       await new Promise(resolve => setTimeout(resolve, 200));
 
       try {
-        const result = await updateVaultLinks('MCP-107-Test-Old', 'MCP-107-Test-New');
+        await updateVaultLinks('MCP-107-Test-Old', 'MCP-107-Test-New');
 
         const refContent = await fs.readFile(refNote, 'utf-8');
 
