@@ -18,6 +18,7 @@ import {
   SearchOptions,
   NoteTemplate,
 } from "./types.js";
+import { stripMdExtension } from "./path-utils.js";
 import { LIFEOS_CONFIG, YAML_RULES } from "./config.js";
 import { TemplateManager } from "./template-manager.js";
 import { ObsidianSettings } from "./obsidian-settings.js";
@@ -25,6 +26,7 @@ import { DateResolver } from "./date-resolver.js";
 import { TemplateContext } from "./template-parser.js";
 import { logger } from "./logger.js";
 import { normalizePath } from "./path-utils.js";
+import { WIKILINK_PATTERN } from "./regex-utils.js";
 
 // iCloud sync retry configuration
 const ICLOUD_RETRY_CONFIG = {
@@ -436,6 +438,116 @@ export class VaultUtils {
     this.writeFileWithRetry(updatedNote.path, fileContent, "utf-8");
 
     return updatedNote;
+  }
+
+  /**
+   * Reconstruct wikilink text from components with new target note name
+   *
+   * Follows Obsidian wikilink format: [[target#heading^block|alias]]
+   * Preserves all link components exactly as they were in original link.
+   *
+   * @param embedFlag - '!' if embed, undefined otherwise
+   * @param targetNote - New note name to use as target (without .md)
+   * @param heading - Heading reference text (without #)
+   * @param blockRef - Block reference text (without ^)
+   * @param alias - Alias display text (without |)
+   * @returns Formatted wikilink text with new target
+   *
+   * @example
+   * buildNewLinkText(undefined, 'NewNote', 'Section', undefined, 'Link')
+   * // Returns: '[[NewNote#Section|Link]]'
+   *
+   * @example
+   * buildNewLinkText('!', 'NewNote', undefined, undefined, undefined)
+   * // Returns: '![[NewNote]]'
+   *
+   * @internal Used by link update operations and testing
+   */
+  public static buildNewLinkText(
+    embedFlag: string | undefined,
+    targetNote: string,
+    heading: string | undefined,
+    blockRef: string | undefined,
+    alias: string | undefined
+  ): string {
+    let link = '[[' + targetNote;
+
+    if (heading) {
+      link += '#' + heading;
+    }
+
+    if (blockRef) {
+      link += '^' + blockRef;
+    }
+
+    // Add alias BEFORE closing brackets
+    if (alias) {
+      link += '|' + alias;
+    }
+
+    link += ']]';  // Close AFTER alias
+
+    if (embedFlag) {
+      link = embedFlag + link;
+    }
+
+    return link;
+  }
+
+  /**
+   * Update all matching wikilinks in a note's content
+   *
+   * Uses String.replace() with WIKILINK_PATTERN callback for precision.
+   * Only updates links where target matches oldNoteName (case-insensitive).
+   * Preserves all link components (alias, heading, block ref, embed flag).
+   *
+   * Updates links in content section only. Frontmatter is preserved but not modified.
+   * (Frontmatter link updates deferred to MCP-110)
+   *
+   * @param content - Full note content (including frontmatter)
+   * @param oldNoteName - Original note name to match (without .md)
+   * @param newNoteName - New note name to replace with (without .md)
+   * @returns Updated content with wikilinks rewritten
+   *
+   * @example
+   * updateNoteLinks(
+   *   'See [[OldNote]] and [[OldNote|Alias]]',
+   *   'OldNote',
+   *   'NewNote'
+   * )
+   * // Returns: 'See [[NewNote]] and [[NewNote|Alias]]'
+   */
+  static updateNoteLinks(
+    content: string,
+    oldNoteName: string,
+    newNoteName: string
+  ): string {
+    // Strip .md extension from both names for consistent comparison
+    const oldNameNormalized = stripMdExtension(oldNoteName).toLowerCase();
+    const newNameNormalized = stripMdExtension(newNoteName);
+
+    // Use gray-matter to preserve frontmatter structure (read-only)
+    const { data: frontmatter, content: noteContent } = matter(content);
+
+    // Update links in content section only (frontmatter updates deferred to MCP-110)
+    const updatedContent = noteContent.replace(
+      WIKILINK_PATTERN,
+      (match: string, embedFlag: string | undefined, target: string, heading: string | undefined, blockRef: string | undefined, alias: string | undefined) => {
+        // Normalize target for case-insensitive comparison
+        const targetNormalized = stripMdExtension(target).toLowerCase();
+
+        // Only update if target matches old note name
+        if (targetNormalized === oldNameNormalized) {
+          return this.buildNewLinkText(embedFlag, newNameNormalized, heading, blockRef, alias);
+        }
+
+        // Preserve non-matching links unchanged
+        return match;
+      }
+    );
+
+    // Reconstruct file with original frontmatter and updated content
+    return matter.stringify(updatedContent, frontmatter);
   }
 
   /**

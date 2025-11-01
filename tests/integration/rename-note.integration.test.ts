@@ -99,7 +99,7 @@ describe('Rename Note Integration (Handler)', () => {
       expect(newContent).toBe(content);
     });
 
-    it('should include Phase 1 warnings when flags are provided', async () => {
+    it('should include Phase 5 warning when dryRun flag is provided', async () => {
       // Create test note
       const sourcePath = path.join(testDir, 'test.md');
       await fs.writeFile(sourcePath, 'Test content');
@@ -109,12 +109,11 @@ describe('Rename Note Integration (Handler)', () => {
         analytics: { logToolCall: () => Promise.resolve() } as any
       };
 
-      // Call handler with Phase 1 flags
+      // Call handler with dryRun flag (Phase 5 not yet implemented)
       const result = await renameNoteHandler(
         {
           oldPath: sourcePath,
           newPath: path.join(testDir, 'renamed.md'),
-          updateLinks: true,
           dryRun: true
         },
         context
@@ -124,8 +123,7 @@ describe('Rename Note Integration (Handler)', () => {
 
       expect(output.success).toBe(true);
       expect(output.warnings).toBeDefined();
-      expect(output.warnings).toHaveLength(2);
-      expect(output.warnings).toContain('Link updates not implemented yet (available in Phase 3)');
+      expect(output.warnings).toHaveLength(1);
       expect(output.warnings).toContain('Dry-run mode not implemented yet (available in Phase 5)');
     });
   });

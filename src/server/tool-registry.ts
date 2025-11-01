@@ -723,7 +723,8 @@ ERROR CODES:
           },
           updateLinks: {
             type: 'boolean',
-            description: 'Whether to update wikilinks after rename (Phase 1: accepted but ignored)'
+            default: true,
+            description: 'Whether to update wikilinks after rename (default: true)'
           },
           dryRun: {
             type: 'boolean',
