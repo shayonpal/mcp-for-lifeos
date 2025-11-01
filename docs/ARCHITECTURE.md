@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last Updated:** 2025-10-30
+**Last Updated:** 2025-11-01
 **Version:** 2.0.1
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
@@ -191,10 +191,18 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 
 **Key Responsibilities:**
 
-- File I/O with iCloud sync retry logic
+- File I/O with iCloud sync retry logic and atomic write capability
+- Atomic file operations via temp-file-then-rename pattern (native Node.js fs)
 - YAML frontmatter parsing and validation
 - Obsidian-compliant file naming
 - PARA method folder structure enforcement
+
+**Atomic Operations** (MCP-114, 2025-11-01):
+- Opt-in atomic writes via `writeFileWithRetry({ atomic: true })`
+- Uses `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic `fs.renameSync()`
+- Full iCloud retry integration with existing retry logic
+- Zero new dependencies - native Node.js fs only
+- Foundation for MCP-108 transaction safety
 
 **Status:** Monolithic (1,687 lines) - scheduled for decomposition in roadmap
 
