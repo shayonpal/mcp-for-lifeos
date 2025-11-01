@@ -206,6 +206,30 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 
 **Status:** Monolithic (1,687 lines) - scheduled for decomposition in roadmap
 
+### Link Update Infrastructure
+
+Two-phase system for vault-wide wikilink updates after note rename operations.
+
+**`link-scanner.ts`** (MCP-106, Phase 2):
+- Vault-wide wikilink detection with regex-based scanning
+- Performance: <5000ms for 1000+ notes, <50ms per note
+- Supports all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
+
+**`link-updater.ts`** (MCP-107/MCP-116, Phase 3):
+- Three-mode operation: RENDER, COMMIT, DIRECT
+- **RENDER mode**: Read-only content map generation without writes (returns LinkRenderResult)
+- **COMMIT mode**: Atomic writes from pre-rendered content map (uses MCP-114 atomic operations)
+- **DIRECT mode**: Legacy Phase 3 behavior (read + update + write), default for backward compatibility
+- Function overloading with TypeScript signatures for type safety per mode
+- Shared helper `scanAndGroupReferences()` eliminates code duplication
+- Memory characteristics: ~1-2KB per note, 1-10MB for 1000 files, 100-200MB for 10K+ files
+- Foundation for MCP-117 TransactionManager atomic rename transactions
+
+**Design Pattern:**
+- Separation of rendering phase (read + compute) from commit phase (write)
+- Enables validation before committing changes
+- Supports future rollback mechanisms via WAL integration
+
 ### Template System
 
 Multi-component system for Obsidian template integration:

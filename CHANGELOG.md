@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Two-Phase Link Updater** (MCP-116, 2025-11-01 16:49): Refactored link updater to support three operational modes separating rendering from committing for atomic transactions
+  - Extended `updateVaultLinks()` with mode parameter supporting 'render', 'commit', and 'direct' modes
+  - RENDER mode: Read-only operation that scans vault, reads affected files, computes updated content, returns content map without writing (returns LinkRenderResult with performance metrics)
+  - COMMIT mode: Writes pre-rendered content atomically from content map, uses existing atomic write infrastructure from MCP-114 (returns LinkUpdateResult)
+  - DIRECT mode: Legacy Phase 3 behavior (read + update + write in single operation) maintained for backward compatibility, used as default when mode not specified
+  - Function overloading with TypeScript signatures ensuring type safety for each mode
+  - Shared helper `scanAndGroupReferences()` eliminates code duplication between render and direct modes
+  - Memory characteristics documented: typical ~1-2KB per note, 1-10MB for 1000 affected files, 100-200MB for 10K+ files
+  - Foundation for MCP-117 TransactionManager integration enabling atomic rename with link updates
+  - Test coverage: 18+ new unit tests in `tests/unit/link-updater-modes.test.ts` covering all three modes, backward compatibility, and error handling with 100% pass rate
+  - Zero breaking changes: existing code continues using default direct mode without modification
+  - Prepared for future WAL integration: LinkCommitInput includes manifestEntries field for transaction validation
+
 - **Link Update Implementation** (MCP-107, 2025-10-31 20:54): Implemented automatic wikilink updates after note rename (Phase 3 of rename_note tool)
   - Created `src/link-updater.ts` (152 lines) providing `updateVaultLinks()` orchestration function for vault-wide link updates
   - Pure orchestration layer delegating all link update logic to `VaultUtils.updateNoteLinks()` (regex-based link rewriting)
