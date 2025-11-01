@@ -298,13 +298,11 @@ export class VaultUtils {
         );
 
         // Step 2: Atomically rename temp file to target (POSIX atomic on macOS)
-        try {
-          renameSync(tempPath, filePath);
-        } catch (error: any) {
-          throw new Error(
-            `Atomic rename failed from ${tempPath} to ${filePath}: ${error.message}`,
-          );
-        }
+        this.retryWrite(
+          () => renameSync(tempPath, filePath),
+          maxRetries,
+          `atomic rename temp file: ${tempPath} -> ${filePath}`,
+        );
       } catch (error) {
         // Cleanup temp file on any error
         try {

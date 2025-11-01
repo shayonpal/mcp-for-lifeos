@@ -11,7 +11,6 @@ import {
   mkdirSync,
   rmSync,
   readFileSync,
-  writeFileSync,
   readdirSync,
   chmodSync,
 } from "fs";
