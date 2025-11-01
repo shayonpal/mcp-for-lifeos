@@ -316,15 +316,6 @@ export class VaultUtils {
           );
         }
         throw error;
-      } finally {
-        // Extra safety: ensure temp file is cleaned up
-        try {
-          if (existsSync(tempPath)) {
-            rmSync(tempPath, { force: true });
-          }
-        } catch {
-          // Ignore cleanup errors in finally block
-        }
       }
     } else {
       // Non-atomic write (existing behavior for backward compatibility)

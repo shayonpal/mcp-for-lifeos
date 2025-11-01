@@ -117,7 +117,7 @@ describe("MCP-114: Atomic File Operations", () => {
           retries: 0, // No retries to fail fast
         });
         // Should not reach here
-        expect(true).toBe(false);
+        fail("Should have thrown an error");
       } catch (error) {
         // Expected to fail
         expect(error).toBeDefined();
@@ -145,7 +145,7 @@ describe("MCP-114: Atomic File Operations", () => {
           retries: 0,
         });
         // Should not reach here
-        expect(true).toBe(false);
+        fail("Should have thrown an error");
       } catch (error) {
         // Expected to fail on rename
         expect(error).toBeDefined();
