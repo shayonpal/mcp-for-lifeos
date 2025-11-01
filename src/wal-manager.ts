@@ -162,9 +162,9 @@ export class WALManager {
    * @returns Array of pending WAL entries
    */
   async scanPendingWALs(): Promise<WALEntry[]> {
-    // Create directory if doesn't exist (idempotent)
+    // Return empty array if WAL directory doesn't exist
     if (!existsSync(this.walDir)) {
-      return []; // No WALs if directory doesn't exist
+      return [];
     }
 
     const files = readdirSync(this.walDir);
