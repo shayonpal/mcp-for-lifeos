@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Transaction Integration with rename_note** (MCP-118, 2025-11-01 21:56): Integrated TransactionManager with rename_note tool providing atomic rename operations with automatic rollback
+  - Refactored `renameNoteHandler` in `src/server/handlers/note-handlers.ts` to delegate all rename operations to TransactionManager.execute()
+  - Singleton pattern for TransactionManager instance with lazy initialization to reduce overhead
+  - Removed "success with warnings" pattern - operations now return explicit transaction failures with detailed metadata
+  - BREAKING CHANGE: Warnings array removed from success responses (RenameNoteOutput) - failures now return TRANSACTION_FAILED error code instead of partial success
+  - Added transaction correlation ID and performance metrics to success responses (correlationId, metrics with totalTimeMs and phaseTimings)
+  - Extended `RenameNoteError` with transaction error codes: TRANSACTION_PLAN_FAILED, TRANSACTION_PREPARE_FAILED, TRANSACTION_VALIDATE_FAILED, TRANSACTION_COMMIT_FAILED, TRANSACTION_ROLLBACK_FAILED, TRANSACTION_STALE_CONTENT, TRANSACTION_FAILED
+  - Added comprehensive `TransactionMetadata` interface in contracts providing phase, correlationId, affectedFiles, rollbackStatus, failures array, recoveryAction, walPath, and recoveryInstructions
+  - Updated tool description in `src/server/tool-registry.ts` to document Phase 4 features (atomic transactions, automatic rollback, vault-wide link updates, SHA-256 staleness detection, WAL crash recovery)
+  - Standardized error creation with `createRenameError()` helper ensuring consistent error structure
+  - Test coverage: 20+ integration tests in `tests/integration/rename-note.integration.test.ts` covering transaction success, rollback scenarios, metadata in errors, no warnings in success, backward compatible inputs
+  - Vault operations are now all-or-nothing with automatic rollback on any failure preventing partial states
+
 ### Documentation
 
 - **Architecture Update** (2025-11-01 18:39): Added WAL Manager and Transaction Manager sections to ARCHITECTURE.md documenting new infrastructure components for atomic rename operations

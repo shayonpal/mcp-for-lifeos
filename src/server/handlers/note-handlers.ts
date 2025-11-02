@@ -19,6 +19,50 @@ import { logger } from '../../logger.js';
 import { updateVaultLinks } from '../../link-updater.js';
 
 /**
+ * Transaction service cache for singleton pattern
+ * Reduces overhead from repeated instantiation
+ */
+let transactionManagerInstance: any = null;
+let walManagerInstance: any = null;
+
+/**
+ * Get or create TransactionManager singleton
+ * Lazy initialization with caching for performance
+ */
+async function getTransactionManager() {
+  if (!transactionManagerInstance) {
+    const { TransactionManager } = await import('../../transaction-manager.js');
+    const { WALManager } = await import('../../wal-manager.js');
+
+    walManagerInstance = new WALManager();
+    transactionManagerInstance = new TransactionManager(LIFEOS_CONFIG.vaultPath, walManagerInstance);
+  }
+  return transactionManagerInstance;
+}
+
+/**
+ * Create standardized RenameNoteError response
+ * Ensures consistent error structure across all rename failures
+ */
+function createRenameError(
+  errorCode: RenameNoteError['errorCode'],
+  message: string,
+  transactionMetadata?: RenameNoteError['transactionMetadata']
+): RenameNoteError {
+  const error: RenameNoteError = {
+    success: false,
+    error: message,
+    errorCode
+  };
+
+  if (transactionMetadata) {
+    error.transactionMetadata = transactionMetadata;
+  }
+
+  return error;
+}
+
+/**
  * Type-safe interface for note update operations
  */
 interface NoteUpdateParams {
@@ -152,8 +196,14 @@ const editNoteHandler: ToolHandler = async (
 };
 
 /**
- * Rename note handler
- * Renames a note file (Phase 1: basic rename without link updates)
+ * Rename note handler (Phase 4: Atomic transactions with link updates)
+ *
+ * Performs atomic note rename with:
+ * - 5-phase transaction protocol (plan, prepare, validate, commit, cleanup)
+ * - Automatic rollback on failures
+ * - Vault-wide wikilink updates
+ * - SHA-256 staleness detection
+ * - WAL-based crash recovery
  */
 const renameNoteHandler: ToolHandler = async (
   args: Record<string, unknown>,
@@ -173,142 +223,102 @@ const renameNoteHandler: ToolHandler = async (
   const normalizedOldPath = normalizePath(typedArgs.oldPath, LIFEOS_CONFIG.vaultPath);
   const normalizedNewPath = normalizePath(typedArgs.newPath, LIFEOS_CONFIG.vaultPath);
 
-  // Import path utilities
-  const { dirname, basename, extname } = await import('path');
+  // Import path utilities (needed for validation and success message formatting)
+  const { basename, extname } = await import('path');
 
-  // Validate .md extension on both paths
-  if (extname(normalizedOldPath) !== '.md') {
-    const error: RenameNoteError = {
-      success: false,
-      error: 'Source file must have .md extension',
-      errorCode: 'INVALID_PATH'
-    };
-    return addVersionMetadata({
-      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
-      isError: true
-    }, context.registryConfig) as CallToolResult;
+  // Basic validation before delegating to TransactionManager
+  // These checks provide better error messages than transaction failures
+
+  // Validate .md extension (prevents unnecessary transaction overhead)
+  if (extname(normalizedOldPath) !== '.md' || extname(normalizedNewPath) !== '.md') {
+    throw new Error(
+      extname(normalizedOldPath) !== '.md'
+        ? 'Source file must have .md extension'
+        : 'New filename must have .md extension'
+    );
   }
 
-  if (extname(normalizedNewPath) !== '.md') {
-    const error: RenameNoteError = {
-      success: false,
-      error: 'New filename must have .md extension',
-      errorCode: 'INVALID_PATH'
-    };
-    return addVersionMetadata({
-      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
-      isError: true
-    }, context.registryConfig) as CallToolResult;
-  }
-
-  // Extract destination folder and new filename from newPath
-  const destinationFolder = dirname(normalizedNewPath);
-  const newFilename = basename(normalizedNewPath);
-
-  // Validate source exists
-  const { existsSync } = await import('fs');
-  if (!existsSync(normalizedOldPath)) {
-    const fileName = basename(normalizedOldPath, '.md');
-    const error: RenameNoteError = {
-      success: false,
-      error: `Note not found: ${normalizedOldPath}. Run search(query='${fileName}') to find similar notes.`,
-      errorCode: 'FILE_NOT_FOUND'
-    };
-    return addVersionMetadata({
-      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
-      isError: true
-    }, context.registryConfig) as CallToolResult;
-  }
-
-  // Check if renaming to same name (no-op)
+  // Check for identical paths (no-op, prevent unnecessary transaction)
   if (normalizedOldPath === normalizedNewPath) {
-    const error: RenameNoteError = {
-      success: false,
-      error: 'Old path and new path are identical - no rename needed',
-      errorCode: 'INVALID_PATH'
-    };
-    return addVersionMetadata({
-      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
-      isError: true
-    }, context.registryConfig) as CallToolResult;
+    throw new Error('Old path and new path are identical - no rename needed');
   }
 
-  // Use VaultUtils.moveItem with newFilename parameter
-  const moveResult = VaultUtils.moveItem(
-    normalizedOldPath,
-    destinationFolder,
-    { newFilename }
-  );
+  // Delegate to TransactionManager for atomic rename with full validation
+  try {
+    // Get cached TransactionManager instance (singleton pattern)
+    const txManager = await getTransactionManager();
 
-  if (!moveResult.success) {
-    // Map VaultUtils errors to RenameNoteError codes
-    let errorCode: RenameNoteError['errorCode'] = 'UNKNOWN_ERROR';
-    if (moveResult.error?.includes('already exists')) {
-      errorCode = 'FILE_EXISTS';
-    } else if (moveResult.error?.includes('not found')) {
-      errorCode = 'FILE_NOT_FOUND';
-    } else if (moveResult.error?.includes('Permission') || moveResult.error?.includes('EACCES')) {
-      errorCode = 'PERMISSION_DENIED';
+    // Execute transaction with 5-phase protocol
+    const result = await txManager.execute(
+      normalizedOldPath,
+      normalizedNewPath,
+      typedArgs.updateLinks ?? true // Default to updating links
+    );
+
+    // Handle transaction result
+    if (!result.success) {
+      // Transaction failed - return TRANSACTION_FAILED with metadata
+      const error = createRenameError(
+        'TRANSACTION_FAILED',
+        'Transaction failed during rename operation',
+        {
+          phase: result.finalPhase,
+          correlationId: result.correlationId,
+          affectedFiles: [normalizedOldPath, normalizedNewPath],
+          rollbackStatus: result.rollback?.success
+            ? 'success'
+            : result.rollback?.partialRecovery
+            ? 'partial'
+            : 'failed',
+          failures: result.rollback?.failures?.map((f: { path: string; type: 'note_rename' | 'link_update'; error: string }) => ({
+            path: f.path,
+            operation: f.type,
+            error: f.error
+          })),
+          recoveryAction: result.rollback?.manualRecoveryRequired
+            ? 'manual_recovery'
+            : 'retry',
+          walPath: result.walPath,
+          recoveryInstructions: result.rollback?.recoveryInstructions
+        }
+      );
+
+      return addVersionMetadata({
+        content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
+        isError: true
+      }, context.registryConfig) as CallToolResult;
     }
 
-    const error: RenameNoteError = {
-      success: false,
-      error: moveResult.error || 'Unknown error during rename',
-      errorCode
-    };
-    return addVersionMetadata({
-      content: [{ type: 'text', text: JSON.stringify(error, null, 2) }],
-      isError: true
-    }, context.registryConfig) as CallToolResult;
-  }
-
-  // Build success response
-  const warnings: string[] = [];
-
-  // Phase 3: Update links if requested
-  if (typedArgs.updateLinks) {
-    try {
-      // Extract note names from paths (strip .md extension)
-      const oldNoteName = basename(normalizedOldPath, '.md');
-      const newNoteName = basename(moveResult.newPath, '.md');
-
-      // Update all wikilinks in vault that reference the old note
-      const linkUpdateResult = await updateVaultLinks(oldNoteName, newNoteName);
-
-      // Add warnings for partial/complete failures
-      if (linkUpdateResult.partialSuccess) {
-        warnings.push(
-          `Updated ${linkUpdateResult.updatedCount} files with links, ` +
-          `${linkUpdateResult.failedFiles.length} files failed to update`
-        );
-      } else if (!linkUpdateResult.success) {
-        warnings.push(
-          `Link updates failed: ${linkUpdateResult.failedFiles.length} files could not be updated`
-        );
+    // Transaction succeeded - return success with metrics
+    const output: RenameNoteOutput = {
+      success: true,
+      oldPath: normalizedOldPath,
+      newPath: result.noteRename?.newPath || normalizedNewPath,
+      message: `Successfully renamed note from ${basename(normalizedOldPath)} to ${basename(result.noteRename?.newPath || normalizedNewPath)}`,
+      correlationId: result.correlationId,
+      metrics: {
+        totalTimeMs: result.metrics.totalTimeMs,
+        phaseTimings: result.metrics.phaseTimings
       }
-    } catch (error) {
-      // Don't fail entire operation if link updates fail
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      warnings.push(`Link updates failed: ${errorMessage}`);
-    }
+    };
+
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(output, null, 2) }]
+    }, context.registryConfig) as CallToolResult;
+
+  } catch (error) {
+    // Unexpected error during transaction setup or execution
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const failureError = createRenameError(
+      'TRANSACTION_FAILED',
+      `Transaction failed: ${errorMessage}`
+    );
+
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(failureError, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
   }
-
-  // Add Phase 5 limitation warning if dryRun flag was provided
-  if (typedArgs.dryRun) {
-    warnings.push('Dry-run mode not implemented yet (available in Phase 5)');
-  }
-
-  const output: RenameNoteOutput = {
-    success: true,
-    oldPath: normalizedOldPath,
-    newPath: moveResult.newPath,
-    message: `Successfully renamed note from ${basename(normalizedOldPath)} to ${basename(moveResult.newPath)}`,
-    ...(warnings.length > 0 && { warnings })
-  };
-
-  return addVersionMetadata({
-    content: [{ type: 'text', text: JSON.stringify(output, null, 2) }]
-  }, context.registryConfig) as CallToolResult;
 };
 
 /**

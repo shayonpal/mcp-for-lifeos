@@ -3,37 +3,49 @@
 ## Tool Overview
 
 - **Name**: `rename_note`
-- **Purpose**: Rename note files in the vault with path validation and error handling
-- **Status**: ✅ Active (Phase 1: Basic rename; Phase 2: Link detection; Phase 3: Link updates)
+- **Purpose**: Atomic note rename with transaction safety and automatic wikilink updates
+- **Status**: ✅ Active (Phase 4: Atomic transactions with rollback capability)
 - **Created**: 2025-10-31
-- **Last Updated**: 2025-10-31 20:54
-- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3)
+- **Last Updated**: 2025-11-01 21:56
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4)
 
 ## TL;DR
 
-Rename note files in your vault with comprehensive error handling, validation, and automatic wikilink updates. Phase 1 provides basic file rename functionality. Phase 2 (MCP-106) completed internal link detection infrastructure. Phase 3 (MCP-107) adds automatic link updates when `updateLinks: true`.
+Rename notes atomically with full transaction safety, automatic rollback on failures, and vault-wide wikilink updates. Phase 4 (MCP-118) integrates TransactionManager providing five-phase atomic protocol ensuring vault consistency through write-ahead logging and SHA-256 staleness detection.
 
 ## Key Features
 
-- **File Rename Operations**: Rename notes in-place or move and rename simultaneously
-- **Path Validation**: Comprehensive validation of source and destination paths
-- **Structured Error Handling**: Five specific error codes with actionable messages
+- **Atomic Transactions**: Five-phase protocol (plan, prepare, validate, commit, cleanup) ensuring all-or-nothing operations
+- **Automatic Rollback**: Full rollback capability on any failure preventing partial vault states
+- **Write-Ahead Logging**: WAL persistence at `~/.config/mcp-lifeos/wal/` for crash recovery
+- **Staleness Detection**: SHA-256 hash validation prevents overwriting concurrent file changes
+- **Automatic Link Updates**: Vault-wide wikilink updates using two-phase commit protocol
+- **Performance Metrics**: Transaction correlation ID and phase timing for monitoring
+- **Structured Error Handling**: Transaction-specific error codes with detailed metadata
 - **Cross-Platform Safety**: Proper path normalization for macOS, Windows, Linux
-- **Automatic Link Updates**: Updates all wikilinks across vault when `updateLinks: true` (Phase 3)
-- **Obsidian Filename Compliance**: Validates against Obsidian naming restrictions
-- **Zero Code Duplication**: Leverages existing VaultUtils.moveItem() infrastructure
 
 ## Implementation Status
 
+### ✅ Phase 4 Complete (MCP-118, 2025-11-01)
+
+**BREAKING CHANGE**: Transaction-based atomic rename operations:
+- **TransactionManager Integration** (`src/transaction-manager.ts`): Five-phase atomic protocol with full rollback
+- **Write-Ahead Logging** (`src/wal-manager.ts`): WAL persistence for crash recovery at `~/.config/mcp-lifeos/wal/`
+- **All-or-Nothing Semantics**: Operations fully succeed or fully fail - no partial states
+- **Warnings Array Removed**: Success responses no longer include warnings field (breaking change)
+- **Transaction Error Codes**: TRANSACTION_PLAN_FAILED, TRANSACTION_PREPARE_FAILED, TRANSACTION_VALIDATE_FAILED, TRANSACTION_COMMIT_FAILED, TRANSACTION_ROLLBACK_FAILED, TRANSACTION_STALE_CONTENT, TRANSACTION_FAILED
+- **Performance Tracking**: Correlation ID and phase timing metrics in success responses
+- **SHA-256 Validation**: Detects concurrent file modifications during transaction
+- **Automatic Rollback**: Restores vault state on any phase failure
+
 ### ✅ Phase 3 Complete (MCP-107, 2025-10-31)
 
-Automatic link updates are now available:
-- **Link Updater Module** (`src/link-updater.ts`): Orchestrates vault-wide link updates after rename
+Automatic link updates integrated with transactions:
+- **Link Updater Module** (`src/link-updater.ts`): Two-phase commit protocol (render + commit modes)
 - **Link Rewriting**: Preserves all wikilink formats (basic, alias, heading, embed)
-- **Graceful Failures**: Continues processing on individual file failures, reports partial success
+- **Atomic Link Updates**: Integrated into transaction commit phase
 - **Performance Metrics**: Tracks scan time and update time separately
-- **Integration**: Activated via `updateLinks: true` parameter in rename_note tool
-- **Limitation**: No rollback mechanism - vault may be inconsistent if link updates fail
+- **Integration**: Activated via `updateLinks: true` parameter (default: true)
 
 ### ✅ Phase 2 Complete (MCP-106, 2025-10-31)
 
@@ -46,10 +58,9 @@ Internal link detection infrastructure:
 
 The following features are NOT yet implemented:
 
-- **Rollback Safety** (Phase 4 - MCP-108): No transaction safety or rollback on link update failures
 - **Dry-Run Mode** (Phase 5 - MCP-109): Preview mode to see changes before applying them
 
-The `dryRun` parameter is accepted for forward compatibility but currently ignored. Warnings are included in responses when this parameter is provided.
+The `dryRun` parameter is accepted for forward compatibility but currently ignored.
 
 ## Parameters
 
@@ -68,17 +79,17 @@ The `dryRun` parameter is accepted for forward compatibility but currently ignor
 
 ### Optional Parameters
 
-- **`updateLinks`** (boolean, optional, default: false)
-  - **Phase 3 Status**: ✅ Fully implemented
-  - **Behavior**: When `true`, automatically updates all wikilinks pointing to renamed note
+- **`updateLinks`** (boolean, optional, default: true)
+  - **Phase 4 Status**: ✅ Fully integrated with transactions
+  - **Behavior**: When `true` (default), automatically updates all wikilinks in atomic transaction
   - **Link Formats**: Preserves basic `[[name]]`, alias `[[name|alias]]`, heading `[[name#heading]]`, embed `![[name]]`
-  - **Failure Handling**: Continues processing on individual file failures, reports partial success
-  - **Limitation**: No rollback mechanism (vault may be inconsistent if link updates fail)
+  - **Failure Handling**: Automatic rollback on any link update failure (all-or-nothing)
+  - **Transaction Integration**: Link updates occur during commit phase using two-phase protocol
 
 - **`dryRun`** (boolean, optional, default: false)
-  - **Phase 3 Status**: Accepted but ignored
+  - **Phase 4 Status**: Accepted but ignored
   - **Future**: Will preview changes without executing (Phase 5 - MCP-109)
-  - **Current Behavior**: Warning added to response when provided
+  - **Current Behavior**: No warnings - parameter reserved for future use
 
 ## Usage Modes
 

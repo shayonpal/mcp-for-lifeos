@@ -91,16 +91,90 @@ export interface RenameNoteOutput {
   message: string;
 
   /**
-   * Warning about limitations in this phase
-   * - Phase 1: "Link updates not implemented yet (available in Phase 3)"
-   * - Phase 1: "Dry-run mode not implemented yet (available in Phase 5)"
+   * Transaction correlation ID (Phase 4: MCP-118)
+   * Only present when using transactional rename
    */
-  warnings?: string[];
+  correlationId?: string;
+
+  /**
+   * Transaction performance metrics (Phase 4: MCP-118)
+   * Only present when using transactional rename
+   */
+  metrics?: {
+    totalTimeMs: number;
+    phaseTimings: Partial<Record<string, number>>;
+  };
+
+  /**
+   * @deprecated **BREAKING CHANGE in Phase 4 (MCP-118)**: The warnings field has been removed.
+   *
+   * **Migration Guide:**
+   * - Previous behavior: Partial success with warnings array (e.g., link update failures)
+   * - New behavior: Atomic transactions - operations fully succeed or fully fail
+   * - Link update failures now return `success: false` with `TRANSACTION_FAILED` error code
+   * - Transaction metadata provides detailed failure information
+   *
+   * **Why this changed:**
+   * - Ensures vault consistency - no partial states
+   * - Prevents data corruption from incomplete operations
+   * - Automatic rollback on any failure
+   *
+   * **What to do:**
+   * - Check `success` field - false indicates complete failure, not partial success
+   * - Use `transactionMetadata` in error responses for failure details
+   * - See CHANGELOG for complete migration guide
+   */
+  warnings?: never;
 }
 
 /**
  * Error response for failed rename operation
  */
+/**
+ * Transaction error codes (Phase 4: MCP-118)
+ */
+export type TransactionErrorCode =
+  | 'TRANSACTION_PLAN_FAILED'
+  | 'TRANSACTION_PREPARE_FAILED'
+  | 'TRANSACTION_VALIDATE_FAILED'
+  | 'TRANSACTION_COMMIT_FAILED'
+  | 'TRANSACTION_ROLLBACK_FAILED'
+  | 'TRANSACTION_STALE_CONTENT'
+  | 'TRANSACTION_FAILED';
+
+/**
+ * Transaction metadata for error responses (Phase 4: MCP-118)
+ */
+export interface TransactionMetadata {
+  /** Transaction phase where error occurred */
+  phase: string;
+
+  /** Transaction correlation ID for tracing */
+  correlationId: string;
+
+  /** Files affected by transaction */
+  affectedFiles: string[];
+
+  /** Rollback status */
+  rollbackStatus: 'not_started' | 'in_progress' | 'success' | 'partial' | 'failed';
+
+  /** Specific operation failures */
+  failures?: Array<{
+    path: string;
+    operation: 'note_rename' | 'link_update';
+    error: string;
+  }>;
+
+  /** Recommended recovery action */
+  recoveryAction: 'retry' | 'manual_recovery' | 'contact_support';
+
+  /** WAL path (for manual recovery) */
+  walPath?: string;
+
+  /** Manual recovery instructions */
+  recoveryInstructions?: string[];
+}
+
 export interface RenameNoteError {
   /**
    * Failure indicator
@@ -114,8 +188,15 @@ export interface RenameNoteError {
 
   /**
    * Error code for programmatic handling
+   * Extended in Phase 4 (MCP-118) with transaction error codes
    */
-  errorCode: 'FILE_NOT_FOUND' | 'FILE_EXISTS' | 'INVALID_PATH' | 'PERMISSION_DENIED' | 'UNKNOWN_ERROR';
+  errorCode: 'FILE_NOT_FOUND' | 'FILE_EXISTS' | 'INVALID_PATH' | 'PERMISSION_DENIED' | 'UNKNOWN_ERROR' | TransactionErrorCode;
+
+  /**
+   * Transaction metadata (Phase 4: MCP-118)
+   * Only present when errorCode is a transaction error
+   */
+  transactionMetadata?: TransactionMetadata;
 }
 
 /**

@@ -389,6 +389,12 @@ export interface TransactionResult {
   finalPhase: TransactionPhase;
 
   /**
+   * WAL file path for manual recovery (Phase 4: MCP-118)
+   * Only present when transaction fails and WAL was written
+   */
+  walPath?: string;
+
+  /**
    * Note rename result (if commit reached)
    */
   noteRename?: {
