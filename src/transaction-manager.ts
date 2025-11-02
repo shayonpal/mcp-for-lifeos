@@ -537,9 +537,9 @@ export class TransactionManager {
       // Step 1: Rollback note rename if needed
       if (manifest.noteRename.completed) {
         try {
-          // Note was committed - restore original file
-          if (manifest.noteRename.stagedPath && existsSync(manifest.noteRename.stagedPath)) {
-            renameSync(manifest.noteRename.stagedPath, manifest.noteRename.from);
+          // Note was committed - restore from final destination back to original location
+          if (manifest.noteRename.to && existsSync(manifest.noteRename.to)) {
+            renameSync(manifest.noteRename.to, manifest.noteRename.from);
             rolledBack.push({ type: 'note_rename', path: manifest.noteRename.from, restored: true });
           }
         } catch (error) {
@@ -584,6 +584,7 @@ export class TransactionManager {
         }
       }
 
+      // Step 3: Assess rollback status (temp files already deleted in Steps 1 and 2)
       // Step 4: Delete WAL on successful rollback
       const success = failures.length === 0;
       const partialRecovery = rolledBack.length > 0 && failures.length > 0;
