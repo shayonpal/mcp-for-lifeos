@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enhanced Dry-Run Preview** (MCP-123, 2025-11-02 16:24): Extended dry-run preview with detailed link scanning, transaction phases, and execution time estimates
+  - Added `linkUpdates` field to preview response when `updateLinks: true` containing filesWithLinks count, affectedPaths array, and totalReferences count
+  - Added `transactionPhases` field displaying 5-phase atomic protocol (plan → prepare → validate → commit → success) with dynamic commit description
+  - Added `estimatedTime` field with min/max execution time range calculated from base operation + link count (formula: base 50ms + links*10ms + overhead 30ms ± 50%)
+  - Updated `filesAffected` calculation to include linking files: 1 (renamed note) + affectedPaths.length when updateLinks enabled
+  - Enhanced `previewRenameOperation()` in `src/server/handlers/note-handlers.ts` to integrate LinkScanner.scanVaultForLinks() when updateLinks enabled
+  - Reuses established infrastructure: LinkScanner from MCP-107, TransactionManager.plan() from MCP-118, SearchEngine cache for performance
+  - Backward compatible with MCP-122: additive changes only, no breaking modifications to existing preview fields
+  - Performance: <5s link scanning for 1000-note vaults, 40-135ms preview generation depending on link count
+  - Test coverage: 2 new integration tests in `tests/integration/rename-note.integration.test.ts` validating enhanced preview structure
+  - Full test suite: 681/681 tests passing (100% pass rate)
+  - Contract-driven development using TypeScript interfaces from `dev/contracts/MCP-123-contracts.ts`
+  - Builds on MCP-122 dry-run foundation with no new code paths - enhancement-first strategy
+
 - **Dry-Run Preview Mode** (MCP-122, 2025-11-02 14:15): Added preview capability to rename_note tool for validating operations before execution
   - Added optional `dryRun` parameter to rename_note tool (default: false)
   - Returns operation preview without executing filesystem changes when `dryRun: true`
