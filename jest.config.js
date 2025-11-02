@@ -24,6 +24,9 @@ export default {
       useESM: true,
       isolatedModules: true,
     }],
+    '^.+\\.js$': ['ts-jest', {
+      useESM: true,
+    }],
   },
   transformIgnorePatterns: [
     'node_modules/(?!uuid)', // Allow transforming uuid (ESM-only package)
