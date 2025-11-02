@@ -3,11 +3,11 @@
 ## Tool Overview
 
 - **Name**: `rename_note`
-- **Purpose**: Atomic note rename with transaction safety and automatic wikilink updates
-- **Status**: ✅ Active (Phase 4: Atomic transactions with rollback capability)
+- **Purpose**: Atomic note rename with transaction safety, automatic wikilink updates, and dry-run preview
+- **Status**: ✅ Active (Phase 5: Complete with dry-run mode)
 - **Created**: 2025-10-31
-- **Last Updated**: 2025-11-01 21:56
-- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4)
+- **Last Updated**: 2025-11-02 14:20
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4), MCP-122 (Phase 5)
 
 ## TL;DR
 
@@ -54,13 +54,10 @@ Internal link detection infrastructure:
 - **Performance**: <5000ms for 1000+ notes, <50ms per note
 - **Supported Formats**: All Obsidian wikilink formats (basic, alias, heading, block reference, embed)
 
-### ⚠️ Current Limitations
+### ✅ Current Status
 
-The following features are NOT yet implemented:
-
-- **Dry-Run Mode** (Phase 5 - MCP-109): Preview mode to see changes before applying them
-
-The `dryRun` parameter is accepted for forward compatibility but currently ignored.
+All planned features now implemented:
+- **Dry-Run Mode** (Phase 5 - MCP-122): Preview changes before executing (Complete)
 
 ## Parameters
 
@@ -87,9 +84,11 @@ The `dryRun` parameter is accepted for forward compatibility but currently ignor
   - **Transaction Integration**: Link updates occur during commit phase using two-phase protocol
 
 - **`dryRun`** (boolean, optional, default: false)
-  - **Phase 4 Status**: Accepted but ignored
-  - **Future**: Will preview changes without executing (Phase 5 - MCP-109)
-  - **Current Behavior**: No warnings - parameter reserved for future use
+  - **Phase 5 Status**: ✅ Fully implemented (MCP-122)
+  - **Behavior**: When `true`, returns preview of operation without executing filesystem changes
+  - **Validation**: All validations occur (FILE_NOT_FOUND, FILE_EXISTS, etc.) same as actual execution
+  - **Preview Response**: Returns operation details, paths, filesAffected count, and executionMode
+  - **Safe Testing**: Can run dry-run multiple times without affecting vault
 
 ## Usage Modes
 
@@ -237,6 +236,31 @@ The tool provides structured error responses with specific error codes and actio
 
 **Resolution**: Check system logs, verify disk space, retry operation.
 
+#### 6. Transaction Error Codes (Phase 4)
+
+**Added in Phase 4**: Transaction-specific error codes for atomic operations
+
+- **TRANSACTION_PLAN_FAILED**: Planning phase failed (invalid paths, file not found)
+- **TRANSACTION_PREPARE_FAILED**: Staging phase failed (filesystem issues)
+- **TRANSACTION_VALIDATE_FAILED**: Validation phase failed (concurrent modifications)
+- **TRANSACTION_COMMIT_FAILED**: Commit phase failed (atomic rename failed)
+- **TRANSACTION_ROLLBACK_FAILED**: Rollback failed (manual recovery needed)
+- **TRANSACTION_STALE_CONTENT**: File modified during transaction
+- **TRANSACTION_FAILED**: General transaction failure
+
+**Example Response**:
+```json
+{
+  "success": false,
+  "error": "Transaction validation failed: File modified during operation",
+  "errorCode": "TRANSACTION_STALE_CONTENT",
+  "transactionId": "550e8400-e29b-41d4-a716-446655440000",
+  "suggestion": "Retry the operation - file was modified by another process"
+}
+```
+
+**Automatic Rollback**: All transaction errors trigger automatic rollback, ensuring vault is never left in inconsistent state.
+
 ## Response Format
 
 ### Success Response (Basic Rename)
@@ -261,53 +285,7 @@ The tool provides structured error responses with specific error codes and actio
 }
 ```
 
-Note: Link update status is reported via absence of warnings. If link updates were requested and completed successfully, no warning appears.
-
-### Success Response (Partial Link Update Failure)
-
-```json
-{
-  "success": true,
-  "oldPath": "Projects/old-name.md",
-  "newPath": "Archive/new-name.md",
-  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md",
-  "warnings": [
-    "Updated 8 files with links, 2 files failed to update"
-  ]
-}
-```
-
-### Success Response (Complete Link Update Failure)
-
-```json
-{
-  "success": true,
-  "oldPath": "Projects/old-name.md",
-  "newPath": "Archive/new-name.md",
-  "message": "Note renamed successfully from Projects/old-name.md to Archive/new-name.md",
-  "warnings": [
-    "Link updates failed: 10 files could not be updated"
-  ]
-}
-```
-
-Note: File rename succeeds even if link updates fail. Vault may be left inconsistent.
-
-### Success Response (Dry-Run Parameter Provided)
-
-```json
-{
-  "success": true,
-  "oldPath": "Projects/old-name.md",
-  "newPath": "Projects/new-name.md",
-  "message": "Note renamed successfully from Projects/old-name.md to Projects/new-name.md",
-  "warnings": [
-    "Dry-run mode not implemented yet (available in Phase 5)"
-  ]
-}
-```
-
-Warnings array only appears when dryRun parameter is provided or link updates encounter failures.
+**Phase 4 Note**: All operations are atomic with automatic rollback. Link updates either fully succeed or the entire operation fails with a transaction error code.
 
 ### Error Response
 
@@ -483,38 +461,78 @@ This single-line enhancement enables rename functionality while maintaining back
 }
 ```
 
-**Response** (All links updated successfully):
-```json
-{
-  "success": true,
-  "oldPath": "Projects/old-name.md",
-  "newPath": "Projects/new-name.md",
-  "message": "Note renamed successfully"
-}
-```
-
-**Response** (Some links failed to update):
+**Response** (Transaction succeeded):
 ```json
 {
   "success": true,
   "oldPath": "Projects/old-name.md",
   "newPath": "Projects/new-name.md",
   "message": "Note renamed successfully",
-  "warnings": [
-    "Updated 15 files with links, 2 files failed to update"
-  ]
+  "transactionId": "550e8400-e29b-41d4-a716-446655440000",
+  "metrics": {
+    "totalTime": 156,
+    "planTime": 12,
+    "prepareTime": 45,
+    "validateTime": 23,
+    "commitTime": 76
+  }
 }
 ```
 
-**Note**: File rename succeeds even if link updates fail. Check warnings for details.
+**Note**: With Phase 4, all operations are atomic. If link updates fail, the entire operation rolls back automatically.
+
+### Example 6: Dry-Run Preview (Phase 5 - MCP-122)
+
+**Scenario**: Preview rename operation before executing
+
+```json
+{
+  "oldPath": "Projects/important-note.md",
+  "newPath": "Archive/2024-important-note.md",
+  "dryRun": true,
+  "updateLinks": true
+}
+```
+
+**Response** (Preview without execution):
+```json
+{
+  "success": true,
+  "preview": {
+    "operation": "rename",
+    "oldPath": "Projects/important-note.md",
+    "newPath": "Archive/2024-important-note.md",
+    "willUpdateLinks": true,
+    "filesAffected": 1,
+    "executionMode": "dry-run"
+  }
+}
+```
+
+**Key Features**:
+- No filesystem changes occur
+- All validation still performed (FILE_NOT_FOUND, FILE_EXISTS, etc.)
+- Returns preview showing what would happen
+- Can run multiple times safely
+- When ready, run same command with `dryRun: false` to execute
+
+**Error Example** (File not found during dry-run):
+```json
+{
+  "success": false,
+  "error": "Source file does not exist: Projects/missing.md",
+  "errorCode": "FILE_NOT_FOUND"
+}
+```
 
 ## Best Practices
 
 ### Pre-Rename Validation
 
-1. **Verify Source Exists**: Use `read_note` or `search` to confirm file exists
-2. **Check Destination**: Ensure target filename doesn't already exist
-3. **Enable Link Updates**: Set `updateLinks: true` to automatically update wikilinks (Phase 3)
+1. **Preview First**: Use `dryRun: true` to preview changes before executing (Phase 5)
+2. **Verify Source Exists**: Use `read_note` or `search` to confirm file exists
+3. **Check Destination**: Ensure target filename doesn't already exist
+4. **Enable Link Updates**: Set `updateLinks: true` to automatically update wikilinks (Phase 3)
 
 ### Filename Guidelines
 
@@ -530,15 +548,15 @@ This single-line enhancement enables rename functionality while maintaining back
 3. **INVALID_PATH**: Review Obsidian filename restrictions
 4. **PERMISSION_DENIED**: Wait for sync, close file in other apps
 
-### Link Management (Phase 3)
+### Link Management (Phase 4)
 
-With automatic link updates available:
+With atomic link updates:
 
-1. **Enable Link Updates**: Set `updateLinks: true` for most rename operations
-2. **Check Warnings**: Review response warnings for any failed link updates
-3. **Verify Results**: Use `search` to confirm all links updated correctly
-4. **Manual Fixes**: Update any files that failed during automatic link updates
-5. **Rollback Awareness**: Be aware that failed link updates cannot be rolled back (Phase 4)
+1. **Enable Link Updates**: Set `updateLinks: true` for most rename operations (default)
+2. **Verify Success**: Check response for `success: true` - all operations are all-or-nothing
+3. **Handle Failures**: If operation fails, entire transaction rolls back automatically
+4. **Transaction Metrics**: Review `transactionId` and phase timing in response
+5. **No Partial States**: Vault is never left in inconsistent state due to automatic rollback
 
 ## Related Tools
 
@@ -551,17 +569,17 @@ With automatic link updates available:
 
 ### Typical Workflows
 
-**Workflow 1: Archive Completed Project (Phase 3)**
+**Workflow 1: Archive Completed Project (Phase 4)**
 1. `read_note` - Review project note content
-2. `rename_note` with `updateLinks: true` - Move to Archive with dated name, update all links
-3. `search` - Verify all links updated correctly
-4. Review warnings for any failed link updates
+2. `rename_note` with `updateLinks: true` - Move to Archive with dated name, atomic link updates
+3. Verify `success: true` - all operations completed or rolled back
+4. Optional: `search` - Confirm all links updated if desired
 
-**Workflow 2: Organize Inbox (Phase 3)**
+**Workflow 2: Organize Inbox (Phase 4)**
 1. `list` - View inbox contents
-2. `rename_note` with `updateLinks: true` - Rename and categorize notes
-3. Check response warnings for any link update failures
-4. Manually fix any files that failed to update
+2. `rename_note` with `updateLinks: true` - Rename and categorize notes atomically
+3. Check response for `success: true` or transaction error code
+4. No manual fixes needed - operations are all-or-nothing
 
 ## Troubleshooting
 
@@ -597,10 +615,9 @@ With automatic link updates available:
 
 **Troubleshooting**:
 - Check if `updateLinks: true` was provided in request
-- Review response warnings for any failed link updates
-- Use `search` to find remaining broken links
-- Manually fix files that failed during automatic updates
-- Future: Rollback mechanism (Phase 4 - MCP-108)
+- Verify transaction succeeded (no `TRANSACTION_FAILED` error)
+- All operations are atomic with automatic rollback on failure
+- Use `search` to find any remaining broken links if needed
 
 ### Issue: Cannot rename to existing filename
 
@@ -644,18 +661,43 @@ With automatic link updates available:
 - ✅ Vault-wide link scanning with regex-based approach
 - ✅ Comprehensive wikilink format support
 
-### Phase 4: Atomic Operations & Rollback (MCP-108) - Next
-- Add transaction safety for rename + link update operations
-- Rollback mechanism if link updates fail
-- Atomic vault state management
-- All-or-nothing guarantee for critical operations
+### ✅ Phase 4: Atomic Operations & Rollback (MCP-118) - Complete
+- ✅ Transaction safety for rename + link update operations
+- ✅ Automatic rollback mechanism on any failure
+- ✅ Atomic vault state management with five-phase protocol
+- ✅ All-or-nothing guarantee for all operations
+- ✅ Write-ahead logging for crash recovery
+- ✅ SHA-256 staleness detection
 
-### Phase 5: Dry-Run Mode (MCP-109)
-- Preview rename operation without executing
-- Show what would change (files, links)
-- Activate `dryRun` parameter
+### ✅ Phase 5: Dry-Run Mode (MCP-122) - Complete
+- ✅ Preview rename operation without executing
+- ✅ Show what would change (paths, filesAffected count)
+- ✅ Validate paths without filesystem changes
+- ✅ Activate `dryRun` parameter
 
 ## Version History
+
+### Phase 5 - v1.4.0 (2025-11-02)
+- **Dry-Run Mode Implementation** (MCP-122)
+- Preview rename operations without executing filesystem changes
+- Full path validation (FILE_NOT_FOUND, FILE_EXISTS, etc.) in preview mode
+- Returns preview response with operation details, paths, and filesAffected count
+- Multiple dry-run calls safe - no filesystem modifications
+- Uses TransactionManager.plan() for validation without execution
+- 5 additional integration tests verifying no filesystem changes during preview
+- All planned features now complete
+
+### Phase 4 - v1.3.0 (2025-11-02)
+- **BREAKING CHANGE**: Transaction-based atomic operations (MCP-118)
+- Five-phase transaction protocol (plan, prepare, validate, commit, cleanup)
+- Automatic rollback on any failure preventing partial vault states
+- Write-ahead logging (WAL) for crash recovery
+- SHA-256 staleness detection prevents concurrent modification overwrites
+- Removed warnings array from success responses (breaking change)
+- Transaction-specific error codes (TRANSACTION_PLAN_FAILED, TRANSACTION_PREPARE_FAILED, etc.)
+- Performance metrics with transaction correlation ID and phase timing
+- 66 additional tests (31 unit TransactionManager, 20+ integration, 15 boot recovery)
+- All-or-nothing semantics: operations fully succeed or fully fail
 
 ### Phase 3 - v1.2.0 (2025-10-31)
 - Link update implementation (MCP-107)
@@ -665,7 +707,7 @@ With automatic link updates available:
 - Graceful failure handling with partial success reporting
 - Performance metrics: separate scan time and update time tracking
 - 24 additional tests (12 unit, 12 integration) with 100% pass rate
-- Limitation: No rollback mechanism (deferred to Phase 4)
+- Note: Phase 4 added automatic rollback mechanism for all operations
 
 ### Phase 2 - v1.1.0 (2025-10-31)
 - Link detection infrastructure (MCP-106)
@@ -684,8 +726,7 @@ With automatic link updates available:
 - 18 tests (10 unit, 8 integration) with 100% pass rate
 
 ### Future Releases
-- Phase 4: Atomic operations & rollback (MCP-108) - Next
-- Phase 5: Dry-run mode (MCP-109)
+- All planned features complete
 
 ## Testing
 

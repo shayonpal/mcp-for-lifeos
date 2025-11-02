@@ -19,7 +19,6 @@ build/
 .serena/
 
 # Personal Documents
-CLAUDE.local.md
 
 # IDE
 .vscode/

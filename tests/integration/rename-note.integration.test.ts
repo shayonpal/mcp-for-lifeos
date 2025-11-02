@@ -98,36 +98,6 @@ describe('Rename Note Integration (Handler)', () => {
       const newContent = await fs.readFile(output.newPath, 'utf-8');
       expect(newContent).toBe(content);
     });
-
-    it('should ignore dryRun flag (not yet implemented)', async () => {
-      // Create test note
-      const sourcePath = path.join(testDir, 'test.md');
-      await fs.writeFile(sourcePath, 'Test content');
-
-      const context: ToolHandlerContext = {
-        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
-        analytics: { logToolCall: () => Promise.resolve() } as any
-      };
-
-      // Call handler with dryRun flag (not yet implemented, flag is ignored)
-      const result = await renameNoteHandler(
-        {
-          oldPath: sourcePath,
-          newPath: path.join(testDir, 'renamed.md'),
-          dryRun: true
-        },
-        context
-      );
-
-      const output = JSON.parse(result.content[0].text) as RenameNoteOutput;
-
-      // Phase 4: Dry-run mode not implemented, operation executes normally
-      // No warnings returned - operation completes successfully
-      expect(output.success).toBe(true);
-      expect(output.warnings).toBeUndefined();
-      expect(output.correlationId).toBeDefined();
-      expect(output.metrics).toBeDefined();
-    });
   });
 
   describe('Error handling', () => {
@@ -286,6 +256,181 @@ describe('Rename Note Integration (Handler)', () => {
       const newExists = await fs.access(output.newPath).then(() => true).catch(() => false);
       expect(oldExists).toBe(false);
       expect(newExists).toBe(true);
+    });
+  });
+
+  describe('Dry-run mode (MCP-122)', () => {
+    it('should return preview without filesystem changes when dryRun=true', async () => {
+      // Create test note
+      const sourcePath = path.join(testDir, 'original.md');
+      const content = '---\ntitle: Original Note\n---\n\nContent here.';
+      await fs.writeFile(sourcePath, content);
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Call handler with dryRun=true
+      const result = await renameNoteHandler(
+        {
+          oldPath: sourcePath,
+          newPath: path.join(testDir, 'renamed.md'),
+          dryRun: true
+        },
+        context
+      );
+
+      // Parse JSON response
+      expect(result.content).toBeDefined();
+      expect(result.content).toHaveLength(1);
+      const output = JSON.parse(result.content[0].text);
+
+      // Verify preview structure
+      expect(output.success).toBe(true);
+      expect(output.preview).toBeDefined();
+      expect(output.preview.operation).toBe('rename');
+      expect(output.preview.oldPath).toBe(sourcePath);
+      expect(output.preview.newPath).toBe(path.join(testDir, 'renamed.md'));
+      expect(output.preview.willUpdateLinks).toBe(true);
+      expect(output.preview.filesAffected).toBe(1);
+      expect(output.preview.executionMode).toBe('dry-run');
+
+      // Verify file was NOT renamed
+      const oldExists = await fs.access(sourcePath).then(() => true).catch(() => false);
+      const newExists = await fs.access(path.join(testDir, 'renamed.md')).then(() => true).catch(() => false);
+      expect(oldExists).toBe(true);
+      expect(newExists).toBe(false);
+
+      // Verify content unchanged
+      const originalContent = await fs.readFile(sourcePath, 'utf-8');
+      expect(originalContent).toBe(content);
+    });
+
+    it('should validate paths in dry-run mode (FILE_NOT_FOUND)', async () => {
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Call handler with non-existent source file
+      const result = await renameNoteHandler(
+        {
+          oldPath: path.join(testDir, 'missing.md'),
+          newPath: path.join(testDir, 'renamed.md'),
+          dryRun: true
+        },
+        context
+      );
+
+      // Parse JSON response
+      const output = JSON.parse(result.content[0].text) as RenameNoteError;
+
+      // Verify error response
+      expect(output.success).toBe(false);
+      expect(output.errorCode).toBe('FILE_NOT_FOUND');
+      expect(result.isError).toBe(true);
+    });
+
+    it('should validate paths in dry-run mode (FILE_EXISTS)', async () => {
+      // Create both source and destination files
+      const sourcePath = path.join(testDir, 'original.md');
+      const destPath = path.join(testDir, 'existing.md');
+      await fs.writeFile(sourcePath, 'Source content');
+      await fs.writeFile(destPath, 'Existing content');
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Call handler trying to rename to existing file
+      const result = await renameNoteHandler(
+        {
+          oldPath: sourcePath,
+          newPath: destPath,
+          dryRun: true
+        },
+        context
+      );
+
+      // Parse JSON response
+      const output = JSON.parse(result.content[0].text) as RenameNoteError;
+
+      // Verify error response
+      expect(output.success).toBe(false);
+      expect(output.errorCode).toBe('FILE_EXISTS');
+      expect(result.isError).toBe(true);
+
+      // Verify neither file was modified
+      const sourceContent = await fs.readFile(sourcePath, 'utf-8');
+      const destContent = await fs.readFile(destPath, 'utf-8');
+      expect(sourceContent).toBe('Source content');
+      expect(destContent).toBe('Existing content');
+    });
+
+    it('should respect updateLinks parameter in preview', async () => {
+      const sourcePath = path.join(testDir, 'test.md');
+      await fs.writeFile(sourcePath, 'Content');
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Test with updateLinks=false
+      const result = await renameNoteHandler(
+        {
+          oldPath: sourcePath,
+          newPath: path.join(testDir, 'renamed.md'),
+          dryRun: true,
+          updateLinks: false
+        },
+        context
+      );
+
+      const output = JSON.parse(result.content[0].text);
+
+      expect(output.success).toBe(true);
+      expect(output.preview.willUpdateLinks).toBe(false);
+      expect(output.preview.filesAffected).toBe(1);
+    });
+
+    it('should allow multiple dry-run calls without affecting filesystem', async () => {
+      const sourcePath = path.join(testDir, 'test.md');
+      await fs.writeFile(sourcePath, 'Content');
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Run multiple dry-runs
+      for (let i = 0; i < 3; i++) {
+        const result = await renameNoteHandler(
+          {
+            oldPath: sourcePath,
+            newPath: path.join(testDir, `renamed-${i}.md`),
+            dryRun: true
+          },
+          context
+        );
+
+        const output = JSON.parse(result.content[0].text);
+        expect(output.success).toBe(true);
+        expect(output.preview).toBeDefined();
+      }
+
+      // Verify original file still exists and no new files created
+      const oldExists = await fs.access(sourcePath).then(() => true).catch(() => false);
+      expect(oldExists).toBe(true);
+
+      for (let i = 0; i < 3; i++) {
+        const newExists = await fs.access(path.join(testDir, `renamed-${i}.md`))
+          .then(() => true)
+          .catch(() => false);
+        expect(newExists).toBe(false);
+      }
     });
   });
 });

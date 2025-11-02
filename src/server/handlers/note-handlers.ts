@@ -196,6 +196,85 @@ const editNoteHandler: ToolHandler = async (
 };
 
 /**
+ * Preview rename operation for dry-run mode
+ * Uses TransactionManager.plan() for validation without execution
+ *
+ * @param oldPath - Source file path (normalized)
+ * @param newPath - Destination file path (normalized)
+ * @param updateLinks - Whether link updates would occur
+ * @param context - Tool handler context for metadata
+ * @returns Preview response with operation details
+ */
+async function previewRenameOperation(
+  oldPath: string,
+  newPath: string,
+  updateLinks: boolean,
+  context: ToolHandlerContext
+): Promise<CallToolResult> {
+  try {
+    // Import filesystem utilities for validation
+    const { existsSync } = await import('fs');
+
+    // Validate destination doesn't already exist (same check as actual execution)
+    if (existsSync(newPath)) {
+      const renameError = createRenameError(
+        'FILE_EXISTS',
+        `Destination file already exists: ${newPath}`
+      );
+
+      return addVersionMetadata({
+        content: [{ type: 'text', text: JSON.stringify(renameError, null, 2) }],
+        isError: true
+      }, context.registryConfig) as CallToolResult;
+    }
+
+    // Get TransactionManager for plan() method
+    const txManager = await getTransactionManager();
+
+    // Use plan() for validation - same logic as execution but no filesystem changes
+    const manifest = await txManager.plan(oldPath, newPath, updateLinks);
+
+    // Build preview response from manifest
+    const preview = {
+      success: true,
+      preview: {
+        operation: 'rename' as const,
+        oldPath,
+        newPath,
+        willUpdateLinks: updateLinks,
+        filesAffected: manifest.totalOperations, // Note rename + link updates
+        executionMode: 'dry-run' as const
+      }
+    };
+
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(preview, null, 2) }]
+    }, context.registryConfig) as CallToolResult;
+
+  } catch (error) {
+    // Validation errors from plan() - same error handling as actual execution
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Determine error code from plan() failure
+    let errorCode: RenameNoteError['errorCode'] = 'UNKNOWN_ERROR';
+    if (errorMessage.includes('ENOENT') || errorMessage.includes('not found')) {
+      errorCode = 'FILE_NOT_FOUND';
+    } else if (errorMessage.includes('EACCES') || errorMessage.includes('permission')) {
+      errorCode = 'PERMISSION_DENIED';
+    } else if (errorMessage.includes('invalid') || errorMessage.includes('Invalid')) {
+      errorCode = 'INVALID_PATH';
+    }
+
+    const renameError = createRenameError(errorCode, errorMessage);
+
+    return addVersionMetadata({
+      content: [{ type: 'text', text: JSON.stringify(renameError, null, 2) }],
+      isError: true
+    }, context.registryConfig) as CallToolResult;
+  }
+}
+
+/**
  * Rename note handler (Phase 4: Atomic transactions with link updates)
  *
  * Performs atomic note rename with:
@@ -222,6 +301,16 @@ const renameNoteHandler: ToolHandler = async (
   // Normalize paths
   const normalizedOldPath = normalizePath(typedArgs.oldPath, LIFEOS_CONFIG.vaultPath);
   const normalizedNewPath = normalizePath(typedArgs.newPath, LIFEOS_CONFIG.vaultPath);
+
+  // Dry-run mode: Return preview without executing filesystem changes
+  if (typedArgs.dryRun === true) {
+    return await previewRenameOperation(
+      normalizedOldPath,
+      normalizedNewPath,
+      typedArgs.updateLinks ?? true,
+      context
+    );
+  }
 
   // Import path utilities (needed for validation and success message formatting)
   const { basename, extname } = await import('path');

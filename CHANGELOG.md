@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dry-Run Preview Mode** (MCP-122, 2025-11-02 14:15): Added preview capability to rename_note tool for validating operations before execution
+  - Added optional `dryRun` parameter to rename_note tool (default: false)
+  - Returns operation preview without executing filesystem changes when `dryRun: true`
+  - Full validation occurs (FILE_NOT_FOUND, FILE_EXISTS, path validation) same as actual execution
+  - Preview response includes operation details, paths, filesAffected count, and executionMode
+  - Leverages TransactionManager.plan() for validation without execution (DRY principle)
+  - Added `previewRenameOperation()` helper function to `src/server/handlers/note-handlers.ts`
+  - Early return pattern when `dryRun === true` to skip execution
+  - Safe for multiple dry-run calls - no filesystem modifications occur
+  - Response format: `{ success: true, preview: { operation, oldPath, newPath, willUpdateLinks, filesAffected, executionMode } }`
+  - Test coverage: 5 comprehensive dry-run tests in `tests/integration/rename-note.integration.test.ts`
+  - Validates no filesystem changes during preview operations
+  - All 12 integration tests passing (includes 5 new dry-run tests)
+  - Full test suite: 679/679 tests passing (100% pass rate)
+  - Performance: Preview completes in <50ms (faster than actual execution)
+  - Updated tool documentation in `docs/tools/rename_note.md` with usage examples
+  - Completes Phase 5 of rename_note tool roadmap - all planned features now implemented
+
 - **Boot Recovery System** (MCP-119, 2025-11-02 06:22): Implemented automatic recovery mechanism detecting and rolling back incomplete transactions from server crashes during boot
   - Added `recoverPendingTransactions()` function to `src/index.ts` (92 lines) executing early in server boot sequence before handler registration
   - Scans `~/.config/mcp-lifeos/wal/` directory for orphaned WAL entries on server startup
