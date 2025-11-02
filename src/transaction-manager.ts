@@ -155,6 +155,7 @@ export class TransactionManager {
         success: false,
         correlationId,
         finalPhase: 'abort',
+        walPath: state.walPath,
         rollback: rollbackResult,
         metrics: {
           totalTimeMs,

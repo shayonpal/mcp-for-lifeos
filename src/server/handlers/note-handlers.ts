@@ -278,7 +278,7 @@ const renameNoteHandler: ToolHandler = async (
           recoveryAction: result.rollback?.manualRecoveryRequired
             ? 'manual_recovery'
             : 'retry',
-          walPath: result.rollback?.failures?.[0]?.path,
+          walPath: result.walPath,
           recoveryInstructions: result.rollback?.recoveryInstructions
         }
       );

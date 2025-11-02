@@ -91,13 +91,13 @@ export interface RenameNoteOutput {
   message: string;
 
   /**
-   * Transaction correlation ID (Phase 4: MCP-108)
+   * Transaction correlation ID (Phase 4: MCP-118)
    * Only present when using transactional rename
    */
   correlationId?: string;
 
   /**
-   * Transaction performance metrics (Phase 4: MCP-108)
+   * Transaction performance metrics (Phase 4: MCP-118)
    * Only present when using transactional rename
    */
   metrics?: {
@@ -106,7 +106,7 @@ export interface RenameNoteOutput {
   };
 
   /**
-   * @deprecated **BREAKING CHANGE in Phase 4 (MCP-108)**: The warnings field has been removed.
+   * @deprecated **BREAKING CHANGE in Phase 4 (MCP-118)**: The warnings field has been removed.
    *
    * **Migration Guide:**
    * - Previous behavior: Partial success with warnings array (e.g., link update failures)
@@ -131,7 +131,7 @@ export interface RenameNoteOutput {
  * Error response for failed rename operation
  */
 /**
- * Transaction error codes (Phase 4: MCP-108)
+ * Transaction error codes (Phase 4: MCP-118)
  */
 export type TransactionErrorCode =
   | 'TRANSACTION_PLAN_FAILED'
@@ -143,7 +143,7 @@ export type TransactionErrorCode =
   | 'TRANSACTION_FAILED';
 
 /**
- * Transaction metadata for error responses (Phase 4: MCP-108)
+ * Transaction metadata for error responses (Phase 4: MCP-118)
  */
 export interface TransactionMetadata {
   /** Transaction phase where error occurred */
@@ -188,12 +188,12 @@ export interface RenameNoteError {
 
   /**
    * Error code for programmatic handling
-   * Extended in Phase 4 (MCP-108) with transaction error codes
+   * Extended in Phase 4 (MCP-118) with transaction error codes
    */
   errorCode: 'FILE_NOT_FOUND' | 'FILE_EXISTS' | 'INVALID_PATH' | 'PERMISSION_DENIED' | 'UNKNOWN_ERROR' | TransactionErrorCode;
 
   /**
-   * Transaction metadata (Phase 4: MCP-108)
+   * Transaction metadata (Phase 4: MCP-118)
    * Only present when errorCode is a transaction error
    */
   transactionMetadata?: TransactionMetadata;
