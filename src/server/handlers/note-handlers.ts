@@ -196,19 +196,9 @@ const editNoteHandler: ToolHandler = async (
 };
 
 /**
- * Rename note handler (Phase 4: Atomic transactions with link updates)
- *
- * Performs atomic note rename with:
- * - 5-phase transaction protocol (plan, prepare, validate, commit, cleanup)
- * - Automatic rollback on failures
- * - Vault-wide wikilink updates
- * - SHA-256 staleness detection
- * - WAL-based crash recovery
- */
-/**
  * Preview rename operation for dry-run mode
  * Uses TransactionManager.plan() for validation without execution
- * 
+ *
  * @param oldPath - Source file path (normalized)
  * @param newPath - Destination file path (normalized)
  * @param updateLinks - Whether link updates would occur
@@ -284,6 +274,16 @@ async function previewRenameOperation(
   }
 }
 
+/**
+ * Rename note handler (Phase 4: Atomic transactions with link updates)
+ *
+ * Performs atomic note rename with:
+ * - 5-phase transaction protocol (plan, prepare, validate, commit, cleanup)
+ * - Automatic rollback on failures
+ * - Vault-wide wikilink updates
+ * - SHA-256 staleness detection
+ * - WAL-based crash recovery
+ */
 const renameNoteHandler: ToolHandler = async (
   args: Record<string, unknown>,
   context: ToolHandlerContext
