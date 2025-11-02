@@ -30,6 +30,10 @@ import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MC
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
 import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
 import { ALWAYS_AVAILABLE_TOOL_NAMES } from '../dev/contracts/MCP-98-contracts.js';
+import { WALManager } from './wal-manager.js';
+import { TransactionManager } from './transaction-manager.js';
+import { join } from 'path';
+import { homedir } from 'os';
 
 // ============================================================================
 // MCP SERVER INITIALIZATION - LAZY PATTERN
@@ -172,6 +176,164 @@ async function executeWithHybridFallback(
   }
 }
 
+// ============================================================================
+// BOOT RECOVERY SYSTEM
+// ============================================================================
+
+/**
+ * Recover pending transactions from orphaned WAL entries
+ *
+ * Called during server startup before handler registration.
+ * Scans for WAL files older than 1 minute and attempts automatic recovery.
+ * Server startup continues regardless of recovery outcome (graceful degradation).
+ *
+ * Part of MCP-119: Boot Recovery System
+ * @see dev/contracts/MCP-108-contracts.ts (lines 571-620, 877-884)
+ * @see https://linear.app/agilecode-studio/issue/MCP-119
+ * @internal Exported for testing purposes only
+ */
+export async function recoverPendingTransactions(): Promise<void> {
+  const walManager = new WALManager();
+  const walDir = join(homedir(), '.config', 'mcp-lifeos', 'wal');
+  const lockFile = join(walDir, '.recovery.lock');
+  let lockAcquired = false;
+
+  try {
+    // 1. Try to acquire recovery lock to prevent concurrent recovery
+    try {
+      const { existsSync, statSync, writeFileSync, unlinkSync } = await import('fs');
+
+      if (existsSync(lockFile)) {
+        const lockStat = statSync(lockFile);
+        const lockAge = Date.now() - lockStat.mtimeMs;
+
+        // If lock is recent (<2 minutes), another process is likely recovering
+        if (lockAge < 120000) {
+          console.error(`⏭️  Skipping recovery - another process is recovering (lock age: ${Math.round(lockAge / 1000)}s)`);
+          return;
+        }
+
+        // Stale lock - take over
+        console.error(`⚠️  Stale recovery lock detected (${Math.round(lockAge / 1000)}s old) - taking over`);
+        unlinkSync(lockFile);
+      }
+
+      // Create lock file with current PID
+      writeFileSync(lockFile, JSON.stringify({ pid: process.pid, timestamp: new Date().toISOString() }), 'utf-8');
+      lockAcquired = true;
+    } catch (lockError) {
+      // If we can't acquire lock, log and skip recovery
+      console.error(`⚠️  Cannot acquire recovery lock: ${lockError instanceof Error ? lockError.message : String(lockError)}`);
+      return;
+    }
+
+    // 2. Scan for pending WAL entries
+    const pendingWALs = await walManager.scanPendingWALs();
+
+    if (pendingWALs.length === 0) {
+      // No orphaned transactions - lock will be released in finally block
+      return;
+    }
+
+    console.error(`Found ${pendingWALs.length} orphaned transaction(s), attempting recovery...`);
+
+    // Track recovery time to enforce 5s budget
+    const recoveryStartTime = Date.now();
+    const RECOVERY_TIMEOUT_MS = 5000;
+
+    // 3. Attempt recovery for each WAL
+    for (const wal of pendingWALs) {
+      // Check if recovery budget exceeded
+      const elapsedTime = Date.now() - recoveryStartTime;
+      if (elapsedTime > RECOVERY_TIMEOUT_MS) {
+        console.error(`⚠️  Recovery timeout exceeded (${Math.round(elapsedTime / 1000)}s) - stopping recovery`);
+        console.error(`   Processed some WALs, remaining will be recovered on next startup`);
+        break;
+      }
+
+      // Note: Age filtering (<1 minute) already handled by scanPendingWALs()
+
+      // SECURITY: Validate WAL vault path matches configured vault
+      if (wal.vaultPath !== LIFEOS_CONFIG.vaultPath) {
+        console.error(`⚠️  Skipping WAL ${wal.correlationId} - vault path mismatch`);
+        console.error(`   WAL vault: ${wal.vaultPath}`);
+        console.error(`   Configured: ${LIFEOS_CONFIG.vaultPath}`);
+        continue;
+      }
+
+      // SECURITY: Validate all manifest paths are within vault boundaries
+      const pathsToValidate = [
+        wal.manifest.noteRename.from,
+        wal.manifest.noteRename.to,
+        wal.manifest.noteRename.stagedPath,
+        ...wal.manifest.linkUpdates.map(u => u.path),
+        ...wal.manifest.linkUpdates.map(u => u.stagedPath)
+      ].filter(Boolean);
+
+      const invalidPaths = pathsToValidate.filter(p => !p?.startsWith(wal.vaultPath));
+      if (invalidPaths.length > 0) {
+        console.error(`❌ Rejecting WAL ${wal.correlationId} - paths outside vault`);
+        console.error(`   Invalid paths: ${invalidPaths.join(', ')}`);
+        continue;
+      }
+
+      try {
+        // Create TransactionManager and attempt rollback
+        const txManager = new TransactionManager(wal.vaultPath, walManager);
+        // Resolve WAL path using centralized helper
+        const walPath = walManager.resolvePath(wal);
+        const result = await txManager.rollback(wal.manifest, walPath);
+
+        if (result.success) {
+          // 4. WAL already deleted by TransactionManager.rollback()
+          console.error(`✅ Recovered transaction ${wal.correlationId}`);
+        } else if (result.partialRecovery) {
+          // 5. Partial recovery - preserve WAL, log instructions
+          console.error(`⚠️  Partial recovery for ${wal.correlationId} - manual intervention needed`);
+          console.error(`   WAL preserved: ${walPath}`);
+          if (result.failures && result.failures.length > 0) {
+            console.error(`   Failures:`);
+            result.failures.forEach((failure) =>
+              console.error(`   - ${failure.path}: ${failure.error}`)
+            );
+          }
+        } else {
+          // 6. Recovery failed - preserve WAL
+          console.error(`❌ Recovery failed for ${wal.correlationId}`);
+          console.error(`   WAL preserved: ${walPath}`);
+          if (result.failures && result.failures.length > 0) {
+            console.error(`   Failures:`);
+            result.failures.forEach((failure) =>
+              console.error(`   - ${failure.path}: ${failure.error}`)
+            );
+          }
+        }
+      } catch (error) {
+        // 7. Recovery error - preserve WAL, log error
+        console.error(`❌ Recovery error for ${wal.correlationId}: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(`   WAL preserved for manual recovery`);
+      }
+    }
+  } catch (error) {
+    // 8. Scan error - log and continue startup
+    console.error(`⚠️  WAL scan failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`   Server startup continuing...`);
+  } finally {
+    // 9. Release recovery lock if acquired
+    if (lockAcquired) {
+      try {
+        const { unlinkSync, existsSync } = await import('fs');
+        if (existsSync(lockFile)) {
+          unlinkSync(lockFile);
+        }
+      } catch (unlockError) {
+        // Log but don't fail - stale lock will be cleaned up next time
+        console.error(`⚠️  Failed to release recovery lock: ${unlockError instanceof Error ? unlockError.message : String(unlockError)}`);
+      }
+    }
+  }
+}
+
 /**
  * Register MCP tool handlers
  * Called once during server initialization
@@ -265,6 +427,9 @@ function registerHandlers(instance: McpServerInstance): void {
 
 // Start the server
 async function main() {
+  // Recover orphaned transactions before serving requests (MCP-119)
+  await recoverPendingTransactions();
+
   // Initialize server and register handlers
   const instance = getMcpInstance();
   const { server } = instance;

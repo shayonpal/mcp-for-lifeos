@@ -153,6 +153,23 @@ export class WALManager {
   }
 
   /**
+   * Resolve WAL file path from entry
+   *
+   * Constructs the filesystem path for a WAL entry using the same
+   * naming convention as writeWAL(). This centralizes the path logic
+   * and prevents desync between writing and reading operations.
+   *
+   * @param entry - WAL entry to resolve path for
+   * @returns Full filesystem path to WAL file
+   */
+  resolvePath(entry: WALEntry): string {
+    // Use same timestamp sanitization as writeWAL
+    const safeTimestamp = entry.timestamp.replace(/[:.]/g, '-');
+    const filename = `${safeTimestamp}-rename-${entry.correlationId}.wal.json`;
+    return join(this.walDir, filename);
+  }
+
+  /**
    * Scan for pending (orphaned) WAL entries
    * Returns only WALs older than 1 minute (active transactions excluded)
    *
