@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Boot Recovery System** (MCP-119, 2025-11-02 06:22): Implemented automatic recovery mechanism detecting and rolling back incomplete transactions from server crashes during boot
+  - Added `recoverPendingTransactions()` function to `src/index.ts` (92 lines) executing early in server boot sequence before handler registration
+  - Scans `~/.config/mcp-lifeos/wal/` directory for orphaned WAL entries on server startup
+  - Skips WALs younger than 1 minute (may be active transactions from concurrent processes)
+  - Attempts automatic rollback via `TransactionManager.rollback()` for stale WALs (>1min old)
+  - Logs recovery results with status symbols: ✅ success, ⚠️ partial recovery, ❌ failed recovery
+  - Preserves WAL files on failed or partial recovery for manual intervention
+  - Graceful degradation: server continues startup regardless of recovery outcome (non-blocking)
+  - Performance: Recovery overhead <5s for typical scenarios
+  - Test coverage: 15 comprehensive integration tests in `tests/integration/boot-recovery.test.ts` covering WAL scanning, recovery operations, graceful degradation, edge cases
+  - Full test suite: 674/679 tests passing (5 skipped, 99.3% pass rate)
+  - Manual testing confirmed operational boot recovery with proper WAL cleanup
+  - Foundation for reliable crash recovery ensuring vault consistency after unexpected server termination
+
 ### Changed
 
 - **Transaction Integration with rename_note** (MCP-118, 2025-11-01 21:56): Integrated TransactionManager with rename_note tool providing atomic rename operations with automatic rollback

@@ -339,7 +339,48 @@ Five-phase atomic transaction protocol for file rename operations with full roll
 
 **Created:** 2025-11-01 (MCP-117) - 691 lines
 **Test Coverage:** 31 comprehensive unit tests (869 lines) with 100% pass rate
-**Status:** Ready for MCP-118 integration with rename_note tool
+**Status:** Integrated with rename_note tool (MCP-118), boot recovery enabled (MCP-119)
+
+### Boot Recovery System (`src/index.ts`)
+
+Automatic recovery mechanism that detects and rolls back incomplete transactions from server crashes during boot. Ensures vault consistency by cleaning up orphaned WAL entries left by unexpected server termination.
+
+**Key Responsibilities:**
+
+- Scan WAL directory on server startup for orphaned transactions
+- Skip WALs younger than 1 minute (may be active from concurrent processes)
+- Attempt automatic rollback via TransactionManager for stale WALs (>1min old)
+- Log recovery results with clear status indicators (✅/⚠️/❌)
+- Preserve WAL files on recovery failure for manual intervention
+- Graceful degradation: continue server startup regardless of recovery outcome
+
+**Recovery Function:**
+
+- `recoverPendingTransactions()` - Executes early in boot sequence before handler registration
+- Non-blocking: server availability prioritized over recovery completion
+- Performance: <5s overhead for typical scenarios
+
+**Recovery Process:**
+
+1. Scan `~/.config/mcp-lifeos/wal/` for WAL entries
+2. Filter by age (skip <1 minute, process ≥1 minute)
+3. For each orphaned WAL:
+   - Attempt `TransactionManager.rollback(walPath)`
+   - Log success (✅), partial recovery (⚠️), or failure (❌)
+   - Preserve WAL on failure for manual recovery
+4. Continue server startup regardless of outcome
+
+**Design Patterns:**
+
+- Early boot integration (before MCP handlers registered)
+- Age-based filtering to avoid interfering with active transactions
+- Graceful degradation on recovery failures
+- Manual recovery path via preserved WAL files
+- Status symbol logging for operator visibility
+
+**Created:** 2025-11-02 (MCP-119) - 92 lines in src/index.ts
+**Test Coverage:** 15 integration tests in `tests/integration/boot-recovery.test.ts`
+**Status:** Operational with full test suite (674/679 passing, 99.3%)
 
 ### Analytics (`src/analytics/`)
 
