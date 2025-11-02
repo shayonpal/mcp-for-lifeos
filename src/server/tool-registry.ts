@@ -443,7 +443,7 @@ export const getLegacyAliases: GetLegacyAliasesFunction = () => {
  * - diagnose_vault: Diagnose vault issues
  * - move_items: Move notes and folders
  * - insert_content: Insert content at specific locations
- * - rename_note: Rename note files (Phase 1: without link updates)
+ * - rename_note: Atomic rename with transaction safety and link updates
  * - list_yaml_property_values: List unique YAML property values
  *
  * @returns Array of 10 always-available tool definitions
@@ -685,26 +685,37 @@ TITLE EXTRACTION: Note titles in responses are determined by priority:
     },
     {
       name: 'rename_note',
-      description: `Rename a note file in the vault. Phase 1: Basic rename without link updates.
+      description: `Rename a note file with atomic transaction safety and automatic link updates.
 
 WHEN TO USE:
-- Rename a note to a different filename
-- Change note location within vault (if paths differ in folder)
-- Prepare for future link update functionality (Phase 3)
+- Rename a note to a different filename with vault-wide link updates
+- Move and rename notes atomically with rollback protection
+- Ensure vault consistency during rename operations
 
-PHASE 1 LIMITATIONS:
-- updateLinks flag accepted but IGNORED (link updates in Phase 3)
-- dryRun flag accepted but IGNORED (dry-run mode in Phase 5)
-- Both flags included for forward compatibility
+PHASE 4 FEATURES:
+- ✅ Atomic transactions with 5-phase protocol (plan, prepare, validate, commit, cleanup)
+- ✅ Automatic rollback on any failure (prevents partial states)
+- ✅ Vault-wide wikilink updates (preserves note connections)
+- ✅ SHA-256 staleness detection (prevents overwriting concurrent changes)
+- ✅ Write-Ahead Log (WAL) for crash recovery
+- ✅ Transaction correlation tracking via UUID
+- ✅ Performance metrics (phase timings, total time)
 
-RETURNS: Success with old/new paths and warnings about limitations, or structured error with actionable suggestions
+BREAKING CHANGES:
+- Warnings array removed from success responses
+- Failures return transaction error codes with detailed metadata
+- Operations are all-or-nothing (no partial success)
+
+RETURNS: Success with transaction correlation ID and metrics, OR structured error with transaction metadata
 
 ERROR CODES:
-- FILE_NOT_FOUND: Source file does not exist (includes search suggestion)
-- FILE_EXISTS: Destination already exists (choose different name)
-- INVALID_PATH: Invalid characters or missing .md extension
-- PERMISSION_DENIED: Filesystem permission or iCloud sync issue
-- UNKNOWN_ERROR: Unexpected error with details`,
+- TRANSACTION_PLAN_FAILED: Planning phase failed (invalid paths, file not found)
+- TRANSACTION_PREPARE_FAILED: Staging phase failed (filesystem issues)
+- TRANSACTION_VALIDATE_FAILED: Validation phase failed (concurrent modifications)
+- TRANSACTION_COMMIT_FAILED: Commit phase failed (atomic rename failed)
+- TRANSACTION_ROLLBACK_FAILED: Rollback failed (manual recovery needed)
+- TRANSACTION_STALE_CONTENT: File modified during transaction
+- TRANSACTION_FAILED: General transaction failure`,
       annotations: {
         readOnlyHint: false,
         idempotentHint: false,
@@ -724,11 +735,11 @@ ERROR CODES:
           updateLinks: {
             type: 'boolean',
             default: true,
-            description: 'Whether to update wikilinks after rename (default: true)'
+            description: 'Whether to update vault-wide wikilinks after rename (default: true, uses two-phase commit)'
           },
           dryRun: {
             type: 'boolean',
-            description: 'Dry-run mode: preview changes without executing (Phase 1: accepted but ignored)'
+            description: 'Dry-run mode: preview changes without executing (not yet implemented)'
           }
         },
         required: ['oldPath', 'newPath']
