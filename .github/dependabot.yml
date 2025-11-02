@@ -1,0 +1,92 @@
+version: 2
+updates:
+  # npm ecosystem - Node.js dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "18:00"
+      timezone: "America/Toronto"
+
+    # Grouping strategy: Conservative approach
+    groups:
+      # Group: Development tools (TypeScript, ESLint, type definitions)
+      development-dependencies:
+        patterns:
+          - "typescript"
+          - "tsx"
+          - "@typescript-eslint/*"
+          - "@types/*"
+          - "eslint"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Group: Testing framework (Jest ecosystem)
+      testing-dependencies:
+        patterns:
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
+        update-types:
+          - "minor"
+          - "patch"
+
+    # Limit concurrent PRs to manage review workload
+    open-pull-requests-limit: 5
+
+    # Only update manifest when necessary (application, not library)
+    versioning-strategy: increase-if-necessary
+
+    # Labels for organization
+    labels:
+      - "dependencies"
+      - "dependabot"
+
+    # Auto-merge configuration via commit message
+    # Patch updates to dev dependencies can auto-merge after CI passes
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+    # Ignore patterns for dependencies requiring manual review
+    ignore:
+      # Block major updates for critical dependencies
+      - dependency-name: "@modelcontextprotocol/sdk"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "fastify"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gray-matter"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "yaml"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions ecosystem
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "18:00"
+      timezone: "America/Toronto"
+
+    # Group all GitHub Actions updates together
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+    open-pull-requests-limit: 2
+
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "dependabot"
+
+    commit-message:
+      prefix: "ci"
+      include: "scope"
