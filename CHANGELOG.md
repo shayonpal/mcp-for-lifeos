@@ -64,6 +64,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated timestamp to reflect latest documentation changes
   - Inserted sections after Template System and before Analytics for logical component flow
 
+### Removed
+
+- **Unused Anthropic SDK Dependency** (2025-11-02 23:22): Removed @anthropic-ai/sdk package that was declared but never used in the codebase
+  - Removed @anthropic-ai/sdk from dependencies (was at version 0.52.0)
+  - Reduces bundle size by ~200KB+ and eliminates 3 transitive dependencies (json-schema-to-ts, ts-algebra, @babel/runtime)
+  - Package was never imported or used - all "anthropic" references were display strings only
+  - Closed Dependabot PR #127 (attempted upgrade to 0.68.0)
+  - MCP server does not directly call Anthropic API - it provides MCP tools for Claude Desktop to use
+  - Cleaner dependency tree with only actively-used packages
+
 ### Added
 
 - **Transaction Manager Core Protocol** (MCP-117, 2025-11-01 18:39): Implemented five-phase atomic transaction protocol for file rename operations with full rollback capability, Write-Ahead Logging (WAL), and staleness detection
