@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last Updated:** 2025-11-01
+**Last Updated:** 2025-11-01 18:39
 **Version:** 2.0.1
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
@@ -251,6 +251,95 @@ Multi-component system for Obsidian template integration:
 - Processes Templater syntax (`<% tp.file.title %>`, `<% tp.date.now() %>`)
 - Template variable substitution
 - YAML-safe template processing
+
+### WAL Manager (`src/wal-manager.ts`)
+
+Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanup. Provides durable storage for transaction state outside the vault to enable crash recovery and rollback operations.
+
+**Key Responsibilities:**
+
+- WAL persistence with filesystem-safe timestamp formatting
+- Transaction state recovery from persisted logs
+- Age-based WAL scanning (excludes active transactions <1 minute old)
+- Automatic README generation in WAL directory explaining recovery procedures
+- Schema version validation for future-proofing
+
+**WAL Storage:**
+
+- Location: `~/.config/mcp-lifeos/wal/` (XDG-compliant, external to vault)
+- Filename format: `{timestamp}-rename-{correlationId}.wal.json`
+- Schema version: 1.0 with validation and evolution support
+- Format: Human-readable JSON (pretty-printed, 2-space indentation)
+
+**Operations:**
+
+- `writeWAL()` - Persist transaction state with correlation ID validation
+- `readWAL()` - Recover transaction state from log file
+- `deleteWAL()` - Clean up completed transactions
+- `scanPendingWALs()` - Find abandoned transactions (age >1 minute)
+
+**Design Patterns:**
+
+- UUID v4 correlation ID validation for transaction tracking
+- Graceful corrupted JSON handling during scans
+- Async method signatures for future remote storage support
+- External to vault storage (avoids iCloud sync conflicts)
+
+**Created:** 2025-11-01 (MCP-115) - 291 lines
+**Test Coverage:** 15+ unit tests (535 lines) with 100% pass rate
+**Status:** Foundation for MCP-117 TransactionManager integration
+
+### Transaction Manager (`src/transaction-manager.ts`)
+
+Five-phase atomic transaction protocol for file rename operations with full rollback capability, Write-Ahead Logging, and staleness detection. Coordinates complex rename operations involving file moves and vault-wide link updates while ensuring vault consistency.
+
+**Five-Phase Protocol:**
+
+1. **PLAN** - Build operation manifest with SHA-256 file hashes for staleness detection
+2. **PREPARE** - Stage files to temporary locations, write WAL entry for crash recovery
+3. **VALIDATE** - Verify files haven't been modified during transaction (hash validation)
+4. **COMMIT** - Atomically promote staged files using POSIX rename semantics, execute link updates
+5. **SUCCESS/ABORT** - Clean up temps and WAL on success, or trigger rollback on failure
+
+**Key Responsibilities:**
+
+- Atomic file rename with link update coordination
+- SHA-256 hash validation for staleness detection (throws `TRANSACTION_STALE_CONTENT`)
+- Two-phase link updates: render mode (plan), commit mode (commit)
+- UUID v4 correlation ID tracking across all phases
+- WAL integration: write during prepare, update at transitions, preserve on failure
+- Graceful rollback with partial recovery support
+- Manual recovery instruction generation when automatic rollback fails
+- Phase timing metrics for performance monitoring
+
+**Operations:**
+
+- `execute()` - Main orchestrator running all five phases
+- `plan()` - Build manifest with SHA-256 hashes
+- `prepare()` - Stage files and write WAL
+- `validate()` - Detect stale content via hash comparison
+- `commit()` - Atomically promote staged files
+- `success()` - Cleanup temps and WAL (graceful degradation)
+- `abort()` - Trigger rollback on any phase failure
+- `rollback()` - Restore from WAL with partial recovery tracking
+
+**Error Handling:**
+
+- New error codes: `TRANSACTION_PLAN_FAILED`, `TRANSACTION_PREPARE_FAILED`, `TRANSACTION_VALIDATE_FAILED`, `TRANSACTION_COMMIT_FAILED`, `TRANSACTION_ROLLBACK_FAILED`, `TRANSACTION_STALE_CONTENT`
+- Comprehensive error wrapping with transaction context
+- Partial rollback tracking when some operations succeed
+- Manual recovery instructions for failed automatic rollback
+
+**Integration Points:**
+
+- WALManager (MCP-115) for crash recovery
+- Link Updater (MCP-116) for two-phase link updates
+- VaultUtils.writeFileWithRetry() (MCP-114) for atomic writes
+- Zero external dependencies (Node.js built-ins: crypto, fs, path)
+
+**Created:** 2025-11-01 (MCP-117) - 691 lines
+**Test Coverage:** 31 comprehensive unit tests (869 lines) with 100% pass rate
+**Status:** Ready for MCP-118 integration with rename_note tool
 
 ### Analytics (`src/analytics/`)
 

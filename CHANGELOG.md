@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **Architecture Update** (2025-11-01 18:39): Added WAL Manager and Transaction Manager sections to ARCHITECTURE.md documenting new infrastructure components for atomic rename operations
+  - Added WAL Manager section describing Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanup (MCP-115)
+  - Added Transaction Manager section documenting five-phase atomic transaction protocol with rollback capability and staleness detection (MCP-117)
+  - Updated timestamp to reflect latest documentation changes
+  - Inserted sections after Template System and before Analytics for logical component flow
+
 ### Added
+
+- **Transaction Manager Core Protocol** (MCP-117, 2025-11-01 18:39): Implemented five-phase atomic transaction protocol for file rename operations with full rollback capability, Write-Ahead Logging (WAL), and staleness detection
+  - Created `src/transaction-manager.ts` (691 lines) with TransactionManager class providing execute(), plan(), prepare(), validate(), commit(), success(), abort(), rollback() methods for managing atomic rename transactions
+  - Five-phase protocol ensures vault consistency: PLAN (build manifest with SHA-256 hashes), PREPARE (stage files and write WAL), VALIDATE (detect stale content), COMMIT (atomically promote staged files), SUCCESS/ABORT (cleanup or rollback)
+  - SHA-256 hash validation detects file modifications during transaction (staleness detection) throwing TRANSACTION_STALE_CONTENT error to prevent writing stale content
+  - Integrates with two-phase link updater (MCP-116): render mode during plan phase for preview, commit mode during commit phase for atomic link updates
+  - UUID v4 correlation ID tracking throughout all phases for transaction tracing and recovery
+  - WAL integration: writes during prepare phase, updates at each phase transition, deletes on success, preserves on failure for manual recovery
+  - Graceful rollback with partial recovery support: automatic restoration from WAL on abort, generates manual recovery instructions when automatic rollback fails
+  - Phase timing metrics collection for performance monitoring
+  - New error codes in `src/error-types.ts`: TRANSACTION_PLAN_FAILED, TRANSACTION_PREPARE_FAILED, TRANSACTION_VALIDATE_FAILED, TRANSACTION_COMMIT_FAILED, TRANSACTION_ROLLBACK_FAILED, TRANSACTION_STALE_CONTENT
+  - Test coverage: 31 comprehensive unit tests in `tests/unit/transaction-manager.test.ts` (869 lines) with 100% pass rate covering all phases, error propagation, and full execution scenarios
+  - Zero external dependencies (Node.js built-ins only: crypto for SHA-256/UUID, fs for file operations, path for path manipulation)
+  - Foundation for MCP-118 integration with rename_note tool - not yet exposed via MCP tools
+  - TypeScript contracts from `dev/contracts/MCP-108-contracts.ts`: TransactionState, TransactionManifest, TransactionResult, RollbackResult, WALEntry
 
 - **Two-Phase Link Updater** (MCP-116, 2025-11-01 16:49): Refactored link updater to support three operational modes separating rendering from committing for atomic transactions
   - Extended `updateVaultLinks()` with mode parameter supporting 'render', 'commit', and 'direct' modes
