@@ -26,7 +26,7 @@ export default {
     }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(uuid)/)', // Allow transforming uuid (ESM-only package)
+    'node_modules/(?!uuid)', // Allow transforming uuid (ESM-only package)
   ],
   testTimeout: 60000, // 60 seconds for parity tests
   verbose: true,
