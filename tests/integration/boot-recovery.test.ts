@@ -8,10 +8,10 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-119
  */
 
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs, existsSync, utimesSync } from 'fs';
 import * as path from 'path';
-import { tmpdir, homedir } from 'os';
+import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
 import { WALManager, type WALEntry } from '../../src/wal-manager.js';
 import { TransactionManager } from '../../src/transaction-manager.js';
@@ -140,8 +140,7 @@ describe('Boot Recovery System', () => {
 
       try {
         const txManager = new TransactionManager(wal.vaultPath, walManager);
-        const safeTimestamp = wal.timestamp.replace(/[:.]/g, '-');
-        const walPath = path.join(walDir, `${safeTimestamp}-rename-${wal.correlationId}.wal.json`);
+        const walPath = walManager.resolvePath(wal);
         const result = await txManager.rollback(wal.manifest, walPath);
 
         if (result.success) {
@@ -269,10 +268,6 @@ describe('Boot Recovery System', () => {
 
     it('should handle permission errors gracefully', async () => {
       const wal = await createTestWAL(120000);
-
-      // Make WAL file read-only to cause deletion failure
-      const safeTimestamp = wal.timestamp.replace(/[:.]/g, '-');
-      const walPath = path.join(walDir, `${safeTimestamp}-rename-${wal.correlationId}.wal.json`);
 
       // Recovery should handle this gracefully
       await expect(simulateRecovery()).resolves.not.toThrow();

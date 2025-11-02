@@ -241,7 +241,7 @@ export async function recoverPendingTransactions(): Promise<void> {
     const recoveryStartTime = Date.now();
     const RECOVERY_TIMEOUT_MS = 5000;
 
-    // 2. Attempt recovery for each WAL
+    // 3. Attempt recovery for each WAL
     for (const wal of pendingWALs) {
       // Check if recovery budget exceeded
       const elapsedTime = Date.now() - recoveryStartTime;
@@ -278,7 +278,7 @@ export async function recoverPendingTransactions(): Promise<void> {
       }
 
       try {
-        // 3. Create TransactionManager and attempt rollback
+        // Create TransactionManager and attempt rollback
         const txManager = new TransactionManager(wal.vaultPath, walManager);
         // Resolve WAL path using centralized helper
         const walPath = walManager.resolvePath(wal);
