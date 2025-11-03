@@ -9,6 +9,7 @@ import type { EditNoteInput, InsertContentInput } from '../../types.js';
 import type { RenameNoteInput, RenameNoteOutput, RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
+import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
 import { VaultUtils } from '../../vault-utils.js';
 import { ObsidianLinks } from '../../obsidian-links.js';
@@ -238,7 +239,7 @@ async function previewRenameOperation(
 
     // Base preview object from MCP-122
     let filesAffected = 1; // Note rename only
-    let linkUpdates: any = undefined;
+    let linkUpdates: LinkUpdatePreview | undefined = undefined;
 
     // Scan for links if updateLinks is enabled (MCP-123 enhancement)
     if (updateLinks) {
@@ -269,31 +270,31 @@ async function previewRenameOperation(
     }
 
     // Transaction phases (MCP-123 enhancement)
-    const transactionPhases = [
+    const transactionPhases: TransactionPhaseDescription[] = [
       {
-        name: 'plan',
+        name: 'plan' as const,
         description: 'Validate paths and detect conflicts',
         order: 1
       },
       {
-        name: 'prepare',
+        name: 'prepare' as const,
         description: 'Stage files for atomic rename',
         order: 2
       },
       {
-        name: 'validate',
+        name: 'validate' as const,
         description: 'Check for concurrent modifications',
         order: 3
       },
       {
-        name: 'commit',
+        name: 'commit' as const,
         description: updateLinks && linkUpdates
           ? `Execute rename and update ${linkUpdates.totalReferences} link(s) in ${linkUpdates.filesWithLinks} file(s)`
           : 'Execute rename',
         order: 4
       },
       {
-        name: 'success',
+        name: 'success' as const,
         description: 'Remove staging files and finalize',
         order: 5
       }
@@ -312,7 +313,7 @@ async function previewRenameOperation(
     };
 
     // Build enhanced preview response (MCP-123 contract)
-    const preview: any = {
+    const preview: EnhancedRenamePreviewOutput = {
       success: true,
       preview: {
         operation: 'rename' as const,
@@ -322,14 +323,11 @@ async function previewRenameOperation(
         filesAffected,
         executionMode: 'dry-run' as const,
         transactionPhases,
-        estimatedTime
+        estimatedTime,
+        // Include linkUpdates only if updateLinks is true (optional field)
+        ...(updateLinks && linkUpdates ? { linkUpdates } : {})
       }
     };
-
-    // Include linkUpdates only if updateLinks is true (optional field)
-    if (updateLinks && linkUpdates) {
-      preview.preview.linkUpdates = linkUpdates;
-    }
 
     return addVersionMetadata({
       content: [{ type: 'text', text: JSON.stringify(preview, null, 2) }]
