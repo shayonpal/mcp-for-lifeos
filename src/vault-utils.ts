@@ -152,7 +152,7 @@ export class VaultUtils {
    */
   static async findNoteByTitle(title: string): Promise<string> {
     // Import SearchEngine dynamically to avoid circular dependency
-    const { SearchEngine } = await import('./search-engine.js');
+    const { SearchEngine } = await import('./modules/search/index.js');
 
     const searchResults = await SearchEngine.quickSearch(title, 1);
 

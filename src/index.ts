@@ -6,7 +6,7 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { VaultUtils } from './vault-utils.js';
-import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
+import { SearchEngine, AdvancedSearchOptions } from './modules/search/index.js';
 import { ObsidianLinks } from './obsidian-links.js';
 import { NaturalLanguageProcessor } from './natural-language-processor.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';

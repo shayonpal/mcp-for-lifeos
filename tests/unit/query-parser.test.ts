@@ -5,7 +5,7 @@
  * @since MCP-59
  */
 
-import { QueryParser } from '../../src/query-parser';
+import { QueryParser } from '../../src/modules/search/index.js';
 import type { QueryStrategy, ParsedQuery } from '../../dev/contracts/MCP-59-contracts';
 
 describe('QueryParser', () => {

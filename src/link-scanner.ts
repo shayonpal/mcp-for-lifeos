@@ -17,7 +17,7 @@
 
 import { basename } from 'path';
 import type { LifeOSNote } from './types.js';
-import { SearchEngine } from './search-engine.js';
+import { SearchEngine } from './modules/search/index.js';
 import { VaultUtils } from './vault-utils.js';
 import { WIKILINK_PATTERN } from './regex-utils.js';
 import { stripMdExtension } from './path-utils.js';

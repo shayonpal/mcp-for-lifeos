@@ -5,9 +5,9 @@
  * @since MCP-59
  */
 
-import type { QueryStrategy, ParsedQuery } from '../dev/contracts/MCP-59-contracts';
-import { escapeRegex } from './regex-utils.js';
-import { normalizeText } from './text-utils.js';
+import type { QueryStrategy, ParsedQuery } from '../../../dev/contracts/MCP-59-contracts';
+import { escapeRegex } from '../../regex-utils.js';
+import { normalizeText } from '../../text-utils.js';
 
 /**
  * Utility class for parsing and analyzing search queries

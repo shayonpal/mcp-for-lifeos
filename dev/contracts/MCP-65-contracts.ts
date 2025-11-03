@@ -20,7 +20,7 @@
  * - Phase 3: Memory threshold recalibration (Priority: Medium)
  */
 
-import type { SearchResult } from '../../src/search-engine.js';
+import type { SearchResult } from '../../src/modules/search/index.js';
 import type { ResponseTruncator } from '../../src/response-truncator.js';
 
 // ============================================================================

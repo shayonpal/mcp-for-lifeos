@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import type { LifeOSNote } from '../../src/types.js';
-import { QueryParser } from '../../src/query-parser.js';
+import { QueryParser } from '../../src/modules/search/index.js';
 
 jest.mock('../../src/vault-utils.js', () => ({
   VaultUtils: {
@@ -10,7 +10,7 @@ jest.mock('../../src/vault-utils.js', () => ({
   }
 }));
 
-import { SearchEngine } from '../../src/search-engine.js';
+import { SearchEngine } from '../../src/modules/search/index.js';
 import { VaultUtils } from '../../src/vault-utils.js';
 
 describe('SearchEngine MCP-59 regressions', () => {
