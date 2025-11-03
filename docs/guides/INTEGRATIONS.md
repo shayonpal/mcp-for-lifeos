@@ -2,6 +2,8 @@
 
 Complete guide for integrating the LifeOS MCP server with various AI clients and development tools.
 
+**Platform Support**: This project officially supports **Unix-only platforms** (macOS, Linux, WSL2). Native Windows is not supported. Windows users should use WSL2 for full compatibility. See [ADR-007](../adr/007-unix-only-platform-support.md) for details.
+
 ## Table of Contents
 
 1. [Claude Desktop](#claude-desktop)
@@ -42,8 +44,10 @@ Add to your Claude Desktop configuration file (`claude_desktop_config.json`):
 ### Configuration File Location
 
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+- **WSL2**: `~/.config/Claude/claude_desktop_config.json` (Linux path within WSL2)
+
+**Note**: Native Windows is not supported. Windows users should use WSL2.
 
 ### Features in Claude Desktop
 
@@ -225,14 +229,16 @@ The MCP server automatically generates Obsidian links based on:
 
 No additional configuration needed - links work automatically once the vault is configured.
 
-### Cross-Platform Support
+### Platform Compatibility
 
-Obsidian links work across:
+Obsidian links work across supported platforms:
 
 - **macOS**: Native URL scheme support
-- **Windows**: Obsidian protocol handler
 - **Linux**: Desktop file associations
+- **WSL2**: Works via Linux environment
 - **Mobile**: iOS and Android app integration
+
+**Note**: This MCP server officially supports Unix-only platforms (macOS, Linux, WSL2). Native Windows is not supported.
 
 ### Usage Tips
 

@@ -18,6 +18,22 @@ A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Pr
 - **iCloud Sync Resilience**: Automatic retry logic for file operations on macOS
 - **Backward Compatibility**: All 11 legacy tool aliases continue to work with deprecation warnings via dedicated handler module (MCP-97) and hybrid dispatch fallback
 
+## Platform Support
+
+**✅ Supported Platforms:**
+
+- **macOS** - Primary deployment target (Raycast integration)
+- **Linux** - Full support
+- **WSL2** - Windows users via Unix subsystem
+
+**❌ Not Supported:**
+
+- **Native Windows** (cmd.exe, PowerShell)
+
+**Windows Users**: This project officially supports Unix-only platforms. For Windows compatibility, install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/) for a full Unix environment. All features work seamlessly in WSL2.
+
+**Rationale**: See [ADR-007: Unix-Only Platform Support](docs/adr/007-unix-only-platform-support.md) for the full decision context.
+
 ## Quick Start
 
 ### Automated Setup (Recommended)
