@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-03 11:16 - feat: frontmatter link scanning for rename operations (MCP-110)
+
+- **Frontmatter Link Scanning** (MCP-110, 2025-11-03 11:16): Enhanced LinkScanner to optionally scan and update wikilinks in YAML frontmatter during rename operations, resolving edge case where notes with frontmatter-only links were not discovered
+  - Added `skipFrontmatter: false` parameter to LinkScanner in `src/link-updater.ts` scanAndGroupReferences() for metadata consistency
+  - Modified `scanNoteForLinks()` in `src/link-scanner.ts` to read raw file content when frontmatter scanning enabled (uses VaultUtils.readFileWithRetry with iCloud retry logic)
+  - Updated `updateNoteLinks()` in `src/vault-utils.ts` to update entire file content including frontmatter using full-content string replacement (preserves YAML structure)
+  - YAML format support: Block scalar (`- "[[Note]]"`) and inline array (`["[[Note1]]", "[[Note2]]"]`) formats both handled by existing WIKILINK_PATTERN regex
+  - Backward compatible: Default `skipFrontmatter: true` preserved, only rename operations explicitly enable frontmatter scanning
+  - Critical fixes from code review: Replaced raw `readFileSync()` with `VaultUtils.readFileWithRetry()` for iCloud reliability, removed circular dependency (SearchEngine import), updated outdated docstring
+  - Test coverage: Added YAML block scalar and inline array format tests, enabled previously skipped integration test for frontmatter-only link updates
+  - Full test suite: 724/728 tests passing (99.5% pass rate, 4 skipped unrelated)
+  - Zero breaking changes: No MCP tool interface modifications, existing content link updates remain functional
+  - Performance: <2% impact when frontmatter scanning enabled (contract requirement met)
+  - Completes MCP-107 link update implementation: Content links + frontmatter links now both updated during rename
+
 - 2025-11-03 00:38 - test: comprehensive integration and regression testing suite (MCP-129)
 
 - **Block Reference Support in Link Updates** (MCP-124, 2025-11-02 23:03): Extended link scanner and updater to detect and preserve Obsidian block references during note rename operations

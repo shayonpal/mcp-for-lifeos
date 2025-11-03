@@ -245,7 +245,10 @@ async function scanAndGroupReferences(
   targetName: string
 ): Promise<{ scanResult: LinkScanResult; fileGroups: Map<string, LinkReference[]> }> {
   // Use LinkScanner to find all references to the target note
-  const scanResult: LinkScanResult = await LinkScanner.scanVaultForLinks(targetName);
+  // Enable frontmatter scanning for rename operations (MCP-110)
+  const scanResult: LinkScanResult = await LinkScanner.scanVaultForLinks(targetName, {
+    skipFrontmatter: false, // Include frontmatter links for metadata consistency
+  });
 
   // Group references by source file path
   const fileGroups = new Map<string, LinkReference[]>();
