@@ -1,7 +1,7 @@
 # Request Handler Infrastructure (MCP-95)
 
 **Created:** 2025-10-29 15:40 (UTC-04:00)  
-**Status:** Completed – infrastructure only (registry population deferred to MCP-96/97)
+**Status:** Completed – All handlers registered (MCP-96/97/98 complete, switch statement removed in MCP-99, validated in MCP-10)
 
 MCP-95 extracts the foundational request handler infrastructure out of `src/index.ts`, establishing an explicit factory, validation layer, and analytics wrapper that future sub-issues will build upon when tool-specific handlers move into the registry.
 
@@ -13,10 +13,10 @@ MCP-95 extracts the foundational request handler infrastructure out of `src/inde
   - `createRequestHandler` factory that compiles shared context once and enforces an empty handler registry during this phase.
   - `isToolAllowed` validator with cached tool-name sets and mode-aware error messaging.
   - `wrapHandlerWithAnalytics` helper that delegates to `AnalyticsCollector.recordToolExecution`.
-- Keep handler registry intentionally empty, with guardrails that remind engineers to populate it only once MCP-96 (consolidated handlers) and MCP-97 (legacy handlers) land.
+- Handler registry fully populated via MCP-96 (consolidated handlers), MCP-97 (legacy handlers), MCP-98 (note handlers), achieving pure factory pattern with no inline logic.
 - Update contracts (`dev/contracts/MCP-95-contracts.ts`) and tests to reflect the infrastructure expectations.
 
-_Not in scope_: moving existing tool logic out of `src/index.ts`, modifying runtime behavior, or changing public MCP tool surfaces.
+_Completed scope_: All tool logic extracted from `src/index.ts` via MCP-96/97/98, switch statement removed in MCP-99, pure factory pattern achieved. Runtime behavior preserved, public MCP tool surfaces unchanged.
 
 ## Entry Points & Dependencies
 
@@ -50,7 +50,7 @@ All suites green locally (MCP-95 implementation was merged with passing tests) a
 
 ## Follow-Up Work
 
-1. **MCP-96:** Populate registry with consolidated tool handlers, remove empty-registry guard, and begin routing through new module.
-2. **MCP-97:** Add legacy handler implementations and alias coverage.
-3. **Index.ts cleanup:** Replace inline handler implementations with imports from the new module once MCP-96/97 complete.
-4. **Docs:** Update tool handler guides once registry is populated; current documentation intentionally highlights infrastructure-only status.
+1. **MCP-96:** ✅ Complete – Consolidated tool handlers registered, empty-registry guard removed, routing active
+2. **MCP-97:** ✅ Complete – Legacy handler implementations and alias coverage added
+3. **Index.ts cleanup:** ✅ Complete (MCP-99) – Inline handler implementations replaced with pure factory pattern
+4. **Docs:** ✅ Complete (MCP-10) – Documentation updated to reflect pure factory pattern with no monolithic references
