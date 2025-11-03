@@ -5,9 +5,11 @@ This directory contains comprehensive guides for setting up, deploying, and inte
 ## 📖 Available Guides
 
 ### 🚀 **[Deployment Guide](./DEPLOYMENT-GUIDE.md)**
+
 Complete setup and deployment instructions for the LifeOS MCP Server.
 
 **Contents:**
+
 - System requirements and prerequisites
 - Installation and configuration
 - Environment setup
@@ -19,9 +21,11 @@ Complete setup and deployment instructions for the LifeOS MCP Server.
 ---
 
 ### 📱 **[Raycast Integration](./RAYCAST-INTEGRATION.md)**
+
 Setup guide for integrating LifeOS MCP Server with Raycast on macOS.
 
 **Contents:**
+
 - Raycast MCP configuration
 - AI command setup with `@lifeos-mcp` mentions
 - Quick vault search and note creation
@@ -32,9 +36,11 @@ Setup guide for integrating LifeOS MCP Server with Raycast on macOS.
 ---
 
 ### 💻 **[Cursor Integration](./CURSOR-IDE-INTEGRATION.md)**
+
 Setup guide for integrating LifeOS MCP Server with Cursor IDE.
 
 **Contents:**
+
 - Cursor IDE MCP configuration
 - Agent Mode setup for vault access
 - Workflow integration with development projects
@@ -42,15 +48,31 @@ Setup guide for integrating LifeOS MCP Server with Cursor IDE.
 
 **Audience:** Developers using Cursor IDE who want vault integration
 
+---
+
+### 🪟 **[WSL2 Setup Guide](./WSL2-SETUP.md)**
+
+Complete WSL2 installation and configuration guide for Windows users.
+
+**Contents:**
+
+- WSL2 installation and Ubuntu setup
+- Node.js and Git installation in WSL2
+- Vault path configuration (Windows vs WSL2 filesystem)
+- MCP client configuration for WSL2
+- Performance optimization and troubleshooting
+
+**Audience:** Windows users who need Unix compatibility for LifeOS MCP Server
+
 ## 🎯 Integration Overview
 
 The LifeOS MCP Server supports multiple client integrations through the Model Context Protocol (MCP):
 
 | Client | Primary Use Case | Setup Complexity | Platform |
 |--------|------------------|------------------|----------|
-| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Linux |
+| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Linux, WSL2 |
 | **Raycast** | Quick vault operations and AI commands | Low | macOS |
-| **Cursor IDE** | Development workflow with knowledge integration | Medium | macOS, Linux |
+| **Cursor IDE** | Development workflow with knowledge integration | Medium | macOS, Linux, WSL2 |
 
 ## 🔧 Common Setup Requirements
 
@@ -80,16 +102,19 @@ All integrations require:
 ## 🚨 Important Notes
 
 ### Web Interface Compatibility
+
 - **Never enable** `ENABLE_WEB_INTERFACE=true` when running as MCP server
 - Web interface is for testing only and conflicts with MCP protocol
 - Use pure stdio communication for all client integrations
 
 ### Path Requirements
+
 - Always use **absolute paths** to the compiled `dist/index.js` file
 - Relative paths will fail in client environments
 - Ensure Node.js is accessible from client PATH
 
 ### Performance Considerations
+
 - MCP server startup time: ~2-3 seconds for large vaults
 - Tool execution time: <200ms for most operations
 - Memory usage: ~50-100MB typical, ~200MB for large search operations
@@ -109,16 +134,19 @@ Before setting up any client integration:
 ### Common Issues Across All Clients
 
 **Server Won't Start**
+
 - Check Node.js version: `node --version` (requires 18+)
 - Verify build completion: `npm run build`
 - Check configuration: ensure `src/config.ts` exists and is valid
 
 **Client Can't Connect**
+
 - Use absolute paths in client configuration
 - Restart client application after configuration changes
 - Check for console output interfering with MCP protocol
 
 **Tools Not Working**
+
 - Verify vault path accessibility
 - Check file permissions on vault directory
 - Test individual tools with minimal parameters
@@ -126,6 +154,7 @@ Before setting up any client integration:
 ### Client-Specific Issues
 
 For detailed troubleshooting of specific clients, see:
+
 - **Claude Desktop**: Check JSON configuration syntax and restart application
 - **Raycast**: Ensure script permissions and PATH variables
 - **Cursor**: Verify Agent Mode is enabled and MCP server is accessible
@@ -140,6 +169,7 @@ If you encounter issues not covered in the guides:
 4. **Report Issues** via [GitHub Issues](https://github.com/shayonpal/mcp-for-lifeos/issues)
 
 When reporting issues, include:
+
 - Operating system and version
 - Node.js version (`node --version`)
 - Client application and version

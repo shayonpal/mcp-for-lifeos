@@ -7,6 +7,8 @@ Model Context Protocol server for LifeOS Obsidian vault management with YAML com
 
 **Current Focus**: Core MCP server functionality, technical debt reduction, and user experience.
 
+**Platform Compatibility**: This project officially supports **Unix-only platforms** (macOS, Linux, WSL2). Native Windows is not supported. See [ADR-007](docs/adr/007-unix-only-platform-support.md) for rationale.
+
 ## Current Focus
 
 **See [docs/CURRENT-FOCUS.md](docs/CURRENT-FOCUS.md) for:**

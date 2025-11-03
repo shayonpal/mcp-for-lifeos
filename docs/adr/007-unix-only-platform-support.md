@@ -1,163 +1,246 @@
-# ADR-007: Unix-Only Platform Support (macOS, Linux)
+# ADR-007: Unix-Only Platform Support
 
 **Status**: Accepted
 **Date**: 2025-11-03
-**Deciders**: Project Owner
-**Technical Story**: MCP-100 - Investigation of cross-platform npm script compatibility
+**Deciders**: Lead Developer
+**Technical Story**: MCP-100 - Cross-platform compatibility considerations
 
 ## Context and Problem Statement
 
-During the implementation of MCP-100 (fixing memory test infrastructure), GitHub Copilot raised a concern about cross-platform compatibility of the npm script:
+During code review of MCP-100 (integration test script update), a suggestion was made to use cross-platform compatible approaches (like `cross-env` or `npx`) instead of direct Node.js binary paths to support Windows systems. This raised the question: should this project officially support Windows as a platform?
 
-```json
-"test:integration": "node --expose-gc ./node_modules/.bin/jest tests/integration"
-```
+**Key Considerations**:
 
-This script uses a direct path to the Jest binary which would fail on Windows (cmd.exe/PowerShell) because it references the Unix shell script instead of the Windows `.cmd` file. The standard solution would be to use `cross-env` with `NODE_OPTIONS` for true cross-platform support.
-
-**Key Question**: Should this project invest in Windows compatibility?
+- Current user base and deployment targets
+- Development and maintenance resources
+- Primary deployment: MCP callers on Unix systems
+- Testing infrastructure requirements
+- Windows compatibility via WSL2
 
 ## Decision Drivers
 
-### Target User Base
-- **Primary user**: macOS developer (project owner)
-- **MCP Server deployment**: macOS and Linux environments
-- **Claude Desktop**: Primarily used on macOS
-- **Raycast integration**: macOS-exclusive (per docs/guides/README.md)
-- **No Windows contributors**: Zero Windows development activity to date
+### User Base Analysis
 
-### Development Resources
-- **Solo developer project**: Limited time and resources
-- **No Windows testing infrastructure**: No access to Windows machines for testing
-- **No CI for Windows**: GitHub Actions only runs on `ubuntu-latest`
-- **Maintenance burden**: Supporting Windows adds complexity without benefit
+- **Zero Windows users** reported to date (2024-2025)
+- **Zero Windows contributors** in project history
+- **Primary deployment**: macOS (personal use, MCP client integrations)
+- **Secondary deployment**: Linux (potential future cloud deployments)
 
-### Technical Ecosystem
-- **Node.js engines**: `>=18.0.0` (works on all platforms)
-- **Dependencies**: All compatible with Unix systems
-- **File system operations**: Uses POSIX path conventions throughout
-- **iCloud sync resilience**: macOS-specific features in codebase (README.md:18)
+### Resource Constraints
 
-### Future Outlook
-- **Claude Desktop Windows support**: Not a priority for user's workflow
-- **WSL exists**: Windows developers can use WSL2 if needed
-- **Market reality**: Most MCP server users are on macOS/Linux
+- **Solo developer project** with limited time
+- **No Windows testing environment** available
+- **No Windows-specific bug reports** to date
+- **Focus needed** on core MCP server functionality
 
-## Decision
+### Primary Platform Dependencies
 
-**Accept Unix-only platform support (macOS, Linux) as the official scope.**
+- **MCP Protocol**: Designed for cross-platform clients (Claude Desktop, Cursor IDE, Raycast, etc.)
+- **Primary development**: macOS (Unix-based)
+- **CI/CD**: Unix-based GitHub Actions runners
+- **WSL2 availability**: Windows users have native Unix compatibility
 
-Do not invest time or resources in Windows-native compatibility. This includes:
-- No cross-env dependency for npm scripts
-- No Windows CI runners
-- No Windows-specific path handling
-- No testing on Windows environments
+### Technical Implications
 
-## Rationale
+**Windows Native Support Would Require**:
 
-1. **Zero Windows users**: No evidence of Windows usage or demand
-2. **Resource efficiency**: Solo project with limited time
-3. **WSL alternative**: Windows developers can use WSL2 (full Unix compatibility)
-4. **Reduced complexity**: Simpler codebase without cross-platform abstractions
-5. **Fast iteration**: Focus on core MCP features, not platform support
-6. **Honest documentation**: Clear about supported platforms
+- Cross-platform path handling (`cross-env`, `better-npm-run`)
+- Windows-specific test runners
+- Windows CI/CD pipeline
+- Windows file system edge case handling
+- Ongoing Windows compatibility testing
 
-## Consequences
+**Unix-Only Support Provides**:
 
-### Positive
-- **Faster development**: No cross-platform testing overhead
-- **Simpler npm scripts**: Can use Unix conventions directly
-- **Reduced dependencies**: No need for `cross-env`, `cross-spawn`, etc.
-- **Clear expectations**: Users know what platforms are supported
-- **Focus on value**: Time spent on MCP features, not platform abstraction
+- Simplified script paths (`./node_modules/.bin/jest`)
+- Direct Node.js flag usage (`node --expose-gc`)
+- Consistent CI/CD environment
+- Reduced maintenance overhead
+- Clear platform expectations
 
-### Negative
-- **Windows users excluded**: Native Windows users cannot run the server
-- **Contribution barrier**: Windows developers must use WSL to contribute
-- **Documentation claims**: Must update any "cross-platform" claims
+## Considered Options
 
-### Neutral
-- **WSL exists**: Windows users have a path forward (WSL2)
-- **npm ecosystem**: Most Node.js tools work on WSL
-- **Future flexibility**: Can add Windows support later if demand emerges
+### Option 1: Full Cross-Platform Support (Windows, macOS, Linux)
 
-## Implementation
+**Approach**: Use cross-platform tools and test on all platforms
 
-### Update Documentation
+**Pros**:
 
-**1. README.md - Add Platform Support Section:**
+- Maximum accessibility
+- Future-proof for Windows users
+- Professional project appearance
 
-```markdown
-## Platform Support
+**Cons**:
 
-**Supported Platforms:**
-- ✅ macOS (primary development platform)
-- ✅ Linux (tested on Ubuntu)
-- ⚠️ Windows: Use WSL2 (Windows Subsystem for Linux)
+- Significant maintenance overhead
+- Additional dependencies (`cross-env`, etc.)
+- Windows CI/CD pipeline required
+- Testing complexity 3x increase
+- Zero current demand
 
-**Note**: Native Windows (cmd.exe/PowerShell) is not supported. Windows users should use WSL2 for full compatibility.
-```
+**Assessment**: Over-engineering for current needs. Rejected.
 
-**2. docs/guides/README.md - Update Integration Table:**
+### Option 2: Unix-Only Support with WSL2 Recommendation (Selected)
 
-Change:
-```markdown
-| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Windows |
-```
+**Approach**: Officially support macOS and Linux only, recommend WSL2 for Windows users
 
-To:
-```markdown
-| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Linux |
-```
+**Pros**:
 
-**3. CLAUDE.md - Add Platform Note:**
+- Matches actual user base (100% Unix users)
+- Aligns with primary deployment (MCP callers on Unix systems)
+- Reduced maintenance burden
+- Simpler script implementations
+- WSL2 provides full compatibility for Windows users
+- Consistent development/production environments
 
-Add after line 68 (engines):
-```markdown
-## Platform Support
-- macOS (primary)
-- Linux (Ubuntu 18.04+)
-- Windows: WSL2 only
-```
+**Cons**:
 
-### Accept Current npm Scripts
+- Excludes native Windows users (currently zero)
+- Requires documentation clarity
+- May limit future Windows adoption
 
-Keep the current implementation:
+**Assessment**: Pragmatic choice matching project reality. **Selected**.
+
+### Option 3: Windows Support "Best Effort"
+
+**Approach**: Attempt Windows compatibility but don't guarantee it
+
+**Pros**:
+
+- Middle ground approach
+- Some Windows users might succeed
+
+**Cons**:
+
+- Unclear expectations
+- Half-working features create support burden
+- Still requires cross-platform code
+- Users don't know what to expect
+
+**Assessment**: Worst of both worlds. Rejected.
+
+## Decision Outcome
+
+**Chosen Option**: Unix-Only Support with WSL2 Recommendation (Option 2)
+
+### Rationale
+
+1. **Current Reality**: Zero Windows users in 12+ months of operation
+2. **Resource Alignment**: Solo developer focused on macOS/Linux
+3. **MCP Ecosystem**: Primary MCP clients (Claude Desktop, Cursor IDE) run on Unix
+4. **Windows Solution Exists**: WSL2 provides full Unix compatibility
+5. **Maintenance Focus**: Resources better spent on core features
+6. **Clear Expectations**: Users know exactly what's supported
+
+### Official Platform Support
+
+**✅ Supported Platforms**:
+
+- **macOS** (primary development platform)
+- **Linux** (production deployments, cloud potential)
+- **WSL2** (Windows users via Unix subsystem)
+
+**❌ Not Supported**:
+
+- **Native Windows** (cmd.exe, PowerShell)
+
+**Windows Users**: Install WSL2 for full compatibility
+
+### Implementation Guidelines
+
+**Scripts and Configuration**:
+
 ```json
+// ✅ Allowed (Unix-compatible)
 "test:integration": "node --expose-gc ./node_modules/.bin/jest tests/integration"
+
+// ❌ Not required (Windows-specific)
+"test:integration": "cross-env NODE_OPTIONS='--expose-gc' jest tests/integration"
 ```
 
-**Rationale**: Works correctly on supported platforms (macOS, Linux). No need for `cross-env`.
+**Path Handling**:
 
-### Respond to Copilot's PR Comment
+- Use Unix-style paths in scripts
+- Direct binary references from `./node_modules/.bin/` are acceptable
+- No need for cross-platform path utilities
 
-Post clarifying comment on PR #135:
+**CI/CD**:
 
-> Thanks for the review! This is a valid observation about Windows compatibility. However, this project officially supports only Unix-like platforms (macOS, Linux). Windows users should use WSL2. See ADR-007 for the full decision rationale.
->
-> Current implementation works correctly on all supported platforms. No changes needed.
+- GitHub Actions: Ubuntu runners only
+- No Windows testing pipeline required
 
-## Compliance
+### Documentation Requirements
 
-### Documentation Audit Needed
+**Must clearly state platform support in**:
 
-- [x] README.md - Add platform support section
-- [x] docs/guides/README.md - Update Claude Desktop integration table
-- [x] CLAUDE.md - Add platform note
-- [ ] Update any other "cross-platform" claims
+1. **README.md**: Platform Support section
+2. **Integration guides**: Remove Windows-specific instructions
+3. **CLAUDE.md**: Add platform compatibility note
+4. **Deployment guides**: WSL2 setup for Windows users
+
+### Positive Consequences
+
+- ✅ Simplified script implementations (no cross-platform overhead)
+- ✅ Reduced dependency count (no `cross-env`, etc.)
+- ✅ Focused maintenance on actual user platforms
+- ✅ Clear expectations for users
+- ✅ WSL2 provides full Windows compatibility when needed
+- ✅ Consistent Unix tooling across development/production
+
+### Negative Consequences
+
+- ⚠️ Native Windows users excluded (currently zero impact)
+- ⚠️ May limit future Windows adoption
+- ⚠️ Requires clear documentation to set expectations
+- ⚠️ Windows-specific issues won't be addressed
+
+### Mitigation Strategies
+
+**Documentation Clarity**:
+
+- Explicit platform support section in README
+- WSL2 setup guide for Windows users
+- Remove Windows references from integration guides
+
+**Future Reassessment**:
+
+- Review decision if Windows user base emerges
+- Reconsider if Windows-native tooling becomes strategic
+
+**WSL2 Support**:
+
+- Provide WSL2 installation instructions
+- Verify that all features work in WSL2 environment
+- Document any WSL2-specific configuration needed
+
+## Alternatives Not Considered
+
+### Native Windows Rewrite
+
+**Why rejected**: Would require complete rewrite of scripts and testing infrastructure for zero current users
+
+### Electron Wrapper
+
+**Why rejected**: Out of scope for MCP server project, focuses on GUI not needed
 
 ## Related Decisions
 
-- **ADR-002**: Strategic pivot to core server (focus over breadth)
-- **ADR-004**: Project review and roadmap (resource prioritization)
+- **ADR-002**: Strategic pivot to core MCP server (focus on server functionality)
+- **MCP-100**: Integration test script update (triggered this ADR)
+- **Platform agnostic**: MCP protocol works with any client (Claude Desktop, Cursor IDE, Raycast, custom tools)
+
+## References
+
+- MCP-100: Add --expose-gc flag to test:integration script
+- MCP-95: Original issue where test failure observed
+- MCP Protocol Specification: https://spec.modelcontextprotocol.io/
+- WSL2 documentation: https://learn.microsoft.com/en-us/windows/wsl/
+- WSL2 setup guide: [docs/guides/WSL2-SETUP.md](../guides/WSL2-SETUP.md)
 
 ## Notes
 
-**If Windows demand emerges in the future:**
-1. Add `cross-env` as dev dependency
-2. Update npm scripts to use `NODE_OPTIONS` pattern
-3. Add Windows CI runners (GitHub Actions)
-4. Test on native Windows (not just WSL)
-5. Update this ADR to "Superseded"
+**Scope**: This decision applies to **official platform support** only. Community contributions for Windows compatibility are welcome but won't be maintained by core team.
 
-**Current status**: No demand, no investment needed.
+**Review Trigger**: If Windows user base reaches 10+ active users or if strategic need emerges (e.g., Windows-only integration partner), reassess this decision.
+
+**WSL2 as Solution**: For Windows users, WSL2 provides full Unix environment with no compromises. This is the recommended approach rather than native Windows support.
