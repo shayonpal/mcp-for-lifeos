@@ -117,3 +117,6 @@ coverage/
 
 # Analytics data
 analytics/usage-metrics.json
+
+# Runtime artifacts
+var/
