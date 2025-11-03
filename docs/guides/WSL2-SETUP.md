@@ -56,11 +56,13 @@ After restart, Ubuntu will launch automatically:
 
 ### 3. Install Node.js
 
+> **⚠️ Note**: Node.js 18 reached End-of-Life in April 2025 and no longer receives security updates. For production environments, we recommend using Node.js 20 LTS or 22 LTS instead. Simply replace `nvm install 18` with `nvm install 20` in the steps below.
+
 Install Node.js 18+ using nvm (recommended):
 
 ```bash
-# Install nvm
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# Install nvm (latest version)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 
 # Reload shell configuration
 source ~/.bashrc
@@ -71,7 +73,7 @@ nvm use 18
 
 # Verify installation
 node --version  # Should show v18.x.x
-npm --version   # Should show 9.x.x or higher
+npm --version   # Bundled with Node.js 18 (typically 8.x - 10.x)
 ```
 
 ### 4. Install Git
