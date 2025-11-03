@@ -1,77 +1,67 @@
 # Current Development Focus
 
-**Last Updated:** Nov 3, 2025 (1:20 PM EST)  
-**Cycle:** Cycle 9 - Modular Transition (Oct 28 - Nov 7, 2025)  
-**Progress:** 68% (23/34 issues completed)  
-**Current Branch:** master
+**Last Updated:** Nov 3, 2025 (5:45 PM EST)
+**Cycle:** Cycle 9 - Modular Transition (Oct 28 - Nov 7, 2025)
+**Progress:** 68% (23/34 issues completed)
+**Current Branch:** feature/modularize-core-mcp-layout
 
 ---
 
 ## 🔧 Active Work
 
-_No issues currently in progress. Ready to start next work item._
+_No issues currently in Linear "In Progress" state._
+
+**Current Branch Activity:**
+- Working on: **Modularize Core MCP Source Layout** project
+- Phase 1-3 complete: Directory scaffolding, templates, YAML, search modules migrated
+- Next: Phase 4 vault decomposition (critical path)
 
 ---
 
 ## 📋 Planned (This Cycle)
 
-### High Priority
+### Phase 4: Vault Decomposition ⚠️ CRITICAL PATH (6 issues)
+- **MCP-139**: Extract file I/O operations (3h)
+- **MCP-140**: Extract note CRUD operations (3h)
+- **MCP-141**: Extract daily note operations (2h)
+- **MCP-142**: Extract content insertion logic (3h)
+- **MCP-143**: Extract YAML operations (3h)
+- **MCP-144**: Extract folder ops & finalize (4h) 🔥
 
-- **MCP-10**: Integration cleanup
+### Phase 5: Links & Transactions (2 issues)
+- **MCP-145**: Move link management (3h)
+- **MCP-146**: Move transaction modules (3h)
 
-### Medium Priority
+### Phase 6-8: Finalization (1 issue)
+- **MCP-147**: Analytics, utilities, documentation (8h)
 
-- **MCP-120**: Explore project file reorganization strategy
-- **MCP-90**: Extract config & instruction scaffolding (blocked by MCP-10)
-- **MCP-91**: Decompose vault-utils into domain modules (blocked by MCP-10)
-- **MCP-92**: Implement hot-reload custom instructions (blocked by MCP-10)
-
-### Low Priority
-
-- **MCP-94**: Instance ID generation integration test
+### Other Cycle Work
+- **MCP-90 to MCP-92**: Custom instructions (3 issues, blocked by MCP-10)
+- **MCP-94**: Instance ID test (low priority)
 
 ---
 
 ## ✅ Recent Completions (Last 3 Days)
 
-**Nov 3:**
-
-- MCP-100: jsonl-stress memory spike fix (PR #135, #136)
-- MCP-95: Request handler infrastructure (PR #108)
-- MCP-130: date-fns v3→v4 migration (PR #133)
-- MCP-110: Frontmatter link scanning (PR #134)
-- MCP-2: rename_note tool complete (epic closed)
-
-**Nov 2:**
-
-- MCP-131: uuid dependency fix
-- MCP-124: Block reference support (PR #131)
-- MCP-123: Enhanced dry-run preview (PR #130)
-- MCP-122: Dry-run mode foundation (PR #122)
-- MCP-129: Integration testing suite (PR #132)
-- MCP-128: Documentation completion
-
-**Nov 1:**
-
-- MCP-119: Boot recovery system (PR #121)
-- MCP-118: Transaction integration (PR #120)
-- MCP-117: TransactionManager core (PR #119)
-- MCP-116: Two-phase link updater (PR #118)
-- MCP-115: WAL infrastructure (PR #117)
-- MCP-114: Atomic file operations (PR #116)
-
-**Oct 31:**
-
-- MCP-107: Link update implementation (PR #115)
-- MCP-105: Basic rename tool (PR #113)
+**Nov 3 - Modularization Phase 1-3:**
+- MCP-138: NLP processor to modules/search/
+- MCP-137: Search engine to modules/search/
+- MCP-136: YAML processing to modules/yaml/
+- MCP-135: Template system to modules/templates/
+- MCP-134: Import policy & circular dependency checks
+- MCP-133: Directory scaffolding
+- MCP-120: Project reorganization strategy (decision: GO)
+- MCP-38: 25K token limit with smart truncation
+- MCP-10: Integration and cleanup
+- MCP-100: jsonl-stress memory fix
 
 ---
 
 ## ✅ Test Status
 
-**Last Run:** Nov 3, 2025 (1:20 PM EST)  
-**Status:** ✅ All tests passing  
-**Test Suites:** 42 passed, 42 total  
+**Last Run:** Nov 3, 2025 (5:45 PM EST)
+**Status:** ✅ All tests passing
+**Test Suites:** 42 passed, 42 total
 **Tests:** 724 passed, 4 skipped, 728 total (99.5%)
 
 ---
@@ -79,22 +69,19 @@ _No issues currently in progress. Ready to start next work item._
 ## 📊 Project Health
 
 **Code Quality:**
-
 - Test coverage: 99.5% (724/728 passing)
 - Zero blocking bugs
-- Full transaction safety with dry-run preview
+- No circular dependencies
 
 **Development Velocity:**
-
-- Cycle 9: 68% complete (23/34) - 4 days left (ends Nov 7)
-- Major milestone: rename_note complete ✅
-- 20+ issues completed in last 3 days
+- Cycle 9: 68% complete (23/34) - 4 days remaining (ends Nov 7)
+- Modularization Phase 1-3: Complete (6 issues, 1 day)
+- Next: Phase 4 vault decomposition (18h estimated, 3-4 days)
 
 **Next Focus:**
-
-- MCP-10: Integration cleanup (high priority)
-- VaultUtils elimination series (MCP-90/91/92)
-- Project reorganization exploration (MCP-120)
+- Complete Phase 4 vault decomposition (MCP-139 to MCP-144)
+- Execute phases 5-8 (MCP-145 to MCP-147)
+- vault-utils.ts: 1,956 → ~400 lines target (80% reduction)
 
 ---
 
