@@ -1,5 +1,5 @@
 import { format, parse, addDays, subDays, startOfWeek, endOfWeek, isValid } from 'date-fns';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { TZDate } from '@date-fns/tz';
 import { logger } from './logger.js';
 
 export class DateResolver {
@@ -21,9 +21,9 @@ export class DateResolver {
     
     logger.info(`Parsing date input: "${input}" (normalized: "${normalizedInput}")`);
     logger.debug(`Reference date: ${ref.toISOString()}, Timezone: ${this.userTimezone}`);
-    
+
     // Get current date in user's timezone
-    const zonedRef = toZonedTime(ref, this.userTimezone);
+    const zonedRef = new TZDate(ref, this.userTimezone);
     logger.debug(`Zoned reference date: ${zonedRef.toISOString()}`)
     
     // Handle relative dates
@@ -172,7 +172,7 @@ export class DateResolver {
    * Get start and end of current week
    */
   public getWeekBounds(date: Date = new Date()): { start: Date; end: Date } {
-    const zonedDate = toZonedTime(date, this.userTimezone);
+    const zonedDate = new TZDate(date, this.userTimezone);
     return {
       start: startOfWeek(zonedDate, { weekStartsOn: 1 }), // Monday
       end: endOfWeek(zonedDate, { weekStartsOn: 1 })      // Sunday
@@ -183,14 +183,15 @@ export class DateResolver {
    * Convert a date to user's timezone
    */
   public toUserTimezone(date: Date): Date {
-    return toZonedTime(date, this.userTimezone);
+    return new TZDate(date, this.userTimezone);
   }
 
   /**
    * Convert from user's timezone to UTC
    */
   public fromUserTimezone(date: Date): Date {
-    return fromZonedTime(date, this.userTimezone);
+    const tzDate = new TZDate(date, this.userTimezone);
+    return new Date(tzDate.getTime());
   }
 
   /**

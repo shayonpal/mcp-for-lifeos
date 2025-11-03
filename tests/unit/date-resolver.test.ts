@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { DateResolver } from '../../src/date-resolver.js';
 import { startOfToday, format, addDays, subDays } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { TZDate } from '@date-fns/tz';
 
 describe('DateResolver', () => {
   let dateResolver: DateResolver;
@@ -121,8 +121,8 @@ describe('DateResolver', () => {
       
       // Even though system time is UTC, should resolve to local date
       const result = resolver.resolveDailyNoteDate('today');
-      const localDate = format(toZonedTime(mockNow, 'America/New_York'), 'yyyy-MM-dd');
-      
+      const localDate = format(new TZDate(mockNow, 'America/New_York'), 'yyyy-MM-dd');
+
       expect(result).toBe(localDate);
     });
   });
