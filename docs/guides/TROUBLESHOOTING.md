@@ -8,8 +8,9 @@ Solutions to common issues when using the LifeOS MCP server.
 2. [Client Connection Issues](#client-connection-issues)
 3. [Template Issues](#template-issues)
 4. [YAML Issues](#yaml-issues)
-5. [Analytics Issues](#analytics-issues)
-6. [Performance Issues](#performance-issues)
+5. [Transaction Errors](#transaction-errors)
+6. [Analytics Issues](#analytics-issues)
+7. [Performance Issues](#performance-issues)
 
 ---
 
@@ -272,6 +273,522 @@ Solutions to common issues when using the LifeOS MCP server.
 - Server never edits `date created` or `date modified`
 - If these change, check Obsidian settings
 - Verify no other plugins modifying dates
+
+---
+
+## Transaction Errors
+
+The transaction system (MCP-108) provides atomic rename operations with automatic rollback. Below are all transaction error codes with troubleshooting guidance.
+
+### Error Code Matrix
+
+| Error Code | Phase | Rollback? | Manual Recovery? | Retry? |
+|------------|-------|-----------|------------------|--------|
+| TRANSACTION_PLAN_FAILED | Plan | N/A | No | Yes |
+| TRANSACTION_PREPARE_FAILED | Prepare | Yes | Rare | Yes |
+| TRANSACTION_VALIDATE_FAILED | Validate | Yes | No | Yes |
+| TRANSACTION_STALE_CONTENT | Validate | Yes | No | Yes (recommended) |
+| TRANSACTION_COMMIT_FAILED | Commit | Yes | Possible | Maybe |
+| TRANSACTION_ROLLBACK_FAILED | Abort | Partial | **Yes** | After manual recovery |
+| TRANSACTION_FAILED | Any | Varies | Varies | Depends on cause |
+
+---
+
+### TRANSACTION_PLAN_FAILED
+
+**Phase**: Plan (phase 1)
+**Rollback**: Not applicable (no changes made yet)
+
+**Common Causes:**
+
+- Source file does not exist
+- Invalid file paths (not within vault)
+- Manifest building failures
+- Link render failures (if `updateLinks: true`)
+
+**Solutions:**
+
+1. **Verify source file:**
+
+   ```bash
+   ls -lh /vault/path/to/file.md
+   # Should exist
+   ```
+
+2. **Check paths:**
+   - Use absolute paths or vault-relative paths
+   - Ensure paths point to `.md` files
+   - Verify paths are within vault boundaries
+
+3. **Test without link updates:**
+
+   ```json
+   {
+     "oldPath": "note.md",
+     "newPath": "renamed.md",
+     "updateLinks": false
+   }
+   ```
+
+**Resolution**: Fix path issues and retry
+
+---
+
+### TRANSACTION_PREPARE_FAILED
+
+**Phase**: Prepare (phase 2)
+**Rollback**: Yes (staged files deleted automatically)
+
+**Common Causes:**
+
+- Filesystem errors during staging
+- Disk full errors
+- WAL directory permission issues
+- Temp file write failures
+
+**Solutions:**
+
+1. **Check disk space:**
+
+   ```bash
+   df -h
+   # Ensure adequate free space
+   ```
+
+2. **Verify WAL directory permissions:**
+
+   ```bash
+   ls -ld ~/.config/mcp-lifeos/wal/
+   # Should be writable
+
+   chmod 755 ~/.config/mcp-lifeos/wal/
+   ```
+
+3. **Check temp file conflicts:**
+
+   ```bash
+   find /vault -name "*.mcp-staged-*"
+   # Should be empty or only recent files
+   ```
+
+**Resolution**: Fix filesystem issues and retry
+
+---
+
+### TRANSACTION_VALIDATE_FAILED
+
+**Phase**: Validate (phase 3)
+**Rollback**: Yes (automatic)
+
+**Common Causes:**
+
+- Hash computation failures
+- File read errors during validation
+- Filesystem corruption
+
+**Solutions:**
+
+1. **Check file accessibility:**
+
+   ```bash
+   cat /vault/path/to/file.md > /dev/null
+   # Should succeed without errors
+   ```
+
+2. **Verify filesystem health:**
+
+   ```bash
+   # macOS
+   diskutil verifyVolume /Volumes/VaultDrive
+
+   # Linux
+   fsck -n /dev/device
+   ```
+
+3. **Retry operation:**
+   - Usually transient errors
+   - Wait a few seconds and retry
+
+**Resolution**: Retry operation, check filesystem if persists
+
+---
+
+### TRANSACTION_STALE_CONTENT
+
+**Phase**: Validate (phase 3)
+**Rollback**: Yes (automatic)
+
+**Common Causes:**
+
+- **File modified by another process during transaction**
+- Concurrent edits (user or sync service)
+- SHA-256 hash mismatch detected
+- **Most common transaction error**
+
+**Example Error:**
+
+```json
+{
+  "success": false,
+  "error": "[TRANSACTION_STALE_CONTENT] Files modified during transaction (staleness detected): /vault/note.md",
+  "errorCode": "TRANSACTION_STALE_CONTENT",
+  "correlationId": "550e8400-..."
+}
+```
+
+**Solutions:**
+
+1. **Retry operation:**
+   - **Recommended first step**
+   - Content is now stable
+   - Transaction will succeed on retry
+
+2. **Disable sync services:**
+
+   ```bash
+   # Pause iCloud sync during rename
+   # Or disable Dropbox temporarily
+   ```
+
+3. **Avoid concurrent edits:**
+   - Close note in Obsidian during rename
+   - Don't manually edit files during operation
+   - Wait for previous operations to complete
+
+4. **Use dry-run first:**
+
+   ```json
+   {
+     "oldPath": "note.md",
+     "newPath": "renamed.md",
+     "dryRun": true
+   }
+   ```
+
+   Then execute after verifying:
+
+   ```json
+   {
+     "oldPath": "note.md",
+     "newPath": "renamed.md",
+     "dryRun": false
+   }
+   ```
+
+**Prevention:**
+
+- Pause sync services during bulk renames
+- Avoid manual edits during rename operations
+- Close files in Obsidian before renaming
+- Use dry-run mode for high-impact operations
+
+**Resolution**: Retry operation (90% success rate on retry)
+
+---
+
+### TRANSACTION_COMMIT_FAILED
+
+**Phase**: Commit (phase 4)
+**Rollback**: Yes (partial changes rolled back)
+
+**Common Causes:**
+
+- Atomic rename failures
+- Permission errors
+- Disk full during commit
+- Filesystem locked/unavailable
+
+**Solutions:**
+
+1. **Check disk space:**
+
+   ```bash
+   df -h /vault
+   # Ensure adequate space
+   ```
+
+2. **Verify permissions:**
+
+   ```bash
+   ls -ld /vault/destination/folder/
+   # Should be writable
+
+   chmod 755 /vault/destination/folder/
+   ```
+
+3. **Check file locks:**
+
+   ```bash
+   # macOS
+   lsof | grep /vault/note.md
+
+   # Linux
+   fuser /vault/note.md
+   ```
+
+4. **Review WAL file if preserved:**
+
+   ```bash
+   cat ~/.config/mcp-lifeos/wal/*.wal.json | jq .
+   ```
+
+**Manual Recovery:**
+
+If rollback fails, see [WAL Recovery Guide](WAL-RECOVERY.md) for manual procedures.
+
+**Resolution**: Fix permissions/space, retry or manually recover
+
+---
+
+### TRANSACTION_ROLLBACK_FAILED
+
+**Phase**: Abort (rollback phase)
+**Rollback**: Partial or failed
+**Manual Recovery**: **REQUIRED**
+
+**Common Causes:**
+
+- Catastrophic filesystem failures
+- Permission changes during rollback
+- Disk full during recovery
+- Rollback logic errors
+
+**Critical Error - Manual Recovery Required**
+
+**Immediate Actions:**
+
+1. **Stop MCP server:**
+
+   ```bash
+   pkill -f "mcp-for-lifeos"
+   ```
+
+2. **Locate WAL file:**
+
+   ```bash
+   ls -lh ~/.config/mcp-lifeos/wal/*.wal.json
+   ```
+
+3. **Follow WAL Recovery Guide:**
+   - [WAL Recovery Guide](WAL-RECOVERY.md)
+   - Complete manual recovery procedures
+   - Validate vault consistency
+
+**Manual Recovery Steps (Summary):**
+
+1. Inspect WAL contents to understand transaction state
+2. Check vault for source/destination files
+3. Restore files based on WAL manifest
+4. Delete orphaned temp files (`.mcp-staged-*`)
+5. Delete WAL file after successful recovery
+6. Restart server
+
+**Example Recovery:**
+
+```bash
+# 1. Inspect WAL
+cat ~/.config/mcp-lifeos/wal/2024-11-02-rename-550e8400.wal.json | jq .
+
+# 2. Check file state
+ls -lh /vault/Projects/note.md     # Source
+ls -lh /vault/Archive/note.md      # Destination
+
+# 3. Restore if needed
+mv /vault/Archive/note.md /vault/Projects/note.md
+
+# 4. Clean up temps
+find /vault -name "*.mcp-staged-550e8400" -delete
+
+# 5. Delete WAL
+rm ~/.config/mcp-lifeos/wal/2024-11-02-rename-550e8400.wal.json
+
+# 6. Restart server
+npm start
+```
+
+**Resolution**: Manual recovery only - see [WAL Recovery Guide](WAL-RECOVERY.md)
+
+---
+
+### TRANSACTION_FAILED
+
+**Phase**: Handler-level (any phase)
+**Rollback**: Varies (depends on phase)
+
+**Common Causes:**
+
+- General transaction execution failures
+- Handler-level errors
+- Unexpected exceptions
+- Underlying error from specific phase
+
+**Solutions:**
+
+1. **Check error message for details:**
+
+   ```json
+   {
+     "success": false,
+     "error": "[TRANSACTION_FAILED] ...",
+     "correlationId": "550e8400-...",
+     "finalPhase": "validate",
+     "rollback": { ... }
+   }
+   ```
+
+2. **Identify underlying cause:**
+   - Review `finalPhase` field
+   - Check `rollback.failures` array
+   - Look for specific error details
+
+3. **Follow phase-specific guidance:**
+   - If `finalPhase: "plan"` → see TRANSACTION_PLAN_FAILED
+   - If `finalPhase: "prepare"` → see TRANSACTION_PREPARE_FAILED
+   - If `finalPhase: "validate"` → see TRANSACTION_VALIDATE_FAILED or TRANSACTION_STALE_CONTENT
+   - If `finalPhase: "commit"` → see TRANSACTION_COMMIT_FAILED
+
+4. **Check rollback status:**
+
+   ```json
+   "rollback": {
+     "success": true,
+     "rolledBack": [...],
+     "failures": []
+   }
+   ```
+
+   - If `rollback.success: true` → safe to retry
+   - If `rollback.success: false` → may need manual recovery
+
+**Resolution**: Address underlying cause and retry
+
+---
+
+### Common Transaction Error Scenarios
+
+#### Scenario 1: Concurrent File Modification
+
+**Symptom**: `TRANSACTION_STALE_CONTENT` error
+
+**Cause**: iCloud sync or manual edit during transaction
+
+**Solution**:
+
+```bash
+# 1. Disable iCloud sync temporarily
+# 2. Close file in Obsidian
+# 3. Retry rename operation
+```
+
+**Success Rate**: 90%+ on retry
+
+---
+
+#### Scenario 2: Orphaned WAL Files
+
+**Symptom**: WAL files accumulating in `~/.config/mcp-lifeos/wal/`
+
+**Cause**: Server crashes during transactions
+
+**Solution**:
+
+```bash
+# 1. Restart server (triggers boot recovery)
+npm start
+
+# 2. Check recovery logs for status
+# Should see ✅ or ⚠️ symbols
+
+# 3. Manual recovery if needed
+# See WAL Recovery Guide
+```
+
+---
+
+#### Scenario 3: Disk Full During Transaction
+
+**Symptom**: `TRANSACTION_PREPARE_FAILED` or `TRANSACTION_COMMIT_FAILED`
+
+**Cause**: Insufficient disk space
+
+**Solution**:
+
+```bash
+# 1. Check disk space
+df -h
+
+# 2. Free up space
+# Delete large files or move to external storage
+
+# 3. Clean up temp files
+find /vault -name "*.mcp-staged-*" -delete
+
+# 4. Retry operation
+```
+
+---
+
+### Transaction Error Prevention
+
+**Best Practices:**
+
+1. **Use dry-run mode for complex operations:**
+
+   ```json
+   { "dryRun": true }
+   ```
+
+2. **Pause sync services during bulk renames:**
+   - Disable iCloud sync
+   - Pause Dropbox
+   - Wait for operations to complete
+
+3. **Avoid concurrent edits:**
+   - Close files in Obsidian
+   - Don't manually edit during renames
+
+4. **Monitor WAL directory:**
+
+   ```bash
+   ls -lh ~/.config/mcp-lifeos/wal/
+   # Should be empty or minimal
+   ```
+
+5. **Ensure adequate disk space:**
+   - Keep >500MB free
+   - Monitor before bulk operations
+
+---
+
+### Transaction Error Recovery Workflows
+
+**Workflow 1: Simple Retry**
+
+```
+TRANSACTION_STALE_CONTENT
+  ↓
+Wait 5 seconds
+  ↓
+Retry operation
+  ↓
+Success ✅
+```
+
+**Workflow 2: Manual Recovery**
+
+```
+TRANSACTION_ROLLBACK_FAILED
+  ↓
+Stop server
+  ↓
+Inspect WAL file
+  ↓
+Manual file restoration
+  ↓
+Delete WAL
+  ↓
+Restart server
+```
 
 ---
 

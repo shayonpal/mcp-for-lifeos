@@ -1,7 +1,7 @@
 # Architecture Overview
 
-**Last Updated:** 2025-11-01 18:39
-**Version:** 2.0.1
+**Last Updated:** 2025-11-02
+**Version:** 2.1.0
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
 
@@ -95,33 +95,39 @@ Factory module for MCP request handling with registry-based tool dispatch. Intro
 Extracted handler implementations organized by functional responsibility. Introduced across MCP-96, MCP-97, MCP-98, and finalized in MCP-99 with complete switch statement removal.
 
 **Consolidated Handlers** (`consolidated-handlers.ts` - MCP-96):
+
 - `search` - Universal search with auto-routing (replaces 6 legacy search tools)
 - `create_note` - Smart note creation with template auto-detection
 - `list` - Universal listing with auto-type detection
 
 **Legacy Alias Handlers** (`legacy-alias-handlers.ts` - MCP-97, updated MCP-99):
+
 - 11 backward compatibility aliases for deprecated tool names
 - Parameter translation (contentType→query, pattern→query)
 - Deprecation warnings in responses
 - Mode guard removal (MCP-99): Legacy aliases now work in all tool modes including legacy-only
 
 **Note Handlers** (`note-handlers.ts` - MCP-98, MCP-105):
+
 - `read_note` - Read notes with formatted content and metadata
 - `edit_note` - Update note frontmatter and/or content (merge/replace modes)
 - `rename_note` - Rename note files with validation (Phase 1: basic rename without link updates)
 - `insert_content` - Insert content at specific locations (heading, blockRef, pattern, lineNumber)
 
 **Utility Handlers** (`utility-handlers.ts` - MCP-98):
+
 - `get_server_version` - Server information and capabilities
 - `get_daily_note` - Daily note handling with auto-creation and analytics tracking
 - `diagnose_vault` - Vault health diagnostics and YAML validation
 - `move_items` - Move notes/folders with various options
 
 **Metadata Handlers** (`metadata-handlers.ts` - MCP-98):
+
 - `get_yaml_rules` - YAML frontmatter rules document
 - `list_yaml_property_values` - Property value analysis with usage statistics
 
 **Design Patterns:**
+
 - Lazy initialization via `ensureHandlersInitialized()`
 - Chaining registration pattern: `registry => populate => return`
 - Hybrid dependency injection: Context for runtime state, imports for stateless utilities
@@ -198,6 +204,7 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 - PARA method folder structure enforcement
 
 **Atomic Operations** (MCP-114, 2025-11-01):
+
 - Opt-in atomic writes via `writeFileWithRetry({ atomic: true })`
 - Uses `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic `fs.renameSync()`
 - Full iCloud retry integration with existing retry logic
@@ -211,11 +218,13 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 Two-phase system for vault-wide wikilink updates after note rename operations.
 
 **`link-scanner.ts`** (MCP-106, Phase 2):
+
 - Vault-wide wikilink detection with regex-based scanning
 - Performance: <5000ms for 1000+ notes, <50ms per note
 - Supports all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
 
 **`link-updater.ts`** (MCP-107/MCP-116, Phase 3):
+
 - Three-mode operation: RENDER, COMMIT, DIRECT
 - **RENDER mode**: Read-only content map generation without writes (returns LinkRenderResult)
 - **COMMIT mode**: Atomic writes from pre-rendered content map (uses MCP-114 atomic operations)
@@ -226,6 +235,7 @@ Two-phase system for vault-wide wikilink updates after note rename operations.
 - Foundation for MCP-117 TransactionManager atomic rename transactions
 
 **Design Pattern:**
+
 - Separation of rendering phase (read + compute) from commit phase (write)
 - Enables validation before committing changes
 - Supports future rollback mechanisms via WAL integration
@@ -381,6 +391,67 @@ Automatic recovery mechanism that detects and rolls back incomplete transactions
 **Created:** 2025-11-02 (MCP-119) - 92 lines in src/index.ts
 **Test Coverage:** 15 integration tests in `tests/integration/boot-recovery.test.ts`
 **Status:** Operational with full test suite (674/679 passing, 99.3%)
+
+### Transaction System
+
+Comprehensive atomic transaction infrastructure for vault-modifying operations with full rollback capability, Write-Ahead Logging, and crash recovery. Ensures vault consistency through five-phase protocol guaranteeing all-or-nothing semantics.
+
+**Architecture Overview:**
+
+The transaction system provides atomic rename operations with vault-wide link updates through coordinated interaction between TransactionManager, WALManager, and Boot Recovery. All components work together to ensure vault consistency even in the face of crashes, power failures, or concurrent modifications.
+
+**Key Components:**
+
+1. **TransactionManager** (`src/transaction-manager.ts`) - Five-phase protocol orchestration
+2. **WALManager** (`src/wal-manager.ts`) - Transaction log persistence and recovery
+3. **Boot Recovery** (`src/index.ts`) - Automatic orphaned transaction cleanup
+4. **Link Infrastructure** (`src/link-scanner.ts`, `src/link-updater.ts`) - Vault-wide link updates
+
+**Five-Phase Protocol:**
+
+1. **PLAN**: Build operation manifest with SHA-256 hashes for staleness detection
+2. **PREPARE**: Stage files to temp locations, write WAL for crash recovery
+3. **VALIDATE**: Verify files unchanged via hash comparison (detects concurrent edits)
+4. **COMMIT**: Atomically promote staged files using POSIX rename semantics
+5. **SUCCESS/ABORT**: Cleanup temps and WAL, or trigger rollback on failure
+
+**Transaction Error Codes:**
+
+- `TRANSACTION_PLAN_FAILED` - Manifest building failures (phase 1)
+- `TRANSACTION_PREPARE_FAILED` - File staging or WAL write failures (phase 2)
+- `TRANSACTION_VALIDATE_FAILED` - Validation failures (phase 3)
+- `TRANSACTION_STALE_CONTENT` - Concurrent file modifications detected (phase 3)
+- `TRANSACTION_COMMIT_FAILED` - Atomic rename failures (phase 4)
+- `TRANSACTION_ROLLBACK_FAILED` - Rollback failures requiring manual recovery
+- `TRANSACTION_FAILED` - General handler-level transaction failures
+
+**Integration with rename_note:**
+
+The `rename_note` tool (MCP-118) delegates all rename operations to TransactionManager, ensuring atomic execution with automatic rollback. Breaking change from Phase 3: success responses no longer include warnings array - operations either fully succeed or fully fail.
+
+**Performance Characteristics:**
+
+- **Overhead**: 2-8x baseline (100-400ms vs 50ms for simple rename)
+- **Phase Timings**: Plan (5-10ms), Prepare (50-200ms), Validate (20-100ms), Commit (10-50ms/file), Cleanup (10-30ms)
+- **Scalability**: Tested up to 1000 affected files, recommended <100 for optimal performance
+- **WAL Size**: ~1KB metadata + ~100 bytes per affected file
+
+**Crash Recovery:**
+
+Boot recovery automatically scans WAL directory on server startup, identifies orphaned transactions (>1 minute old), and attempts rollback. Recovery failures preserve WAL files for manual intervention. Server startup continues regardless of recovery outcome (graceful degradation).
+
+**Related Documentation:**
+
+- **[Transaction System Guide](guides/TRANSACTION-SYSTEM.md)** - Complete architecture and error code reference
+- **[WAL Recovery Guide](guides/WAL-RECOVERY.md)** - Manual recovery procedures and troubleshooting
+- **[rename_note Tool](tools/rename_note.md)** - Tool documentation with transaction examples
+
+**Implementation Issues:**
+
+- MCP-108: Transaction infrastructure foundation
+- MCP-114 through MCP-119: Component implementations
+- MCP-122, MCP-123: Dry-run preview mode
+- MCP-124: Block reference support
 
 ### Analytics (`src/analytics/`)
 

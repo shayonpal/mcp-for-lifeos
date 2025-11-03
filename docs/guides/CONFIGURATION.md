@@ -12,6 +12,7 @@ Complete guide for configuring the LifeOS MCP server for your Obsidian vault.
 4. [File Naming Convention](#file-naming-convention)
 5. [Folder Structure](#folder-structure)
 6. [Environment Variables](#environment-variables)
+7. [Transaction System Configuration](#transaction-system-configuration)
 
 ---
 
@@ -148,22 +149,26 @@ TOOL_MODE=consolidated-with-aliases
 **Backward Compatibility:**
 
 The deprecated `CONSOLIDATED_TOOLS_ENABLED` flag is still supported for backward compatibility:
+
 - `CONSOLIDATED_TOOLS_ENABLED=false` maps to `TOOL_MODE=legacy-only`
 - Console warning logged when using deprecated flag
 - Scheduled for removal in Cycle 10
 
 **Tool Renaming:**
+
 - `create_note_smart` has been renamed to `create_note`
 - Smart functionality (template auto-detection) is now the default create_note behavior
 - Legacy `create_note_smart` alias available in consolidated-with-aliases mode
 
 **Default Mode Change:**
+
 - Previous default: `consolidated-with-aliases` (34 tools)
 - New default: `consolidated-only` (12 tools)
 - **Upgrade impact**: Users upgrading will see 12 tools instead of 34
 - **Restoration**: Set `TOOL_MODE=consolidated-with-aliases` to restore previous behavior
 
 **Validation:**
+
 - Invalid TOOL_MODE values fallback to `consolidated-only` with error log
 - Server logs tool count at startup for verification
 - All MCP responses include `toolMode` field in metadata
@@ -440,6 +445,176 @@ node dist\src\index.js
 1. **Environment variables** (highest priority)
 2. **config.ts** file
 3. **Default values** (lowest priority)
+
+---
+
+## Transaction System Configuration
+
+The transaction system (MCP-108) provides atomic rename operations with Write-Ahead Logging and automatic crash recovery. This section covers configuration options for the WAL directory and recovery behavior.
+
+### WAL Directory
+
+**Default Location:**
+
+```
+~/.config/mcp-lifeos/wal/
+```
+
+**Purpose:**
+
+- Stores Write-Ahead Log (WAL) entries for atomic transactions
+- External to vault (avoids iCloud/Dropbox sync conflicts)
+- XDG Base Directory specification compliant
+- Enables crash recovery and transaction rollback
+
+**Directory Structure:**
+
+```
+~/.config/mcp-lifeos/wal/
+├── README.md                                              # Auto-generated documentation
+├── 2024-11-02T10-30-15-123Z-rename-550e8400.wal.json     # WAL entry
+├── 2024-11-02T10-35-42-789Z-rename-7a3bc912.wal.json     # WAL entry
+└── .recovery.lock                                          # Boot recovery lock (temporary)
+```
+
+**Custom Location** (not currently supported):
+
+The WAL directory location is hardcoded to `~/.config/mcp-lifeos/wal/`. Future versions may support custom locations via environment variable.
+
+### Boot Recovery Settings
+
+Boot recovery automatically detects and recovers orphaned transactions on server startup.
+
+**Recovery Behavior:**
+
+- **Age Threshold**: 1 minute (WALs younger than 1 minute are skipped to avoid interfering with active transactions)
+- **Time Budget**: 5 seconds (recovery process enforces 5-second time budget to prevent startup delays)
+- **Graceful Degradation**: Server continues startup regardless of recovery outcome
+- **Lock File**: `.recovery.lock` prevents concurrent recovery attempts
+
+**Recovery Logging:**
+
+Server logs recovery results with status symbols:
+
+- ✅ **Success**: Transaction fully recovered, WAL deleted
+- ⚠️ **Partial**: Some operations succeeded, some failed, WAL preserved
+- ❌ **Failed**: Recovery failed completely, WAL preserved for manual intervention
+- ⏭️ **Skipped**: Lock conflict or WAL too recent (< 1 minute)
+
+**Example Boot Logs:**
+
+```
+Found 3 orphaned transaction(s), attempting recovery...
+✅ Recovered transaction 550e8400-e29b-41d4-a716-446655440000
+⚠️  Partial recovery for 7a3bc912-f456-78ab-cdef-123456789012 - manual intervention needed
+   WAL preserved: /Users/name/.config/mcp-lifeos/wal/2024-11-02-rename-7a3bc912.wal.json
+```
+
+### Performance Tuning
+
+**Transaction Overhead:**
+
+- **Expected**: 2-8x baseline (100-400ms vs 50ms for simple rename)
+- **Phase Timing**: Plan (5-10ms), Prepare (50-200ms), Validate (20-100ms), Commit (10-50ms/file), Cleanup (10-30ms)
+
+**Scalability Limits:**
+
+- **Maximum Affected Files**: ~1000 files before memory pressure
+- **Recommended**: <100 affected files per transaction for optimal performance
+- **WAL Size**: ~1KB metadata + ~100 bytes per affected file
+
+**Optimization Tips:**
+
+1. **Set `updateLinks: false`** for performance-critical renames (manual link cleanup):
+
+   ```json
+   {
+     "oldPath": "note.md",
+     "newPath": "renamed.md",
+     "updateLinks": false
+   }
+   ```
+
+2. **Use dry-run mode** to validate operations before execution:
+
+   ```json
+   {
+     "oldPath": "note.md",
+     "newPath": "renamed.md",
+     "dryRun": true
+   }
+   ```
+
+3. **Pause sync services** during bulk rename operations to prevent `TRANSACTION_STALE_CONTENT` errors
+
+### Maintenance
+
+**WAL Directory Cleanup:**
+
+WAL entries are automatically deleted after successful transactions. Orphaned WAL files indicate:
+
+1. **Server crash** during transaction (boot recovery will handle)
+2. **Recovery failure** (requires manual intervention)
+
+**Manual Cleanup** (if needed):
+
+```bash
+# Check for orphaned WALs (should be empty or minimal)
+ls -lh ~/.config/mcp-lifeos/wal/*.wal.json
+
+# Delete WAL after manual recovery verification
+rm ~/.config/mcp-lifeos/wal/2024-11-02-rename-550e8400.wal.json
+```
+
+**Monitoring:**
+
+```bash
+# Alert script for orphaned WALs (> 5 minutes old)
+find ~/.config/mcp-lifeos/wal/ -name "*.wal.json" -mmin +5 | while read wal; do
+  echo "ALERT: Orphaned WAL detected: $wal"
+done
+```
+
+**Backup Recommendations:**
+
+Include WAL directory in backups:
+
+- Primary: Vault directory (main data)
+- Secondary: `~/.config/mcp-lifeos/wal/` (transaction logs)
+- Exclude: `.mcp-staged-*` temp files (ephemeral)
+
+### Disk Space Requirements
+
+**Minimum Free Space:**
+
+- Keep >500MB free during rename operations
+- WAL entries are small (~1KB each) but temp files consume space
+- Temp files cleaned up automatically on success
+
+**Disk Full Handling:**
+
+Transactions fail gracefully with `TRANSACTION_PREPARE_FAILED` or `TRANSACTION_COMMIT_FAILED` errors. Automatic rollback restores vault state.
+
+### Related Configuration
+
+**Environment Variables** (future consideration):
+
+```bash
+# Not currently supported - for future reference
+# WAL_DIRECTORY=/custom/path/to/wal/
+# RECOVERY_TIME_BUDGET=5000  # milliseconds
+# RECOVERY_AGE_THRESHOLD=60  # seconds
+```
+
+**Dry-Run Configuration:**
+
+No configuration needed - controlled per-operation via `dryRun: true` parameter.
+
+### Related Documentation
+
+- **[Transaction System Guide](TRANSACTION-SYSTEM.md)** - Complete architecture and error codes
+- **[WAL Recovery Guide](WAL-RECOVERY.md)** - Manual recovery procedures
+- **[Troubleshooting Guide](TROUBLESHOOTING.md#transaction-errors)** - Transaction error troubleshooting
 
 ---
 

@@ -235,26 +235,87 @@ You must use **either** `item` **or** `items`, but not both:
 - **Empty Folders**: Source folders cleaned up after content transfer
 - **Partial Failures**: Detailed error reporting for failed merge operations
 
-## Link Preservation
+## Link Behavior
 
-### Internal Link Updates
-- **Obsidian [[wikilinks]]**: Automatically updated to new paths
-- **Relative References**: Adjusted for new file locations
-- **Block References**: Preserved during moves
-- **Backlink Integrity**: Maintains bidirectional link relationships
+**Important:** `move_items` does **NOT** automatically update wikilinks when moving files. Links pointing to moved files will break unless manually updated.
 
-### Link Processing
-- Uses Obsidian's standard link update mechanisms
-- Handles both file renames and folder moves
-- Preserves link aliases and display text
-- Updates both source and target references
+### What Happens to Links
 
-### Reference Types Supported
-- Standard `[[Note Name]]` wikilinks
-- `[[Note Name|Alias]]` links with aliases
-- `[[Note Name#Header]]` section links
-- `[[Note Name#^block-id]]` block references
-- Relative markdown links `[text](path.md)`
+When you move a note from `Projects/note.md` to `Archive/note.md`:
+
+- **Links pointing TO the moved note**: ❌ Break (become unresolved)
+- **Links WITHIN the moved note**: ✅ Preserved (content unchanged)
+- **File structure**: ✅ Maintained (folders and files move intact)
+
+### Example
+
+**Before move:**
+- `Projects/important-note.md` contains `[[reference]]`
+- `Daily/2024-11-01.md` contains `[[Projects/important-note]]`
+
+**After moving to Archive:**
+- `Archive/important-note.md` still contains `[[reference]]` ✅
+- `Daily/2024-11-01.md` still contains `[[Projects/important-note]]` ❌ (broken link)
+
+### Recommendation
+
+For moves that require link updates, use `rename_note` instead with `updateLinks: true`.
+
+## Comparison: move_items vs rename_note
+
+### Feature Comparison Table
+
+| Feature | move_items | rename_note |
+|---------|------------|-------------|
+| **Move files** | ✅ Yes | ✅ Yes (via newPath) |
+| **Move folders** | ✅ Yes | ❌ No (files only) |
+| **Batch operations** | ✅ Yes (via items array) | ❌ No (single file) |
+| **Rename files** | ❌ No (preserves filename) | ✅ Yes (always) |
+| **Update wikilinks** | ❌ No | ✅ Yes (with `updateLinks: true`) |
+| **Folder merging** | ✅ Yes (with `mergeFolders`) | ❌ N/A |
+| **Overwrite protection** | ✅ Yes (with `overwrite`) | ✅ Yes (automatic) |
+| **Transaction safety** | ❌ No | ✅ Yes (atomic with rollback) |
+| **Dry-run preview** | ❌ No | ✅ Yes (with `dryRun: true`) |
+| **Primary use case** | Folder reorganization | File renaming with link integrity |
+
+### When to Use move_items
+
+- Moving notes **without** renaming (keeping same filename)
+- Moving entire **folders** with contents
+- **Batch operations** (multiple files/folders at once)
+- Reorganizing vault structure (PARA method)
+- Links are not a concern or will be manually updated
+
+### When to Use rename_note
+
+- **Renaming** individual files
+- Need **automatic link updates** across vault
+- Require **transaction safety** (atomic operations with rollback)
+- Want **dry-run preview** before executing
+- Need **performance metrics** and correlation tracking
+
+### Migration Example
+
+**Scenario:** Move and rename with link updates
+
+**Wrong approach (move_items):**
+```json
+{
+  "item": "Projects/draft.md",
+  "destination": "Archive"
+}
+```
+**Result:** File moves but links break, no rename capability
+
+**Right approach (rename_note):**
+```json
+{
+  "oldPath": "Projects/draft.md",
+  "newPath": "Archive/final-draft.md",
+  "updateLinks": true
+}
+```
+**Result:** File moved, renamed, all wikilinks updated atomically
 
 ## PARA Method Organization
 
