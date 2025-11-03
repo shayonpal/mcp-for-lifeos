@@ -13,6 +13,10 @@
     "test": "jest",
     "test:integration": "jest tests/integration",
     "test:unit": "jest tests/unit",
+    "test:workflows": "jest tests/integration/workflows",
+    "test:regression": "jest tests/integration/regression",
+    "test:edge-cases": "jest tests/integration/edge-cases",
+    "test:vault-config": "jest tests/integration/vault-configurations.test.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "smoke:stdio": "node scripts/smoke-stdio.mjs"
