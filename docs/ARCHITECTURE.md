@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last Updated:** 2025-11-02
+**Last Updated:** 2025-11-03
 **Version:** 2.1.0
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
