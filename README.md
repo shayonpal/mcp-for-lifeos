@@ -64,6 +64,17 @@ npm run build
 
 **📖 For detailed deployment instructions, see [Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)**
 
+## Platform Support
+
+**Supported Platforms:**
+- ✅ **macOS** (primary development platform)
+- ✅ **Linux** (tested on Ubuntu 18.04+)
+- ⚠️ **Windows**: Use WSL2 (Windows Subsystem for Linux)
+
+**Note**: Native Windows (cmd.exe/PowerShell) is not supported. Windows users should use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) for full compatibility.
+
+See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support decision rationale.
+
 ## Configuration
 
 1. Copy `src/config.example.ts` to `src/config.ts`

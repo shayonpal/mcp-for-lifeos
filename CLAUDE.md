@@ -74,6 +74,15 @@ markdownlint-cli2 <file>          # Check without fixing
 
 **Deployment:** See [docs/guides/DEPLOYMENT-GUIDE.md](docs/guides/DEPLOYMENT-GUIDE.md)
 
+## Platform Support
+
+**Supported Platforms:**
+- ✅ **macOS** (primary development and testing platform)
+- ✅ **Linux** (Ubuntu 18.04+, other distros)
+- ⚠️ **Windows**: WSL2 only (native Windows not supported)
+
+See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support rationale.
+
 ## Key File Locations
 
 **Core:**
