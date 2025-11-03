@@ -9,6 +9,8 @@ import type { EditNoteInput, InsertContentInput } from '../../types.js';
 import type { RenameNoteInput, RenameNoteOutput, RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
+import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
+import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
 import { VaultUtils } from '../../vault-utils.js';
 import { ObsidianLinks } from '../../obsidian-links.js';
 import { normalizePath } from '../../path-utils.js';
@@ -214,6 +216,7 @@ async function previewRenameOperation(
   try {
     // Import filesystem utilities for validation
     const { existsSync } = await import('fs');
+    const { basename } = await import('path');
 
     // Validate destination doesn't already exist (same check as actual execution)
     if (existsSync(newPath)) {
@@ -234,16 +237,95 @@ async function previewRenameOperation(
     // Use plan() for validation - same logic as execution but no filesystem changes
     const manifest = await txManager.plan(oldPath, newPath, updateLinks);
 
-    // Build preview response from manifest
-    const preview = {
+    // Base preview object from MCP-122
+    let filesAffected = 1; // Note rename only
+    let linkUpdates: LinkUpdatePreview | undefined = undefined;
+
+    // Scan for links if updateLinks is enabled (MCP-123 enhancement)
+    if (updateLinks) {
+      const { LinkScanner } = await import('../../link-scanner.js');
+      
+      // Extract note name from oldPath (without .md extension)
+      const oldNoteName = basename(oldPath, '.md');
+      
+      // Scan vault for links to this note
+      const scanResult = await LinkScanner.scanVaultForLinks(oldNoteName);
+      
+      // Group references by source path to get affected file list
+      const affectedPathsSet = new Set<string>();
+      scanResult.references.forEach(ref => {
+        affectedPathsSet.add(ref.sourcePath);
+      });
+      const affectedPaths = Array.from(affectedPathsSet).sort();
+      
+      // Build link update preview (MCP-123 contract)
+      linkUpdates = {
+        filesWithLinks: affectedPaths.length,
+        affectedPaths,
+        totalReferences: scanResult.totalReferences
+      };
+      
+      // Update files affected count: note rename + files with links
+      filesAffected = 1 + affectedPaths.length;
+    }
+
+    // Transaction phases (MCP-123 enhancement)
+    const transactionPhases: TransactionPhaseDescription[] = [
+      {
+        name: 'plan' as const,
+        description: 'Validate paths and detect conflicts',
+        order: 1
+      },
+      {
+        name: 'prepare' as const,
+        description: 'Stage files for atomic rename',
+        order: 2
+      },
+      {
+        name: 'validate' as const,
+        description: 'Check for concurrent modifications',
+        order: 3
+      },
+      {
+        name: 'commit' as const,
+        description: updateLinks && linkUpdates
+          ? `Execute rename and update ${linkUpdates.totalReferences} link(s) in ${linkUpdates.filesWithLinks} file(s)`
+          : 'Execute rename',
+        order: 4
+      },
+      {
+        name: 'success' as const,
+        description: 'Remove staging files and finalize',
+        order: 5
+      }
+    ];
+
+    // Time estimation (MCP-123 enhancement)
+    // Uses constants from contract file to ensure single source of truth
+    const linkUpdateCount = updateLinks && linkUpdates ? linkUpdates.filesWithLinks : 0;
+    const baseTime = TIME_ESTIMATION.BASE_RENAME_TIME +
+      (linkUpdateCount * TIME_ESTIMATION.TIME_PER_LINK_FILE) +
+      TIME_ESTIMATION.TRANSACTION_OVERHEAD;
+
+    const estimatedTime = {
+      min: Math.round(baseTime * (1 - TIME_ESTIMATION.VARIATION_FACTOR)),
+      max: Math.round(baseTime * (1 + TIME_ESTIMATION.VARIATION_FACTOR))
+    };
+
+    // Build enhanced preview response (MCP-123 contract)
+    const preview: EnhancedRenamePreviewOutput = {
       success: true,
       preview: {
         operation: 'rename' as const,
         oldPath,
         newPath,
         willUpdateLinks: updateLinks,
-        filesAffected: manifest.totalOperations, // Note rename + link updates
-        executionMode: 'dry-run' as const
+        filesAffected,
+        executionMode: 'dry-run' as const,
+        transactionPhases,
+        estimatedTime,
+        // Include linkUpdates only if updateLinks is true (optional field)
+        ...(updateLinks && linkUpdates ? { linkUpdates } : {})
       }
     };
 
@@ -252,7 +334,7 @@ async function previewRenameOperation(
     }, context.registryConfig) as CallToolResult;
 
   } catch (error) {
-    // Validation errors from plan() - same error handling as actual execution
+    // Validation errors from plan() or link scanning - same error handling as actual execution
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     // Determine error code from plan() failure

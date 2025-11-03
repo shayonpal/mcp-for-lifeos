@@ -76,6 +76,26 @@ This guide describes the specialized agents available for the MCP for LifeOS pro
 
 **Note**: git-expert ensures proper MCP deployment practices and Linear integration during all git operations.
 
+### agent-Plan
+
+**Purpose**: Code exploration and architectural analysis using Serena MCP
+
+**Use when**:
+
+- Exploring unfamiliar code areas
+- Understanding complex architectural patterns
+- Analyzing codebase structure
+- Finding implementation patterns before coding
+- Investigating technical feasibility
+
+**Examples**:
+
+- "Explore the tool router architecture"
+- "Analyze the search engine implementation patterns"
+- "Find all template processing code"
+
+**Note**: agent-Plan uses Serena MCP for efficient code exploration and should be preferred over manual code searching.
+
 ## Priority Order
 
 When multiple agents could handle a task, use this priority:
@@ -84,6 +104,7 @@ When multiple agents could handle a task, use this priority:
 2. **doc-search** - Internal MCP documentation and patterns
 3. **linear-expert** - Project management and issue tracking
 4. **git-expert** - Git operations and deployment compliance
+5. **agent-Plan** - Code exploration and architectural analysis
 
 ## Serena MCP Integration
 
@@ -111,7 +132,7 @@ When multiple agents could handle a task, use this priority:
 
 - **Research**: web-researcher, doc-search
 - **Execution**: git-expert, linear-expert
-- **Code analysis**: Serena MCP
+- **Code analysis**: agent-Plan, Serena MCP
 
 **Provide clear context**:
 
@@ -126,14 +147,16 @@ When multiple agents could handle a task, use this priority:
 
 1. **Research**: web-researcher finds best practices and documentation
 2. **Code Patterns**: doc-search locates similar implementations
-3. **Implementation**: Use Serena MCP for code navigation and analysis
-4. **Issue Tracking**: linear-expert updates issue status
-5. **Deployment**: git-expert commits and creates PR
+3. **Code Exploration**: agent-Plan explores architecture and patterns
+4. **Implementation**: Use Serena MCP for code navigation and analysis
+5. **Issue Tracking**: linear-expert updates issue status
+6. **Deployment**: git-expert commits and creates PR
 
 ### Bug Fix Workflow
 
 1. **Analysis**: doc-search finds similar code patterns and existing fixes
-2. **Research**: web-researcher investigates external solutions if needed
-3. **Implementation**: Serena MCP for precise code changes
-4. **Issue Updates**: linear-expert tracks progress
-5. **Deployment**: git-expert commits with Linear reference
+2. **Code Exploration**: agent-Plan analyzes affected code areas
+3. **Research**: web-researcher investigates external solutions if needed
+4. **Implementation**: Serena MCP for precise code changes
+5. **Issue Updates**: linear-expert tracks progress
+6. **Deployment**: git-expert commits with Linear reference

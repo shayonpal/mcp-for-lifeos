@@ -433,4 +433,116 @@ describe('Rename Note Integration (Handler)', () => {
       }
     });
   });
+
+  describe('Enhanced dry-run preview (MCP-123)', () => {
+    it('should include linkUpdates structure when updateLinks=true and links exist', async () => {
+      // Create target note
+      const targetPath = path.join(testDir, 'target-note.md');
+      await fs.writeFile(targetPath, '---\ntitle: Target Note\n---\n\nContent here.');
+
+      // Create linking notes (notes that reference the target)
+      const linking1Path = path.join(testDir, 'linking-note-1.md');
+      await fs.writeFile(linking1Path, '---\ntitle: Linking Note 1\n---\n\nThis links to [[target-note]].');
+
+      const linking2Path = path.join(testDir, 'linking-note-2.md');
+      await fs.writeFile(linking2Path, '---\ntitle: Linking Note 2\n---\n\nAnother link to [[target-note]] and [[target-note|with alias]].');
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Call handler with dryRun=true and updateLinks=true
+      const result = await renameNoteHandler(
+        {
+          oldPath: targetPath,
+          newPath: path.join(testDir, 'renamed-target.md'),
+          dryRun: true,
+          updateLinks: true
+        },
+        context
+      );
+
+      // Parse JSON response
+      const output = JSON.parse(result.content[0].text);
+
+      // Verify preview structure
+      expect(output.success).toBe(true);
+      expect(output.preview).toBeDefined();
+
+      // Verify linkUpdates structure (MCP-123)
+      expect(output.preview.linkUpdates).toBeDefined();
+      expect(output.preview.linkUpdates.filesWithLinks).toBe(2); // 2 files contain links
+      expect(output.preview.linkUpdates.affectedPaths).toBeDefined();
+      expect(Array.isArray(output.preview.linkUpdates.affectedPaths)).toBe(true);
+      expect(output.preview.linkUpdates.affectedPaths).toHaveLength(2);
+      expect(output.preview.linkUpdates.totalReferences).toBe(3); // 3 total link references
+
+      // Verify affectedPaths contains the linking note paths
+      expect(output.preview.linkUpdates.affectedPaths).toContain(linking1Path);
+      expect(output.preview.linkUpdates.affectedPaths).toContain(linking2Path);
+
+      // Verify filesAffected calculation: 1 (renamed note) + 2 (files with links) = 3
+      expect(output.preview.filesAffected).toBe(3);
+    });
+
+    it('should include transactionPhases array in preview response', async () => {
+      // Create test note
+      const sourcePath = path.join(testDir, 'original.md');
+      await fs.writeFile(sourcePath, '---\ntitle: Original Note\n---\n\nContent here.');
+
+      const context: ToolHandlerContext = {
+        registryConfig: { serverVersion: '2.0.1', toolMode: 'consolidated-only' },
+        analytics: { logToolCall: () => Promise.resolve() } as any
+      };
+
+      // Call handler with dryRun=true
+      const result = await renameNoteHandler(
+        {
+          oldPath: sourcePath,
+          newPath: path.join(testDir, 'renamed.md'),
+          dryRun: true,
+          updateLinks: false
+        },
+        context
+      );
+
+      // Parse JSON response
+      const output = JSON.parse(result.content[0].text);
+
+      // Verify preview structure
+      expect(output.success).toBe(true);
+      expect(output.preview).toBeDefined();
+
+      // Verify transactionPhases structure (MCP-123)
+      expect(output.preview.transactionPhases).toBeDefined();
+      expect(Array.isArray(output.preview.transactionPhases)).toBe(true);
+      expect(output.preview.transactionPhases).toHaveLength(5);
+
+      // Verify each phase has required fields
+      const phaseNames = ['plan', 'prepare', 'validate', 'commit', 'success'];
+      output.preview.transactionPhases.forEach((phase: any, index: number) => {
+        expect(phase.name).toBe(phaseNames[index]);
+        expect(phase.description).toBeDefined();
+        expect(typeof phase.description).toBe('string');
+        expect(phase.description.length).toBeGreaterThan(0);
+        expect(phase.order).toBe(index + 1);
+      });
+
+      // Verify specific phase descriptions
+      expect(output.preview.transactionPhases[0].description).toContain('Validate paths');
+      expect(output.preview.transactionPhases[1].description).toContain('Stage files');
+      expect(output.preview.transactionPhases[2].description).toContain('concurrent modifications');
+      expect(output.preview.transactionPhases[3].description).toContain('Execute rename');
+      expect(output.preview.transactionPhases[4].description).toContain('staging files');
+
+      // Verify estimatedTime structure (bonus validation)
+      expect(output.preview.estimatedTime).toBeDefined();
+      expect(output.preview.estimatedTime.min).toBeDefined();
+      expect(output.preview.estimatedTime.max).toBeDefined();
+      expect(typeof output.preview.estimatedTime.min).toBe('number');
+      expect(typeof output.preview.estimatedTime.max).toBe('number');
+      expect(output.preview.estimatedTime.max).toBeGreaterThan(output.preview.estimatedTime.min);
+    });
+  });
 });

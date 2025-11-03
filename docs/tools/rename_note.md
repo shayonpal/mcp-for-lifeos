@@ -6,8 +6,8 @@
 - **Purpose**: Atomic note rename with transaction safety, automatic wikilink updates, and dry-run preview
 - **Status**: ✅ Active (Phase 5: Complete with dry-run mode)
 - **Created**: 2025-10-31
-- **Last Updated**: 2025-11-02 14:20
-- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4), MCP-122 (Phase 5)
+- **Last Updated**: 2025-11-02 16:24
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4), MCP-122 (Phase 5), MCP-123 (Phase 5 Enhancement)
 
 ## TL;DR
 
@@ -29,6 +29,7 @@ Rename notes atomically with full transaction safety, automatic rollback on fail
 ### ✅ Phase 4 Complete (MCP-118, 2025-11-01)
 
 **BREAKING CHANGE**: Transaction-based atomic rename operations:
+
 - **TransactionManager Integration** (`src/transaction-manager.ts`): Five-phase atomic protocol with full rollback
 - **Write-Ahead Logging** (`src/wal-manager.ts`): WAL persistence for crash recovery at `~/.config/mcp-lifeos/wal/`
 - **All-or-Nothing Semantics**: Operations fully succeed or fully fail - no partial states
@@ -41,6 +42,7 @@ Rename notes atomically with full transaction safety, automatic rollback on fail
 ### ✅ Phase 3 Complete (MCP-107, 2025-10-31)
 
 Automatic link updates integrated with transactions:
+
 - **Link Updater Module** (`src/link-updater.ts`): Two-phase commit protocol (render + commit modes)
 - **Link Rewriting**: Preserves all wikilink formats (basic, alias, heading, embed)
 - **Atomic Link Updates**: Integrated into transaction commit phase
@@ -50,6 +52,7 @@ Automatic link updates integrated with transactions:
 ### ✅ Phase 2 Complete (MCP-106, 2025-10-31)
 
 Internal link detection infrastructure:
+
 - **LinkScanner Module** (`src/link-scanner.ts`): Vault-wide wikilink detection with regex-based approach
 - **Performance**: <5000ms for 1000+ notes, <50ms per note
 - **Supported Formats**: All Obsidian wikilink formats (basic, alias, heading, block reference, embed)
@@ -57,6 +60,7 @@ Internal link detection infrastructure:
 ### ✅ Current Status
 
 All planned features now implemented:
+
 - **Dry-Run Mode** (Phase 5 - MCP-122): Preview changes before executing (Complete)
 
 ## Parameters
@@ -149,6 +153,7 @@ The tool provides structured error responses with specific error codes and actio
 ```
 
 **Common Causes**:
+
 - Typo in filename or path
 - File was already moved or deleted
 - Incorrect vault root assumption
@@ -169,6 +174,7 @@ The tool provides structured error responses with specific error codes and actio
 ```
 
 **Common Causes**:
+
 - Target filename already in use
 - Previous rename attempt completed successfully
 - Duplicate file in destination folder
@@ -189,6 +195,7 @@ The tool provides structured error responses with specific error codes and actio
 ```
 
 **Common Causes**:
+
 - Obsidian-restricted characters in filename (`:`, `|`, `\\`, `/`, `<`, `>`, `*`, `?`, `"`)
 - Missing `.md` extension
 - Invalid path structure
@@ -209,6 +216,7 @@ The tool provides structured error responses with specific error codes and actio
 ```
 
 **Common Causes**:
+
 - File locked by another application
 - iCloud sync in progress
 - Insufficient filesystem permissions
@@ -230,6 +238,7 @@ The tool provides structured error responses with specific error codes and actio
 ```
 
 **Common Causes**:
+
 - Filesystem-level issues
 - Disk space exhaustion
 - Corrupted file metadata
@@ -249,6 +258,7 @@ The tool provides structured error responses with specific error codes and actio
 - **TRANSACTION_FAILED**: General transaction failure
 
 **Example Response**:
+
 ```json
 {
   "success": false,
@@ -338,13 +348,15 @@ This single-line enhancement enables rename functionality while maintaining back
 
 ## Comparison with move_items
 
-### Use rename_note when:
+### Use rename_note when
+
 - Renaming a single note file
 - Need structured error handling with specific error codes
 - Want consistent rename semantics (always operates on individual files)
 - Planning to use link updates in future phases
 
-### Use move_items when:
+### Use move_items when
+
 - Moving notes without renaming (keep same filename)
 - Batch operations (moving multiple notes)
 - Moving entire folders
@@ -377,6 +389,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -398,6 +411,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -419,6 +433,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response**:
+
 ```json
 {
   "success": false,
@@ -440,6 +455,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response**:
+
 ```json
 {
   "success": false,
@@ -462,6 +478,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response** (Transaction succeeded):
+
 ```json
 {
   "success": true,
@@ -495,6 +512,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Response** (Preview without execution):
+
 ```json
 {
   "success": true,
@@ -510,6 +528,7 @@ This single-line enhancement enables rename functionality while maintaining back
 ```
 
 **Key Features**:
+
 - No filesystem changes occur
 - All validation still performed (FILE_NOT_FOUND, FILE_EXISTS, etc.)
 - Returns preview showing what would happen
@@ -517,6 +536,7 @@ This single-line enhancement enables rename functionality while maintaining back
 - When ready, run same command with `dryRun: false` to execute
 
 **Error Example** (File not found during dry-run):
+
 ```json
 {
   "success": false,
@@ -524,6 +544,102 @@ This single-line enhancement enables rename functionality while maintaining back
   "errorCode": "FILE_NOT_FOUND"
 }
 ```
+
+### Example 7: Enhanced Dry-Run Preview (Phase 5 Enhancement - MCP-123)
+
+**Scenario**: Preview rename with detailed link scanning, transaction phases, and time estimates
+
+```json
+{
+  "oldPath": "Projects/important-note.md",
+  "newPath": "Archive/2024-important-note.md",
+  "dryRun": true,
+  "updateLinks": true
+}
+```
+
+**Response** (Enhanced preview with link details):
+
+```json
+{
+  "success": true,
+  "preview": {
+    "operation": "rename",
+    "oldPath": "Projects/important-note.md",
+    "newPath": "Archive/2024-important-note.md",
+    "willUpdateLinks": true,
+    "filesAffected": 4,
+    "executionMode": "dry-run",
+    "linkUpdates": {
+      "filesWithLinks": 3,
+      "affectedPaths": [
+        "Projects/related-note.md",
+        "Projects/meeting-notes.md",
+        "Archive/old-project.md"
+      ],
+      "totalReferences": 7
+    },
+    "transactionPhases": [
+      {
+        "phase": "plan",
+        "description": "Validate paths and detect conflicts"
+      },
+      {
+        "phase": "prepare",
+        "description": "Stage files for atomic rename"
+      },
+      {
+        "phase": "validate",
+        "description": "Check for concurrent modifications"
+      },
+      {
+        "phase": "commit",
+        "description": "Execute rename and update 3 files"
+      },
+      {
+        "phase": "success",
+        "description": "Remove staging files and finalize"
+      }
+    ],
+    "estimatedTime": {
+      "min": 70,
+      "max": 210
+    }
+  }
+}
+```
+
+**Key Enhanced Features** (MCP-123):
+
+- **Link Scanning**: `linkUpdates` field shows exactly which files contain references (3 files, 7 total references)
+- **Transaction Insight**: `transactionPhases` array details the 5-phase atomic protocol with dynamic commit description
+- **Time Estimation**: `estimatedTime` provides execution range (70-210ms) based on link count
+- **Accurate File Count**: `filesAffected` now includes linking files (1 renamed + 3 linking = 4 total)
+- **Same Validation**: All FILE_NOT_FOUND, FILE_EXISTS checks still occur
+- **Safe Preview**: No filesystem changes, can run multiple times
+
+**When `updateLinks: false`**:
+
+```json
+{
+  "success": true,
+  "preview": {
+    "operation": "rename",
+    "oldPath": "Projects/important-note.md",
+    "newPath": "Archive/2024-important-note.md",
+    "willUpdateLinks": false,
+    "filesAffected": 1,
+    "executionMode": "dry-run",
+    "transactionPhases": [...],
+    "estimatedTime": {
+      "min": 40,
+      "max": 120
+    }
+  }
+}
+```
+
+**Note**: `linkUpdates` field only appears when `updateLinks: true`. Time estimates are faster without link updates.
 
 ## Best Practices
 
@@ -570,12 +686,14 @@ With atomic link updates:
 ### Typical Workflows
 
 **Workflow 1: Archive Completed Project (Phase 4)**
+
 1. `read_note` - Review project note content
 2. `rename_note` with `updateLinks: true` - Move to Archive with dated name, atomic link updates
 3. Verify `success: true` - all operations completed or rolled back
 4. Optional: `search` - Confirm all links updated if desired
 
 **Workflow 2: Organize Inbox (Phase 4)**
+
 1. `list` - View inbox contents
 2. `rename_note` with `updateLinks: true` - Rename and categorize notes atomically
 3. Check response for `success: true` or transaction error code
@@ -586,11 +704,13 @@ With atomic link updates:
 ### Issue: "File not found" but I can see it in Obsidian
 
 **Possible Causes**:
+
 - Path case sensitivity (Linux/macOS)
 - Obsidian showing cached file list
 - File in different vault than configured
 
 **Solutions**:
+
 - Use `list` tool to get exact path
 - Check vault root configuration
 - Verify file exists on filesystem
@@ -598,11 +718,13 @@ With atomic link updates:
 ### Issue: "Permission denied" errors
 
 **Possible Causes**:
+
 - iCloud sync in progress
 - File open in Obsidian or another app
 - Filesystem permissions
 
 **Solutions**:
+
 - Wait 30 seconds for iCloud sync
 - Close file in all applications
 - Check file permissions with `ls -la`
@@ -610,10 +732,12 @@ With atomic link updates:
 ### Issue: Links broken after rename
 
 **Phase 3 Behavior**:
+
 - Links ARE automatically updated when `updateLinks: true`
 - If `updateLinks: false` (default), links are NOT updated
 
 **Troubleshooting**:
+
 - Check if `updateLinks: true` was provided in request
 - Verify transaction succeeded (no `TRANSACTION_FAILED` error)
 - All operations are atomic with automatic rollback on failure
@@ -622,10 +746,12 @@ With atomic link updates:
 ### Issue: Cannot rename to existing filename
 
 **Expected Behavior**:
+
 - Tool prevents overwriting existing files
 - Returns FILE_EXISTS error
 
 **Solutions**:
+
 - Choose different target filename
 - Manually delete or rename existing file first
 - Use `read_note` to compare files before deciding
@@ -633,16 +759,19 @@ With atomic link updates:
 ## Performance Considerations
 
 ### Single File Operations
+
 - Rename operation: < 50ms for typical note
 - Path normalization: < 5ms
 - Filesystem checks: < 10ms
 
 ### Best Practices
+
 - Rename files during low vault activity
 - Avoid renaming while Obsidian is indexing
 - Wait for iCloud/sync to complete before renaming
 
 ### Scaling Limitations
+
 - Tool operates on single files only
 - For bulk renames, call tool multiple times
 - Consider performance impact of manual link updates (Phase 1)
@@ -650,6 +779,7 @@ With atomic link updates:
 ## Future Phases
 
 ### ✅ Phase 3: Link Updates (MCP-107) - Complete
+
 - ✅ Automatically update wikilinks after rename
 - ✅ Handle all wikilink formats: `[[note]]`, `[[note|alias]]`, `[[note#heading]]`, `![[note]]`
 - ✅ Preserve link aliases, headings, and embeds during updates
@@ -657,11 +787,13 @@ With atomic link updates:
 - ✅ Graceful failure handling with partial success reporting
 
 ### ✅ Phase 2: Link Detection (MCP-106) - Complete
+
 - ✅ Detect wikilinks pointing to renamed note
 - ✅ Vault-wide link scanning with regex-based approach
 - ✅ Comprehensive wikilink format support
 
 ### ✅ Phase 4: Atomic Operations & Rollback (MCP-118) - Complete
+
 - ✅ Transaction safety for rename + link update operations
 - ✅ Automatic rollback mechanism on any failure
 - ✅ Atomic vault state management with five-phase protocol
@@ -670,6 +802,7 @@ With atomic link updates:
 - ✅ SHA-256 staleness detection
 
 ### ✅ Phase 5: Dry-Run Mode (MCP-122) - Complete
+
 - ✅ Preview rename operation without executing
 - ✅ Show what would change (paths, filesAffected count)
 - ✅ Validate paths without filesystem changes
@@ -677,7 +810,23 @@ With atomic link updates:
 
 ## Version History
 
+### Phase 5 Enhancement - v1.4.1 (2025-11-02)
+
+- **Enhanced Dry-Run Preview** (MCP-123)
+- Extended preview with link scanning, transaction phases, and time estimates
+- Added `linkUpdates` field with filesWithLinks, affectedPaths, totalReferences when updateLinks enabled
+- Added `transactionPhases` field showing 5-phase atomic protocol with dynamic commit description
+- Added `estimatedTime` field with min/max execution range based on link count
+- Updated `filesAffected` to include linking files: 1 (renamed) + affectedPaths.length
+- Reuses LinkScanner (MCP-107), TransactionManager (MCP-118), SearchEngine cache
+- Backward compatible with MCP-122: additive changes only
+- Performance: <5s link scanning for 1000-note vaults, 40-135ms preview generation
+- 2 additional integration tests validating enhanced preview structure
+- Contract-driven development via TypeScript interfaces
+- Enhancement-first strategy: no new code paths
+
 ### Phase 5 - v1.4.0 (2025-11-02)
+
 - **Dry-Run Mode Implementation** (MCP-122)
 - Preview rename operations without executing filesystem changes
 - Full path validation (FILE_NOT_FOUND, FILE_EXISTS, etc.) in preview mode
@@ -688,6 +837,7 @@ With atomic link updates:
 - All planned features now complete
 
 ### Phase 4 - v1.3.0 (2025-11-02)
+
 - **BREAKING CHANGE**: Transaction-based atomic operations (MCP-118)
 - Five-phase transaction protocol (plan, prepare, validate, commit, cleanup)
 - Automatic rollback on any failure preventing partial vault states
@@ -700,6 +850,7 @@ With atomic link updates:
 - All-or-nothing semantics: operations fully succeed or fully fail
 
 ### Phase 3 - v1.2.0 (2025-10-31)
+
 - Link update implementation (MCP-107)
 - Created link-updater module for vault-wide link updates
 - Automatic wikilink updates via `updateLinks: true` parameter
@@ -710,6 +861,7 @@ With atomic link updates:
 - Note: Phase 4 added automatic rollback mechanism for all operations
 
 ### Phase 2 - v1.1.0 (2025-10-31)
+
 - Link detection infrastructure (MCP-106)
 - Created LinkScanner module for vault-wide wikilink scanning
 - Regex-based approach with comprehensive format support
@@ -718,6 +870,7 @@ With atomic link updates:
 - Internal infrastructure only - no user-facing changes yet
 
 ### Phase 1 - v1.0.0 (2025-10-31)
+
 - Initial implementation (MCP-105)
 - Basic file rename functionality
 - Comprehensive error handling with 5 error codes
@@ -726,26 +879,31 @@ With atomic link updates:
 - 18 tests (10 unit, 8 integration) with 100% pass rate
 
 ### Future Releases
+
 - All planned features complete
 
 ## Testing
 
 ### Unit Tests
+
 - Location: `tests/unit/rename-note.test.ts`
 - Coverage: 10 tests covering basic functionality and error cases
 - Test categories: Basic rename, error handling, edge cases
 
 ### Integration Tests
+
 - Location: `tests/integration/rename-note.integration.test.ts`
 - Coverage: 8 tests covering end-to-end scenarios
 - Test categories: Successful operations, error handling, path normalization
 
 ### Manual Testing
+
 - Verified in Claude Desktop live environment
 - Tested all error codes with real filesystem
 - Confirmed forward-compatible parameter handling
 
 ### Test Status
+
 - Unit: 10/10 passing (100%)
 - Integration: 8/8 passing (100%)
 - Overall suite: 475/475 passing (100%)
@@ -753,11 +911,13 @@ With atomic link updates:
 ## Support
 
 ### Questions or Issues
+
 - Check Linear issues MCP-105 (Phase 1) and MCP-106 (Phase 2) for implementation details
 - Review error codes and suggestions in error responses
 - Use `diagnose_vault` for vault-level issues
 
 ### Reporting Problems
+
 - Include oldPath and newPath in report
 - Note error code and error message
 - Describe expected vs actual behavior
