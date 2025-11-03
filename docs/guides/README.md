@@ -48,9 +48,9 @@ The LifeOS MCP Server supports multiple client integrations through the Model Co
 
 | Client | Primary Use Case | Setup Complexity | Platform |
 |--------|------------------|------------------|----------|
-| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Windows |
+| **Claude Desktop** | General AI assistance with vault access | Medium | macOS, Linux |
 | **Raycast** | Quick vault operations and AI commands | Low | macOS |
-| **Cursor IDE** | Development workflow with knowledge integration | Medium | Cross-platform |
+| **Cursor IDE** | Development workflow with knowledge integration | Medium | macOS, Linux |
 
 ## 🔧 Common Setup Requirements
 
