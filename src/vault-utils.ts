@@ -586,8 +586,8 @@ export class VaultUtils {
    * Only updates links where target matches oldNoteName (case-insensitive).
    * Preserves all link components (alias, heading, block ref, embed flag).
    *
-   * Updates links in content section only. Frontmatter is preserved but not modified.
-   * (Frontmatter link updates deferred to MCP-110)
+   * Updates links in both frontmatter and content sections (MCP-110).
+   * Uses simple string replacement on full content to preserve YAML structure.
    *
    * @param content - Full note content (including frontmatter)
    * @param oldNoteName - Original note name to match (without .md)
@@ -611,11 +611,9 @@ export class VaultUtils {
     const oldNameNormalized = stripMdExtension(oldNoteName).toLowerCase();
     const newNameNormalized = stripMdExtension(newNoteName);
 
-    // Use gray-matter to preserve frontmatter structure (read-only)
-    const { data: frontmatter, content: noteContent } = matter(content);
-
-    // Update links in content section only (frontmatter updates deferred to MCP-110)
-    const updatedContent = noteContent.replace(
+    // MCP-110: Update wikilinks in both frontmatter and content
+    // Use simple string replacement on full content (preserves YAML structure)
+    const updatedFullContent = content.replace(
       WIKILINK_PATTERN,
       (match: string, embedFlag: string | undefined, target: string, anchor: string | undefined, alias: string | undefined) => {
         // Normalize target for case-insensitive comparison
@@ -638,8 +636,7 @@ export class VaultUtils {
       }
     );
 
-    // Reconstruct file with original frontmatter and updated content
-    return matter.stringify(updatedContent, frontmatter);
+    return updatedFullContent;
   }
 
   /**

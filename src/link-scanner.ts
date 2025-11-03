@@ -270,6 +270,17 @@ export class LinkScanner {
     note: LifeOSNote,
     options?: LinkScanOptions
   ): LinkReference[] {
+    // MCP-110: When frontmatter scanning enabled, read raw file to include frontmatter
+    // Otherwise use note.content (frontmatter already stripped by gray-matter)
+    const shouldScanFrontmatter = options?.skipFrontmatter === false;
+
+    if (shouldScanFrontmatter) {
+      // Read raw file content to include frontmatter (with iCloud retry logic)
+      const rawContent = VaultUtils.readFileWithRetry(note.path, 'utf-8');
+      return this.extractLinksFromContent(rawContent, note.path, options);
+    }
+
+    // Default: use parsed content (frontmatter stripped)
     return this.extractLinksFromContent(note.content, note.path, options);
   }
 

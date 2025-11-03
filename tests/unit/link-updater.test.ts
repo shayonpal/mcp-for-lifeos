@@ -159,7 +159,7 @@ See [[OldNote]] for details`;
       expect(result).toContain('[[NewNote]]');
     });
 
-    it('should NOT modify links in frontmatter (deferred to MCP-110)', () => {
+    it('should update links in both frontmatter and content (MCP-110)', () => {
       const content = `---
 related: "[[OldNote]]"
 ---
@@ -168,14 +168,16 @@ Body with [[OldNote]]`;
 
       const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
 
-      // Frontmatter link should remain unchanged (MCP-110 will handle)
+      // Frontmatter link NOW UPDATED (implemented in MCP-110)
       const frontmatterMatch = result.match(/---[\s\S]*?---/);
-      expect(frontmatterMatch![0]).toContain('[[OldNote]]');  // Not updated
+      expect(frontmatterMatch![0]).toContain('[[NewNote]]');
 
       // Body link should be updated
       const bodyMatch = result.split('---')[2];
       expect(bodyMatch).toContain('[[NewNote]]');
-      expect(bodyMatch).not.toContain('[[OldNote]]');
+
+      // No old references anywhere
+      expect(result).not.toContain('[[OldNote]]');
     });
 
     it('should preserve content structure and formatting', () => {

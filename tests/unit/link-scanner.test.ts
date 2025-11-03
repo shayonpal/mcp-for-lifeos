@@ -276,6 +276,69 @@ Content [[Note2]]`;
       expect(links[1].targetNote).toBe('Note2');
     });
 
+    it('should extract wikilinks from YAML block scalar array format (MCP-110)', () => {
+      // Test real-world YAML array formats with wikilinks
+      // Format from production vault: block scalar with quoted wikilinks
+      const content = `---
+people:
+  - "[[John Doe|John]]"
+  - "[[Jane Smith]]"
+  - "[[Bob]]"
+author:
+  - "[[Main Author]]"
+---
+# Content
+Some content here`;
+
+      const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md', {
+        skipFrontmatter: false,
+      });
+
+      // Should extract all 4 wikilinks from frontmatter
+      expect(links).toHaveLength(4);
+      expect(links[0].targetNote).toBe('John Doe');
+      expect(links[0].alias).toBe('John');
+      expect(links[1].targetNote).toBe('Jane Smith');
+      expect(links[2].targetNote).toBe('Bob');
+      expect(links[3].targetNote).toBe('Main Author');
+
+      // Verify all links are in frontmatter (lines 2-7)
+      links.forEach(link => {
+        expect(link.lineNumber).toBeGreaterThanOrEqual(2);
+        expect(link.lineNumber).toBeLessThanOrEqual(7);
+      });
+    });
+
+    it('should extract wikilinks from YAML inline array format (MCP-110)', () => {
+      // Test inline YAML array format with wikilinks
+      // Format: ["[[Note]]", "[[Other]]"]
+      const content = `---
+people: ["[[Alice]]", "[[Bob|Bobby]]", "[[Charlie]]"]
+tags: ["meeting", "project"]
+related: ["[[Project A]]"]
+---
+# Content
+Some content here`;
+
+      const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md', {
+        skipFrontmatter: false,
+      });
+
+      // Should extract all 4 wikilinks from frontmatter inline arrays
+      expect(links).toHaveLength(4);
+      expect(links[0].targetNote).toBe('Alice');
+      expect(links[1].targetNote).toBe('Bob');
+      expect(links[1].alias).toBe('Bobby');
+      expect(links[2].targetNote).toBe('Charlie');
+      expect(links[3].targetNote).toBe('Project A');
+
+      // Verify all links are in frontmatter (lines 2-4)
+      links.forEach(link => {
+        expect(link.lineNumber).toBeGreaterThanOrEqual(2);
+        expect(link.lineNumber).toBeLessThanOrEqual(4);
+      });
+    });
+
     it('should filter embeds when includeEmbeds is false', () => {
       const content = 'Regular [[Note1]] and embed ![[Note2]]';
       const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md', {

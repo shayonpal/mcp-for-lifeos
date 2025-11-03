@@ -390,8 +390,8 @@ See [[MCP-107-Test-Old]] and [[MCP-107-Test-Old|Custom Alias]] here.`);
 
         const refContent = await fs.readFile(refNote, 'utf-8');
 
-        // Frontmatter: NOT updated (deferred to MCP-110)
-        expect(refContent).toContain('[[MCP-107-Test-Old|Display Name]]');
+        // Frontmatter: NOW UPDATED (implemented in MCP-110)
+        expect(refContent).toContain('[[MCP-107-Test-New|Display Name]]');
 
         // Content: basic link updated
         expect(refContent).toContain('[[MCP-107-Test-New]]');
@@ -399,9 +399,8 @@ See [[MCP-107-Test-Old]] and [[MCP-107-Test-Old|Custom Alias]] here.`);
         // Content: alias preserved
         expect(refContent).toContain('[[MCP-107-Test-New|Custom Alias]]');
 
-        // Verify no old references remain IN CONTENT (frontmatter still has old name)
-        const contentSection = refContent.split('---')[2];  // Get content after frontmatter
-        expect(contentSection).not.toContain('[[MCP-107-Test-Old');
+        // Verify no old references remain ANYWHERE (both frontmatter and content updated)
+        expect(refContent).not.toContain('[[MCP-107-Test-Old');
       } finally {
         // Cleanup - always run even if test fails
         await fs.unlink(oldNote).catch(() => {});
@@ -409,21 +408,10 @@ See [[MCP-107-Test-Old]] and [[MCP-107-Test-Old|Custom Alias]] here.`);
       }
     });
 
-    it.skip('should handle frontmatter-only link updates in fleeting notes (FUTURE: MCP-106 skips frontmatter)', async () => {
-      // NOTE: This test is skipped because LinkScanner from MCP-106 skips frontmatter by default
-      // (skipFrontmatter: true) since "frontmatter links not rendered" in Obsidian.
-      //
-      // However, MCP-107's updateNoteLinks() DOES update frontmatter links when called directly.
-      // The limitation is in the discovery phase (LinkScanner), not the update phase.
-      //
-      // FUTURE: Enhance LinkScanner to optionally include frontmatter links for metadata updates
-      // (e.g., people property in YAML). This would require:
-      // 1. Add skipFrontmatter: false option to LinkScanOptions
-      // 2. Update LinkScanner to scan frontmatter when option is false
-      // 3. Update updateVaultLinks to pass this option
-      //
-      // For now, frontmatter links ARE updated IF they're discovered through content scanning
-      // (i.e., if there's also a content link, frontmatter gets updated too).
+    it('should handle frontmatter-only link updates in fleeting notes (MCP-110)', async () => {
+      // MCP-110: LinkScanner now scans frontmatter links when skipFrontmatter: false
+      // link-updater.ts passes this option to enable frontmatter link discovery for rename operations
+      // This ensures YAML metadata consistency for person/organization references
 
       // Create source note for LinkScanner to find
       const oldNote = path.join(fleetingPath, 'MCP-107-Test-Old.md');
@@ -490,8 +478,8 @@ Embed: ![[MCP-107-Test-Old]]`);
 
         const refContent = await fs.readFile(refNote, 'utf-8');
 
-        // Frontmatter: NOT updated (deferred to MCP-110)
-        expect(refContent).toContain('[[MCP-107-Test-Old|Person Alias]]');
+        // Frontmatter: NOW UPDATED (implemented in MCP-110)
+        expect(refContent).toContain('[[MCP-107-Test-New|Person Alias]]');
 
         // Content - all formats UPDATED
         expect(refContent).toMatch(/Basic: \[\[MCP-107-Test-New\]\]/);
@@ -501,9 +489,8 @@ Embed: ![[MCP-107-Test-Old]]`);
         expect(refContent).toMatch(/Combo: \[\[MCP-107-Test-New#Section\|Link Text\]\]/);
         expect(refContent).toMatch(/Embed: !\[\[MCP-107-Test-New\]\]/);
 
-        // No old references in CONTENT (frontmatter still has old name)
-        const contentSection = refContent.split('---')[2];
-        expect(contentSection).not.toContain('MCP-107-Test-Old');
+        // No old references anywhere (both frontmatter and content updated in MCP-110)
+        expect(refContent).not.toContain('MCP-107-Test-Old');
       } finally {
         await fs.unlink(oldNote).catch(() => {});
         await fs.unlink(refNote).catch(() => {});
