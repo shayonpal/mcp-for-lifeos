@@ -21,7 +21,7 @@
  */
 
 import type { SearchResult } from '../../src/modules/search/index.js';
-import type { ResponseTruncator } from '../../src/response-truncator.js';
+import type { ResponseTruncator } from '../../src/modules/search/index.js';
 
 // ============================================================================
 // Phase 1: formatSearchResult Compatibility Layer

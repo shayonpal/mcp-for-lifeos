@@ -8,7 +8,7 @@ import {
 import { VaultUtils } from './vault-utils.js';
 import { SearchEngine, AdvancedSearchOptions } from './modules/search/index.js';
 import { ObsidianLinks } from './obsidian-links.js';
-import { NaturalLanguageProcessor } from './natural-language-processor.js';
+import { NaturalLanguageProcessor } from './modules/search/index.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';

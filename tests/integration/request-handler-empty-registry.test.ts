@@ -15,7 +15,7 @@ import type { AnalyticsCollector } from '../../src/analytics/analytics-collector
 import type { RequestHandlerWithClientContext } from '../../dev/contracts/MCP-96-contracts.js';
 import { ObsidianLinks } from '../../src/obsidian-links.js';
 import { VaultUtils } from '../../src/vault-utils.js';
-import { NaturalLanguageProcessor } from '../../src/natural-language-processor.js';
+import { NaturalLanguageProcessor } from '../../src/modules/search/index.js';
 
 describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
   const mockAnalytics = {

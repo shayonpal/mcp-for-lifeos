@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions } from '../../types.js';
 import { VaultUtils } from '../../vault-utils.js';
-import { NaturalLanguageProcessor, QueryInterpretation } from '../../natural-language-processor.js';
+import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
 import { QueryParser } from './query-parser.js';
 import type { QueryStrategy } from '../../../dev/contracts/MCP-59-contracts.js';
 import { escapeRegex } from '../../regex-utils.js';
