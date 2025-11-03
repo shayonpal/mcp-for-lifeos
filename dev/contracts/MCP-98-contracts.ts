@@ -256,7 +256,7 @@ export interface MetadataHandlerDependencies {
 export interface UtilityHandlerDependencies {
   VaultUtils: typeof import('../../src/vault-utils.js').VaultUtils;
   ObsidianLinks: typeof import('../../src/obsidian-links.js').ObsidianLinks;
-  DynamicTemplateEngine: typeof import('../../src/template-engine-dynamic.js').DynamicTemplateEngine;
+  DynamicTemplateEngine: typeof import('../../src/modules/templates/index.js').DynamicTemplateEngine;
   DateResolver: typeof import('../../src/date-resolver.js').DateResolver;
   AnalyticsCollector: typeof import('../../src/analytics/analytics-collector.js').AnalyticsCollector;
   addVersionMetadata: (response: any, config: any) => any;

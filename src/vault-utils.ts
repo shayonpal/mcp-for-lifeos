@@ -20,10 +20,10 @@ import {
 } from "./types.js";
 import { stripMdExtension } from "./path-utils.js";
 import { LIFEOS_CONFIG, YAML_RULES } from "./config.js";
-import { TemplateManager } from "./template-manager.js";
+import { TemplateManager } from "./modules/templates/index.js";
 import { ObsidianSettings } from "./obsidian-settings.js";
 import { DateResolver } from "./date-resolver.js";
-import { TemplateContext } from "./template-parser.js";
+import { TemplateContext } from "./modules/templates/index.js";
 import { logger } from "./logger.js";
 import { normalizePath } from "./path-utils.js";
 import { WIKILINK_PATTERN } from "./regex-utils.js";

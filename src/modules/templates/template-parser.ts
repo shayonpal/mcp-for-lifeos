@@ -1,5 +1,5 @@
 import { format, parse } from 'date-fns';
-import { logger } from './logger.js';
+import { logger } from '../../logger.js';
 
 export interface TemplateContext {
   title: string;           // File title (usually the date for daily notes)

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { TemplateManager } from '../../src/template-manager.js';
+import { TemplateManager } from '../../src/modules/templates/index.js';
 import { ObsidianSettings } from '../../src/obsidian-settings.js';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -13,7 +13,7 @@ jest.mock('fs', () => ({
   }
 }));
 jest.mock('../../src/obsidian-settings.js');
-jest.mock('../../src/template-parser.js');
+jest.mock('../../src/modules/templates/template-parser.js');
 jest.mock('../../src/logger.js', () => ({
   logger: {
     info: jest.fn(),
@@ -200,7 +200,7 @@ contentType: Daily Note
       (fs.readFile as jest.Mock).mockResolvedValue('# <% tp.file.title %>');
 
       // Mock TemplateParser - need to import and mock before creating new TemplateManager
-      const { TemplateParser } = await import('../../src/template-parser.js');
+      const { TemplateParser } = await import('../../src/modules/templates/template-parser.js');
       (TemplateParser as jest.MockedClass<typeof TemplateParser>).mockImplementation(() => ({
         processTemplate: jest.fn().mockResolvedValue('# 2025-06-28')
       } as any));

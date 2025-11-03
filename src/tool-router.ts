@@ -9,7 +9,7 @@
 
 import { SearchEngine, AdvancedSearchOptions, SearchResult } from './search-engine.js';
 import { VaultUtils } from './vault-utils.js';
-import { DynamicTemplateEngine } from './template-engine-dynamic.js';
+import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { ObsidianLinks } from './obsidian-links.js';

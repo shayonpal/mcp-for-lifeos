@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { TemplateManager } from '../../src/template-manager.js';
+import { TemplateManager } from '../../src/modules/templates/index.js';
 import { DateResolver } from '../../src/date-resolver.js';
 import { ObsidianSettings } from '../../src/obsidian-settings.js';
 import { VaultUtils } from '../../src/vault-utils.js';
