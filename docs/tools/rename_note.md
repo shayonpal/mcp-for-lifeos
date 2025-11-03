@@ -6,8 +6,8 @@
 - **Purpose**: Atomic note rename with transaction safety, automatic wikilink updates, and dry-run preview
 - **Status**: ✅ Active (Phase 5: Complete with dry-run mode)
 - **Created**: 2025-10-31
-- **Last Updated**: 2025-11-02 16:24
-- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4), MCP-122 (Phase 5), MCP-123 (Phase 5 Enhancement)
+- **Last Updated**: 2025-11-02 23:03
+- **MCP Issues**: MCP-105 (Phase 1), MCP-106 (Phase 2), MCP-107 (Phase 3), MCP-118 (Phase 4), MCP-122 (Phase 5), MCP-123 (Phase 5 Enhancement), MCP-124 (Block Reference Support)
 
 ## TL;DR
 
@@ -83,7 +83,7 @@ All planned features now implemented:
 - **`updateLinks`** (boolean, optional, default: true)
   - **Phase 4 Status**: ✅ Fully integrated with transactions
   - **Behavior**: When `true` (default), automatically updates all wikilinks in atomic transaction
-  - **Link Formats**: Preserves basic `[[name]]`, alias `[[name|alias]]`, heading `[[name#heading]]`, embed `![[name]]`
+  - **Link Formats**: Preserves basic `[[name]]`, alias `[[name|alias]]`, heading `[[name#heading]]`, block reference `[[name#^blockid]]`, embed `![[name]]`
   - **Failure Handling**: Automatic rollback on any link update failure (all-or-nothing)
   - **Transaction Integration**: Link updates occur during commit phase using two-phase protocol
 
@@ -498,7 +498,51 @@ This single-line enhancement enables rename functionality while maintaining back
 
 **Note**: With Phase 4, all operations are atomic. If link updates fail, the entire operation rolls back automatically.
 
-### Example 6: Dry-Run Preview (Phase 5 - MCP-122)
+### Example 6: Block Reference Link Updates (MCP-124)
+
+**Scenario**: Rename note with block reference links
+
+When a note contains block references like `[[OldNote#^block123]]`, the rename operation updates them to preserve the block reference:
+
+**Before** (in other notes linking to the renamed file):
+
+```markdown
+See the introduction in [[OldNote#^intro-block]].
+
+The key findings are in [[OldNote#^findings|Important Results]].
+
+![[OldNote#^diagram-1]]
+```
+
+**Command**:
+
+```json
+{
+  "oldPath": "OldNote.md",
+  "newPath": "UpdatedNote.md",
+  "updateLinks": true
+}
+```
+
+**After** (block references preserved with new note name):
+
+```markdown
+See the introduction in [[UpdatedNote#^intro-block]].
+
+The key findings are in [[UpdatedNote#^findings|Important Results]].
+
+![[UpdatedNote#^diagram-1]]
+```
+
+**Key Features**:
+
+- Block references detected by `^` prefix after `#`
+- Caret prefix `^` preserved in all updates
+- Works with aliases: `[[Note#^block|Alias]]`
+- Works with embeds: `![[Note#^block]]`
+- Distinct from heading links: `[[Note#Heading]]` (no caret)
+
+### Example 7: Dry-Run Preview (Phase 5 - MCP-122)
 
 **Scenario**: Preview rename operation before executing
 
@@ -545,7 +589,7 @@ This single-line enhancement enables rename functionality while maintaining back
 }
 ```
 
-### Example 7: Enhanced Dry-Run Preview (Phase 5 Enhancement - MCP-123)
+### Example 8: Enhanced Dry-Run Preview (Phase 5 Enhancement - MCP-123)
 
 **Scenario**: Preview rename with detailed link scanning, transaction phases, and time estimates
 

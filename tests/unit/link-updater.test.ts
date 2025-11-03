@@ -43,9 +43,9 @@ describe('Link Updater', () => {
       expect(result).toBe('[[NewNote#Section]]');
     });
 
-    it('should build block reference link [[Note^block]]', () => {
-      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', undefined, 'block123', undefined);
-      expect(result).toBe('[[NewNote^block123]]');
+    it('should build block reference link [[Note#^block]]', () => {
+      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', undefined, '^block123', undefined);
+      expect(result).toBe('[[NewNote#^block123]]');
     });
 
     it('should build heading + alias [[Note#Section|Alias]]', () => {
@@ -53,19 +53,15 @@ describe('Link Updater', () => {
       expect(result).toBe('[[NewNote#Section|Link Text]]');
     });
 
-    it('should build block + alias [[Note^block|Alias]]', () => {
-      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', undefined, 'block123', 'Link Text');
-      expect(result).toBe('[[NewNote^block123|Link Text]]');
+    it('should build block + alias [[Note#^block|Alias]]', () => {
+      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', undefined, '^block123', 'Link Text');
+      expect(result).toBe('[[NewNote#^block123|Link Text]]');
     });
 
-    it('should build heading + block [[Note#Section^block]]', () => {
-      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', 'Section', 'block123', undefined);
-      expect(result).toBe('[[NewNote#Section^block123]]');
-    });
-
-    it('should build full format [[Note#Section^block|Alias]]', () => {
-      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', 'Section', 'block123', 'Display');
-      expect(result).toBe('[[NewNote#Section^block123|Display]]');
+    it('should prioritize block ref over heading when both provided', () => {
+      // When both heading and blockRef are set, blockRef takes precedence
+      const result = VaultUtils.buildNewLinkText(undefined, 'NewNote', 'Section', '^block123', undefined);
+      expect(result).toBe('[[NewNote#^block123]]');
     });
 
     it('should build embed with heading ![[Note#Section]]', () => {
@@ -107,21 +103,22 @@ describe('Link Updater', () => {
     });
 
     it('should update link with block reference', () => {
-      const content = '[[OldNote^block123]]';
+      const content = '[[OldNote#^block123]]';
       const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
-      expect(result).toContain('[[NewNote^block123]]');
+      expect(result).toContain('[[NewNote#^block123]]');
+    });
+
+    it('should distinguish block refs from headings during update', () => {
+      const content = '[[OldNote#^block]] and [[OldNote#heading]]';
+      const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
+      expect(result).toContain('[[NewNote#^block]]'); // Block ref preserved with ^
+      expect(result).toContain('[[NewNote#heading]]'); // Heading preserved without ^
     });
 
     it('should update embed link', () => {
       const content = '![[OldNote]]';
       const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
       expect(result).toContain('![[NewNote]]');
-    });
-
-    it('should update complex link with all components', () => {
-      const content = '[[OldNote#Section^block|Alias]]';
-      const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
-      expect(result).toContain('[[NewNote#Section^block|Alias]]');
     });
 
     it('should preserve non-matching links', () => {

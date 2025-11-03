@@ -329,7 +329,7 @@ export class LinkScanner {
       let match: RegExpExecArray | null;
 
       while ((match = WIKILINK_PATTERN.exec(line)) !== null) {
-        const [fullMatch, embedFlag, target, heading, blockRef, alias] = match;
+        const [fullMatch, embedFlag, target, anchor, alias] = match;
 
         // Skip embeds if option disabled
         const isEmbed = !!embedFlag;
@@ -340,14 +340,21 @@ export class LinkScanner {
         // Extract target note name (strip extension if present)
         const targetNote = stripMdExtension(target);
 
+        // Classify anchor as heading or block reference
+        // Block refs start with ^ (e.g., "^abc123")
+        // Headings are plain text (e.g., "Section")
+        const isBlockRef = anchor?.startsWith('^') ?? false;
+        const heading = isBlockRef ? undefined : (anchor?.trim() || undefined);
+        const blockRef = isBlockRef ? anchor.trim() : undefined;
+
         references.push({
           sourcePath,
           sourceNote,
           linkText: fullMatch,
           targetNote,
           alias: alias || undefined,
-          heading: heading || undefined,
-          blockRef: blockRef || undefined,
+          heading,
+          blockRef,
           isEmbed,
           lineNumber,
           lineText: line,

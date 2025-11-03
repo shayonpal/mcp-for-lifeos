@@ -21,9 +21,8 @@ describe('LinkScanner', () => {
       expect(matches[0][0]).toBe('[[Note]]'); // Full match
       expect(matches[0][1]).toBeUndefined(); // No embed flag
       expect(matches[0][2]).toBe('Note'); // Target note
-      expect(matches[0][3]).toBeUndefined(); // No heading
-      expect(matches[0][4]).toBeUndefined(); // No block ref
-      expect(matches[0][5]).toBeUndefined(); // No alias
+      expect(matches[0][3]).toBeUndefined(); // No anchor
+      expect(matches[0][4]).toBeUndefined(); // No alias
     });
 
     it('should match embed link ![[Image]]', () => {
@@ -43,7 +42,7 @@ describe('LinkScanner', () => {
       expect(matches).toHaveLength(1);
       expect(matches[0][0]).toBe('[[Note|Display Text]]');
       expect(matches[0][2]).toBe('Note'); // Target (note name before |)
-      expect(matches[0][5]).toBe('Display Text'); // Alias (display text after |)
+      expect(matches[0][4]).toBe('Display Text'); // Alias (display text after |)
     });
 
     it('should match heading link [[Note#Section]]', () => {
@@ -53,17 +52,17 @@ describe('LinkScanner', () => {
       expect(matches).toHaveLength(1);
       expect(matches[0][0]).toBe('[[Note#Section]]');
       expect(matches[0][2]).toBe('Note'); // Target
-      expect(matches[0][3]).toBe('Section'); // Heading
+      expect(matches[0][3]).toBe('Section'); // Anchor (heading)
     });
 
-    it('should match block reference [[Note^blockid]]', () => {
-      const content = '[[Note^blockid]]';
+    it('should match block reference [[Note#^blockid]]', () => {
+      const content = '[[Note#^blockid]]';
       const matches = Array.from(content.matchAll(WIKILINK_PATTERN));
 
       expect(matches).toHaveLength(1);
-      expect(matches[0][0]).toBe('[[Note^blockid]]');
+      expect(matches[0][0]).toBe('[[Note#^blockid]]');
       expect(matches[0][2]).toBe('Note'); // Target
-      expect(matches[0][4]).toBe('blockid'); // Block ref
+      expect(matches[0][3]).toBe('^blockid'); // Anchor (block ref with ^ prefix)
     });
 
     it('should match complex link [[Note#Heading|Alias]]', () => {
@@ -73,8 +72,30 @@ describe('LinkScanner', () => {
       expect(matches).toHaveLength(1);
       expect(matches[0][0]).toBe('[[Note#Heading|Alias]]');
       expect(matches[0][2]).toBe('Note'); // Target
-      expect(matches[0][3]).toBe('Heading'); // Heading
-      expect(matches[0][5]).toBe('Alias'); // Alias
+      expect(matches[0][3]).toBe('Heading'); // Anchor (heading)
+      expect(matches[0][4]).toBe('Alias'); // Alias
+    });
+
+    it('should match block reference with alias [[Note#^block123|Link]]', () => {
+      const content = '[[Note#^block123|Link]]';
+      const matches = Array.from(content.matchAll(WIKILINK_PATTERN));
+
+      expect(matches).toHaveLength(1);
+      expect(matches[0][0]).toBe('[[Note#^block123|Link]]');
+      expect(matches[0][2]).toBe('Note'); // Target
+      expect(matches[0][3]).toBe('^block123'); // Anchor (block ref with ^ prefix)
+      expect(matches[0][4]).toBe('Link'); // Alias
+    });
+
+    it('should distinguish [[Note#^block]] from [[Note#heading]]', () => {
+      const content = '[[Note#^block]] and [[Note#heading]]';
+      const matches = Array.from(content.matchAll(WIKILINK_PATTERN));
+
+      expect(matches).toHaveLength(2);
+      // First match: block reference
+      expect(matches[0][3]).toBe('^block'); // Starts with ^
+      // Second match: heading
+      expect(matches[1][3]).toBe('heading'); // No ^ prefix
     });
 
     it('should match multiple links in one line', () => {
@@ -154,13 +175,27 @@ describe('LinkScanner', () => {
       expect(links[0].heading).toBe('Introduction');
     });
 
-    it('should extract block reference link', () => {
-      const content = '[[Note^abc123]]';
+    it('should extract block reference link [[Note#^abc123]]', () => {
+      const content = '[[Note#^abc123]]';
       const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md');
 
       expect(links).toHaveLength(1);
       expect(links[0].targetNote).toBe('Note');
-      expect(links[0].blockRef).toBe('abc123');
+      expect(links[0].blockRef).toBe('^abc123'); // Includes ^ prefix
+      expect(links[0].heading).toBeUndefined();
+    });
+
+    it('should distinguish block ref [[Note#^block]] from heading [[Note#heading]]', () => {
+      const content = '[[Note#^block]] and [[Note#heading]]';
+      const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md');
+
+      expect(links).toHaveLength(2);
+      // First link: block reference
+      expect(links[0].blockRef).toBe('^block');
+      expect(links[0].heading).toBeUndefined();
+      // Second link: heading
+      expect(links[1].heading).toBe('heading');
+      expect(links[1].blockRef).toBeUndefined();
     });
 
     it('should extract multiple links from multiple lines', () => {

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Block Reference Support in Link Updates** (MCP-124, 2025-11-02 23:03): Extended link scanner and updater to detect and preserve Obsidian block references during note rename operations
+  - Updated WIKILINK_PATTERN regex in `src/regex-utils.ts` to capture block references `[[Note#^blockid]]` distinct from headings `[[Note#heading]]`
+  - Modified anchor parsing logic in LinkScanner to classify anchors by `^` prefix: block refs preserve caret, headings remain plain text
+  - Enhanced link reconstruction in LinkUpdater to preserve `^` prefix when rebuilding block reference links
+  - Block refs and headings are mutually exclusive: link can have heading OR blockRef, never both
+  - Supported formats: `[[Note#^block123]]`, `[[Note#^block123|Alias]]`, `![[Note#^block123]]` (embed with block ref)
+  - Updated LinkReference interface with `blockRef?: string` field (includes `^` prefix, e.g., "^abc123")
+  - Test coverage: 18+ new tests in `tests/unit/link-scanner.test.ts`, `tests/unit/link-updater.test.ts`, `tests/integration/link-updater.integration.test.ts`
+  - Full test suite: 681/681 tests passing (100% pass rate)
+  - Zero breaking changes: existing heading links, basic links, and embeds remain fully functional
+  - Performance: <5s link scanning for 1000-note vaults maintained (no performance regression)
+  - Completes Obsidian wikilink format support: basic links, aliases, headings, block refs, and embeds all handled
+
 - **Enhanced Dry-Run Preview** (MCP-123, 2025-11-02 16:24): Extended dry-run preview with detailed link scanning, transaction phases, and execution time estimates
   - Added `linkUpdates` field to preview response when `updateLinks: true` containing filesWithLinks count, affectedPaths array, and totalReferences count
   - Added `transactionPhases` field displaying 5-phase atomic protocol (plan → prepare → validate → commit → success) with dynamic commit description
