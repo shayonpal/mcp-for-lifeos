@@ -409,18 +409,11 @@ LIFEOS_DAILY_NOTES_PATH=/path/to/daily    # Override daily notes path
 
 ### Setting Variables
 
-**macOS/Linux:**
+**macOS/Linux/WSL2:**
 
 ```bash
 export ENABLE_WEB_INTERFACE=false
 node dist/src/index.js
-```
-
-**Windows:**
-
-```cmd
-set ENABLE_WEB_INTERFACE=false
-node dist\src\index.js
 ```
 
 **Claude Desktop Config:**

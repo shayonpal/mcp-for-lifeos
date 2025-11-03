@@ -16,22 +16,28 @@ This guide provides comprehensive instructions for deploying the LifeOS MCP serv
 ## System Requirements
 
 ### Minimum Requirements
+
 - **Node.js**: Version 18.0.0 or higher
 - **npm**: Version 8.0.0 or higher (comes with Node.js)
-- **Operating System**: macOS, Linux, or Windows
+- **Operating System**: macOS, Linux, or WSL2
 - **Memory**: 512MB RAM minimum, 1GB recommended
 - **Storage**: 100MB for application files + vault size
 
 ### Supported Platforms
+
 - **macOS**: 10.15 (Catalina) or later
 - **Linux**: Ubuntu 18.04+, CentOS 7+, or equivalent
-- **Windows**: Windows 10 or later (with WSL recommended)
+- **WSL2**: Windows 10 version 2004+ or Windows 11
+
+**Note**: Native Windows is not supported. Windows users should use WSL2. See [WSL2 Setup Guide](WSL2-SETUP.md) for installation instructions.
 
 ### Required Dependencies
+
 - **Obsidian**: For vault management and link integration
 - **Git**: For cloning repository and version control
 
 ### Vault Requirements
+
 - **LifeOS Vault Structure**: Must follow PARA method organization
 - **Template System**: Optional but recommended for full functionality
 - **YAML Frontmatter**: Notes should use consistent YAML formatting
@@ -51,6 +57,7 @@ chmod +x scripts/setup.sh
 ```
 
 The setup script will:
+
 - Verify system requirements
 - Install dependencies
 - Generate configuration from template
@@ -145,18 +152,21 @@ npm test
 Add the MCP server to your Claude Desktop configuration:
 
 **macOS/Linux:**
+
 ```bash
 # Edit Claude Desktop config
 nano ~/.config/claude-desktop/claude_desktop_config.json
 ```
 
-**Windows:**
+**WSL2:**
+
 ```bash
-# Edit Claude Desktop config  
-notepad %APPDATA%\Claude\claude_desktop_config.json
+# Edit Claude Desktop config (same as Linux)
+nano ~/.config/claude-desktop/claude_desktop_config.json
 ```
 
 **Configuration:**
+
 ```json
 {
   "mcpServers": {
@@ -172,6 +182,7 @@ notepad %APPDATA%\Claude\claude_desktop_config.json
 ```
 
 **Important Notes:**
+
 - Use absolute paths, not relative paths
 - Ensure the path exists and is accessible
 - Restart Claude Desktop after configuration changes
@@ -182,11 +193,14 @@ Configure Raycast to use the MCP server:
 
 1. **Install MCP Extension** (if available) or create custom script
 2. **Configure Script Path:**
+
    ```bash
    # Edit the start-mcp.sh script with your paths
    nano scripts/start-mcp.sh
    ```
+
 3. **Update Paths:**
+
    ```bash
    #!/bin/bash
    export NVM_DIR="$HOME/.nvm"
@@ -195,7 +209,9 @@ Configure Raycast to use the MCP server:
    cd "/absolute/path/to/mcp-for-lifeos"
    exec node dist/index.js "$@"
    ```
+
 4. **Make Executable:**
+
    ```bash
    chmod +x scripts/start-mcp.sh
    ```
@@ -205,18 +221,21 @@ Configure Raycast to use the MCP server:
 The setup script automatically generates Cursor configurations:
 
 **Project-specific configuration (recommended):**
+
 ```bash
 # Copy generated config to your project
 cp config-examples/cursor-project-mcp.json .cursor/mcp.json
 ```
 
 **Global configuration:**
+
 ```bash
 # Copy generated config to global location
 cp config-examples/cursor-global-mcp.json ~/.cursor/mcp.json
 ```
 
 **Manual configuration steps:**
+
 1. Choose project-specific or global configuration
 2. Copy the appropriate generated config file
 3. Restart Cursor IDE
@@ -224,6 +243,7 @@ cp config-examples/cursor-global-mcp.json ~/.cursor/mcp.json
 5. Verify "lifeos-mcp" appears in MCP settings
 
 For detailed integration guides, see:
+
 - [Raycast Integration Guide](RAYCAST_INTEGRATION.md)
 - [Cursor Integration Guide](CURSOR_INTEGRATION.md)
 
@@ -238,6 +258,7 @@ For local development, no special network configuration is required. The MCP ser
 If deploying to a remote server:
 
 #### Port Configuration (Web Interface Only)
+
 ```bash
 # Default web interface port
 export WEB_PORT=19831
@@ -248,6 +269,7 @@ export ENABLE_WEB_INTERFACE=true
 ```
 
 #### Firewall Configuration
+
 ```bash
 # Allow Node.js through firewall (if needed)
 sudo ufw allow from 192.168.1.0/24 to any port 19831
@@ -257,6 +279,7 @@ sudo ufw allow from YOUR_CLIENT_IP to any port 19831
 ```
 
 #### Security Considerations
+
 - **Never expose the web interface to public internet**
 - **Use HTTPS in production environments**
 - **Implement proper authentication for remote access**
@@ -278,6 +301,7 @@ Common network-related issues:
 Use a process manager for production deployments:
 
 #### Using PM2
+
 ```bash
 # Install PM2
 npm install -g pm2
@@ -308,6 +332,7 @@ pm2 startup
 ```
 
 #### Using systemd (Linux)
+
 ```bash
 # Create service file
 sudo nano /etc/systemd/system/lifeos-mcp.service
@@ -416,6 +441,7 @@ tar -czf backups/lifeos-mcp-$(date +%Y%m%d).tar.gz \
 Configure the application using environment variables:
 
 ### Core Configuration
+
 ```bash
 # Node.js environment
 export NODE_ENV=production
@@ -436,6 +462,7 @@ export LOG_FILE=/var/log/lifeos-mcp.log
 ```
 
 ### .env File Support
+
 Create a `.env` file for local development:
 
 ```bash
@@ -454,6 +481,7 @@ LOG_LEVEL=debug
 ### Post-Deployment Validation
 
 1. **Verify Installation:**
+
    ```bash
    # Check Node.js version
    node --version
@@ -466,6 +494,7 @@ LOG_LEVEL=debug
    ```
 
 2. **Test MCP Functionality:**
+
    ```bash
    # Start server and test basic tools
    node dist/index.js &
@@ -475,6 +504,7 @@ LOG_LEVEL=debug
    ```
 
 3. **Validate Vault Access:**
+
    ```bash
    # Check vault path accessibility
    ls -la "$VAULT_PATH"
@@ -501,6 +531,7 @@ Test client integrations:
    - Test vault search functionality
 
 3. **API Test (if web interface enabled):**
+
    ```bash
    curl -X POST http://localhost:19831/api/tools/get_server_version \
         -H "Content-Type: application/json" \

@@ -13,7 +13,7 @@ During code review of MCP-100 (integration test script update), a suggestion was
 
 - Current user base and deployment targets
 - Development and maintenance resources
-- Primary integration platforms (Raycast is macOS-only)
+- Primary deployment: MCP callers on Unix systems
 - Testing infrastructure requirements
 - Windows compatibility via WSL2
 
@@ -23,7 +23,7 @@ During code review of MCP-100 (integration test script update), a suggestion was
 
 - **Zero Windows users** reported to date (2024-2025)
 - **Zero Windows contributors** in project history
-- **Primary deployment**: macOS (personal use, Raycast integration)
+- **Primary deployment**: macOS (personal use, MCP client integrations)
 - **Secondary deployment**: Linux (potential future cloud deployments)
 
 ### Resource Constraints
@@ -35,14 +35,15 @@ During code review of MCP-100 (integration test script update), a suggestion was
 
 ### Primary Platform Dependencies
 
-- **Raycast integration**: macOS-only application
-- **Primary development**: macOS
+- **MCP Protocol**: Designed for cross-platform clients (Claude Desktop, Cursor IDE, Raycast, etc.)
+- **Primary development**: macOS (Unix-based)
 - **CI/CD**: Unix-based GitHub Actions runners
 - **WSL2 availability**: Windows users have native Unix compatibility
 
 ### Technical Implications
 
 **Windows Native Support Would Require**:
+
 - Cross-platform path handling (`cross-env`, `better-npm-run`)
 - Windows-specific test runners
 - Windows CI/CD pipeline
@@ -50,6 +51,7 @@ During code review of MCP-100 (integration test script update), a suggestion was
 - Ongoing Windows compatibility testing
 
 **Unix-Only Support Provides**:
+
 - Simplified script paths (`./node_modules/.bin/jest`)
 - Direct Node.js flag usage (`node --expose-gc`)
 - Consistent CI/CD environment
@@ -63,11 +65,13 @@ During code review of MCP-100 (integration test script update), a suggestion was
 **Approach**: Use cross-platform tools and test on all platforms
 
 **Pros**:
+
 - Maximum accessibility
 - Future-proof for Windows users
 - Professional project appearance
 
 **Cons**:
+
 - Significant maintenance overhead
 - Additional dependencies (`cross-env`, etc.)
 - Windows CI/CD pipeline required
@@ -81,14 +85,16 @@ During code review of MCP-100 (integration test script update), a suggestion was
 **Approach**: Officially support macOS and Linux only, recommend WSL2 for Windows users
 
 **Pros**:
+
 - Matches actual user base (100% Unix users)
-- Aligns with primary deployment (Raycast = macOS-only)
+- Aligns with primary deployment (MCP callers on Unix systems)
 - Reduced maintenance burden
 - Simpler script implementations
 - WSL2 provides full compatibility for Windows users
 - Consistent development/production environments
 
 **Cons**:
+
 - Excludes native Windows users (currently zero)
 - Requires documentation clarity
 - May limit future Windows adoption
@@ -100,10 +106,12 @@ During code review of MCP-100 (integration test script update), a suggestion was
 **Approach**: Attempt Windows compatibility but don't guarantee it
 
 **Pros**:
+
 - Middle ground approach
 - Some Windows users might succeed
 
 **Cons**:
+
 - Unclear expectations
 - Half-working features create support burden
 - Still requires cross-platform code
@@ -119,7 +127,7 @@ During code review of MCP-100 (integration test script update), a suggestion was
 
 1. **Current Reality**: Zero Windows users in 12+ months of operation
 2. **Resource Alignment**: Solo developer focused on macOS/Linux
-3. **Primary Integration**: Raycast is macOS-only
+3. **MCP Ecosystem**: Primary MCP clients (Claude Desktop, Cursor IDE) run on Unix
 4. **Windows Solution Exists**: WSL2 provides full Unix compatibility
 5. **Maintenance Focus**: Resources better spent on core features
 6. **Clear Expectations**: Users know exactly what's supported
@@ -127,11 +135,13 @@ During code review of MCP-100 (integration test script update), a suggestion was
 ### Official Platform Support
 
 **✅ Supported Platforms**:
-- **macOS** (primary deployment, Raycast integration)
-- **Linux** (secondary deployment, cloud potential)
+
+- **macOS** (primary development platform)
+- **Linux** (production deployments, cloud potential)
 - **WSL2** (Windows users via Unix subsystem)
 
 **❌ Not Supported**:
+
 - **Native Windows** (cmd.exe, PowerShell)
 
 **Windows Users**: Install WSL2 for full compatibility
@@ -139,6 +149,7 @@ During code review of MCP-100 (integration test script update), a suggestion was
 ### Implementation Guidelines
 
 **Scripts and Configuration**:
+
 ```json
 // ✅ Allowed (Unix-compatible)
 "test:integration": "node --expose-gc ./node_modules/.bin/jest tests/integration"
@@ -148,17 +159,20 @@ During code review of MCP-100 (integration test script update), a suggestion was
 ```
 
 **Path Handling**:
+
 - Use Unix-style paths in scripts
 - Direct binary references from `./node_modules/.bin/` are acceptable
 - No need for cross-platform path utilities
 
 **CI/CD**:
+
 - GitHub Actions: Ubuntu runners only
 - No Windows testing pipeline required
 
 ### Documentation Requirements
 
 **Must clearly state platform support in**:
+
 1. **README.md**: Platform Support section
 2. **Integration guides**: Remove Windows-specific instructions
 3. **CLAUDE.md**: Add platform compatibility note
@@ -183,15 +197,18 @@ During code review of MCP-100 (integration test script update), a suggestion was
 ### Mitigation Strategies
 
 **Documentation Clarity**:
+
 - Explicit platform support section in README
 - WSL2 setup guide for Windows users
 - Remove Windows references from integration guides
 
 **Future Reassessment**:
+
 - Review decision if Windows user base emerges
 - Reconsider if Windows-native tooling becomes strategic
 
 **WSL2 Support**:
+
 - Provide WSL2 installation instructions
 - Verify that all features work in WSL2 environment
 - Document any WSL2-specific configuration needed
@@ -208,15 +225,17 @@ During code review of MCP-100 (integration test script update), a suggestion was
 
 ## Related Decisions
 
-- **ADR-002**: Strategic pivot to core MCP server (focus on server, not multi-platform GUI)
+- **ADR-002**: Strategic pivot to core MCP server (focus on server functionality)
 - **MCP-100**: Integration test script update (triggered this ADR)
+- **Platform agnostic**: MCP protocol works with any client (Claude Desktop, Cursor IDE, Raycast, custom tools)
 
 ## References
 
 - MCP-100: Add --expose-gc flag to test:integration script
 - MCP-95: Original issue where test failure observed
-- Raycast platform: macOS-only (https://raycast.com)
+- MCP Protocol Specification: https://spec.modelcontextprotocol.io/
 - WSL2 documentation: https://learn.microsoft.com/en-us/windows/wsl/
+- WSL2 setup guide: [docs/guides/WSL2-SETUP.md](../guides/WSL2-SETUP.md)
 
 ## Notes
 

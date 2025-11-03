@@ -30,6 +30,7 @@ build/
 # Project-specific configuration
 *.code-workspace
 project_items.json
+.worktrees-registry.json
 
 # OS
 .DS_Store
