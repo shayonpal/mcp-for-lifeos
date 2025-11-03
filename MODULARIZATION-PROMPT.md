@@ -381,6 +381,93 @@ git ls-files --stage | awk '$4 > 100000 {print $4, $5}'
 - [ ] ARCHITECTURE.md reflects new structure
 - [ ] Migration guide created for developers
 
+### 7. Comprehensive Code Review via Codex (MANDATORY)
+
+**Objective**: Perform final architectural and code quality review before PR submission.
+
+**Use the `codex` skill with comprehensive context:**
+
+```
+Use codex skill to perform comprehensive code review of the modularization refactoring.
+
+Context for codex:
+- Project: MCP for LifeOS server modularization
+- Branch: feature/modularize-core-mcp-layout
+- Scope: 15 incremental issues (MCP-133 through MCP-147)
+- Changes: Reorganized 28 peer files into modular structure
+- Key transformation: vault-utils.ts (1,956 lines) → modules/files/* (~400 lines)
+
+Areas to review:
+
+1. **Architectural Assessment**
+   - Module boundary clarity and separation of concerns
+   - Barrel export design (modules/*/index.ts)
+   - Import graph health (no circular dependencies verified, but check patterns)
+   - Orchestration layer design (vault-utils.ts remaining responsibilities)
+   - Module cohesion and coupling analysis
+
+2. **Code Quality**
+   - Consistent module organization patterns
+   - Proper use of TypeScript types across module boundaries
+   - Error handling patterns maintained during refactoring
+   - Performance implications of new module structure
+   - Any code smells or anti-patterns introduced
+
+3. **Refactoring Completeness**
+   - All files properly migrated (no orphaned code)
+   - Import paths consistently updated
+   - No duplicated logic across modules
+   - Singleton patterns preserved correctly
+   - Test coverage maintained (724/728 baseline)
+
+4. **MCP Protocol Compliance**
+   - Tool handler patterns unaffected by refactoring
+   - Request routing still efficient
+   - Analytics integration intact
+   - Transaction safety preserved
+
+5. **Future Maintainability**
+   - Clear module ownership for future changes
+   - Easy to add new features within module structure
+   - Migration path clear for MCP-90/91/92 work
+   - Technical debt reduction achieved
+
+6. **Documentation Alignment**
+   - ARCHITECTURE.md accurately reflects new structure
+   - Migration guide provides clear old→new mappings
+   - Serena memories updated with correct patterns
+   - Tool docs reference correct module locations
+
+7. **Risk Assessment**
+   - Any hidden coupling not captured by tests
+   - Performance regressions not caught by test suite
+   - Edge cases in module interactions
+   - Deployment risks or runtime surprises
+
+Please provide:
+- Overall assessment (approve/request changes)
+- Critical issues (must fix before merge)
+- Recommendations (nice-to-have improvements)
+- Specific code locations requiring attention
+```
+
+**Codex Review Checklist:**
+- [ ] Codex review executed with full context
+- [ ] Overall assessment received (approve/request changes)
+- [ ] Critical issues documented (if any)
+- [ ] Critical issues addressed and re-validated
+- [ ] Recommendations documented for future consideration
+- [ ] Architecture patterns approved by codex
+- [ ] No hidden coupling or anti-patterns identified
+
+**Action Required:**
+- If codex identifies **critical issues**: Fix immediately, re-run tests, re-submit to codex
+- If codex identifies **recommendations only**: Document in PR description for future work
+- If codex **approves**: Proceed to PR submission
+- If codex **requests major changes**: Consider breaking into smaller PR or addressing concerns
+
+**Important**: Do NOT proceed to PR submission until codex review is complete and any critical issues are resolved.
+
 ---
 
 ## PR Submission Checklist
@@ -442,6 +529,26 @@ Complete modularization of MCP for LifeOS codebase into feature-focused modules.
 - Link update atomicity validated
 - Transaction safety confirmed
 
+## Codex Code Review
+
+### Overall Assessment
+✅ **Approved** - Architecture and code quality meet standards
+
+### Review Areas Validated
+- ✅ **Architectural Assessment**: Module boundaries clear, separation of concerns maintained
+- ✅ **Code Quality**: Consistent patterns, proper TypeScript usage, error handling preserved
+- ✅ **Refactoring Completeness**: All files migrated, no orphaned code, test coverage maintained
+- ✅ **MCP Protocol Compliance**: Tool handlers unaffected, request routing efficient
+- ✅ **Future Maintainability**: Clear ownership, easy to extend, enables MCP-90/91/92
+- ✅ **Documentation Alignment**: Architecture docs accurate, migration guide complete
+- ✅ **Risk Assessment**: No hidden coupling, no performance regressions, edge cases handled
+
+### Critical Issues
+None identified
+
+### Recommendations (for future consideration)
+[Include any non-blocking recommendations from codex here]
+
 ## Documentation
 - ✅ ARCHITECTURE.md updated with module diagram
 - ✅ All tool docs updated with new paths
@@ -489,6 +596,7 @@ None - All changes maintain backward compatibility via barrel exports during tra
 - Commit messages include detailed acceptance criteria
 - No functional changes - pure refactoring
 - Test baseline maintained throughout: 724/728 passing
+- Comprehensive codex code review performed and approved before PR submission
 
 ## Deployment Notes
 - No environment changes required
@@ -566,6 +674,7 @@ Track these throughout execution:
 - ✅ Zero TypeScript errors
 - ✅ All smoke tests passing
 - ✅ All documentation updated
+- ✅ **Codex code review completed and approved**
 - ✅ Clean git history (15 well-structured commits)
 - ✅ PR approved and merged
 
@@ -577,10 +686,12 @@ Track these throughout execution:
 2. **DO NOT** switch branches during execution
 3. **DO NOT** skip testing phases
 4. **DO NOT** batch commits - one commit per issue
-5. **DO** run full test suite after each issue
-6. **DO** update Linear issue status after each completion
-7. **DO** perform smoke tests when required
-8. **DO** maintain test baseline (724/728)
+5. **DO NOT** skip codex code review before PR submission
+6. **DO** run full test suite after each issue
+7. **DO** update Linear issue status after each completion
+8. **DO** perform smoke tests when required
+9. **DO** maintain test baseline (724/728)
+10. **DO** perform comprehensive codex review before final PR submission
 
 ---
 
@@ -588,7 +699,7 @@ Track these throughout execution:
 
 To execute this project, simply say:
 
-> "Execute the modularization project following MODULARIZATION-PROMPT.md. Start with MCP-133 and proceed sequentially through all 15 issues. Run all required tests after each issue. Perform smoke tests when specified. Commit after each completed issue. Continue until all 15 issues complete and final validation passes. Then submit PR."
+> "Execute the modularization project following MODULARIZATION-PROMPT.md. Start with MCP-133 and proceed sequentially through all 15 issues. Run all required tests after each issue. Perform smoke tests when specified. Commit after each completed issue. Continue until all 15 issues complete and final validation passes. Then perform comprehensive codex code review. After codex approval, submit PR."
 
 Or for step-by-step execution:
 
