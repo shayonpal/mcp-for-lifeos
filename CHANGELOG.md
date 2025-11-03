@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-03 00:38 - test: comprehensive integration and regression testing suite (MCP-129)
+
 - **Block Reference Support in Link Updates** (MCP-124, 2025-11-02 23:03): Extended link scanner and updater to detect and preserve Obsidian block references during note rename operations
   - Updated WIKILINK_PATTERN regex in `src/regex-utils.ts` to capture block references `[[Note#^blockid]]` distinct from headings `[[Note#heading]]`
   - Modified anchor parsing logic in LinkScanner to classify anchors by `^` prefix: block refs preserve caret, headings remain plain text
