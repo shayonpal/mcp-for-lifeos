@@ -7,7 +7,8 @@
  * - consolidated-only mode (12 tools)
  * - consolidated-with-aliases mode (34 tools)
  *
- * @see dev/contracts/MCP-10-contracts.ts
+ * @see dev/contracts/MCP-10-contracts.ts - Test contracts and acceptance criteria
+ * Note: ToolMode type originates from MCP-6-contracts.ts (server factory contracts)
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';

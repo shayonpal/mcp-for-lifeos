@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Contract Validation**: All acceptance criteria from dev/contracts/MCP-10-contracts.ts met, TypeScript interfaces ensure type safety
   - **Zero Breaking Changes**: MCP tool interfaces unchanged, existing functionality preserved, runtime behavior identical
   - **Validates Decomposition**: End-to-end validation of MCP-6/7/8/9 server decomposition through automated integration testing
-  - **Bootstrap Extraction**: Skipped (src/index.ts = 503 lines, only 3 lines over ≤500 target, acceptable variance per contracts)
+  - **Bootstrap Extraction**: Skipped (src/index.ts = 503 lines, within acceptable variance of optional ≤500 target per MCP-10-contracts.ts line 396: "indexLinesOptional")
   - **Unblocks Issues**: MCP-90 (config extraction), MCP-91 (vault-utils decomposition), MCP-92 (hot-reload instructions) ready to proceed
   - **Cycle Impact**: Completes 68% of Cycle 9 (Oct 28 - Nov 7), critical path cleared for VaultUtils elimination series
 

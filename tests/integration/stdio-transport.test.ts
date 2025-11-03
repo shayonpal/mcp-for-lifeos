@@ -17,21 +17,28 @@ import type { TestVaultSetup } from '../helpers/vault-setup.js';
 
 describe('Stdio Transport - Integration', () => {
   let testVault: TestVaultSetup;
+  let serverInstances: Array<{ shutdown: () => Promise<void> }> = [];
 
   beforeEach(async () => {
     testVault = await createTestVault();
+    serverInstances = [];
   });
 
   afterEach(async () => {
+    // Clean up all server instances to prevent handle leaks
+    for (const instance of serverInstances) {
+      await instance.shutdown();
+    }
     await testVault.cleanup();
   });
 
   describe('Transport Creation', () => {
-    it('should create stdio transport when enabled', () => {
+    it('should create stdio transport when enabled', async () => {
       const instance = createMcpServer({
         vaultPath: testVault.vaultPath,
         enableStdio: true
       });
+      serverInstances.push(instance); // Track for cleanup
 
       expect(instance.transport).toBeDefined();
     });

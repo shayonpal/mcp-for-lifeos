@@ -64,7 +64,7 @@ Following ADR-001's OpenWebUI integration and subsequent LinuxServer.io Obsidian
 - Critical test suite failures resolution
 
 #### Phase 2: Architecture Decomposition (P1)
-- Server decomposition: index.ts from 2,224 to 503 lines (✅ completed, target achieved)
+- Server decomposition: index.ts from 2,224 to 503 lines (✅ completed, 77% reduction, within acceptable variance of optional ≤500 target)
 - vault-utils.ts god class elimination
 - Tool consolidation validation and legacy retirement
 
@@ -76,7 +76,7 @@ Following ADR-001's OpenWebUI integration and subsequent LinuxServer.io Obsidian
 
 ### Success Metrics
 - Test suite: 100% passing (✅ 724/728 = 99.5%)
-- Largest file: 503 lines (src/index.ts, target achieved)
+- Largest file: 503 lines (src/index.ts, within acceptable variance of optional ≤500 target)
 - Tool count: Reduced from 37 to ~11 tools
 - Technical debt: 7.8/10 → 3.0/10
 - Performance: <100ms for common operations
