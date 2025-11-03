@@ -9,37 +9,40 @@
 /**
  * Comprehensive regex pattern for matching Obsidian wikilinks
  *
- * Obsidian format: [[target#heading^block|alias]] or [[target#heading^block]]
+ * Obsidian format: [[target#anchor|alias]] or [[target#anchor]]
  * - target: The actual note being linked to (required)
- * - heading: Optional section heading reference (before alias)
- * - block: Optional block reference ID (before alias)
+ * - anchor: Optional heading or block reference after # (heading OR block, not both)
+ *   - Heading: [[Note#Heading]] - plain text after #
+ *   - Block: [[Note#^blockid]] - starts with ^ after #
  * - alias: Optional display text shown instead of full link text
  *
  * Pattern breakdown:
  * - `(!)?` - Capture group 1: Optional embed flag (!)
  * - `\[\[` - Opening wikilink brackets
- * - `(.+?)` - Capture group 2: Target note name (required, before #/^/|)
- * - `(?:#(.+?))?` - Capture group 3: Optional heading reference after #
- * - `(?:\^(.+?))?` - Capture group 4: Optional block reference after ^
- * - `(?:\|(.+?))?` - Capture group 5: Optional alias text after pipe (comes last)
+ * - `(.+?)` - Capture group 2: Target note name (required, non-greedy, supports nested brackets)
+ * - `(?:#(\^[^\]|]+|[^\]|]+))?` - Capture group 3: Optional anchor after #
+ *   - `\^[^\]|]+` - Block ref (starts with ^, continues until ] or |)
+ *   - `[^\]|]+` - Heading (no ^, continues until ] or |)
+ * - `(?:\|(.+?))?` - Capture group 4: Optional alias text after pipe (comes last)
  * - `\]\]` - Closing wikilink brackets
  *
  * Capture group indices:
  * - [1]: Embed flag (!) - optional
  * - [2]: Target note name - required (the actual link destination)
- * - [3]: Heading reference - optional (e.g., "Section" from [[Note#Section]])
- * - [4]: Block reference - optional (e.g., "abc" from [[Note^abc]])
- * - [5]: Alias text - optional (display text shown to user, comes after |)
+ * - [3]: Anchor (heading OR block ref) - optional
+ *   - If starts with ^: block reference (includes ^ prefix, e.g., "^abc123")
+ *   - Otherwise: heading reference (e.g., "Section")
+ * - [4]: Alias text - optional (display text shown to user, comes after |)
  *
  * Supported formats:
  * - Basic: [[Note]]
  * - Alias: [[Note|Display Text]] (Note=target, Display Text=alias)
  * - Heading: [[Note#Heading]]
  * - Heading + Alias: [[Note#Heading|Alias]]
- * - Block: [[Note^blockref]]
- * - Block + Alias: [[Note^blockref|Alias]]
+ * - Block: [[Note#^blockref]]
+ * - Block + Alias: [[Note#^blockref|Alias]]
  * - Embed: ![[Note]]
- * - Combined: [[Note#Heading^block|Alias]]
+ * - Nested brackets: [[Note [with] brackets]] (edge case support)
  *
  * @example Basic link
  * ```typescript
@@ -47,20 +50,18 @@
  * // match[0] = "[[Note]]"  (full match)
  * // match[1] = undefined   (no embed flag)
  * // match[2] = "Note"      (target note)
- * // match[3] = undefined   (no heading)
- * // match[4] = undefined   (no block ref)
- * // match[5] = undefined   (no alias)
+ * // match[3] = undefined   (no anchor)
+ * // match[4] = undefined   (no alias)
  * ```
  *
- * @example Alias link
+ * @example Block reference
  * ```typescript
- * const match = WIKILINK_PATTERN.exec("[[Note|Display]]");
- * // match[0] = "[[Note|Display]]"  (full match)
+ * const match = WIKILINK_PATTERN.exec("[[Note#^block123]]");
+ * // match[0] = "[[Note#^block123]]"  (full match)
  * // match[1] = undefined   (no embed flag)
- * // match[2] = "Note"      (target - the actual link destination)
- * // match[3] = undefined   (no heading)
- * // match[4] = undefined   (no block ref)
- * // match[5] = "Display"   (alias - what user sees)
+ * // match[2] = "Note"      (target note)
+ * // match[3] = "^block123" (block ref - includes ^ prefix)
+ * // match[4] = undefined   (no alias)
  * ```
  *
  * @example Heading with alias
@@ -69,14 +70,14 @@
  * // match[0] = "[[Note#Section|Alias]]"
  * // match[1] = undefined   (no embed)
  * // match[2] = "Note"      (target)
- * // match[3] = "Section"   (heading)
- * // match[4] = undefined   (no block ref)
- * // match[5] = "Alias"     (alias)
+ * // match[3] = "Section"   (heading - no ^ prefix)
+ * // match[4] = "Alias"     (alias)
  * ```
  *
  * @since MCP-106 - Link detection infrastructure (Phase 2 of rename_note)
+ * @since MCP-124 - Updated to properly distinguish block refs from headings, support nested brackets
  */
-export const WIKILINK_PATTERN = /(!)?\[\[(.+?)(?:#(.+?))?(?:\^(.+?))?(?:\|(.+?))?\]\]/g;
+export const WIKILINK_PATTERN = /(!)?\[\[(.+?)(?:#(\^[^\]|]+|[^\]|]+))?(?:\|(.+?))?\]\]/g;
 
 /**
  * Escapes special regex characters in a string to treat it as a literal search term

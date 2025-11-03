@@ -523,19 +523,24 @@ export class VaultUtils {
   /**
    * Reconstruct wikilink text from components with new target note name
    *
-   * Follows Obsidian wikilink format: [[target#heading^block|alias]]
+   * Follows Obsidian wikilink format: [[target#anchor|alias]]
+   * where anchor is either a heading (plain text) or block ref (starts with ^)
    * Preserves all link components exactly as they were in original link.
    *
    * @param embedFlag - '!' if embed, undefined otherwise
    * @param targetNote - New note name to use as target (without .md)
    * @param heading - Heading reference text (without #)
-   * @param blockRef - Block reference text (without ^)
+   * @param blockRef - Block reference text (includes ^ prefix, e.g., "^abc123")
    * @param alias - Alias display text (without |)
    * @returns Formatted wikilink text with new target
    *
    * @example
    * buildNewLinkText(undefined, 'NewNote', 'Section', undefined, 'Link')
    * // Returns: '[[NewNote#Section|Link]]'
+   *
+   * @example
+   * buildNewLinkText(undefined, 'NewNote', undefined, '^block123', undefined)
+   * // Returns: '[[NewNote#^block123]]'
    *
    * @example
    * buildNewLinkText('!', 'NewNote', undefined, undefined, undefined)
@@ -552,12 +557,12 @@ export class VaultUtils {
   ): string {
     let link = '[[' + targetNote;
 
-    if (heading) {
-      link += '#' + heading;
-    }
-
+    // Add anchor (heading or block ref) after #
+    // Block refs include ^ prefix in the blockRef parameter
     if (blockRef) {
-      link += '^' + blockRef;
+      link += '#' + blockRef;  // blockRef already includes ^
+    } else if (heading) {
+      link += '#' + heading;
     }
 
     // Add alias BEFORE closing brackets
@@ -612,12 +617,19 @@ export class VaultUtils {
     // Update links in content section only (frontmatter updates deferred to MCP-110)
     const updatedContent = noteContent.replace(
       WIKILINK_PATTERN,
-      (match: string, embedFlag: string | undefined, target: string, heading: string | undefined, blockRef: string | undefined, alias: string | undefined) => {
+      (match: string, embedFlag: string | undefined, target: string, anchor: string | undefined, alias: string | undefined) => {
         // Normalize target for case-insensitive comparison
         const targetNormalized = stripMdExtension(target).toLowerCase();
 
         // Only update if target matches old note name
         if (targetNormalized === oldNameNormalized) {
+          // Classify anchor as heading or block reference
+          // Block refs start with ^ (e.g., "^abc123")
+          // Headings are plain text (e.g., "Section")
+          const isBlockRef = anchor?.startsWith('^') ?? false;
+          const heading = isBlockRef ? undefined : anchor;
+          const blockRef = isBlockRef ? anchor : undefined;
+
           return this.buildNewLinkText(embedFlag, newNameNormalized, heading, blockRef, alias);
         }
 

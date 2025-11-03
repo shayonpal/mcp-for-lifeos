@@ -194,7 +194,7 @@ title: Complex References
 - Basic: [[OldNote]]
 - Alias: [[OldNote|See Old Note]]
 - Heading: [[OldNote#Introduction]]
-- Block: [[OldNote^block123]]
+- Block: [[OldNote#^block123]]
 - Heading + Alias: [[OldNote#Section|Link Text]]
 - Embed: ![[OldNote]]
 - Embed + Heading: ![[OldNote#Diagram]]`
@@ -214,7 +214,7 @@ title: Complex References
       expect(refContent).toContain('[[NewNote]]');
       expect(refContent).toContain('[[NewNote|See Old Note]]');
       expect(refContent).toContain('[[NewNote#Introduction]]');
-      expect(refContent).toContain('[[NewNote^block123]]');
+      expect(refContent).toContain('[[NewNote#^block123]]');
       expect(refContent).toContain('[[NewNote#Section|Link Text]]');
       expect(refContent).toContain('![[NewNote]]');
       expect(refContent).toContain('![[NewNote#Diagram]]');
@@ -479,7 +479,7 @@ people:
 Basic: [[MCP-107-Test-Old]]
 Alias: [[MCP-107-Test-Old|My Alias]]
 Heading: [[MCP-107-Test-Old#Section]]
-Block: [[MCP-107-Test-Old^block123]]
+Block: [[MCP-107-Test-Old#^block123]]
 Combo: [[MCP-107-Test-Old#Section|Link Text]]
 Embed: ![[MCP-107-Test-Old]]`);
 
@@ -497,7 +497,7 @@ Embed: ![[MCP-107-Test-Old]]`);
         expect(refContent).toMatch(/Basic: \[\[MCP-107-Test-New\]\]/);
         expect(refContent).toMatch(/Alias: \[\[MCP-107-Test-New\|My Alias\]\]/);
         expect(refContent).toMatch(/Heading: \[\[MCP-107-Test-New#Section\]\]/);
-        expect(refContent).toMatch(/Block: \[\[MCP-107-Test-New\^block123\]\]/);
+        expect(refContent).toMatch(/Block: \[\[MCP-107-Test-New#\^block123\]\]/);
         expect(refContent).toMatch(/Combo: \[\[MCP-107-Test-New#Section\|Link Text\]\]/);
         expect(refContent).toMatch(/Embed: !\[\[MCP-107-Test-New\]\]/);
 
