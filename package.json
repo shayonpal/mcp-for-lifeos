@@ -19,6 +19,7 @@
     "test:vault-config": "jest tests/integration/vault-configurations.test.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
+    "check:circular": "madge --circular --extensions ts src/",
     "smoke:stdio": "node scripts/smoke-stdio.mjs"
   },
   "keywords": [
@@ -60,6 +61,7 @@
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
+    "madge": "^8.0.0",
     "ts-jest": "^29.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
