@@ -246,7 +246,7 @@ export interface NoteHandlerDependencies {
  */
 export interface MetadataHandlerDependencies {
   VaultUtils: typeof import('../../src/vault-utils.js').VaultUtils;
-  YamlRulesManager: typeof import('../../src/yaml-rules-manager.js').YamlRulesManager;
+  YamlRulesManager: typeof import('../../src/modules/yaml/index.js').YamlRulesManager;
   addVersionMetadata: (response: any, config: any) => any;
 }
 

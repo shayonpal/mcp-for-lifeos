@@ -10,7 +10,7 @@ import { SearchEngine, AdvancedSearchOptions } from './search-engine.js';
 import { ObsidianLinks } from './obsidian-links.js';
 import { NaturalLanguageProcessor } from './natural-language-processor.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';
-import { YamlRulesManager } from './yaml-rules-manager.js';
+import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
 import { LIFEOS_CONFIG } from './config.js';
