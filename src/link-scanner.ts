@@ -78,7 +78,7 @@ export interface LinkReference {
   /** Heading reference if link uses [[Note#Heading]] format */
   heading?: string;
 
-  /** Block reference if link uses [[Note^block]] format */
+  /** Block reference if link uses [[Note#^block]] format */
   blockRef?: string;
 
   /** Whether this is an embed link (![[...]]) */
@@ -345,7 +345,8 @@ export class LinkScanner {
         // Headings are plain text (e.g., "Section")
         const isBlockRef = anchor?.startsWith('^') ?? false;
         const heading = isBlockRef ? undefined : (anchor?.trim() || undefined);
-        const blockRef = isBlockRef ? anchor.trim() : undefined;
+        // Validate block ref has content after ^ (reject malformed "[[Note#^]]")
+        const blockRef = isBlockRef && anchor.length > 1 ? anchor.trim() : undefined;
 
         references.push({
           sourcePath,

@@ -198,6 +198,17 @@ describe('LinkScanner', () => {
       expect(links[1].blockRef).toBeUndefined();
     });
 
+    it('should reject malformed block reference [[Note#^]] with bare caret', () => {
+      const content = '[[Note#^]] is malformed';
+      const links = LinkScanner.extractLinksFromContent(content, '/vault/note.md');
+
+      expect(links).toHaveLength(1);
+      // Malformed block ref (bare ^ without ID) should be rejected
+      expect(links[0].blockRef).toBeUndefined();
+      expect(links[0].heading).toBeUndefined();
+      expect(links[0].targetNote).toBe('Note');
+    });
+
     it('should extract multiple links from multiple lines', () => {
       const content = `Line 1 with [[Note1]]
 Line 2 with [[Note2]]
