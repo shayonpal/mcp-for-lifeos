@@ -11,7 +11,7 @@ import { SearchEngine, AdvancedSearchOptions, SearchResult } from './modules/sea
 import { VaultUtils } from './modules/files/index.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './config.js';
-import { AnalyticsCollector } from './analytics/analytics-collector.js';
+import { AnalyticsCollector } from './modules/analytics/index.js';
 import { ObsidianLinks } from './modules/links/index.js';
 
 /**

@@ -258,7 +258,7 @@ export interface UtilityHandlerDependencies {
   ObsidianLinks: typeof import('../../src/modules/links/index.js').ObsidianLinks;
   DynamicTemplateEngine: typeof import('../../src/modules/templates/index.js').DynamicTemplateEngine;
   DateResolver: typeof import('../../src/date-resolver.js').DateResolver;
-  AnalyticsCollector: typeof import('../../src/analytics/analytics-collector.js').AnalyticsCollector;
+  AnalyticsCollector: typeof import('../../src/modules/analytics/index.js').AnalyticsCollector;
   addVersionMetadata: (response: any, config: any) => any;
   extractClientInfo: (server: any) => { name: string; version: string };
   format: typeof import('date-fns').format;
