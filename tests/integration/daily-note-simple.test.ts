@@ -83,7 +83,7 @@ tags:
     obsidianSettings = new ObsidianSettings(vaultPath);
     
     // Mock the LIFEOS_CONFIG for VaultUtils
-    const { LIFEOS_CONFIG } = await import('../../src/config.js');
+    const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
     const { VaultUtils } = await import('../../src/modules/files/index.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
@@ -97,7 +97,7 @@ tags:
   afterEach(async () => {
     // Restore original config
     if (originalConfig) {
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       Object.assign(LIFEOS_CONFIG, originalConfig);
     }
     
@@ -320,7 +320,7 @@ Today is <% tp.date.now("dddd") %> in week <% tp.date.now("ww") %>`
       await fs.mkdir(journalPath, { recursive: true });
       
       // Update config to use simple Daily folder for testing
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       LIFEOS_CONFIG.dailyNotesPath = path.join(vaultPath, 'Daily');
       
       const dateString = '2025-07-01';
