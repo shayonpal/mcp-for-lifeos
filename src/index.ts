@@ -26,8 +26,7 @@ import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MC
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
 import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
 import { ALWAYS_AVAILABLE_TOOL_NAMES } from '../dev/contracts/MCP-98-contracts.js';
-import { WALManager } from './wal-manager.js';
-import { TransactionManager } from './transaction-manager.js';
+import { WALManager, TransactionManager } from './modules/transactions/index.js';
 import { join } from 'path';
 import { homedir } from 'os';
 

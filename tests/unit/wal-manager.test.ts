@@ -1,4 +1,4 @@
-import { WALManager, WALEntry, TransactionManifest } from '../../src/wal-manager.js';
+import { WALManager, WALEntry, TransactionManifest } from '../../src/modules/transactions/index.js';
 import {
   existsSync,
   readFileSync,

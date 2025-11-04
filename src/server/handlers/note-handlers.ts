@@ -33,8 +33,7 @@ let walManagerInstance: any = null;
  */
 async function getTransactionManager() {
   if (!transactionManagerInstance) {
-    const { TransactionManager } = await import('../../transaction-manager.js');
-    const { WALManager } = await import('../../wal-manager.js');
+    const { TransactionManager, WALManager } = await import('../../modules/transactions/index.js');
 
     walManagerInstance = new WALManager();
     transactionManagerInstance = new TransactionManager(LIFEOS_CONFIG.vaultPath, walManagerInstance);

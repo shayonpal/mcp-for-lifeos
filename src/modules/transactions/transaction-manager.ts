@@ -38,13 +38,13 @@ import type {
   TransactionResult,
   RollbackResult,
   WALEntry,
-} from '../dev/contracts/MCP-108-contracts.js';
+} from '../../../dev/contracts/MCP-108-contracts.js';
 import { WALManager } from './wal-manager.js';
-import { updateVaultLinks } from './modules/links/index.js';
-import type { LinkRenderResult } from './modules/links/index.js';
-import { writeFileWithRetry } from './modules/files/file-io.js';
-import { TransactionErrorCode } from './error-types.js';
-import { LIFEOS_CONFIG } from './config.js';
+import { updateVaultLinks } from '../links/index.js';
+import type { LinkRenderResult } from '../links/index.js';
+import { writeFileWithRetry } from '../files/file-io.js';
+import { TransactionErrorCode } from '../../error-types.js';
+import { LIFEOS_CONFIG } from '../../config.js';
 
 /**
  * TransactionManager - Coordinates atomic rename operations with rollback

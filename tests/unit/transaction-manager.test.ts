@@ -19,8 +19,8 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-117
  */
 
-import { TransactionManager } from '../../src/transaction-manager.js';
-import { WALManager } from '../../src/wal-manager.js';
+import { TransactionManager } from '../../src/modules/transactions/index.js';
+import { WALManager } from '../../src/modules/transactions/index.js';
 import type {
   TransactionManifest,
   TransactionState,

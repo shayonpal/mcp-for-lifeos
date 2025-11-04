@@ -13,8 +13,8 @@ import { promises as fs, existsSync, utimesSync } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
-import { WALManager, type WALEntry } from '../../src/wal-manager.js';
-import { TransactionManager } from '../../src/transaction-manager.js';
+import { WALManager, type WALEntry } from '../../src/modules/transactions/index.js';
+import { TransactionManager } from '../../src/modules/transactions/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('Boot Recovery System', () => {
