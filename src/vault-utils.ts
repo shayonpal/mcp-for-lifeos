@@ -27,39 +27,11 @@ import { TemplateContext } from "./modules/templates/index.js";
 import { logger } from "./logger.js";
 import { normalizePath } from "./path-utils.js";
 import { WIKILINK_PATTERN } from "./regex-utils.js";
-
-/**
- * Options for atomic file writes
- *
- * Extends writeFileWithRetry with atomic semantics via temp-file-then-rename
- */
-export interface AtomicWriteOptions {
-  /**
-   * Whether to use atomic temp-file-then-rename pattern
-   * Default: false (preserves existing behavior)
-   */
-  atomic?: boolean;
-
-  /**
-   * Number of retry attempts for iCloud sync conflicts
-   * Default: 3 (uses ICLOUD_RETRY_CONFIG.maxRetries)
-   */
-  retries?: number;
-
-  /**
-   * Whether this write is part of a transaction
-   * Used for telemetry and error context
-   */
-  transactional?: boolean;
-}
-
-// iCloud sync retry configuration
-const ICLOUD_RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelayMs: 200,
-  maxDelayMs: 2000,
-  retryableErrors: ["EBUSY", "ENOENT", "EPERM", "EMFILE", "ENFILE"],
-};
+import {
+  readFileWithRetry,
+  writeFileWithRetry,
+  AtomicWriteOptions,
+} from "./modules/files/file-io.js";
 
 export class VaultUtils {
   private static templateManager: TemplateManager | null = null;
@@ -163,170 +135,6 @@ export class VaultUtils {
     return searchResults[0].note.path;
   }
 
-  /**
-   * Sleep for specified milliseconds
-   */
-  private static sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Check if an error is retryable (likely due to iCloud sync conflicts)
-   */
-  private static isRetryableError(error: any): boolean {
-    if (!error || typeof error.code !== "string") return false;
-    return ICLOUD_RETRY_CONFIG.retryableErrors.includes(error.code);
-  }
-
-  /**
-   * Calculate exponential backoff delay
-   */
-  private static calculateBackoffDelay(attempt: number): number {
-    const delay = ICLOUD_RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt);
-    return Math.min(delay, ICLOUD_RETRY_CONFIG.maxDelayMs);
-  }
-
-  /**
-   * Synchronous sleep using busy-wait
-   * Used for iCloud retry delays in synchronous operations
-   */
-  private static syncSleep(ms: number): void {
-    const start = Date.now();
-    while (Date.now() - start < ms) {
-      // Busy wait - acceptable for short delays (<2s)
-    }
-  }
-
-  /**
-   * Retry a write operation with exponential backoff
-   * Handles iCloud sync conflicts and retryable errors
-   */
-  private static retryWrite(
-    writeFn: () => void,
-    maxRetries: number,
-    operation: string,
-  ): void {
-    let lastError: any;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        writeFn();
-        return; // Success
-      } catch (error: any) {
-        lastError = error;
-
-        if (!this.isRetryableError(error)) {
-          throw error;
-        }
-
-        if (attempt < maxRetries) {
-          const delay = this.calculateBackoffDelay(attempt);
-          this.syncSleep(delay);
-        }
-      }
-    }
-
-    // All retries failed
-    throw new Error(
-      `Failed to ${operation} after ${maxRetries} retries: ${lastError.message}`,
-    );
-  }
-
-  /**
-   * Read file with iCloud sync retry logic
-   */
-  static readFileWithRetry(
-    filePath: string,
-    encoding: BufferEncoding = "utf-8",
-  ): string {
-    let lastError: any;
-
-    for (
-      let attempt = 0;
-      attempt <= ICLOUD_RETRY_CONFIG.maxRetries;
-      attempt++
-    ) {
-      try {
-        return readFileSync(filePath, encoding);
-      } catch (error: any) {
-        lastError = error;
-
-        // Don't retry if it's not a retryable error
-        if (!this.isRetryableError(error)) {
-          throw error;
-        }
-
-        // Don't sleep on the last attempt
-        if (attempt < ICLOUD_RETRY_CONFIG.maxRetries) {
-          const delay = this.calculateBackoffDelay(attempt);
-          this.syncSleep(delay);
-        }
-      }
-    }
-
-    // If all retries failed, throw the last error
-    throw new Error(
-      `Failed to read file after ${ICLOUD_RETRY_CONFIG.maxRetries} retries: ${lastError.message}`,
-    );
-  }
-
-  /**
-   * Write file with iCloud sync retry logic
-   */
-  static writeFileWithRetry(
-    filePath: string,
-    content: string,
-    encoding: BufferEncoding = "utf-8",
-    options?: AtomicWriteOptions,
-  ): void {
-    const maxRetries = options?.retries ?? ICLOUD_RETRY_CONFIG.maxRetries;
-    const useAtomic = options?.atomic ?? false;
-
-    if (useAtomic) {
-      // Atomic write using temp-file-then-rename pattern
-      const tempPath = join(
-        dirname(filePath),
-        `.mcp-tmp-${Date.now()}-${basename(filePath)}`,
-      );
-
-      try {
-        // Step 1: Write content to temp file with retry logic
-        this.retryWrite(
-          () => writeFileSync(tempPath, content, encoding),
-          maxRetries,
-          `write temp file (atomic mode): ${tempPath}`,
-        );
-
-        // Step 2: Atomically rename temp file to target (POSIX atomic on macOS)
-        this.retryWrite(
-          () => renameSync(tempPath, filePath),
-          maxRetries,
-          `atomic rename temp file: ${tempPath} -> ${filePath}`,
-        );
-      } catch (error) {
-        // Cleanup temp file on any error
-        try {
-          if (existsSync(tempPath)) {
-            rmSync(tempPath, { force: true });
-          }
-        } catch (cleanupError) {
-          // Log cleanup failure but don't mask original error
-          logger.error(
-            `Failed to cleanup temp file ${tempPath}: ${cleanupError}`,
-          );
-        }
-        throw error;
-      }
-    } else {
-      // Non-atomic write (existing behavior for backward compatibility)
-      this.retryWrite(
-        () => writeFileSync(filePath, content, encoding),
-        maxRetries,
-        `write file (non-atomic mode): ${filePath}`,
-      );
-    }
-  }
-
   static async findNotes(pattern: string = "**/*.md"): Promise<string[]> {
     const searchPath = join(LIFEOS_CONFIG.vaultPath, pattern);
     return await glob(searchPath, {
@@ -347,7 +155,7 @@ export class VaultUtils {
     }
 
     try {
-      const content = this.readFileWithRetry(normalizedPath, "utf-8");
+      const content = readFileWithRetry(normalizedPath, "utf-8");
       let parsed;
 
       try {
@@ -369,7 +177,7 @@ export class VaultUtils {
     } catch (error) {
       console.error(`Error parsing note ${normalizedPath}:`, error);
       // Return note with empty frontmatter if parsing fails
-      const content = this.readFileWithRetry(normalizedPath, "utf-8");
+      const content = readFileWithRetry(normalizedPath, "utf-8");
       const stats = statSync(normalizedPath);
 
       return {
@@ -394,7 +202,7 @@ export class VaultUtils {
     });
 
     const fileContent = matter.stringify(note.content, frontmatterToWrite);
-    this.writeFileWithRetry(note.path, fileContent, "utf-8");
+    writeFileWithRetry(note.path, fileContent, "utf-8");
   }
 
   static createNote(
@@ -515,7 +323,7 @@ export class VaultUtils {
       updatedNote.content,
       frontmatterToWrite,
     );
-    this.writeFileWithRetry(updatedNote.path, fileContent, "utf-8");
+    writeFileWithRetry(updatedNote.path, fileContent, "utf-8");
 
     return updatedNote;
   }
@@ -1685,7 +1493,7 @@ export class VaultUtils {
       for (const file of files) {
         scannedFiles++;
         try {
-          const content = this.readFileWithRetry(file, "utf-8");
+          const content = readFileWithRetry(file, "utf-8");
           const { data: frontmatter } = matter(content);
 
           if (
@@ -1905,7 +1713,7 @@ export class VaultUtils {
       for (const file of files) {
         scannedFiles++;
         try {
-          const content = this.readFileWithRetry(file, "utf-8");
+          const content = readFileWithRetry(file, "utf-8");
           const { data: frontmatter } = matter(content);
 
           if (frontmatter && typeof frontmatter === "object") {

@@ -10,7 +10,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/src/index.js",
     "watch": "tsx watch src/index.ts",
-    "test": "jest",
+    "test": "node --expose-gc ./node_modules/.bin/jest",
     "test:integration": "node --expose-gc ./node_modules/.bin/jest tests/integration",
     "test:unit": "jest tests/unit",
     "test:workflows": "jest tests/integration/workflows",

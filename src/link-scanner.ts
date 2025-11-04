@@ -19,6 +19,7 @@ import { basename } from 'path';
 import type { LifeOSNote } from './types.js';
 import { SearchEngine } from './modules/search/index.js';
 import { VaultUtils } from './vault-utils.js';
+import { readFileWithRetry } from './modules/files/file-io.js';
 import { WIKILINK_PATTERN } from './regex-utils.js';
 import { stripMdExtension } from './path-utils.js';
 
@@ -276,7 +277,7 @@ export class LinkScanner {
 
     if (shouldScanFrontmatter) {
       // Read raw file content to include frontmatter (with iCloud retry logic)
-      const rawContent = VaultUtils.readFileWithRetry(note.path, 'utf-8');
+      const rawContent = readFileWithRetry(note.path, 'utf-8');
       return this.extractLinksFromContent(rawContent, note.path, options);
     }
 

@@ -15,6 +15,7 @@ import {
   chmodSync,
 } from "fs";
 import { VaultUtils } from "../../src/vault-utils.js";
+import { writeFileWithRetry } from "../../src/modules/files/file-io.js";
 
 const TEST_VAULT_PATH = join(process.cwd(), "test-vault-atomic");
 
@@ -42,7 +43,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const filePath = join(TEST_VAULT_PATH, "test.md");
       const content = "Atomic write test content";
 
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
       });
 
@@ -66,7 +67,7 @@ describe("MCP-114: Atomic File Operations", () => {
       // 2. No temp files remain (cleanup worked)
       // This indirectly confirms the pattern is correct
 
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
       });
 
@@ -88,7 +89,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const filePath = join(TEST_VAULT_PATH, "atomic-test.md");
       const content = "POSIX atomic rename test";
 
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
       });
 
@@ -112,7 +113,7 @@ describe("MCP-114: Atomic File Operations", () => {
       chmodSync(TEST_VAULT_PATH, 0o444);
 
       try {
-        VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+        writeFileWithRetry(filePath, content, "utf-8", {
           atomic: true,
           retries: 0, // No retries to fail fast
         });
@@ -140,7 +141,7 @@ describe("MCP-114: Atomic File Operations", () => {
       chmodSync(join(TEST_VAULT_PATH, "subdir"), 0o444);
 
       try {
-        VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+        writeFileWithRetry(filePath, content, "utf-8", {
           atomic: true,
           retries: 0,
         });
@@ -166,7 +167,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content = "iCloud retry integration test";
 
       // Should succeed with default retry count
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
         retries: 3,
       });
@@ -180,7 +181,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content = "Custom retry count test";
 
       // Use custom retry count
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
         retries: 5,
       });
@@ -196,7 +197,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content = "Default behavior test";
 
       // Call without options - should use non-atomic path
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8");
+      writeFileWithRetry(filePath, content, "utf-8");
 
       expect(existsSync(filePath)).toBe(true);
       expect(readFileSync(filePath, "utf-8")).toBe(content);
@@ -207,7 +208,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content = "Backward compatibility test";
 
       // Call with empty options object
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {});
+      writeFileWithRetry(filePath, content, "utf-8", {});
 
       expect(existsSync(filePath)).toBe(true);
       expect(readFileSync(filePath, "utf-8")).toBe(content);
@@ -217,7 +218,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const filePath = join(TEST_VAULT_PATH, "explicit-non-atomic.md");
       const content = "Explicit non-atomic test";
 
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: false,
       });
 
@@ -233,7 +234,7 @@ describe("MCP-114: Atomic File Operations", () => {
 
       // Try to write to non-existent directory without creating it
       expect(() => {
-        VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+        writeFileWithRetry(filePath, content, "utf-8", {
           atomic: true,
           retries: 0,
         });
@@ -254,7 +255,7 @@ describe("MCP-114: Atomic File Operations", () => {
       chmodSync(TEST_VAULT_PATH, 0o444);
 
       try {
-        VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+        writeFileWithRetry(filePath, content, "utf-8", {
           atomic: true,
           retries: 0,
         });
@@ -277,10 +278,10 @@ describe("MCP-114: Atomic File Operations", () => {
       const content2 = "Concurrent write 2";
 
       // Simulate concurrent writes (in practice, temp file timestamps will differ)
-      VaultUtils.writeFileWithRetry(file1, content1, "utf-8", {
+      writeFileWithRetry(file1, content1, "utf-8", {
         atomic: true,
       });
-      VaultUtils.writeFileWithRetry(file2, content2, "utf-8", {
+      writeFileWithRetry(file2, content2, "utf-8", {
         atomic: true,
       });
 
@@ -301,7 +302,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content2 = "Second write";
 
       // Write twice to same file
-      VaultUtils.writeFileWithRetry(filePath, content1, "utf-8", {
+      writeFileWithRetry(filePath, content1, "utf-8", {
         atomic: true,
       });
 
@@ -311,7 +312,7 @@ describe("MCP-114: Atomic File Operations", () => {
         // Wait 2ms
       }
 
-      VaultUtils.writeFileWithRetry(filePath, content2, "utf-8", {
+      writeFileWithRetry(filePath, content2, "utf-8", {
         atomic: true,
       });
 
@@ -330,7 +331,7 @@ describe("MCP-114: Atomic File Operations", () => {
       const content = "Transactional write";
 
       // transactional flag should be accepted (used for telemetry)
-      VaultUtils.writeFileWithRetry(filePath, content, "utf-8", {
+      writeFileWithRetry(filePath, content, "utf-8", {
         atomic: true,
         transactional: true,
       });

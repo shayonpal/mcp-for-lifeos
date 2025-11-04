@@ -45,10 +45,12 @@ npm run test:vault-config   # Vault configuration variations
 
 ### Integration Tests with Memory Management
 
-Integration tests require memory management flags:
+Integration tests require memory management flags for garbage collection testing. The `npm test` command now automatically includes `--expose-gc`:
 
 ```bash
-node --expose-gc ./node_modules/.bin/jest tests/integration
+npm test                                                  # Includes --expose-gc automatically
+npm run test:integration                                  # Integration tests with --expose-gc
+node --expose-gc ./node_modules/.bin/jest tests/integration  # Manual invocation
 ```
 
 ### Specific Test Files

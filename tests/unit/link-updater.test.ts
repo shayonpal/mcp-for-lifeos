@@ -13,13 +13,14 @@ import { updateVaultLinks } from '../../src/link-updater.js';
 import { LinkScanner } from '../../src/link-scanner.js';
 import { VaultUtils } from '../../src/vault-utils.js';
 import type { LinkScanResult } from '../../src/link-scanner.js';
+import * as fileIo from '../../src/modules/files/file-io.js';
 
 // Mock only I/O dependencies (not helper functions)
 jest.mock('../../src/link-scanner.js');
 
-// Spy on VaultUtils for updateVaultLinks tests
-const readFileSpy = jest.spyOn(VaultUtils, 'readFileWithRetry');
-const writeFileSpy = jest.spyOn(VaultUtils, 'writeFileWithRetry');
+// Spy on file I/O functions for updateVaultLinks tests
+const readFileSpy = jest.spyOn(fileIo, 'readFileWithRetry');
+const writeFileSpy = jest.spyOn(fileIo, 'writeFileWithRetry');
 
 describe('Link Updater', () => {
   describe('VaultUtils.buildNewLinkText', () => {
