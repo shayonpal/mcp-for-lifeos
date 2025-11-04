@@ -56,24 +56,27 @@ export function getLocalDate(dateInput?: Date | string): Date {
 /**
  * Normalize tags to string array
  *
- * Handles various tag input formats and normalizes them to a consistent string array.
- * Used for YAML frontmatter tag processing and search filtering.
+ * Simple type normalizer that converts various tag input formats to a consistent array.
+ * Does NOT parse comma-separated strings - expects pre-split arrays or single string tags.
  *
  * @param tags - Tags in various formats (string, string[], undefined, null)
- * @returns Normalized string array (empty array for invalid input)
+ * @returns String array (single string wrapped in array, or original array, or empty array)
  *
  * @example
- * normalizeTagsToArray("project") // ["project"]
+ * normalizeTagsToArray("project") // ["project"] - single string wrapped
  *
  * @example
- * normalizeTagsToArray(["work", "urgent"]) // ["work", "urgent"]
+ * normalizeTagsToArray(["work", "urgent"]) // ["work", "urgent"] - array preserved
  *
  * @example
- * normalizeTagsToArray(undefined) // []
+ * normalizeTagsToArray(undefined) // [] - empty for invalid input
  *
  * @remarks
- * Preserves user input without validation or deduplication.
- * Does NOT trim whitespace or validate tag format.
+ * This is a simple type normalizer, not a parser.
+ * Does NOT split comma-separated strings (e.g., "work,urgent" stays as single element).
+ * Does NOT trim whitespace from tags.
+ * Does NOT deduplicate array elements.
+ * YAML parser should handle comma-separated tags before calling this function.
  */
 export function normalizeTagsToArray(tags: any): string[] {
   if (!tags) return [];
