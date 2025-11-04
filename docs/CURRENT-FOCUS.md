@@ -17,16 +17,13 @@ _No issues currently in progress._
 
 ## 📋 Planned (This Cycle)
 
-### High Priority
+### Remaining in Cycle 9 (Blocked)
 
-- **MCP-132**: Add pagination to list_yaml_property_values - Tool fails with 73k tokens for large property sets
-- **MCP-93**: Add "last weekday" date parsing - Natural language enhancement for date resolver
+- **MCP-90**: Extract config scaffolding from vault-utils
+- **MCP-91**: Decompose vault-utils into domain modules
+- **MCP-92**: Implement hot-reload custom instructions
 
-### Medium Priority (Blocked)
-
-- **MCP-90**: Extract config scaffolding from vault-utils - Blocked by MCP-10 completion
-- **MCP-91**: Decompose vault-utils into domain modules - Blocked by MCP-10 completion
-- **MCP-92**: Implement hot-reload custom instructions - Blocked by MCP-90, MCP-91
+_Note: These 3 issues blocked by MCP-10 completion requirement. With cycle ending today, will likely move to Cycle 10._
 
 ---
 
@@ -74,8 +71,7 @@ _No issues currently in progress._
 
 **Next Focus:**
 
-- MCP-132: Fix list_yaml_property_values token limit
-- MCP-93: Natural language date parsing
+- Complete or defer remaining Cycle 9 issues (MCP-90, MCP-91, MCP-92)
 - Plan Cycle 10 priorities
 
 ---

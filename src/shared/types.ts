@@ -4,6 +4,41 @@ export interface LifeOSConfig {
   templatesPath: string;
   dailyNotesPath: string;
   yamlRulesPath?: string;
+  customInstructions?: CustomInstructionsConfig;
+}
+
+/**
+ * Configuration for custom instructions with support for both
+ * inline definitions and file-based references
+ */
+export interface CustomInstructionsConfig {
+  /**
+   * Inline instruction definitions
+   * For immediate configuration without external files
+   */
+  inline?: {
+    /** Rules applied during note creation */
+    noteCreationRules?: string;
+
+    /** Rules applied during note editing */
+    editingRules?: string;
+
+    /** Rules applied during template processing */
+    templateRules?: string;
+  };
+
+  /**
+   * File path reference to external instructions file
+   * Enables hot-reload when combined with enableHotReload
+   */
+  filePath?: string;
+
+  /**
+   * Enable hot-reload for file-based instructions
+   * Uses fs.watch() to detect changes and clear cache
+   * Default: false
+   */
+  enableHotReload?: boolean;
 }
 
 export interface YAMLFrontmatter {
