@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
+import { randomUUID } from 'crypto';
 
 describe('JSONL Analytics Final Validation', () => {
   const ANALYTICS_DIR = path.join(process.cwd(), 'analytics');
@@ -124,7 +125,6 @@ describe('JSONL Analytics Final Validation', () => {
       for (let i = 0; i < 5; i++) {
         // Generate instance ID using the same mechanism as AnalyticsCollector
         // This is exactly what happens in: private readonly instanceId: string = randomUUID();
-        const { randomUUID } = require('crypto');
         const instanceId = randomUUID();
 
         // Validate instance ID is a valid UUID v4
@@ -133,10 +133,9 @@ describe('JSONL Analytics Final Validation', () => {
         expect(instanceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 
         // Capture process metadata (also tracked by AnalyticsCollector)
-        const { hostname } = require('os');
         const metadata = {
           id: instanceId,
-          hostname: hostname(),
+          hostname: os.hostname(),
           pid: process.pid
         };
 
