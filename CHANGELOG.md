@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-03 19:14 - test: prevent unit tests from polluting production Obsidian vault (MCP-148)
+
 - 2025-11-03 14:30 - test: integration testing and documentation refresh (MCP-10)
 
 - **Integration Testing and Documentation Refresh** (MCP-10, 2025-11-03 14:30): Comprehensive validation of server decomposition with module boundary tests, MCP protocol compliance tests, and documentation updates reflecting completed architecture

@@ -3,6 +3,8 @@
  * Global test configuration and utilities
  */
 
+import { LIFEOS_CONFIG } from '../src/config.js';
+
 // Extend Jest timeout for integration tests
 jest.setTimeout(30000);
 
@@ -62,6 +64,25 @@ const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
 
 beforeAll(() => {
+  // MCP-148: Production vault detection guard
+  // Note: We can't check LIFEOS_CONFIG here because it's set to production by default,
+  // and individual tests override it in their beforeEach hooks using createTestVault().
+  // The test-level assertions (expect(testVault.vaultPath).not.toContain('iCloud'))
+  // provide the actual safety guarantee.
+  //
+  // This environment variable check catches the case where someone tries to run tests
+  // with an explicitly set production vault path via env var.
+  if (process.env.LIFEOS_VAULT_PATH &&
+      (process.env.LIFEOS_VAULT_PATH.includes('iCloud') ||
+       process.env.LIFEOS_VAULT_PATH.includes('Library/Mobile Documents'))) {
+    throw new Error(
+      `[MCP-148] PRODUCTION VAULT PATH IN ENVIRONMENT VARIABLE!\n` +
+      `LIFEOS_VAULT_PATH: ${process.env.LIFEOS_VAULT_PATH}\n` +
+      `Tests must not use production vault paths.\n\n` +
+      `Fix: Unset LIFEOS_VAULT_PATH or set it to a test directory.`
+    );
+  }
+
   if (!process.env.VERBOSE_TESTS) {
     console.log = () => {};
     console.error = () => {};

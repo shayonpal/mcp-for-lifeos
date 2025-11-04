@@ -11,7 +11,10 @@ import type { AnalyticsCollector } from '../../src/analytics/analytics-collector
 import { ToolRouter } from '../../src/tool-router.js';
 import { VaultUtils } from '../../src/vault-utils.js';
 
-// Mock VaultUtils to prevent actual file creation
+// MCP-148: Safety net mock to prevent file creation if any code path bypasses ToolRouter
+// These tests focus on parameter mapping by mocking ToolRouter methods directly.
+// This VaultUtils mock is intentionally minimal as it should never be reached.
+// For tests that actually create files, use createTestVault() instead (see unit tests).
 jest.mock('../../src/vault-utils.js', () => ({
   VaultUtils: {
     createNote: jest.fn((fileName, frontmatter, content, targetFolder) => ({

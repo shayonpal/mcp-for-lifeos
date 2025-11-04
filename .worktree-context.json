@@ -1,0 +1,13 @@
+{
+  "issueId": "MCP-148",
+  "branchName": "bugfix/MCP-148-fix-unit-test-vault-isolation",
+  "worktreePath": "/Users/shayon/DevProjects/worktrees/bugfix-MCP-148-fix-unit-test-vault-isolation",
+  "executedPhases": [1, 2, 3, 4, 5, 6],
+  "prUrl": null,
+  "prNumber": null,
+  "pausePoints": {
+    "planApproved": true,
+    "implementationVerified": true,
+    "testsVerified": true
+  }
+}
