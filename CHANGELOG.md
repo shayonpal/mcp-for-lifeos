@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-03 21:00 - refactor: complete Phase 5 modularization (MCP-145, MCP-146, MCP-147)
+
+- **Phase 5 Modularization Complete** (MCP-145, MCP-146, MCP-147, 2025-11-03): Completed final modularization phase organizing codebase into focused domain modules with zero circular dependencies
+  - **MCP-145** (Links Module): Moved `link-scanner.ts`, `link-updater.ts`, `obsidian-links.ts` to `src/modules/links/` with barrel export
+  - **MCP-146** (Transactions Module): Moved `transaction-manager.ts`, `wal-manager.ts` to `src/modules/transactions/` with barrel export
+  - **MCP-147A** (Analytics Module): Moved `analytics-collector.ts`, `usage-metrics.ts` to `src/modules/analytics/` with barrel export
+  - **MCP-147B** (Shared Utilities): Moved 9 core utility files to `src/shared/` (types, config, logger, error-types, path-utils, regex-utils, text-utils, date-resolver) with consolidated barrel export
+  - Updated ~200+ import statements across src/, tests/, dev/contracts/, .claude/commands/
+  - Fixed jest.mock() paths and dynamic import() statements in test suite
+  - Updated documentation: ARCHITECTURE.md (added module structure diagram), workflow commands, tool docs, Serena memories
+  - **Validation**: TypeScript passing, 0 circular dependencies (madge), 781/785 tests passing (4 skipped)
+  - **Module Count**: 24 modules across 7 domain areas (files: 7, templates: 5, yaml: 2, search: 3, links: 3, transactions: 2, analytics: 2)
+  - **Benefits**: Improved discoverability, maintainability, clean module boundaries, zero circular deps baseline established
+
 - 2025-11-03 14:30 - test: integration testing and documentation refresh (MCP-10)
 
 - **Integration Testing and Documentation Refresh** (MCP-10, 2025-11-03 14:30): Comprehensive validation of server decomposition with module boundary tests, MCP protocol compliance tests, and documentation updates reflecting completed architecture
@@ -32,9 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2025-11-03 11:16 - feat: frontmatter link scanning for rename operations (MCP-110)
 
 - **Frontmatter Link Scanning** (MCP-110, 2025-11-03 11:16): Enhanced LinkScanner to optionally scan and update wikilinks in YAML frontmatter during rename operations, resolving edge case where notes with frontmatter-only links were not discovered
-  - Added `skipFrontmatter: false` parameter to LinkScanner in `src/link-updater.ts` scanAndGroupReferences() for metadata consistency
-  - Modified `scanNoteForLinks()` in `src/link-scanner.ts` to read raw file content when frontmatter scanning enabled (uses VaultUtils.readFileWithRetry with iCloud retry logic)
-  - Updated `updateNoteLinks()` in `src/vault-utils.ts` to update entire file content including frontmatter using full-content string replacement (preserves YAML structure)
+  - Added `skipFrontmatter: false` parameter to LinkScanner in `src/modules/links/link-updater.ts` scanAndGroupReferences() for metadata consistency
+  - Modified `scanNoteForLinks()` in `src/modules/links/link-scanner.ts` to read raw file content when frontmatter scanning enabled (uses VaultUtils.readFileWithRetry with iCloud retry logic)
+  - Updated `updateNoteLinks()` in `src/modules/files/vault-utils.ts` to update entire file content including frontmatter using full-content string replacement (preserves YAML structure)
   - YAML format support: Block scalar (`- "[[Note]]"`) and inline array (`["[[Note1]]", "[[Note2]]"]`) formats both handled by existing WIKILINK_PATTERN regex
   - Backward compatible: Default `skipFrontmatter: true` preserved, only rename operations explicitly enable frontmatter scanning
   - Critical fixes from code review: Replaced raw `readFileSync()` with `VaultUtils.readFileWithRetry()` for iCloud reliability, removed circular dependency (SearchEngine import), updated outdated docstring

@@ -170,6 +170,7 @@ const rules = await get_yaml_rules();
 ### Verify Field Requirements
 
 Use before editing existing notes to understand:
+
 - Which fields are required
 - What values are allowed
 - Which fields are auto-managed
@@ -177,27 +178,32 @@ Use before editing existing notes to understand:
 ### Understand Allowed Values
 
 For enum fields like `contentType`, check what values are permitted:
+
 - journal, project, task, meeting, reference
 - Prevents validation errors during note creation
 
 ## Integration with Other Tools
 
 ### create_note
+
 - Consults rules for YAML validation
 - Ensures required fields are present
 - Validates enum values and data types
 
 ### edit_note
+
 - Preserves auto-managed fields
 - Validates new YAML against rules
 - Prevents rule violations during edits
 
 ### create_note_smart
+
 - Uses rules for template compliance
 - Validates template-generated YAML
 - Ensures consistent frontmatter structure
 
 ### YamlRulesManager (Internal)
+
 - Caches rules for performance
 - Validates rule file accessibility
 - Provides instruction text for other tools
@@ -207,18 +213,21 @@ For enum fields like `contentType`, check what values are permitted:
 **Critical**: These fields are automatically managed and should NEVER be manually modified:
 
 ### created
+
 - **Purpose**: Records note creation timestamp
 - **Format**: ISO 8601 date-time string
 - **Managed**: Set once during creation
 - **Example**: `"2025-01-15T10:30:00Z"`
 
 ### modified
+
 - **Purpose**: Tracks last modification time
 - **Format**: ISO 8601 date-time string  
 - **Managed**: Updated on every change
 - **Behavior**: Automatically updated by tools
 
 ### id
+
 - **Purpose**: Unique identifier for the note
 - **Format**: String (often slug-based)
 - **Managed**: Generated during creation
@@ -227,12 +236,14 @@ For enum fields like `contentType`, check what values are permitted:
 ## Common Rules Examples
 
 ### Required Fields
+
 ```yaml
 title: string (required)
 contentType: enum (required) - journal|project|task|meeting|reference
 ```
 
 ### Optional Standard Fields
+
 ```yaml
 tags: array of strings
 people: array of strings (person references)
@@ -242,18 +253,21 @@ subCategory: string
 ```
 
 ### Array Fields
+
 ```yaml
 tags: ["tag1", "tag2", "tag3"]
 people: ["person-1", "person-2"]
 ```
 
 ### Date Fields
+
 ```yaml
 dueDate: "2025-01-20T00:00:00Z"
 startDate: "2025-01-15T09:00:00Z"
 ```
 
 ### URL Fields
+
 ```yaml
 source: "https://example.com/article"
 reference: "https://docs.company.com/guidelines"
@@ -262,17 +276,20 @@ reference: "https://docs.company.com/guidelines"
 ## Implementation Details
 
 ### Manager Class
+
 - **Class**: `YamlRulesManager`
 - **File**: `src/yaml-rules-manager.ts`
 - **Caching**: In-memory with file modification tracking
 - **Validation**: `validateRulesFile()` method
 
 ### File Watching
+
 - Monitors rule file modification time
 - Auto-reloads when file changes
 - Maintains cache for performance
 
 ### Error Handling
+
 - Configuration validation
 - File accessibility checks
 - Graceful failure with helpful messages
@@ -281,18 +298,21 @@ reference: "https://docs.company.com/guidelines"
 ## Best Practices
 
 ### Before Note Operations
+
 1. **Always check rules first** when creating/editing notes
 2. **Cache response for session** to avoid repeated calls
 3. **Respect auto-managed fields** - never modify them
 4. **Use for field discovery** to understand schema
 
 ### During Development
+
 1. **Reference for validation** when building tools
 2. **Test with different configurations** (configured/unconfigured)
 3. **Handle all response types** gracefully
 4. **Update rules as schema evolves**
 
 ### For Users
+
 1. **Keep rules updated** as workflow changes
 2. **Document new fields** when adding them
 3. **Include examples** for complex structures
@@ -303,6 +323,7 @@ reference: "https://docs.company.com/guidelines"
 ### Configuration Issues
 
 #### yamlRulesPath Not Set
+
 ```
 YAML rules are not configured. Set the yamlRulesPath in your config to enable this feature.
 ```
@@ -310,6 +331,7 @@ YAML rules are not configured. Set the yamlRulesPath in your config to enable th
 **Resolution**: Configure `yamlRulesPath` in MCP server config
 
 #### Rules File Missing
+
 ```
 YAML rules file not found or not accessible at: /path/to/rules.md
 ```
@@ -319,6 +341,7 @@ YAML rules file not found or not accessible at: /path/to/rules.md
 ### File Access Issues
 
 #### Permission Error
+
 ```
 Error reading YAML rules: EACCES: permission denied
 ```
@@ -326,6 +349,7 @@ Error reading YAML rules: EACCES: permission denied
 **Resolution**: Check file permissions and vault access
 
 #### Invalid File Path
+
 ```
 Error reading YAML rules: ENOENT: no such file or directory
 ```
@@ -453,6 +477,7 @@ modified: "2025-01-15T10:30:00Z"
 id: "weekly-team-sync-20250115"
 ---
 ```
+
 ```
 
 ## Related Tools

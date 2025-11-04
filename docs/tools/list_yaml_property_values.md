@@ -13,6 +13,7 @@ Discover all unique values used for any YAML property across your vault. Shows w
 The `list_yaml_property_values` tool provides comprehensive analysis of YAML property usage patterns across your entire vault. It scans all notes, extracts values for a specified property, categorizes them as single values or array elements, and provides detailed statistics and examples.
 
 This tool is essential for:
+
 - **Metadata Discovery**: Understanding how properties are used across your vault
 - **Data Quality Audits**: Finding typos, inconsistencies, and duplicate variations
 - **Standardization Projects**: Consolidating similar values and improving consistency
@@ -61,6 +62,7 @@ This tool is essential for:
 ## Property Name Formats
 
 ### Standard Properties
+
 ```bash
 # Simple property names
 property: "tags"
@@ -70,6 +72,7 @@ property: "source"
 ```
 
 ### Properties with Spaces
+
 ```bash
 # Use exact property name including spaces
 property: "content type"
@@ -78,12 +81,16 @@ property: "created date"
 ```
 
 ### Case Sensitivity
+
 Property names are **case-sensitive**. These are different properties:
+
 - `tags` vs `Tags` vs `TAGS`
 - `contentType` vs `content-type` vs `content type`
 
 ### Nested Properties
+
 For nested YAML structures, use the exact property path:
+
 ```yaml
 # For this YAML structure:
 metadata:
@@ -99,18 +106,21 @@ property: "metadata.author"  # if nested (implementation dependent)
 The tool returns structured information about property usage:
 
 ### Basic Response Elements
+
 - **Property name** being analyzed
 - **Total notes** containing the property
 - **Scan statistics** (files scanned, skipped, processed)
 - **Value type analysis** (single vs array values)
 
 ### Value Information (per unique value)
+
 - **Value name/content**
 - **Value type** (single value or array element)  
 - **Usage count** (if `includeCount: true`)
 - **Example notes** (if `includeExamples: true`)
 
 ### Summary Statistics
+
 - **Total unique values** discovered
 - **Type distribution** (single vs array usage)
 - **Files scanned** vs **files with property**
@@ -119,6 +129,7 @@ The tool returns structured information about property usage:
 ## Usage Examples
 
 ### Basic Property Analysis
+
 ```bash
 # List all tags used in vault
 list_yaml_property_values property: "tags"
@@ -131,6 +142,7 @@ list_yaml_property_values property: "category"
 ```
 
 ### Enhanced Analysis with Counts
+
 ```bash
 # Show usage statistics
 list_yaml_property_values property: "tags" includeCount: true
@@ -140,6 +152,7 @@ list_yaml_property_values property: "contentType" includeCount: true sortBy: "us
 ```
 
 ### Comprehensive Analysis with Examples  
+
 ```bash
 # Full analysis with examples
 list_yaml_property_values property: "people" includeCount: true includeExamples: true
@@ -152,6 +165,7 @@ list_yaml_property_values property: "category" sortBy: "type" includeCount: true
 ```
 
 ### All Features Combined
+
 ```bash
 # Maximum insight for property analysis
 list_yaml_property_values property: "contentType" includeCount: true includeExamples: true sortBy: "usage" maxExamples: 3
@@ -160,6 +174,7 @@ list_yaml_property_values property: "contentType" includeCount: true includeExam
 ## Common Properties to Analyze
 
 ### Standard LifeOS Properties
+
 - **tags**: All tags across vault - identify popular vs orphaned tags
 - **contentType**: Content type distribution - see Article, Recipe, Person ratios
 - **category**: PARA categories - understand organizational patterns  
@@ -169,6 +184,7 @@ list_yaml_property_values property: "contentType" includeCount: true includeExam
 - **status**: Task/note statuses - track completion patterns
 
 ### Content-Specific Properties
+
 - **cuisine**: For recipe collections (restaurant types, cooking styles)
 - **location**: Geographic references (cities, countries, venues)  
 - **project**: Project associations for task management
@@ -176,7 +192,9 @@ list_yaml_property_values property: "contentType" includeCount: true includeExam
 - **rating**: Rating patterns for reviews and recommendations
 
 ### Custom Properties
+
 Any custom YAML property you've created can be analyzed:
+
 - **mood**: Emotional tags for journal entries
 - **tools**: Software/tools mentioned in technical notes
 - **skills**: Skill categories for learning notes  
@@ -185,7 +203,9 @@ Any custom YAML property you've created can be analyzed:
 ## Value Type Detection
 
 ### Single Values
+
 Properties used as simple strings:
+
 ```yaml
 # Single value usage
 category: "Projects"
@@ -194,7 +214,9 @@ priority: "high"
 ```
 
 ### Array Elements  
+
 Properties used as arrays, analyzed per element:
+
 ```yaml
 # Array usage - each element counted separately
 tags: ["productivity", "automation", "tools"]
@@ -203,12 +225,15 @@ skills: ["javascript", "typescript", "node.js"]
 ```
 
 ### Mixed Usage Detection
+
 The tool identifies when the same property is used both ways:
+
 - Notes using `tags: "single-tag"` (string)
 - Notes using `tags: ["tag1", "tag2"]` (array)
 - Flags these inconsistencies for standardization
 
 ### Empty Value Handling
+
 - **Empty strings**: Counted as valid values
 - **Null values**: Excluded from analysis  
 - **Missing properties**: Notes without the property are excluded
@@ -217,17 +242,20 @@ The tool identifies when the same property is used both ways:
 ## Sorting Options Explained
 
 ### Alphabetical Sort (default)
+
 - **Behavior**: A-Z ordering of value names
 - **Use Case**: General browsing, finding specific values
 - **Example**: "apple", "banana", "cherry"
 
 ### Usage Sort  
+
 - **Behavior**: Most frequently used values first
 - **Use Case**: Identifying popular vs rare values
 - **Requires**: `includeCount: true` for meaningful results
 - **Example**: "javascript" (50 uses), "python" (30 uses), "ruby" (5 uses)
 
 ### Type Sort
+
 - **Behavior**: Groups values by how they're used (single vs array)
 - **Use Case**: Understanding usage patterns and inconsistencies
 - **Sections**: Single values first, then array elements
@@ -236,7 +264,9 @@ The tool identifies when the same property is used both ways:
 ## Example Discovery Features
 
 ### Note Title Examples
+
 When `includeExamples: true`, shows actual note titles:
+
 ```markdown
 - "javascript" (used in 25 notes)
   Examples: "React Hooks Tutorial", "Node.js Best Practices", "JavaScript Testing Guide"
@@ -246,13 +276,17 @@ When `includeExamples: true`, shows actual note titles:
 ```
 
 ### Example Limit Control
+
 Use `maxExamples` to control example length:
+
 - `maxExamples: 1`: Just one example per value
 - `maxExamples: 5`: Up to 5 examples (good for detailed analysis)
 - `maxExamples: 10`: Comprehensive examples (may be verbose)
 
 ### Example Selection Logic
+
 Examples are selected based on:
+
 1. **Recent usage**: Newer notes preferred when available
 2. **Alphabetical fallback**: Consistent ordering when dates similar
 3. **Title uniqueness**: Avoids duplicate or very similar titles
@@ -260,18 +294,21 @@ Examples are selected based on:
 ## Implementation Details
 
 ### Scanner Architecture
+
 - **File Discovery**: Uses VaultUtils.getYamlPropertyValues()
 - **YAML Parsing**: Robust parsing with error recovery
 - **Value Extraction**: Handles both single values and arrays
 - **Type Categorization**: Automatic single vs array detection
 
 ### Performance Characteristics
+
 - **Full Vault Scan**: Processes all .md files in vault
 - **Memory Efficient**: Streams file processing, doesn't load all content
 - **Error Recovery**: Continues processing despite individual file errors
 - **Caching**: Results cached during session for repeated queries
 
 ### Error Handling
+
 - **Malformed YAML**: Files with YAML syntax errors are skipped
 - **Read Permissions**: Files that can't be read are counted as skipped
 - **Missing Properties**: Notes without the property are excluded cleanly
@@ -280,6 +317,7 @@ Examples are selected based on:
 ## Best Practices
 
 ### Before Bulk Updates
+
 ```bash
 # Understand current state before changing metadata
 list_yaml_property_values property: "tags" includeCount: true sortBy: "usage"
@@ -289,6 +327,7 @@ list_yaml_property_values property: "category" includeCount: true includeExample
 ```
 
 ### Data Quality Audits
+
 ```bash
 # Find typos and variants
 list_yaml_property_values property: "contentType" includeCount: true
@@ -298,6 +337,7 @@ list_yaml_property_values property: "contentType" includeCount: true
 ```
 
 ### Consolidation Projects
+
 ```bash
 # Identify rarely-used values for consolidation
 list_yaml_property_values property: "tags" includeCount: true sortBy: "usage"
@@ -306,6 +346,7 @@ list_yaml_property_values property: "tags" includeCount: true sortBy: "usage"
 ```
 
 ### Consistency Analysis
+
 ```bash
 # Check for mixed usage patterns
 list_yaml_property_values property: "people" sortBy: "type" includeCount: true
@@ -316,24 +357,28 @@ list_yaml_property_values property: "people" sortBy: "type" includeCount: true
 ## Use Cases
 
 ### Metadata Cleanup Projects
+
 1. **Tag Consolidation**: Find duplicate/similar tags to merge
 2. **Category Standardization**: Ensure consistent category naming
 3. **Typo Detection**: Spot misspelled property values  
 4. **Case Consistency**: Find "Tag" vs "tag" inconsistencies
 
 ### Content Analysis
+
 1. **Popular Topics**: Most-used tags show content focus areas
 2. **Author Analysis**: Most-mentioned people in your notes
 3. **Source Analysis**: Most-referenced websites/publications
 4. **Content Distribution**: Balance of content types (Article vs Recipe vs Person)
 
 ### Vault Organization
+
 1. **PARA Compliance**: Ensure categories align with PARA method
 2. **Folder Strategy**: Property usage informs folder organization
 3. **Template Design**: Popular properties should be in templates
 4. **Workflow Optimization**: Focus on frequently-used metadata
 
 ### Quality Assurance
+
 1. **Template Compliance**: Verify notes follow template standards
 2. **Missing Metadata**: Properties that should be arrays but aren't
 3. **Validation Rules**: Check if values comply with rules
@@ -342,18 +387,21 @@ list_yaml_property_values property: "people" sortBy: "type" includeCount: true
 ## Performance Considerations
 
 ### Vault Size Impact
+
 - **Small vaults** (< 100 notes): Near-instant results
 - **Medium vaults** (100-1000 notes): 1-3 seconds
 - **Large vaults** (1000+ notes): 5-15 seconds depending on file sizes
 - **Very large vaults** (5000+ notes): May take 30+ seconds
 
 ### Optimization Strategies
+
 - **Session Caching**: Results cached until server restart
 - **Property-Specific Cache**: Each property analysis cached separately  
 - **Skip Logic**: Malformed files skipped quickly to avoid delays
 - **Progress Indicators**: Scan statistics show processing progress
 
 ### Memory Usage
+
 - **Efficient Processing**: Files processed individually, not loaded in bulk
 - **Result Storage**: Only final analysis kept in memory
 - **Garbage Collection**: Intermediate data cleaned up during processing
@@ -361,22 +409,26 @@ list_yaml_property_values property: "people" sortBy: "type" includeCount: true
 ## Related Tools
 
 ### Discovery Tools
+
 - **list with type='yaml_properties'**: List all available properties across vault
 - **get_yaml_rules**: Understand property requirements and validation rules
 - **diagnose_vault**: Check for YAML compliance issues
 
 ### Action Tools  
+
 - **search**: Find notes with specific property values
 - **edit_note**: Update property values based on analysis results
 - **create_note_smart**: Use popular values when creating new notes
 
 ### Analysis Tools
+
 - **advanced_search**: Filter by property values discovered through analysis
 - **search with yamlProperties**: Find notes using specific property combinations
 
 ## Data Quality Insights
 
 ### Standardization Opportunities
+
 ```bash
 # Find variations that should be standardized
 list_yaml_property_values property: "contentType" includeCount: true
@@ -388,6 +440,7 @@ list_yaml_property_values property: "contentType" includeCount: true
 ```
 
 ### Orphaned Values (Single Use)
+
 ```bash  
 # Find values used only once (potential typos)
 list_yaml_property_values property: "tags" includeCount: true sortBy: "usage"
@@ -399,6 +452,7 @@ list_yaml_property_values property: "tags" includeCount: true sortBy: "usage"
 ```
 
 ### Popular Pattern Discovery
+
 ```bash
 # Understand your most important metadata
 list_yaml_property_values property: "people" includeCount: true sortBy: "usage"
@@ -410,6 +464,7 @@ list_yaml_property_values property: "people" includeCount: true sortBy: "usage"
 ```
 
 ### Inconsistency Detection
+
 ```bash
 # Mixed usage patterns indicate need for standardization
 list_yaml_property_values property: "tags" sortBy: "type" includeCount: true

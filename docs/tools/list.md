@@ -47,18 +47,21 @@ The `list` tool accepts parameters through the `UniversalListOptions` interface:
 The `format` parameter controls the level of detail in list results to optimize AI context window usage:
 
 **`'detailed'` (default)**:
+
 - Full metadata for templates (description, path, target folder, content type)
 - Property usage counts for YAML properties
 - Formatted presentation with emoji and descriptions
 - Current behavior (backward compatible)
 
 **`'concise'`**:
+
 - Minimal data optimized for token budget
 - Templates: Key + name only (~60-70% reduction)
 - YAML properties: Property names array (vs object with counts)
 - Folders/daily_notes: Already minimal (no change)
 
 **Example - Templates (concise)**:
+
 ```
 **tpl-restaurant**: Restaurant Template
 **tpl-recipe**: Recipe Template
@@ -66,6 +69,7 @@ The `format` parameter controls the level of detail in list results to optimize 
 ```
 
 **Example - Templates (detailed)**:
+
 ```
 **tpl-restaurant**: Restaurant Template
   Template for documenting restaurant experiences
@@ -81,6 +85,7 @@ The `format` parameter controls the level of detail in list results to optimize 
 ```
 
 **Example - YAML Properties (concise)**:
+
 ```
 title
 author
@@ -90,6 +95,7 @@ status
 ```
 
 **Example - YAML Properties (detailed)**:
+
 ```
 **title**: 1,234 notes
 **author**: 856 notes
@@ -101,6 +107,7 @@ status
 ## List Types and Auto-Detection
 
 ### folders
+
 **Purpose**: Lists vault folder structure  
 **Auto-Detection**: Triggered when `path` parameter is provided  
 **Returns**: Array of folder names (strings)
@@ -116,6 +123,7 @@ Lists directories in the Obsidian vault, organized according to PARA methodology
 ```
 
 ### daily_notes
+
 **Purpose**: Lists daily journal notes  
 **Auto-Detection**: Triggered when `limit` parameter is provided  
 **Returns**: Array of daily note filenames (strings)
@@ -131,6 +139,7 @@ Lists daily notes from the configured daily notes folder, sorted chronologically
 ```
 
 ### templates
+
 **Purpose**: Lists available note templates  
 **Auto-Detection**: No specific trigger (use explicit type)  
 **Returns**: Array of TemplateInfo objects
@@ -143,6 +152,7 @@ Discovers and lists all available Obsidian templates with their metadata, includ
 ```
 
 ### yaml_properties
+
 **Purpose**: Lists all YAML frontmatter properties across the vault  
 **Auto-Detection**: Triggered when `includeCount` parameter is provided  
 **Returns**: Object with property names and optional usage counts
@@ -158,8 +168,10 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 ### auto
+
 **Purpose**: Intelligent type detection based on parameters  
 **Auto-Detection Logic**:
+
 1. If `path` is provided → `folders`
 2. If `limit` is provided → `daily_notes`  
 3. If `includeCount` is provided → `yaml_properties`
@@ -193,6 +205,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 [
   "areas",
@@ -221,6 +234,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 [
   "health",
@@ -247,6 +261,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 [
   "2024-12-29.md",
@@ -267,6 +282,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 [
   {
@@ -305,6 +321,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 {
   "title": 1247,
@@ -331,6 +348,7 @@ Analyzes all notes in the vault to extract unique YAML frontmatter properties, w
 ```
 
 **Expected Response**:
+
 ```json
 {
   "rating": 156,
@@ -383,6 +401,7 @@ The `list` tool replaces all legacy listing tools. Here's the complete migration
 ## Response Formats
 
 ### Folders Response
+
 **Type**: `string[]`  
 **Format**: Array of folder names
 
@@ -396,6 +415,7 @@ The `list` tool replaces all legacy listing tools. Here's the complete migration
 ```
 
 ### Daily Notes Response  
+
 **Type**: `string[]`  
 **Format**: Array of filenames sorted chronologically (newest first)
 
@@ -408,6 +428,7 @@ The `list` tool replaces all legacy listing tools. Here's the complete migration
 ```
 
 ### Templates Response
+
 **Type**: `TemplateInfo[]`  
 **Format**: Array of template objects with metadata
 
@@ -423,6 +444,7 @@ interface TemplateInfo {
 ```
 
 ### YAML Properties Response
+
 **Type**: `Record<string, number>` or `Record<string, boolean>`  
 **Format**: Object mapping property names to usage counts (if includeCount=true) or boolean flags
 
@@ -445,6 +467,7 @@ interface TemplateInfo {
 ## Routing Behavior
 
 ### Direct Mapping Strategy
+
 The list tool uses a **direct mapping strategy** with 1.0 confidence for all explicit type specifications:
 
 - `type: "folders"` → `listFolders()`
@@ -453,6 +476,7 @@ The list tool uses a **direct mapping strategy** with 1.0 confidence for all exp
 - `type: "yaml_properties"` → `VaultUtils.getAllYamlProperties()`
 
 ### Auto-Detection Algorithm
+
 For `type: "auto"`, the system applies this detection logic:
 
 1. **Path Parameter Check**: `options.path !== undefined` → folders
@@ -461,6 +485,7 @@ For `type: "auto"`, the system applies this detection logic:
 4. **Default Fallback**: No specific parameters → folders
 
 ### Confidence Scoring
+
 - **Explicit Types**: Always 1.0 confidence
 - **Auto-Detection**: 1.0 confidence (deterministic routing)
 - **Fallback**: 1.0 confidence (clear default behavior)
@@ -468,6 +493,7 @@ For `type: "auto"`, the system applies this detection logic:
 ## Implementation Details
 
 ### Handler Location
+
 - **Main Router**: `ToolRouter.routeList()` in `src/tool-router.ts`
 - **Execution**: `ToolRouter.executeList()`
 - **Individual Handlers**:
@@ -477,12 +503,14 @@ For `type: "auto"`, the system applies this detection logic:
   - YAML Properties: `VaultUtils.getAllYamlProperties()`
 
 ### Data Sources
+
 - **Folders**: File system directory traversal
 - **Daily Notes**: Configured daily notes directory (`LIFEOS_CONFIG.dailyNotesPath`)
 - **Templates**: Template scanning and caching system
 - **YAML Properties**: Vault-wide frontmatter analysis
 
 ### Caching Strategy
+
 - **Templates**: 24-hour cache for performance optimization
 - **YAML Properties**: Real-time analysis (no caching for accuracy)
 - **Folders & Daily Notes**: No caching (real-time file system reads)
@@ -548,7 +576,7 @@ The list tool provides graceful error handling for various scenarios:
 
 - [Tool Router Implementation](../../src/tool-router.ts) - Routing logic and execution
 - [Template Engine](../../src/template-engine-dynamic.ts) - Template discovery system
-- [Vault Utils](../../src/vault-utils.ts) - File system operations and YAML analysis
+- [Vault Utils](../../src/modules/files/vault-utils.ts) - File system operations and YAML analysis
 - [MCP Tools Overview](README.md) - Complete tool inventory
 - [Search Tool](search.md) - Primary search functionality
 

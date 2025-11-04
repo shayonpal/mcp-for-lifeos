@@ -14,6 +14,7 @@ This guide shows you how to integrate the LifeOS MCP server with Raycast for sea
 
 1. **Open Raycast** and search for "Install Server"
 2. **Configure the server** with these settings:
+
    ```json
    {
      "name": "lifeos-mcp",
@@ -23,6 +24,7 @@ This guide shows you how to integrate the LifeOS MCP server with Raycast for sea
      "env": {}
    }
    ```
+
 3. **Replace the path** with your actual project path
 4. **Save the configuration**
 
@@ -68,6 +70,7 @@ node /path/to/your/mcp-for-lifeos/dist/index.js
 ```
 
 If Node.js isn't in PATH, you can:
+
 - Add Node.js to your PATH in `~/.zshrc` or `~/.bashrc`
 - Use the full path to Node.js in the configuration
 - Restart Raycast after PATH changes
@@ -96,15 +99,18 @@ npm install -g lifeos-mcp-1.0.0.tgz
 Once installed, you can use the LifeOS MCP server in several ways:
 
 ### 1. Root Search
+
 - Open Raycast (⌘ + Space)
 - Type `@lifeos-mcp` to mention the server
 - Ask questions about your vault
 
 ### 2. AI Commands
+
 - Create custom AI commands that utilize your vault
 - Use `@lifeos-mcp` in command prompts
 
 ### 3. AI Chat
+
 - Start an AI chat
 - Use `@lifeos-mcp` to bring in vault context
 - Ask questions like:
@@ -113,27 +119,32 @@ Once installed, you can use the LifeOS MCP server in several ways:
   - "Create a new restaurant note for..."
 
 ### 4. Presets
+
 - Create presets that automatically include `@lifeos-mcp`
 - Set up workflows for common vault operations
 
 ## Example Interactions
 
 ### Search Your Vault
+
 ```
 @lifeos-mcp search for notes about "machine learning"
 ```
 
 ### Create Notes
+
 ```
 @lifeos-mcp create a new restaurant note for "Sakura Sushi" with cuisine Japanese and location downtown
 ```
 
 ### Daily Notes
+
 ```
 @lifeos-mcp get today's daily note
 ```
 
 ### Templates
+
 ```
 @lifeos-mcp show me all available templates
 ```
@@ -141,21 +152,25 @@ Once installed, you can use the LifeOS MCP server in several ways:
 ## Troubleshooting
 
 ### Server Not Found
+
 - Verify Node.js is in PATH: `which node`
 - Check the server path is correct
 - Try running the server manually first
 - Restart Raycast after PATH changes
 
 ### Permission Issues
+
 - Ensure the script is executable: `chmod +x dist/index.js`
 - Check file permissions
 
 ### Configuration Errors
+
 - Validate JSON syntax in configuration
 - Use absolute paths, not relative paths
 - Ensure no trailing commas in JSON
 
 ### Vault Access Issues
+
 - Verify your `src/config.ts` has correct vault path
 - Check that Obsidian vault is accessible
 - Ensure no file permission issues
@@ -191,6 +206,7 @@ exec node dist/index.js "$@"
 ```
 
 Then use:
+
 ```json
 {
   "name": "lifeos-mcp",
@@ -204,16 +220,19 @@ Then use:
 ## Management
 
 ### Uninstall Server
+
 1. Open Raycast
 2. Search for "Manage Servers"
 3. Find "lifeos-mcp" and uninstall
 
 ### Update Server
+
 1. Rebuild your project: `npm run build`
 2. Server will automatically use updated code
 3. No need to reinstall unless configuration changes
 
 ### Start New Chat
+
 Use "Manage Servers" command to start fresh conversations with the server.
 
 ## Tips for Best Experience

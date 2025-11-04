@@ -18,14 +18,17 @@ This document provides complete implementation context for all 6 MCP-108 sub-iss
 MCP-108 is decomposed into 6 slices that build incrementally:
 
 **Round 1 - Foundation** (can run in parallel):
+
 - MCP-114: Atomic File Operations Foundation
 - MCP-115: WAL Infrastructure
 - MCP-116: Two-Phase Link Updater
 
 **Round 2 - Orchestration**:
+
 - MCP-117: Transaction Manager - Core Protocol (requires Round 1)
 
 **Round 3 - Integration** (can run in parallel):
+
 - MCP-118: Transaction Integration with rename_note (requires MCP-117)
 - MCP-119: Boot Recovery System (requires MCP-115, MCP-117)
 
@@ -88,6 +91,7 @@ npm run build         # Successful
 **Goal**: Extend `VaultUtils.writeFileWithRetry()` with atomic write capability using native Node.js fs temp-file-then-rename pattern.
 
 **Add Interface**:
+
 ```typescript
 interface AtomicWriteOptions {
   atomic?: boolean;           // Enable temp-file-then-rename (default: false)
@@ -97,6 +101,7 @@ interface AtomicWriteOptions {
 ```
 
 **Extend Method Signature**:
+
 ```typescript
 static writeFileWithRetry(
   filePath: string,
@@ -107,6 +112,7 @@ static writeFileWithRetry(
 ```
 
 **Atomic Write Logic**:
+
 1. If `options?.atomic === true`:
    - Generate temp file: `.mcp-tmp-{timestamp}` in same directory as target
    - Write content to temp file using existing retry logic
@@ -116,6 +122,7 @@ static writeFileWithRetry(
    - Preserve existing behavior (backward compatible)
 
 **Key Requirements**:
+
 - **Native fs only**: No write-file-atomic, fs-extra, or tmp dependencies
 - **POSIX semantics**: `fs.renameSync()` is atomic on macOS
 - **iCloud retry**: Apply existing `ICLOUD_RETRY_CONFIG` to temp file operations
@@ -135,6 +142,7 @@ static writeFileWithRetry(
 **File**: `tests/unit/atomic-file-operations.test.ts`
 
 **Test Count**: 12+ tests covering:
+
 1. Atomic write using temp-file-then-rename
 2. Temp file uses correct naming pattern (`.mcp-tmp-{timestamp}`)
 3. POSIX atomic rename promotes temp → target
@@ -183,6 +191,7 @@ static writeFileWithRetry(
 **Goal**: Create `WALManager` class for Write-Ahead Log persistence, recovery, and cleanup. No transaction integration yet - just infrastructure.
 
 **Create Class**:
+
 ```typescript
 // src/wal-manager.ts
 export class WALManager {
@@ -219,6 +228,7 @@ export class WALManager {
 ```
 
 **WAL Entry Structure** (from contracts):
+
 ```typescript
 interface WALEntry {
   version: '1.0';
@@ -233,11 +243,13 @@ interface WALEntry {
 ```
 
 **WAL Directory**: `~/.config/mcp-lifeos/wal/`
+
 - External to vault (avoids iCloud sync conflicts)
 - XDG-compliant location
 - Auto-generated README.md on first use
 
 **README.md Content**:
+
 ```markdown
 # MCP for LifeOS - Write-Ahead Log (WAL)
 
@@ -274,6 +286,7 @@ Contact support if manual intervention is needed.
 **File**: `tests/unit/wal-manager.test.ts`
 
 **Test Count**: 15+ tests covering:
+
 1. WAL directory creation on first write
 2. Directory creation is idempotent
 3. README.md auto-generated with correct content
@@ -325,11 +338,13 @@ Contact support if manual intervention is needed.
 **Goal**: Refactor `updateVaultLinks()` to support three modes: `render` (content map generation), `commit` (atomic writes from map), `direct` (legacy Phase 3).
 
 **Add Mode Type**:
+
 ```typescript
 type LinkUpdateMode = 'render' | 'commit' | 'direct';
 ```
 
 **Add Result Interfaces**:
+
 ```typescript
 interface LinkRenderResult {
   contentMap: Map<string, string>;  // path → updated content
@@ -346,6 +361,7 @@ interface LinkCommitInput {
 ```
 
 **Extend Function Signature** (overloads):
+
 ```typescript
 // Render mode: Returns content map without writes
 export async function updateVaultLinks(
@@ -372,6 +388,7 @@ export async function updateVaultLinks(
 **Mode Implementation**:
 
 **Render Mode**:
+
 1. Scan vault for wikilinks (use existing LinkScanner from MCP-106)
 2. Compute updated content for each affected file
 3. Build content map: `Map<string, string>` (path → updated content)
@@ -379,12 +396,14 @@ export async function updateVaultLinks(
 5. Return `LinkRenderResult` with metrics
 
 **Commit Mode**:
+
 1. Receive pre-rendered content map from prepare phase
 2. Validate manifest entries (staleness detection deferred to MCP-117)
 3. Write each file atomically using `VaultUtils.writeFileWithRetry({ atomic: true })` from MCP-114
 4. Return `LinkUpdateResult`
 
 **Direct Mode** (default):
+
 1. Preserve existing Phase 3 behavior (MCP-107)
 2. Read + update + write in single pass
 3. Backward compatible with all existing calls
@@ -403,6 +422,7 @@ export async function updateVaultLinks(
 **File**: `tests/unit/link-updater-modes.test.ts`
 
 **Test Count**: 18+ tests covering:
+
 1. Render mode generates content map without writes
 2. Render mode includes all affected files
 3. Render mode includes scan time metric
@@ -459,6 +479,7 @@ export async function updateVaultLinks(
 **Goal**: Create `TransactionManager` class implementing 5-phase protocol: plan → prepare → validate → commit → success/abort.
 
 **Create Class**:
+
 ```typescript
 // src/transaction-manager.ts
 import { WALManager } from './wal-manager.js';
@@ -610,6 +631,7 @@ export class TransactionManager {
 **5-Phase Protocol Details**:
 
 **Phase 1 - Plan**:
+
 - Generate correlation ID (UUID v4)
 - Read source file, compute SHA-256 hash
 - If updateLinks: call `updateVaultLinks({ mode: 'render' })` to get content map
@@ -617,12 +639,14 @@ export class TransactionManager {
 - Start phase timing
 
 **Phase 2 - Prepare**:
+
 - Stage note rename: copy source to `.mcp-staged-{correlationId}` temp file
 - If updateLinks: stage link updates (store content map in manifest)
 - Write WAL entry to `~/.config/mcp-lifeos/wal/{timestamp}-rename-{correlationId}.wal.json`
 - Store WAL path in state
 
 **Phase 3 - Validate**:
+
 - Verify source file still exists
 - Recompute SHA-256 hash of source file
 - Compare with manifest hash
@@ -631,6 +655,7 @@ export class TransactionManager {
 - This prevents writing stale content
 
 **Phase 4 - Commit**:
+
 - Atomically rename note: `fs.renameSync(stagedPath, targetPath)` (POSIX atomic)
 - Delete original file
 - If updateLinks: call `updateVaultLinks({ mode: 'commit', commitInput })` with atomic writes
@@ -638,12 +663,14 @@ export class TransactionManager {
 - Update WAL with commit phase status
 
 **Phase 5a - Success**:
+
 - Delete all temp files (staged files)
 - Delete WAL file
 - Log transaction success with correlation ID
 - Async cleanup (non-blocking)
 
 **Phase 5b - Abort**:
+
 - Trigger rollback from manifest
 - Restore original files from backups/temps
 - Track partial recovery (which operations succeeded/failed)
@@ -657,6 +684,7 @@ export class TransactionManager {
 - `src/error-types.ts` (if not exists - add TransactionErrorCode enum)
 
 **Error Codes to Add**:
+
 ```typescript
 export type TransactionErrorCode =
   | 'FILE_NOT_FOUND'
@@ -678,6 +706,7 @@ export type TransactionErrorCode =
 **File**: `tests/unit/transaction-manager.test.ts`
 
 **Test Count**: 25+ tests covering:
+
 1. Full 5-phase execution success path
 2. Plan phase: manifest building with file hashes
 3. Plan phase: correlation ID generation (UUID format)
@@ -746,6 +775,7 @@ export type TransactionErrorCode =
 **Current Handler Location**: `src/server/handlers/note-handlers.ts`
 
 **Refactor Strategy**:
+
 ```typescript
 async function renameNoteHandler(
   input: RenameNoteInput
@@ -801,11 +831,13 @@ async function renameNoteHandler(
 ```
 
 **Breaking Change**:
+
 - **Old Behavior**: `{ success: true, warnings: ['Link update failed for file.md'] }`
 - **New Behavior**: `{ success: false, errorCode: 'TRANSACTION_FAILED', transactionMetadata: {...} }`
 - **Rationale**: Vault consistency requires explicit failure signaling. If any part of the transaction fails (note rename OR link updates), the entire operation must be reported as failed.
 
 **Error Response Structure**:
+
 ```typescript
 interface TransactionRenameNoteError {
   success: false;
@@ -846,6 +878,7 @@ interface TransactionRenameNoteError {
 **File**: `tests/integration/rename-note-transaction.test.ts`
 
 **Test Count**: 20+ integration tests covering:
+
 1. Successful rename without link updates (full transaction)
 2. Successful rename with link updates (full transaction)
 3. Transaction failure returns TRANSACTION_FAILED error code
@@ -904,6 +937,7 @@ interface TransactionRenameNoteError {
 **Goal**: Add recovery hook in `src/index.ts` that runs before handler registration. Scans for orphaned WAL entries and attempts automatic recovery. Graceful degradation - server startup continues even if recovery fails.
 
 **Add Function to `src/index.ts`**:
+
 ```typescript
 async function recoverPendingTransactions(): Promise<void> {
   const walManager = new WALManager();
@@ -968,6 +1002,7 @@ async function recoverPendingTransactions(): Promise<void> {
 ```
 
 **Integration with Server Startup**:
+
 ```typescript
 // In src/index.ts, before handler registration
 const server = new Server(
@@ -992,6 +1027,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 ```
 
 **Graceful Degradation**:
+
 - Recovery failures never block server startup
 - Partial recovery tracked with detailed logging
 - Manual recovery instructions generated for failed operations
@@ -1010,6 +1046,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 **File**: `tests/integration/boot-recovery.test.ts`
 
 **Test Count**: 10+ integration tests covering:
+
 1. Scans and recovers orphaned WALs
 2. Skips WALs younger than 1 minute
 3. Deletes WAL on successful recovery
@@ -1045,17 +1082,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 ### From MCP-108 Contracts
 
 **Native Node.js fs Only**:
+
 - NO external dependencies (write-file-atomic, fs-extra, tmp)
 - Use `fs.renameSync()` for POSIX atomic rename
 - Temp file pattern: `.mcp-tmp-{timestamp}`
 - Cleanup temp files with try/finally blocks
 
 **WAL Location**:
+
 - `~/.config/mcp-lifeos/wal/` (XDG-compliant)
 - External to vault (avoids iCloud sync conflicts)
 - Auto-generated README.md explaining purpose
 
 **5-Phase Transaction Protocol**:
+
 1. **Plan**: Build manifest with SHA-256 hashes
 2. **Prepare**: Stage files, write WAL
 3. **Validate**: Verify staged files, detect staleness
@@ -1063,12 +1103,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 5. **Success/Abort**: Cleanup or rollback
 
 **Graceful Degradation**:
+
 - Partial recovery tracked in `RollbackResult`
 - Manual recovery instructions generated
 - WAL preserved for manual intervention
 - Server continues operation on recovery failures
 
 **Staleness Detection**:
+
 - SHA-256 hashes computed during plan phase
 - Recomputed during validate phase
 - Throw `TRANSACTION_STALE_CONTENT` on mismatch
@@ -1077,17 +1119,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 ### From Serena Memories
 
 **Vault Integration Patterns**:
+
 - iCloud retry logic: `ICLOUD_RETRY_CONFIG` (3 retries, exponential backoff)
 - Path normalization: `VaultUtils.normalizePath()`
 - File operations: Always use `VaultUtils` helpers
 
 **Error Handling**:
+
 - Structured errors with error codes
 - Detailed error metadata for AI agents
 - Correlation IDs for tracing
 - Recovery instructions in error responses
 
 **Testing Patterns**:
+
 - Temp vault for all tests (protect production vault)
 - `VaultUtils.resetSingletons()` called between tests
 - No production vault access in test suite
@@ -1096,11 +1141,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 ### Performance Expectations
 
 **Acceptable Overhead** (per contracts):
+
 - Non-transactional baseline: ~50ms
 - With transactions: 100-400ms acceptable
 - 2-8x slowdown acceptable (safety > speed)
 
 **Phase Breakdown**:
+
 - Plan: 5-10ms
 - Prepare: 50-200ms (WAL write + temp staging)
 - Validate: 20-100ms (hash checks)
@@ -1108,6 +1155,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 - Cleanup: 10-30ms (background async)
 
 **Scalability Limits**:
+
 - Max affected files: ~1000 before memory pressure
 - Max file size: No hard limit, streaming for >100KB
 - WAL size: ~1KB metadata per file + selective content backups
@@ -1119,6 +1167,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 ### Unit Tests First
 
 Each sub-issue must have comprehensive unit tests before integration:
+
 - Test count specified per sub-issue (12-25+ tests)
 - Test files created in `tests/unit/`
 - All edge cases covered
@@ -1128,6 +1177,7 @@ Each sub-issue must have comprehensive unit tests before integration:
 ### Integration Tests
 
 After MCP-118 (transaction integration):
+
 - Full transaction lifecycle tests
 - End-to-end rename with link updates
 - Failure scenarios (disk full, permissions, crashes)
@@ -1136,6 +1186,7 @@ After MCP-118 (transaction integration):
 ### Failure Injection
 
 Test resilience at each phase:
+
 - Disk full during prepare
 - Permission denied during commit
 - Forced crash between prepare/commit
@@ -1148,6 +1199,7 @@ Test resilience at each phase:
 **Why**: Real vault operations, error message clarity, recovery instructions
 
 **Test Cases**:
+
 1. Successful rename with link updates
 2. Failed rename with rollback
 3. Partial rollback scenario
@@ -1161,6 +1213,7 @@ Test resilience at each phase:
 ### MCP-118: Remove "Success + Warnings" Pattern
 
 **Old Behavior** (Phase 3):
+
 ```json
 {
   "success": true,
@@ -1174,6 +1227,7 @@ Test resilience at each phase:
 ```
 
 **New Behavior** (Phase 4):
+
 ```json
 {
   "success": false,
@@ -1291,6 +1345,7 @@ All planning and contracts are already defined - go directly to implementation.
 ```
 
 **Example for MCP-114**:
+
 ```
 I need to implement MCP-114.
 
@@ -1316,6 +1371,7 @@ MCP-108 is complete when all 6 sub-issues are merged to master:
 - [ ] MCP-119 merged: Boot recovery active
 
 **Final Validation**:
+
 - All 559/564 existing tests still passing (no regressions)
 - All new tests passing (100+ new tests across 6 slices)
 - TypeScript validation clean
@@ -1325,6 +1381,7 @@ MCP-108 is complete when all 6 sub-issues are merged to master:
 - Vault always consistent
 
 **Documentation Updates** (after all slices complete):
+
 - `docs/ARCHITECTURE.md` - Transaction design patterns
 - `docs/tools/rename_note.md` - Transaction semantics
 - `docs/TROUBLESHOOTING.md` - Recovery procedures

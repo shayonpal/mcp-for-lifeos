@@ -7,6 +7,53 @@ This document provides a high-level overview of the LifeOS MCP Server architectu
 
 ---
 
+## Module Structure
+
+**Status:** Modularized (Phase 5 complete - MCP-145, MCP-146, MCP-147)
+
+The codebase is organized into focused modules following domain-driven design:
+
+```
+src/
+├── modules/               # Domain modules (business logic)
+│   ├── files/            # File operations, vault utils, CRUD (7 modules)
+│   ├── templates/        # Template system and processing (5 modules)
+│   ├── yaml/             # YAML parsing and validation (2 modules)
+│   ├── search/           # Full-text search engine (3 modules)
+│   ├── links/            # Link scanning and updates (3 modules)
+│   ├── transactions/     # Atomic operations with WAL (2 modules)
+│   └── analytics/        # Usage tracking and metrics (2 modules)
+├── shared/               # Shared utilities and core types
+│   ├── types.ts          # Core type definitions
+│   ├── config.ts         # Configuration and settings
+│   ├── logger.ts         # Logging infrastructure
+│   ├── error-types.ts    # Error definitions
+│   ├── path-utils.ts     # Path manipulation utilities
+│   ├── regex-utils.ts    # Regex patterns
+│   ├── text-utils.ts     # Text processing utilities
+│   └── date-resolver.ts  # Date parsing and resolution
+├── server/               # MCP server infrastructure
+│   ├── mcp-server.ts     # Server factory
+│   ├── request-handler.ts # Request routing
+│   ├── tool-registry.ts  # Tool registration
+│   └── handlers/         # Tool handler implementations
+├── index.ts              # MCP entry point
+└── tool-router.ts        # Unified tool routing
+
+dev/contracts/            # TypeScript contracts and interfaces
+tests/                    # Unit and integration tests
+docs/                     # Documentation
+```
+
+**Key Benefits:**
+
+- Zero circular dependencies (validated via madge)
+- Clean module boundaries with barrel exports
+- Improved discoverability and maintainability
+- Test baseline maintained: 781/785 passing
+
+---
+
 ## Core Components
 
 ### MCP Server Factory (`src/server/mcp-server.ts`)
@@ -179,7 +226,7 @@ Consolidates multiple legacy tools into unified interfaces with intelligent auto
 
 **Design:** Maintains backward compatibility while simplifying AI interactions
 
-### Search Engine (`src/search-engine.ts`)
+### Search Engine (`src/modules/search/search-engine.ts`)
 
 Full-text search with YAML property filtering, relevance scoring, and natural language processing. Handles all search operations across the Obsidian vault.
 
@@ -191,7 +238,7 @@ Full-text search with YAML property filtering, relevance scoring, and natural la
 - Natural language query understanding
 - Token budget management (~25K response limit)
 
-### Vault Utils (`src/vault-utils.ts`)
+### Vault Utils (`src/modules/files/vault-utils.ts`)
 
 Core file operations with iCloud sync resilience, YAML parsing/validation, and Obsidian-compliant file naming. Central interface for vault interactions.
 
@@ -211,19 +258,19 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 - Zero new dependencies - native Node.js fs only
 - Foundation for MCP-108 transaction safety
 
-**Status:** Monolithic (1,687 lines) - scheduled for decomposition in roadmap
+**Status:** Decomposed (Phase 4 - MCP-141 to MCP-144) into 7 focused modules within `src/modules/files/`
 
 ### Link Update Infrastructure
 
 Two-phase system for vault-wide wikilink updates after note rename operations.
 
-**`link-scanner.ts`** (MCP-106, Phase 2):
+**`src/modules/links/link-scanner.ts`** (MCP-106, Phase 2):
 
 - Vault-wide wikilink detection with regex-based scanning
 - Performance: <5000ms for 1000+ notes, <50ms per note
 - Supports all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
 
-**`link-updater.ts`** (MCP-107/MCP-116, Phase 3):
+**`src/modules/links/link-updater.ts`** (MCP-107/MCP-116, Phase 3):
 
 - Three-mode operation: RENDER, COMMIT, DIRECT
 - **RENDER mode**: Read-only content map generation without writes (returns LinkRenderResult)
@@ -262,7 +309,7 @@ Multi-component system for Obsidian template integration:
 - Template variable substitution
 - YAML-safe template processing
 
-### WAL Manager (`src/wal-manager.ts`)
+### WAL Manager (`src/modules/transactions/wal-manager.ts`)
 
 Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanup. Provides durable storage for transaction state outside the vault to enable crash recovery and rollback operations.
 
@@ -299,7 +346,7 @@ Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanu
 **Test Coverage:** 15+ unit tests (535 lines) with 100% pass rate
 **Status:** Foundation for MCP-117 TransactionManager integration
 
-### Transaction Manager (`src/transaction-manager.ts`)
+### Transaction Manager (`src/modules/transactions/transaction-manager.ts`)
 
 Five-phase atomic transaction protocol for file rename operations with full rollback capability, Write-Ahead Logging, and staleness detection. Coordinates complex rename operations involving file moves and vault-wide link updates while ensuring vault consistency.
 
@@ -402,10 +449,10 @@ The transaction system provides atomic rename operations with vault-wide link up
 
 **Key Components:**
 
-1. **TransactionManager** (`src/transaction-manager.ts`) - Five-phase protocol orchestration
-2. **WALManager** (`src/wal-manager.ts`) - Transaction log persistence and recovery
+1. **TransactionManager** (`src/modules/transactions/transaction-manager.ts`) - Five-phase protocol orchestration
+2. **WALManager** (`src/modules/transactions/wal-manager.ts`) - Transaction log persistence and recovery
 3. **Boot Recovery** (`src/index.ts`) - Automatic orphaned transaction cleanup
-4. **Link Infrastructure** (`src/link-scanner.ts`, `src/link-updater.ts`) - Vault-wide link updates
+4. **Link Infrastructure** (`src/modules/links/link-scanner.ts`, `src/modules/links/link-updater.ts`) - Vault-wide link updates
 
 **Five-Phase Protocol:**
 
@@ -453,7 +500,7 @@ Boot recovery automatically scans WAL directory on server startup, identifies or
 - MCP-122, MCP-123: Dry-run preview mode
 - MCP-124: Block reference support
 
-### Analytics (`src/analytics/`)
+### Analytics (`src/modules/analytics/`)
 
 Zero-maintenance telemetry system tracking tool usage, performance metrics, and routing effectiveness with visual dashboard.
 

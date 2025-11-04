@@ -62,12 +62,14 @@ No complete off-the-shelf solution exists for standalone Node.js wikilink manage
 **Dependencies**: `remark`, `unified`, `mdast-util-from-markdown`, `unist-util-visit`
 
 **Pros**:
+
 - Standard markdown parsing ecosystem
 - Handles all markdown syntax correctly
 - Extensible with plugins
 - Semantic understanding of document structure
 
 **Cons**:
+
 - **Overkill**: Full AST construction unnecessary for link detection
 - **Performance**: AST building adds overhead for 1000+ files
 - **Complexity**: Must understand mdast node types and traversal
@@ -76,6 +78,7 @@ No complete off-the-shelf solution exists for standalone Node.js wikilink manage
 - **Custom work anyway**: Still need Obsidian-specific handling (aliases, headings, blocks)
 
 **Performance Analysis**:
+
 ```typescript
 // AST approach (estimated)
 for each note:
@@ -94,6 +97,7 @@ for each note:
 **Dependencies**: None (built-in RegExp)
 
 **Pros**:
+
 - **Simpler**: Direct pattern matching, no AST overhead
 - **Faster**: Single regex pass per file (~10ms/1000 lines)
 - **Sufficient**: Rename only needs to find/replace wikilink text
@@ -102,12 +106,14 @@ for each note:
 - **Performance**: Meets <5000ms target easily
 
 **Cons**:
+
 - **Limited scope**: Only works for wikilink detection, not general markdown parsing
 - **Pattern maintenance**: Must update regex for new wikilink formats
 - **Edge cases**: Must manually handle code blocks, frontmatter exclusions
 - **No semantic understanding**: Can't validate markdown structure
 
 **Performance Analysis**:
+
 ```typescript
 // Regex approach (measured in MCP-106)
 for each note:
@@ -120,6 +126,7 @@ for each note:
 ```
 
 **Implementation**:
+
 ```typescript
 // Centralized in src/regex-utils.ts
 const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|\\]]+))?\\]\\]/g;
@@ -139,11 +146,13 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 **Dependencies**: `markdown-it` or similar lightweight parser
 
 **Pros**:
+
 - Automatically handles code blocks/frontmatter exclusion
 - Some structural understanding
 - More accurate than pure regex
 
 **Cons**:
+
 - Still requires parsing overhead
 - Still need custom wikilink handling
 - Adds dependency without major benefit
@@ -167,6 +176,7 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 ### Implementation Details
 
 **Phase 2 (MCP-106) Results**:
+
 - Created `src/link-scanner.ts` (426 lines) with LinkScanner class
 - Centralized `WIKILINK_PATTERN` in `src/regex-utils.ts`
 - 42 tests (30 unit, 12 integration) - 100% pass rate
@@ -174,6 +184,7 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 - Manual filtering for code blocks and frontmatter (skipCodeBlocks, skipFrontmatter options)
 
 **Wikilink Formats Supported**:
+
 ```typescript
 [[Note]]                    // Basic
 [[Note|Alias]]              // With alias
@@ -202,16 +213,19 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 ### Mitigation Strategies
 
 **Pattern Maintenance**:
+
 - Centralize regex patterns in `src/regex-utils.ts` (single source of truth)
 - Comprehensive test coverage for all wikilink formats
 - Document pattern structure and capture groups
 
 **Format Changes**:
+
 - Monitor Obsidian changelog for wikilink syntax changes
 - Test suite validates all formats, catches breakage quickly
 - Pattern updates localized to single file
 
 **Filtering Logic**:
+
 - Extract filtering into reusable utility functions
 - Test coverage for edge cases (nested code blocks, YAML edge cases)
 - Clear documentation of filtering behavior
