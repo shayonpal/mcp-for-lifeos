@@ -76,29 +76,29 @@ describe('InstructionProcessor', () => {
       expect(result.loadedAt).toBeInstanceOf(Date);
     });
 
-    it('warns when filePath provided (not yet implemented)', () => {
-      // Arrange: Configure file path (not yet implemented)
+    it('attempts to load file-based config and falls back on error', () => {
+      // Arrange: Configure invalid file path
       const fileConfig: CustomInstructionsConfig = {
-        filePath: '/path/to/instructions.md',
+        filePath: '/nonexistent/path/to/instructions.md',
         enableHotReload: true
       };
       LIFEOS_CONFIG.customInstructions = fileConfig;
 
-      // Spy on logger.warn
-      const warnSpy = jest.spyOn(require('../../src/shared/logger.js').logger, 'warn');
+      // Spy on logger.error
+      const errorSpy = jest.spyOn(require('../../src/shared/logger.js').logger, 'error');
 
       // Act
       const result = InstructionProcessor.getInstructions();
 
-      // Assert
+      // Assert: Should try to load file, fail, and return null
       expect(result.instructions).toBeNull();
       expect(result.source).toBe('none');
-      expect(warnSpy).toHaveBeenCalledWith(
-        'File-based custom instructions not yet implemented',
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Failed to load file-based instructions, falling back to inline',
         expect.objectContaining({ filePath: fileConfig.filePath })
       );
 
-      warnSpy.mockRestore();
+      errorSpy.mockRestore();
     });
 
     it('handles undefined customInstructions gracefully', () => {
@@ -113,20 +113,20 @@ describe('InstructionProcessor', () => {
       expect(result.source).toBe('none');
     });
 
-    it('returns inline config even when filePath also present', () => {
-      // Arrange: Both inline and filePath configured (inline takes precedence)
+    it('file path takes precedence over inline config', () => {
+      // Arrange: Both inline and filePath configured (filePath takes precedence)
       const mixedConfig: CustomInstructionsConfig = {
         inline: {
-          noteCreationRules: 'Inline rules take precedence'
+          noteCreationRules: 'Inline rules as fallback'
         },
-        filePath: '/path/to/instructions.md'
+        filePath: '/nonexistent/path/to/instructions.md'
       };
       LIFEOS_CONFIG.customInstructions = mixedConfig;
 
       // Act
       const result = InstructionProcessor.getInstructions();
 
-      // Assert: Inline should be returned
+      // Assert: Should try file first, fail, then fall back to inline
       expect(result.instructions).toEqual(mixedConfig.inline);
       expect(result.source).toBe('inline');
     });
@@ -161,9 +161,9 @@ describe('InstructionProcessor', () => {
       // Act
       InstructionProcessor.applyInstructions(context);
 
-      // Assert: Debug log should be called
+      // Assert: Debug log should be called (updated message for Phase 2)
       expect(debugSpy).toHaveBeenCalledWith(
-        'InstructionProcessor.applyInstructions called (pass-through mode)',
+        'InstructionProcessor.applyInstructions called',
         expect.objectContaining({
           operation: 'edit',
           noteType: 'restaurant'
@@ -507,11 +507,12 @@ describe('InstructionProcessor', () => {
       };
       const result = InstructionProcessor.applyInstructions(context);
 
-      // Assert: Instructions retrieved but context unchanged
+      // Assert: Instructions retrieved and rules detected
       expect(instructions.instructions).toBeDefined();
       expect(instructions.source).toBe('inline');
       expect(result.context).toEqual(context);
-      expect(result.modified).toBe(false); // No modifications yet (Phase 1)
+      expect(result.modified).toBe(true); // Phase 2: Rules detected and logged
+      expect(result.appliedRules.length).toBeGreaterThan(0);
     });
   });
 });

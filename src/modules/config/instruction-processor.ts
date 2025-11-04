@@ -11,6 +11,7 @@ import { watch, FSWatcher } from 'fs';
 import { LIFEOS_CONFIG } from '../../shared/config.js';
 import { CustomInstructionsConfig } from '../../shared/types.js';
 import { logger } from '../../shared/logger.js';
+import { readFileWithRetry } from '../files/file-io.js';
 
 /**
  * Context for instruction application
@@ -51,11 +52,15 @@ export interface InstructionApplicationResult {
   /** The context after instruction application (currently unchanged) */
   context: InstructionContext;
 
-  /** Whether any modifications were applied */
+  /**
+   * Whether any modifications were applied
+   * Phase 2: Indicates rules were detected (even if not yet applied to context)
+   * Future: Will indicate actual context modification
+   */
   modified: boolean;
 
-  /** Applied instruction rules (for debugging) */
-  appliedRules?: string[];
+  /** Applied instruction rules (for debugging) - always present, empty array if no rules */
+  appliedRules: string[];
 }
 
 /**
@@ -110,24 +115,69 @@ export class InstructionProcessor {
       };
     }
 
+    // File-based config takes precedence
+    if (config.filePath) {
+      // Return cached instructions if available
+      if (this.cachedInstructions !== null) {
+        logger.debug('Returning cached file-based instructions', {
+          filePath: config.filePath
+        });
+        return {
+          instructions: this.cachedInstructions,
+          source: 'file',
+          loadedAt: new Date()
+        };
+      }
+
+      // Load and cache instructions from file
+      try {
+        const fileContent = this.readInstructionFile(config.filePath);
+        const parsedInstructions = this.parseInstructionFile(fileContent, config.filePath);
+
+        // Cache the parsed instructions
+        this.cachedInstructions = parsedInstructions;
+
+        logger.info('Loaded file-based custom instructions', {
+          filePath: config.filePath,
+          hasNoteCreationRules: !!parsedInstructions.noteCreationRules,
+          hasEditingRules: !!parsedInstructions.editingRules,
+          hasTemplateRules: !!parsedInstructions.templateRules
+        });
+
+        return {
+          instructions: parsedInstructions,
+          source: 'file',
+          loadedAt: new Date()
+        };
+      } catch (error: any) {
+        logger.error('Failed to load file-based instructions, falling back to inline', {
+          filePath: config.filePath,
+          error: error.message
+        });
+
+        // Fall back to inline config if available
+        if (config.inline) {
+          return {
+            instructions: config.inline,
+            source: 'inline',
+            loadedAt: new Date()
+          };
+        }
+
+        // Return empty if no fallback available
+        return {
+          instructions: null,
+          source: 'none',
+          loadedAt: new Date()
+        };
+      }
+    }
+
     // Return inline config if present
     if (config.inline) {
       return {
         instructions: config.inline,
         source: 'inline',
-        loadedAt: new Date()
-      };
-    }
-
-    // File-based config: not yet implemented
-    if (config.filePath) {
-      logger.warn(
-        'File-based custom instructions not yet implemented',
-        { filePath: config.filePath }
-      );
-      return {
-        instructions: null,
-        source: 'none',
         loadedAt: new Date()
       };
     }
@@ -140,25 +190,161 @@ export class InstructionProcessor {
   }
 
   /**
-   * Apply instructions to context
-   * Phase 1: Pure pass-through, no modifications
+   * Read instruction file from disk
+   * Uses readFileWithRetry for resilience against iCloud/network issues
    *
-   * Future phases will implement branching logic based on:
-   * - context.operation type
-   * - context.noteType
-   * - Configured instruction rules
+   * @throws Error if file cannot be read after retries
+   */
+  private static readInstructionFile(filePath: string): string {
+    try {
+      return readFileWithRetry(filePath, 'utf-8');
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        throw new Error(`Instruction file not found: ${filePath}`);
+      } else if (error.code === 'EACCES') {
+        throw new Error(`Permission denied reading instruction file: ${filePath}`);
+      } else {
+        throw new Error(`Failed to read instruction file: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Parse instruction file content as JSON
+   * Validates against expected structure
+   *
+   * @throws Error if parsing or validation fails
+   */
+  private static parseInstructionFile(
+    content: string,
+    filePath: string
+  ): NonNullable<CustomInstructionsConfig['inline']> {
+    try {
+      const parsed = JSON.parse(content);
+
+      // Validate structure - must have at least one rule type
+      if (!parsed.noteCreationRules && !parsed.editingRules && !parsed.templateRules) {
+        throw new Error(
+          'Invalid instruction file: must contain at least one of ' +
+          'noteCreationRules, editingRules, or templateRules'
+        );
+      }
+
+      // Return with expected shape (rules as strings)
+      return {
+        noteCreationRules: parsed.noteCreationRules,
+        editingRules: parsed.editingRules,
+        templateRules: parsed.templateRules
+      };
+    } catch (error: any) {
+      if (error instanceof SyntaxError) {
+        throw new Error(`Invalid JSON in instruction file ${filePath}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Apply instructions to context
+   *
+   * Phase 2 Behavior:
+   * - Branches on context.operation to select relevant rules
+   * - Logs when rules are available for the operation
+   * - Tracks rule availability in appliedRules array
+   * - Returns modified=true when rules found (even if not yet applied)
+   *
+   * Future enhancements:
+   * - Actual rule parsing and application
+   * - Context modification based on parsed rules
    */
   static applyInstructions(context: InstructionContext): InstructionApplicationResult {
-    logger.debug('InstructionProcessor.applyInstructions called (pass-through mode)', {
+    logger.debug('InstructionProcessor.applyInstructions called', {
       operation: context.operation,
       noteType: context.noteType
     });
 
-    // Phase 1: Pure pass-through, no modifications
+    // Get current instructions
+    const result = this.getInstructions();
+
+    // If no instructions configured, return pass-through
+    if (!result.instructions) {
+      logger.debug('No instructions configured, returning pass-through');
+      return {
+        context,
+        modified: false,
+        appliedRules: []
+      };
+    }
+
+    const instructions = result.instructions;
+    const appliedRules: string[] = [];
+    let modified = false;
+
+    // Branch on operation type to select relevant rules
+    let relevantRules: string | undefined;
+    let ruleType: string;
+
+    switch (context.operation) {
+      case 'create':
+        relevantRules = instructions.noteCreationRules;
+        ruleType = 'noteCreationRules';
+        break;
+      case 'edit':
+      case 'insert': // Treat insert as partial edit
+        relevantRules = instructions.editingRules;
+        ruleType = 'editingRules';
+        break;
+      case 'template':
+        relevantRules = instructions.templateRules;
+        ruleType = 'templateRules';
+        break;
+      default:
+        logger.warn('Unknown operation type', { operation: context.operation });
+        return {
+          context,
+          modified: false,
+          appliedRules: []
+        };
+    }
+
+    // If no relevant rules for this operation, return pass-through
+    if (!relevantRules) {
+      logger.debug('No rules configured for operation', {
+        operation: context.operation,
+        ruleType
+      });
+      return {
+        context,
+        modified: false,
+        appliedRules: []
+      };
+    }
+
+    // Phase 2 MVP: Log that rules would be applied, but don't modify context yet
+    // Full rule parsing and application will be implemented in future iterations
+    logger.info('Instruction rules available for operation', {
+      operation: context.operation,
+      ruleType,
+      rulesLength: relevantRules.length,
+      noteType: context.noteType,
+      source: result.source
+    });
+
+    appliedRules.push(
+      `${ruleType} available (${relevantRules.length} chars, source: ${result.source})`
+    );
+
+    // Phase 2: Mark as modified to indicate rules were detected
+    // NOTE: Context is NOT actually modified yet - this flag tracks rule detection
+    // Future phases will implement actual context modification
+    modified = true;
+
+    // TODO: Implement actual rule parsing and application
+    // For now, return context with tracking that rules were found
     return {
       context,
-      modified: false,
-      appliedRules: []
+      modified,
+      appliedRules
     };
   }
 
