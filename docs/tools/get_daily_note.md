@@ -294,13 +294,13 @@ For ambiguous inputs, the DateResolver attempts intelligent parsing:
 - Support for multiple input formats and languages
 - Relative date calculation with reference date context
 
-**Note Retrieval**: `VaultUtils.getDailyNote()` method
+**Note Retrieval**: `getDailyNote()` from files module
 
 - iCloud sync-aware file reading
 - YAML frontmatter parsing and validation
 - Metadata extraction (size, modified date, etc.)
 
-**Note Creation**: `VaultUtils.createDailyNote()` method
+**Note Creation**: `createDailyNote()` from files module
 
 - Template discovery and processing via `TemplateManager`
 - Dynamic content generation via `DynamicTemplateEngine`

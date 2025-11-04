@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import { VaultUtils } from "../../src/modules/files/index.js";
+import { insertContent, createDailyNote } from "../../src/modules/files/index.js";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
-import { LIFEOS_CONFIG } from "../../src/shared/index.js";
+import { LIFEOS_CONFIG, getLocalDate } from "../../src/shared/index.js";
+import { TemplateManager } from "../../src/modules/templates/index.js";
 import { format } from "date-fns";
+import { resetTestSingletons } from "../helpers/test-utils.js";
 
 describe("Task Formatting with Obsidian Tasks Plugin", () => {
   let vaultPath: string;
@@ -21,9 +23,9 @@ describe("Task Formatting with Obsidian Tasks Plugin", () => {
     // Store original config
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
-    
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+
+    // Reset singletons to use new config
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -49,7 +51,7 @@ Some content here`;
 
       // Insert a task
       const taskContent = "- [ ] Test task without creation date";
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         notePath,
         taskContent,
         { heading: "Tasks" },
@@ -78,7 +80,7 @@ Some content here`;
       // Insert a task that already has a creation date
       const existingDate = "2025-06-01";
       const taskContent = `- [ ] Test task with existing date ➕ ${existingDate}`;
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         notePath,
         taskContent,
         { heading: "Tasks" },
@@ -110,7 +112,7 @@ Some content here`;
 - [ ] Second task with date ➕ 2025-06-01
 - [ ] Third task`;
 
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         notePath,
         tasksContent,
         { heading: "Tasks" },
@@ -144,7 +146,7 @@ Some content here`;
 - [ ] Task item
 1. Numbered list item`;
 
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         notePath,
         mixedContent,
         { heading: "Content" },
@@ -172,11 +174,15 @@ Some content here`;
 
       // Create daily note
       const testDate = new Date();
-      const dailyNote = await VaultUtils.createDailyNote(testDate);
+      const dailyNote = await createDailyNote(
+        testDate,
+        getLocalDate,
+        () => new TemplateManager(LIFEOS_CONFIG.vaultPath)
+      );
 
       // Add a task to the daily note
       const taskContent = "- [ ] Daily task for testing";
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         dailyNote.path,
         taskContent,
         { heading: "Day's Notes" },
@@ -236,7 +242,7 @@ title: Test Note
         // Create fresh note for each test
         await fs.writeFile(notePath, noteContent);
 
-        const updatedNote = VaultUtils.insertContent(
+        const updatedNote = insertContent(
           notePath,
           testCase.input,
           { heading: "Tasks" },

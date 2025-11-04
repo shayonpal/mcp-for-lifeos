@@ -12,7 +12,7 @@
  */
 
 import { LinkScanner } from './link-scanner.js';
-import { VaultUtils } from '../files/index.js';
+import { updateNoteLinks } from './link-text-builder.js';
 import { readFileWithRetry, writeFileWithRetry } from '../files/file-io.js';
 import type { LinkScanResult, LinkReference } from './link-scanner.js';
 
@@ -291,8 +291,8 @@ async function renderLinkUpdates(
       // Read file content
       const content = readFileWithRetry(sourcePath);
 
-      // Update links in content using VaultUtils
-      const updatedContent = VaultUtils.updateNoteLinks(content, oldNoteName, newNoteName);
+      // Update links in content using link-text-builder
+      const updatedContent = updateNoteLinks(content, oldNoteName, newNoteName);
 
       // Store in content map (NO write yet)
       contentMap.set(sourcePath, updatedContent);
@@ -397,8 +397,8 @@ async function directLinkUpdates(
       // Read file content
       const content = readFileWithRetry(sourcePath);
 
-      // Update links in content using VaultUtils
-      const updatedContent = VaultUtils.updateNoteLinks(content, oldNoteName, newNoteName);
+      // Update links in content using link-text-builder
+      const updatedContent = updateNoteLinks(content, oldNoteName, newNoteName);
 
       // Write updated content back
       writeFileWithRetry(sourcePath, updatedContent);

@@ -23,6 +23,7 @@ import {
   type LinkCommitInput
 } from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 // ============================================================================
 // TEST SETUP
@@ -43,8 +44,8 @@ describe('Link Updater Modes (MCP-116)', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = testVaultPath;
 
-    // Reset VaultUtils singleton to pick up new vault path
-    VaultUtils.resetSingletons();
+    // Reset singletons to pick up new vault path
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -59,8 +60,8 @@ describe('Link Updater Modes (MCP-116)', () => {
       fs.rmSync(testVaultPath, { recursive: true, force: true });
     }
 
-    // Reset VaultUtils singleton
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
   });
 
   // ============================================================================

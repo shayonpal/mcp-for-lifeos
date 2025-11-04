@@ -281,7 +281,7 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ### Core Components Used
 
 - **SearchEngine**: `quickSearch()` for title-based note discovery
-- **VaultUtils**: `updateNote()` for file operations and YAML processing
+- **Note Crud Module**: `updateNote()` for file operations and YAML processing
 - **ObsidianLinks**: `createClickableLink()` for response formatting
 - **YamlRulesManager**: YAML validation and compliance checking
 

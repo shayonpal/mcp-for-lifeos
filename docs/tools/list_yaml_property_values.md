@@ -295,7 +295,7 @@ Examples are selected based on:
 
 ### Scanner Architecture
 
-- **File Discovery**: Uses VaultUtils.getYamlPropertyValues()
+- **File Discovery**: Uses `getYamlPropertyValues()` from files module
 - **YAML Parsing**: Robust parsing with error recovery
 - **Value Extraction**: Handles both single values and arrays
 - **Type Categorization**: Automatic single vs array detection

@@ -14,7 +14,7 @@ import type { ToolMode } from '../../dev/contracts/MCP-6-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import type { RequestHandlerWithClientContext } from '../../dev/contracts/MCP-96-contracts.js';
 import { ObsidianLinks } from '../../src/modules/links/index.js';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import * as NoteCrud from '../../src/modules/files/note-crud.js';
 import { NaturalLanguageProcessor } from '../../src/modules/search/index.js';
 
 describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
@@ -84,7 +84,7 @@ describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
 
     mockRouter.routeList.mockResolvedValue(['Folder A', 'Folder B']);
 
-    jest.spyOn(VaultUtils, 'createNote').mockReturnValue({ path: '/mock/vault/Test.md' });
+    jest.spyOn(NoteCrud, 'createNote').mockReturnValue({ path: '/mock/vault/Test.md' });
     jest.spyOn(ObsidianLinks, 'formatSearchResult').mockReturnValue('• Result');
     jest.spyOn(ObsidianLinks, 'extractNoteTitle').mockReturnValue('Test Note');
     jest.spyOn(ObsidianLinks, 'createClickableLink').mockReturnValue('[Test](Test)');

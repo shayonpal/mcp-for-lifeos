@@ -473,7 +473,7 @@ The list tool uses a **direct mapping strategy** with 1.0 confidence for all exp
 - `type: "folders"` → `listFolders()`
 - `type: "daily_notes"` → `listDailyNotes()`
 - `type: "templates"` → `DynamicTemplateEngine.getAllTemplates()`
-- `type: "yaml_properties"` → `VaultUtils.getAllYamlProperties()`
+- `type: "yaml_properties"` → `getAllYamlProperties()` from files module
 
 ### Auto-Detection Algorithm
 
@@ -500,7 +500,7 @@ For `type: "auto"`, the system applies this detection logic:
   - Folders: `ToolRouter.listFolders()`
   - Daily Notes: `ToolRouter.listDailyNotes()`
   - Templates: `DynamicTemplateEngine.getAllTemplates()`
-  - YAML Properties: `VaultUtils.getAllYamlProperties()`
+  - YAML Properties: `getAllYamlProperties()` from files module
 
 ### Data Sources
 
@@ -576,7 +576,7 @@ The list tool provides graceful error handling for various scenarios:
 
 - [Tool Router Implementation](../../src/tool-router.ts) - Routing logic and execution
 - [Template Engine](../../src/template-engine-dynamic.ts) - Template discovery system
-- [Vault Utils](../../src/modules/files/vault-utils.ts) - File system operations and YAML analysis
+- [File Operations](../../src/modules/files/index.ts) - File system operations and YAML analysis
 - [MCP Tools Overview](README.md) - Complete tool inventory
 - [Search Tool](search.md) - Primary search functionality
 

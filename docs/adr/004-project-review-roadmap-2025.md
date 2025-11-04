@@ -16,7 +16,7 @@ The LifeOS MCP Server demonstrates solid TypeScript engineering with a well-stru
 | File                           | Lines | Assessment                                                     |
 | ------------------------------ | ----- | -------------------------------------------------------------- |
 | src/index.ts                   | 503   | ✅ **COMPLETED** - Decomposed via MCP-6/7/8/9, 77% reduction achieved (2224→503), within acceptable variance of optional ≤500 target (MCP-10 validated) |
-| src/vault-utils.ts             | 1,687 | **CRITICAL** - God class anti-pattern, violates SRP            |
+| src/modules/files/             | ~2,500 total | ✅ **DECOMPOSED** - 7 focused modules (MCP-91): file-io, note-crud, yaml-operations, folder-operations, content-insertion, daily-note-service, index |
 | src/tool-router.ts             | 627   | Acceptable but approaching limits                              |
 | src/search-engine.ts           | 621   | Well-scoped, could use minor optimization                      |
 | src/template-engine-dynamic.ts | 497   | Reasonable size, good separation                               |

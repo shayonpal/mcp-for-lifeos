@@ -239,9 +239,19 @@ Full-text search with YAML property filtering, relevance scoring, and natural la
 - Natural language query understanding
 - Token budget management (~25K response limit)
 
-### Vault Utils (`src/modules/files/vault-utils.ts`)
+### File Operations Module
 
-Core file operations with iCloud sync resilience, YAML parsing/validation, and Obsidian-compliant file naming. Central interface for vault interactions.
+The file operations module (`src/modules/files/`) provides focused, single-purpose utilities for vault interactions:
+
+**Module Components:**
+
+- **file-io.ts** - File reading/writing with iCloud retry logic and atomic operations
+- **note-crud.ts** - Note CRUD operations (read, write, create, update)
+- **yaml-operations.ts** - YAML parsing, validation, property analysis
+- **folder-operations.ts** - Folder/item movement and organization
+- **content-insertion.ts** - Content insertion at specific locations
+- **daily-note-service.ts** - Daily note operations and auto-creation
+- **index.ts** - Barrel export for all file operations
 
 **Key Responsibilities:**
 
@@ -259,7 +269,11 @@ Core file operations with iCloud sync resilience, YAML parsing/validation, and O
 - Zero new dependencies - native Node.js fs only
 - Foundation for MCP-108 transaction safety
 
-**Status:** Decomposed (Phase 4 - MCP-141 to MCP-144) into 7 focused modules within `src/modules/files/`
+**Design Patterns:**
+
+Each module exposes pure functions with clear contracts. See `dev/contracts/MCP-91-contracts.ts` for interface definitions.
+
+**Status:** Completed (MCP-91, Phase 4) - vault-utils.ts fully decomposed into 7 focused modules
 
 ### Link Update Infrastructure
 
@@ -392,7 +406,7 @@ Five-phase atomic transaction protocol for file rename operations with full roll
 
 - WALManager (MCP-115) for crash recovery
 - Link Updater (MCP-116) for two-phase link updates
-- VaultUtils.writeFileWithRetry() (MCP-114) for atomic writes
+- writeFileWithRetry() from file-io module (MCP-114) for atomic writes
 - Zero external dependencies (Node.js built-ins: crypto, fs, path)
 
 **Created:** 2025-11-01 (MCP-117) - 691 lines

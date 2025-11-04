@@ -3,7 +3,7 @@ import { NaturalLanguageProcessor } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
 import { ResponseTruncator } from '../../modules/search/index.js';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
-import { VaultUtils } from '../../modules/files/index.js';
+import { createNote } from '../../modules/files/index.js';
 import type {
   SmartCreateNoteOptions,
   UniversalListOptions,
@@ -147,7 +147,7 @@ function ensureHandlersInitialized(): void {
       .replace(/\s+/g, ' ')
       .trim();
 
-    const note = VaultUtils.createNote(
+    const note = createNote(
       fileName,
       templateResult.frontmatter,
       templateResult.content,

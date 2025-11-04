@@ -142,7 +142,7 @@ npx jest path/to/specific.test.ts -t "test name"     # Run one test
 Always use temporary vaults to prevent production pollution:
 
 ```typescript
-import { VaultUtils } from '../../src/vault-utils.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 
@@ -161,7 +161,7 @@ beforeEach(async () => {
   LIFEOS_CONFIG.vaultPath = vaultPath;
 
   // CRITICAL: Reset singletons
-  VaultUtils.resetSingletons();
+  resetTestSingletons();
 });
 
 afterEach(async () => {
@@ -178,7 +178,9 @@ afterEach(async () => {
 });
 ```
 
-**Why Critical**: Without `VaultUtils.resetSingletons()`, singleton instances retain production vault path and cause test pollution of live vault.
+**Why Critical**: Without `resetTestSingletons()`, singleton instances retain production vault path and cause test pollution of live vault.
+
+**Note:** Currently a no-op placeholder pending MCP-92 singleton management implementation.
 
 ### Handler Testing Pattern
 
@@ -276,12 +278,14 @@ const date = parseISO('2025-08-30'); // Aug 30
 
 **Root Cause**: Singletons (TemplateManager, ObsidianSettings, DateResolver) initialized with production config persist across tests.
 
-**Fix**: Always call `VaultUtils.resetSingletons()` after modifying `LIFEOS_CONFIG`:
+**Fix**: Always call `resetTestSingletons()` after modifying `LIFEOS_CONFIG`:
 
 ```typescript
+import { resetTestSingletons } from '../helpers/test-utils.js';
+
 beforeEach(() => {
   LIFEOS_CONFIG.vaultPath = testVaultPath;
-  VaultUtils.resetSingletons(); // Force re-initialization
+  resetTestSingletons(); // Force re-initialization
 });
 ```
 

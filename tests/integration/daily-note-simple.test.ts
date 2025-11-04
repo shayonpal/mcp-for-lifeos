@@ -8,11 +8,12 @@ import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { TemplateManager } from '../../src/modules/templates/index.js';
-import { DateResolver } from '../../src/shared/index.js';
+import { DateResolver, getLocalDate, LIFEOS_CONFIG } from '../../src/shared/index.js';
 import { ObsidianSettings } from '../../src/obsidian-settings.js';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { createDailyNote } from '../../src/modules/files/index.js';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Daily Note Template Integration (Direct)', () => {
   let vaultPath: string;
@@ -90,8 +91,8 @@ tags:
     LIFEOS_CONFIG.dailyNotesPath = path.join(vaultPath, 'Daily');
     LIFEOS_CONFIG.templatesPath = path.join(vaultPath, 'Templates');
     
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+    // Reset singletons to use new config
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -325,9 +326,9 @@ Today is <% tp.date.now("dddd") %> in week <% tp.date.now("ww") %>`
       
       const dateString = '2025-07-01';
       const date = new Date(dateString + 'T00:00:00');
-      
-      // Create daily note using VaultUtils
-      const note = await VaultUtils.createDailyNote(date);
+
+      // Create daily note using createDailyNote
+      const note = await createDailyNote(date, getLocalDate, () => templateManager);
       
       expect(note).toBeTruthy();
       // The path will contain the actual date formatted

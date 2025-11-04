@@ -88,7 +88,7 @@ npm run build         # Successful
 
 ### Implementation Details
 
-**Goal**: Extend `VaultUtils.writeFileWithRetry()` with atomic write capability using native Node.js fs temp-file-then-rename pattern.
+**Goal**: Extend `writeFileWithRetry()` from file-io module with atomic write capability using native Node.js fs temp-file-then-rename pattern.
 
 **Add Interface**:
 
@@ -399,7 +399,7 @@ export async function updateVaultLinks(
 
 1. Receive pre-rendered content map from prepare phase
 2. Validate manifest entries (staleness detection deferred to MCP-117)
-3. Write each file atomically using `VaultUtils.writeFileWithRetry({ atomic: true })` from MCP-114
+3. Write each file atomically using `writeFileWithRetry({ atomic: true })` from file-io module (MCP-114)
 4. Return `LinkUpdateResult`
 
 **Direct Mode** (default):
@@ -483,8 +483,8 @@ export async function updateVaultLinks(
 ```typescript
 // src/modules/transactions/transaction-manager.ts
 import { WALManager } from './wal-manager.js';
-import { updateVaultLinks } from './link-updater.js';
-import { VaultUtils } from './vault-utils.js';
+import { updateVaultLinks } from '../links/link-updater.js';
+import { normalizePath } from '../../shared/path-utils.js';
 import crypto from 'crypto';
 
 export class TransactionManager {
@@ -784,8 +784,8 @@ async function renameNoteHandler(
   const walManager = new WALManager();
 
   // 2. Create TransactionManager instance
-  const vaultPath = VaultUtils.getVaultPath();
-  const txManager = new TransactionManager(vaultPath, walManager);
+  const { LIFEOS_CONFIG } = await import('../../config.js');
+  const txManager = new TransactionManager(LIFEOS_CONFIG.vaultPath, walManager);
 
   // 3. Delegate to TransactionManager.execute()
   const result = await txManager.execute(
@@ -1121,8 +1121,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 **Vault Integration Patterns**:
 
 - iCloud retry logic: `ICLOUD_RETRY_CONFIG` (3 retries, exponential backoff)
-- Path normalization: `VaultUtils.normalizePath()`
-- File operations: Always use `VaultUtils` helpers
+- Path normalization: `normalizePath()` from shared/path-utils
+- File operations: Use file-io module functions
 
 **Error Handling**:
 
@@ -1134,7 +1134,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 **Testing Patterns**:
 
 - Temp vault for all tests (protect production vault)
-- `VaultUtils.resetSingletons()` called between tests
+- `resetTestSingletons()` from test-utils called between tests
 - No production vault access in test suite
 - Comprehensive cleanup in afterEach hooks
 

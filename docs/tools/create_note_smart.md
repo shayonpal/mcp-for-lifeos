@@ -293,7 +293,7 @@ The tool uses intelligent routing to determine the creation method:
 
 ### File Operations
 
-- **Creation**: `VaultUtils.createNote()` - Core file creation
+- **Creation**: `createNote()` from files module - Core file creation
 - **Sanitization**: Automatic filename sanitization for Obsidian compatibility
 - **Folder Placement**: Based on template configuration or user override
 

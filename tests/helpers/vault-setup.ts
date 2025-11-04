@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import { LIFEOS_CONFIG } from '../../src/shared/index.js';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { resetTestSingletons } from './test-utils.js';
 
 /**
  * Test vault setup result with cleanup function
@@ -74,9 +74,9 @@ export async function createTestVault(): Promise<TestVaultSetup> {
   // Mock config to point to test vault
   LIFEOS_CONFIG.vaultPath = vaultPath;
 
-  // Reset VaultUtils singleton to pick up new config
+  // Reset singleton managers to pick up new config
   // Critical for test isolation - prevents cache pollution
-  VaultUtils.resetSingletons();
+  resetTestSingletons();
 
   return {
     vaultPath,
@@ -85,8 +85,8 @@ export async function createTestVault(): Promise<TestVaultSetup> {
       // Restore original config
       Object.assign(LIFEOS_CONFIG, originalConfig);
 
-      // Reset singleton again to pick up restored config
-      VaultUtils.resetSingletons();
+      // Reset singleton managers again to pick up restored config
+      resetTestSingletons();
 
       // Remove temporary vault directory
       // force: true prevents errors if already deleted

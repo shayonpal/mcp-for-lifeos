@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { insertContent } from '../../src/modules/files/index.js';
 import { LIFEOS_CONFIG } from '../../src/shared/index.js';
 import { writeFileSync, mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import * as fs from 'fs/promises';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('VaultUtils.insertContent', () => {
   let vaultPath: string;
@@ -26,9 +27,9 @@ describe('VaultUtils.insertContent', () => {
     // Mock the LIFEOS_CONFIG
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
-    
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+
+    // Reset singletons to use new config
+    resetTestSingletons();
     
     // Create test directory
     await fs.mkdir(testDir, { recursive: true });
@@ -68,7 +69,7 @@ Second section content.
       writeFileSync(testNotePath, content);
       
       // Insert content after Section One
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '- New item added',
         { heading: '## Section One' },
@@ -92,7 +93,7 @@ title: Test Note
 `;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '## New Section\n\nSome new content',
         { heading: '## Tasks' },
@@ -115,7 +116,7 @@ Tasks go here
 `;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '- New task',
         { heading: "Today's Tasks" }, // Without ## prefix
@@ -137,7 +138,7 @@ Content here
       writeFileSync(testNotePath, content);
       
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           testNotePath,
           'New content',
           { heading: '## Non-existent Heading' },
@@ -161,7 +162,7 @@ This is an important paragraph. ^important-block
 `;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'Additional context about the important paragraph.',
         { blockRef: '^important-block' },
@@ -180,7 +181,7 @@ Decision made: Use TypeScript. ^decision-ts
 `;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'Rationale: Better type safety',
         { blockRef: 'decision-ts' }, // Without ^ prefix
@@ -205,7 +206,7 @@ Topics discussed:
 `;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '\n- Budget review\n- Q4 planning',
         { pattern: 'Topics discussed:' },
@@ -225,7 +226,7 @@ title: Test Note
       writeFileSync(testNotePath, content);
       
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           testNotePath,
           'New content',
           { pattern: 'Non-existent pattern' },
@@ -247,10 +248,10 @@ Line 4`;
       writeFileSync(testNotePath, content);
       
       // Line 4 is "Line 1" (after the frontmatter which is stripped)
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'Inserted line',
-        { lineNumber: 2 }, // Insert after "Line 2" 
+        { lineNumber: 2 }, // Insert after "Line 2"
         'after'
       );
       
@@ -267,7 +268,7 @@ Line 1`;
       writeFileSync(testNotePath, content);
       
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           testNotePath,
           'New content',
           { lineNumber: 100 },
@@ -290,7 +291,7 @@ Target content here`;
     });
     
     it('should append to end of target line', () => {
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         ' - appended',
         { heading: '## Target Section' },
@@ -301,7 +302,7 @@ Target content here`;
     });
     
     it('should prepend to beginning of target line', () => {
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'PREFIX: ',
         { heading: '## Target Section' },
@@ -321,7 +322,7 @@ title: Test Note
 Content`;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'New paragraph',
         { heading: '## Section' },
@@ -341,7 +342,7 @@ title: Test Note
 Content`;
       writeFileSync(testNotePath, content);
       
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         'inline',
         { heading: '## Section' },

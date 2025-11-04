@@ -7,8 +7,8 @@
  * @see docs/AI-Tool-Caller-Optimization-PRD.md for complete specification
  */
 
-import { SearchEngine, AdvancedSearchOptions, SearchResult } from './modules/search/index.js';
-import { VaultUtils } from './modules/files/index.js';
+import { SearchEngine, AdvancedSearchOptions, SearchResult, findNotes } from './modules/search/index.js';
+import { readNote, getAllYamlProperties } from './modules/files/index.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './shared/index.js';
 import { AnalyticsCollector } from './modules/analytics/index.js';
@@ -254,13 +254,13 @@ export class ToolRouter {
         case 'pattern':
           decision.targetTool = 'find_notes_by_pattern';
           const pattern = options.pattern || options.query || '';
-          const files = await VaultUtils.findNotes(pattern);
-          
+          const files = await findNotes(pattern);
+
           // Convert file paths to SearchResult format
           results = await Promise.all(
             files.slice(0, options.maxResults || 20).map(async (filePath) => {
               try {
-                const note = VaultUtils.readNote(filePath);
+                const note = readNote(filePath);
                 const title = ObsidianLinks.extractNoteTitle(note.path, note.frontmatter);
                 return {
                   note,
@@ -588,16 +588,16 @@ export class ToolRouter {
           return DynamicTemplateEngine.getAllTemplates();
           
         case 'yaml_properties':
-          return VaultUtils.getAllYamlProperties({
+          return getAllYamlProperties({
             includeCount: options.includeCount || false,
             excludeStandard: options.excludeStandard || false
           });
-          
+
         case 'auto':
           // Auto-detect what to list based on available options
           if (options.path !== undefined) return await this.listFolders(options.path);
           if (options.limit !== undefined) return await this.listDailyNotes(options.limit);
-          if (options.includeCount !== undefined) return VaultUtils.getAllYamlProperties({
+          if (options.includeCount !== undefined) return getAllYamlProperties({
             includeCount: options.includeCount,
             excludeStandard: options.excludeStandard || false
           });

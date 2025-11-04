@@ -21,3 +21,5 @@ export type {
 } from './link-updater.js';
 
 export { ObsidianLinks } from './obsidian-links.js';
+
+export { buildNewLinkText, updateNoteLinks } from './link-text-builder.js';

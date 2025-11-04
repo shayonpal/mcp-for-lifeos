@@ -14,8 +14,8 @@ import {
   readdirSync,
   chmodSync,
 } from "fs";
-import { VaultUtils } from "../../src/modules/files/index.js";
 import { writeFileWithRetry } from "../../src/modules/files/file-io.js";
+import { resetTestSingletons } from "../helpers/test-utils.js";
 
 const TEST_VAULT_PATH = join(process.cwd(), "test-vault-atomic");
 
@@ -27,8 +27,8 @@ describe("MCP-114: Atomic File Operations", () => {
     }
     mkdirSync(TEST_VAULT_PATH, { recursive: true });
 
-    // Reset VaultUtils singleton
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
   });
 
   afterEach(() => {

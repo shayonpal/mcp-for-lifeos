@@ -474,7 +474,7 @@ Periodic cleanup and organization:
 
 ### Core Handler
 
-- **Location**: `VaultUtils.moveItem()` method in `src/modules/files/vault-utils.ts`
+- **Location**: `moveItem()` method in `src/modules/files/index.ts`
 - **Type Detection**: File system checks using Node.js `statSync()`
 - **Path Processing**: Automatic normalization and validation
 - **Error Handling**: Comprehensive error checking and reporting

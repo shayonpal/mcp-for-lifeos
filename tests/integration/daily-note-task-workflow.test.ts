@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import { VaultUtils } from "../../src/modules/files/index.js";
+import { createDailyNote, insertContent } from "../../src/modules/files/index.js";
+import { TemplateManager } from "../../src/modules/templates/index.js";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
-import { LIFEOS_CONFIG } from "../../src/shared/index.js";
+import { LIFEOS_CONFIG, getLocalDate } from "../../src/shared/index.js";
 import { format } from "date-fns";
+import { resetTestSingletons } from "../helpers/test-utils.js";
 
 describe("Daily Note Task Addition Workflow", () => {
   let vaultPath: string;
@@ -34,9 +36,9 @@ describe("Daily Note Task Addition Workflow", () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
     LIFEOS_CONFIG.dailyNotesPath = dailyNotesPath;
-    
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+
+    // Reset singletons to use new config
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -50,14 +52,18 @@ describe("Daily Note Task Addition Workflow", () => {
   describe("Reproducing Issue #88", () => {
     it("should add tasks to existing Day's Notes section", async () => {
       // Step 1: Create daily note (simulating get_daily_note)
-      const dailyNote = await VaultUtils.createDailyNote(testDate);
+      const dailyNote = await createDailyNote(
+        testDate,
+        getLocalDate,
+        () => new TemplateManager(LIFEOS_CONFIG.vaultPath)
+      );
       expect(dailyNote).toBeDefined();
       expect(dailyNote.content).toContain("# Day's Notes");
 
       // Step 2: Add a task to the daily note (simulating insert_content)
       const taskContent =
         "- [ ] Test task that should go in Day's Notes section";
-      const updatedNote = VaultUtils.insertContent(
+      const updatedNote = insertContent(
         dailyNote.path,
         taskContent,
         { heading: "Day's Notes" },
@@ -84,11 +90,15 @@ describe("Daily Note Task Addition Workflow", () => {
 
     it("should handle multiple task additions without creating duplicates", async () => {
       // Create daily note
-      const dailyNote = await VaultUtils.createDailyNote(testDate);
+      const dailyNote = await createDailyNote(
+        testDate,
+        getLocalDate,
+        () => new TemplateManager(LIFEOS_CONFIG.vaultPath)
+      );
 
       // Add first task
       let updatedPath = dailyNote.path;
-      let result = VaultUtils.insertContent(
+      let result = insertContent(
         updatedPath,
         "- [ ] First task",
         { heading: "Day's Notes" },
@@ -100,7 +110,7 @@ describe("Daily Note Task Addition Workflow", () => {
       await fs.writeFile(updatedPath, result.content);
 
       // Add second task
-      result = VaultUtils.insertContent(
+      result = insertContent(
         updatedPath,
         "- [ ] Second task",
         { heading: "Day's Notes" },
@@ -118,11 +128,15 @@ describe("Daily Note Task Addition Workflow", () => {
     });
 
     it("should fail gracefully when heading doesn't exist", async () => {
-      const dailyNote = await VaultUtils.createDailyNote(testDate);
+      const dailyNote = await createDailyNote(
+        testDate,
+        getLocalDate,
+        () => new TemplateManager(LIFEOS_CONFIG.vaultPath)
+      );
 
       // Try to add task to non-existent section
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           dailyNote.path,
           "- [ ] Task",
           { heading: "Wrong Section Name" },
@@ -150,7 +164,7 @@ Content here
 
       // This should fail due to case sensitivity
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           notePath,
           "- [ ] Task",
           { heading: "Day's Notes" }, // Different case
@@ -160,7 +174,7 @@ Content here
       }).toThrow("Heading not found");
 
       // This should work with exact case
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] Task",
         { heading: "DAY'S NOTES" }, // Exact case
@@ -193,7 +207,7 @@ Some content after tasks
       );
 
       // Add a new task - it should go after existing tasks
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] New task that should be at bottom",
         { heading: "Day's Notes" },
@@ -242,7 +256,7 @@ More content between tasks.
       );
 
       // Add a new task
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] New task",
         { heading: "Day's Notes" },
@@ -279,7 +293,7 @@ Just some text content here.
       );
 
       // Add first task
-      let result = VaultUtils.insertContent(
+      let result = insertContent(
         notePath,
         "- [ ] First task",
         { heading: "Day's Notes" },
@@ -304,7 +318,7 @@ Just some text content here.
       await fs.writeFile(notePath, result.content);
 
       // Now add a second task
-      result = VaultUtils.insertContent(
+      result = insertContent(
         notePath,
         "- [ ] Second task",
         { heading: "Day's Notes" },
@@ -343,7 +357,7 @@ Some notes after the tasks.
       );
 
       // Add a new task
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] Evening: Review code",
         { heading: "Day's Notes" },
@@ -400,7 +414,7 @@ Meeting notes from earlier today...
       await fs.writeFile(notePath, initialContent);
 
       // User adds a new task
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] Review and delete vault-reorganisation feature branch",
         { heading: "Day's Notes" },
@@ -449,7 +463,7 @@ Just some text without any tasks yet.
       await fs.writeFile(notePath, initialContent);
 
       // Add first task
-      let result = VaultUtils.insertContent(
+      let result = insertContent(
         notePath,
         "- [ ] First task to add",
         { heading: "Day's Notes" },
@@ -477,7 +491,7 @@ Just some text without any tasks yet.
       // Write back and add second task
       await fs.writeFile(notePath, result.content);
 
-      result = VaultUtils.insertContent(
+      result = insertContent(
         notePath,
         "- [ ] Second task to add",
         { heading: "Day's Notes" },
@@ -511,7 +525,7 @@ Some content in other section`;
       await fs.writeFile(notePath, initialContent);
 
       // Add first task
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         notePath,
         "- [ ] Task in empty section",
         { heading: "Day's Notes" },
@@ -543,12 +557,16 @@ Some content in other section`;
   describe("Error Scenarios from RCA", () => {
     it("should not create duplicate files when updating daily notes", async () => {
       // Create initial daily note
-      const dailyNote = await VaultUtils.createDailyNote(testDate);
+      const dailyNote = await createDailyNote(
+        testDate,
+        getLocalDate,
+        () => new TemplateManager(LIFEOS_CONFIG.vaultPath)
+      );
       const originalPath = dailyNote.path;
 
       // Simulate multiple updates
       for (let i = 1; i <= 3; i++) {
-        const result = VaultUtils.insertContent(
+        const result = insertContent(
           originalPath,
           `- [ ] Task ${i}`,
           { heading: "Day's Notes" },

@@ -21,6 +21,7 @@ import { VaultUtils } from '../../../src/modules/files/index.js';
 import { WALManager, type WALEntry } from '../../../src/modules/transactions/index.js';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
+import { resetTestSingletons } from '../../helpers/test-utils.js';
 
 describe('Transaction System Regression Tests', () => {
   let vaultPath: string;
@@ -42,8 +43,8 @@ describe('Transaction System Regression Tests', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singletons
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
 
     // Import the handler
     const { registerNoteHandlers } = await import('../../../src/server/handlers/note-handlers.js');
@@ -60,7 +61,7 @@ describe('Transaction System Regression Tests', () => {
     }
 
     // Reset singletons
-    VaultUtils.resetSingletons();
+    resetTestSingletons();
 
     // Cleanup test directories
     try {

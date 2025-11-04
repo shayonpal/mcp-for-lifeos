@@ -15,7 +15,7 @@ import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
 import { WALManager, type WALEntry } from '../../src/modules/transactions/index.js';
 import { TransactionManager } from '../../src/modules/transactions/index.js';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Boot Recovery System', () => {
   let vaultPath: string;
@@ -38,8 +38,8 @@ describe('Boot Recovery System', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singletons
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -50,7 +50,7 @@ describe('Boot Recovery System', () => {
     }
 
     // Reset singletons
-    VaultUtils.resetSingletons();
+    resetTestSingletons();
 
     // Cleanup test directories
     try {

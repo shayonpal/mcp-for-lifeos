@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { insertContent } from '../../src/modules/files/index.js';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import { LIFEOS_CONFIG } from '../../src/shared/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Insert Content - Section Targeting', () => {
   let vaultPath: string;
@@ -20,9 +21,9 @@ describe('Insert Content - Section Targeting', () => {
     // Store original config
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
-    
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+
+    // Reset singletons to use new config
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -58,8 +59,8 @@ This is where daily tasks should go.
 
     it('should find "Day\'s Notes" heading correctly', async () => {
       const content = '- [ ] Test task for Day\'s Notes section';
-      
-      const result = VaultUtils.insertContent(
+
+      const result = insertContent(
         testNotePath,
         content,
         { heading: 'Day\'s Notes' },
@@ -84,9 +85,9 @@ This is where daily tasks should go.
 
     it('should handle exact heading matching with hash prefix', async () => {
       const content = '- [ ] Another test task';
-      
+
       // Should work with or without the # prefix
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         content,
         { heading: '# Day\'s Notes' },
@@ -100,7 +101,7 @@ This is where daily tasks should go.
 
     it('should add multiple tasks to the same section', async () => {
       // Add first task
-      let result = VaultUtils.insertContent(
+      let result = insertContent(
         testNotePath,
         '- [ ] First task',
         { heading: 'Day\'s Notes' },
@@ -112,7 +113,7 @@ This is where daily tasks should go.
       await fs.writeFile(testNotePath, result.content);
 
       // Add second task
-      result = VaultUtils.insertContent(
+      result = insertContent(
         testNotePath,
         '- [ ] Second task',
         { heading: 'Day\'s Notes' },
@@ -138,7 +139,7 @@ This is where daily tasks should go.
 
     it('should throw error for non-existent heading', async () => {
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           testNotePath,
           '- [ ] Task',
           { heading: 'Non-existent Section' },
@@ -151,7 +152,7 @@ This is where daily tasks should go.
     it('should handle case sensitivity correctly', async () => {
       // Should find the heading despite different case
       expect(() => {
-        VaultUtils.insertContent(
+        insertContent(
           testNotePath,
           '- [ ] Task',
           { heading: 'day\'s notes' }, // lowercase
@@ -168,7 +169,7 @@ This is where daily tasks should go.
       testNotePath = path.join(vaultPath, 'test-alt.md');
       await fs.writeFile(testNotePath, `# Days Notes\n\nContent here\n\n# Other Section`);
 
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '- [ ] Task for Days Notes',
         { heading: 'Days Notes' },
@@ -183,7 +184,7 @@ This is where daily tasks should go.
       testNotePath = path.join(vaultPath, 'test-levels.md');
       await fs.writeFile(testNotePath, `## Day's Notes\n\nContent\n\n## Next Section`);
 
-      const result = VaultUtils.insertContent(
+      const result = insertContent(
         testNotePath,
         '- [ ] Task',
         { heading: 'Day\'s Notes' },

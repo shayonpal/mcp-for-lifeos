@@ -11,9 +11,10 @@ import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-c
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
 import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
-import { VaultUtils } from '../../modules/files/index.js';
+import { readNote, updateNote, insertContent } from '../../modules/files/index.js';
+import { findNoteByTitle } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
-import { normalizePath } from '../../shared/index.js';
+import { normalizePath, normalizeTagsToArray } from '../../shared/index.js';
 import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
@@ -85,7 +86,7 @@ async function resolveNotePath(
   if (args.path) {
     return normalizePath(args.path, vaultPath);
   } else if (args.title) {
-    return await VaultUtils.findNoteByTitle(args.title);
+    return await findNoteByTitle(args.title);
   } else {
     throw new Error('Either path or title is required');
   }
@@ -126,11 +127,11 @@ const readNoteHandler: ToolHandler = async (
   const normalizedPath = normalizePath(path, LIFEOS_CONFIG.vaultPath);
 
   // Debug logging removed for MCP compatibility
-  const note = VaultUtils.readNote(normalizedPath);
+  const note = readNote(normalizedPath);
   const obsidianLink = ObsidianLinks.createClickableLink(note.path, note.frontmatter.title);
 
   // Normalize tags to array format
-  const tags = VaultUtils.normalizeTagsToArray(note.frontmatter.tags);
+  const tags = normalizeTagsToArray(note.frontmatter.tags);
   const tagsDisplay = tags.length > 0 ? tags.join(', ') : 'None';
 
   return addVersionMetadata({
@@ -184,7 +185,7 @@ const editNoteHandler: ToolHandler = async (
   }
 
   // Update the note
-  const updatedNote = VaultUtils.updateNote(notePath, updates);
+  const updatedNote = updateNote(notePath, updates);
   const obsidianLink = ObsidianLinks.createClickableLink(updatedNote.path, updatedNote.frontmatter.title);
 
   return addVersionMetadata({
@@ -531,7 +532,7 @@ const insertContentHandler: ToolHandler = async (
   // Perform the insertion
   let updatedNote;
   try {
-    updatedNote = VaultUtils.insertContent(
+    updatedNote = insertContent(
       notePath,
       content,
       target,

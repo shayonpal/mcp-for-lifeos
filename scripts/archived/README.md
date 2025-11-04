@@ -109,12 +109,16 @@ npm run test:watch
 
 ### Test Isolation Pattern
 ```typescript
-// ✅ Correct: Direct import with temp vault
-import { VaultUtils } from '../../src/vault-utils.js';
+// ✅ Correct: Direct import with temp vault (updated MCP-91)
+import { readNote, createNote } from '../../src/modules/files/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
+import { LIFEOS_CONFIG } from '../../src/shared/index.js';
 
 beforeEach(async () => {
   vaultPath = join(tmpdir(), `test-vault-${randomBytes(8).toString('hex')}`);
   await fs.mkdir(vaultPath, { recursive: true });
+  LIFEOS_CONFIG.vaultPath = vaultPath;
+  resetTestSingletons();
 });
 
 afterEach(async () => {

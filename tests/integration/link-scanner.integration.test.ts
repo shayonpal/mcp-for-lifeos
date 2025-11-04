@@ -14,6 +14,7 @@ import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import { LinkScanner } from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('LinkScanner Integration', () => {
   let vaultPath: string;
@@ -31,7 +32,7 @@ describe('LinkScanner Integration', () => {
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
     // Reset singletons
-    VaultUtils.resetSingletons();
+    resetTestSingletons();
   });
 
   afterEach(async () => {
