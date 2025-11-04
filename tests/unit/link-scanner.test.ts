@@ -7,7 +7,7 @@
  * @since MCP-106
  */
 
-import { LinkScanner, type LinkReference } from '../../src/link-scanner.js';
+import { LinkScanner, type LinkReference } from '../../src/modules/links/index.js';
 import { WIKILINK_PATTERN } from '../../src/regex-utils.js';
 import type { LifeOSNote } from '../../src/types.js';
 

@@ -12,7 +12,7 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { LinkScanner } from '../../src/link-scanner.js';
+import { LinkScanner } from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('LinkScanner Integration', () => {

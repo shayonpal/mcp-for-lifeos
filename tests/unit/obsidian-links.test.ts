@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { ObsidianLinks } from '../../src/obsidian-links.js';
+import { ObsidianLinks } from '../../src/modules/links/index.js';
 import type { YAMLFrontmatter } from '../../src/types.js';
 
 describe('ObsidianLinks.extractNoteTitle()', () => {

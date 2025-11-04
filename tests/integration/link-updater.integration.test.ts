@@ -15,7 +15,7 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { updateVaultLinks } from '../../src/link-updater.js';
+import { updateVaultLinks } from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('Link Updater Integration', () => {

@@ -40,8 +40,8 @@ import type {
   WALEntry,
 } from '../dev/contracts/MCP-108-contracts.js';
 import { WALManager } from './wal-manager.js';
-import { updateVaultLinks } from './link-updater.js';
-import type { LinkRenderResult } from './link-updater.js';
+import { updateVaultLinks } from './modules/links/index.js';
+import type { LinkRenderResult } from './modules/links/index.js';
 import { writeFileWithRetry } from './modules/files/file-io.js';
 import { TransactionErrorCode } from './error-types.js';
 import { LIFEOS_CONFIG } from './config.js';

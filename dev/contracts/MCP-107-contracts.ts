@@ -11,7 +11,7 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-107
  */
 
-import type { LinkReference, LinkScanResult } from '../../src/link-scanner.js';
+import type { LinkReference, LinkScanResult } from '../../src/modules/links/index.js';
 
 // ============================================================================
 // CORE LINK UPDATE CONTRACTS

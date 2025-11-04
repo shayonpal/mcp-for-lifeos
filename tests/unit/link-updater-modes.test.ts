@@ -21,7 +21,7 @@ import {
   type LinkRenderResult,
   type LinkUpdateResult,
   type LinkCommitInput
-} from '../../src/link-updater.js';
+} from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
 
 // ============================================================================

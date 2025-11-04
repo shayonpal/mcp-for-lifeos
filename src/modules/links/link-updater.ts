@@ -12,8 +12,8 @@
  */
 
 import { LinkScanner } from './link-scanner.js';
-import { VaultUtils } from './modules/files/index.js';
-import { readFileWithRetry, writeFileWithRetry } from './modules/files/file-io.js';
+import { VaultUtils } from '../files/index.js';
+import { readFileWithRetry, writeFileWithRetry } from '../files/file-io.js';
 import type { LinkScanResult, LinkReference } from './link-scanner.js';
 
 // ============================================================================

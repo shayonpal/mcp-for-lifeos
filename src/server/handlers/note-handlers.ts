@@ -12,13 +12,13 @@ import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts
 import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
 import { VaultUtils } from '../../modules/files/index.js';
-import { ObsidianLinks } from '../../obsidian-links.js';
+import { ObsidianLinks } from '../../modules/links/index.js';
 import { normalizePath } from '../../path-utils.js';
 import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../config.js';
 import { logger } from '../../logger.js';
-import { updateVaultLinks } from '../../link-updater.js';
+import { updateVaultLinks } from '../../modules/links/index.js';
 
 /**
  * Transaction service cache for singleton pattern
@@ -243,7 +243,7 @@ async function previewRenameOperation(
 
     // Scan for links if updateLinks is enabled (MCP-123 enhancement)
     if (updateLinks) {
-      const { LinkScanner } = await import('../../link-scanner.js');
+      const { LinkScanner } = await import('../../modules/links/index.js');
       
       // Extract note name from oldPath (without .md extension)
       const oldNoteName = basename(oldPath, '.md');

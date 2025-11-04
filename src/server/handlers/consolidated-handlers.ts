@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { NaturalLanguageProcessor } from '../../modules/search/index.js';
-import { ObsidianLinks } from '../../obsidian-links.js';
+import { ObsidianLinks } from '../../modules/links/index.js';
 import { ResponseTruncator } from '../../modules/search/index.js';
 import { LIFEOS_CONFIG } from '../../config.js';
 import { VaultUtils } from '../../modules/files/index.js';

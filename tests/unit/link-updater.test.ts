@@ -9,14 +9,14 @@
  * @since MCP-107
  */
 
-import { updateVaultLinks } from '../../src/link-updater.js';
-import { LinkScanner } from '../../src/link-scanner.js';
+import { updateVaultLinks } from '../../src/modules/links/index.js';
+import { LinkScanner } from '../../src/modules/links/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
-import type { LinkScanResult } from '../../src/link-scanner.js';
+import type { LinkScanResult } from '../../src/modules/links/index.js';
 import * as fileIo from '../../src/modules/files/file-io.js';
 
 // Mock only I/O dependencies (not helper functions)
-jest.mock('../../src/link-scanner.js');
+jest.mock('../../src/modules/links/link-scanner.js');
 
 // Spy on file I/O functions for updateVaultLinks tests
 const readFileSpy = jest.spyOn(fileIo, 'readFileWithRetry');

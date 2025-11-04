@@ -5,7 +5,7 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ObsidianLinks } from './obsidian-links.js';
+import { ObsidianLinks } from './modules/links/index.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
