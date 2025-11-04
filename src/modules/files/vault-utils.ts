@@ -187,6 +187,30 @@ export class VaultUtils {
   }
 
   /**
+   * Read file with iCloud sync retry logic
+   * Public API for backward compatibility
+   */
+  static readFileWithRetry(
+    filePath: string,
+    encoding: BufferEncoding = "utf-8",
+  ): string {
+    return readFileWithRetry(filePath, encoding);
+  }
+
+  /**
+   * Write file with iCloud sync retry logic
+   * Public API for backward compatibility
+   */
+  static writeFileWithRetry(
+    filePath: string,
+    content: string,
+    encoding: BufferEncoding = "utf-8",
+    options?: AtomicWriteOptions,
+  ): void {
+    return writeFileWithRetry(filePath, content, encoding, options);
+  }
+
+  /**
    * Reconstruct wikilink text from components with new target note name
    *
    * Follows Obsidian wikilink format: [[target#anchor|alias]]
