@@ -1,8 +1,8 @@
 # Modularization Project Execution Prompt
 
-**Branch**: `feature/modularize-core-mcp-layout`
-**Project**: Modularize Core MCP Source Layout
-**Issues**: MCP-133 through MCP-147 (15 issues)
+**Branch**: `feature/modularize-core-mcp-layout`  
+**Project**: Modularize Core MCP Source Layout  
+**Issues**: MCP-133 through MCP-147 (15 issues)  
 **Timeline**: 10-12 days (51 hours total)
 
 ---
@@ -10,6 +10,7 @@
 ## Execution Instructions
 
 Work through the 15 issues sequentially in the feature branch `feature/modularize-core-mcp-layout`. After completing each issue:
+
 1. Run full test suite
 2. Commit changes with descriptive message
 3. Continue to next issue in same branch
@@ -22,12 +23,14 @@ Work through the 15 issues sequentially in the feature branch `feature/modulariz
 For each issue (MCP-133 through MCP-147), follow this workflow:
 
 ### Step 1: Start Issue
+
 ```bash
 # Update Linear issue status to "In Progress"
 # Read issue description and acceptance criteria
 ```
 
 ### Step 2: Implementation
+
 ```bash
 # Implement the changes specified in the Linear issue
 # Follow acceptance criteria exactly
@@ -59,6 +62,7 @@ npm run build
 ```
 
 **Critical Validation Points:**
+
 - All type errors resolved (zero TypeScript errors)
 - No circular dependencies detected
 - Test count stable: 724/728 tests passing
@@ -87,6 +91,7 @@ npm run dev
 ```
 
 **Smoke Test Checklist:**
+
 - [ ] Server starts without errors
 - [ ] All tested tools return expected results
 - [ ] No runtime exceptions in logs
@@ -135,12 +140,14 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ```
 
 ### Step 6: Update Linear Issue
+
 ```bash
 # Mark Linear issue as "Done"
 # Add comment with commit SHA and test results
 ```
 
 ### Step 7: Continue to Next Issue
+
 ```bash
 # Proceed immediately to next issue in sequence
 # NO push to remote until all 15 issues complete
@@ -154,6 +161,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ### Phase 1: Foundation (4 hours)
 
 **MCP-133: Create modular directory scaffolding (2h)**
+
 - Create directory structure
 - Add .gitkeep files
 - Update .gitignore
@@ -161,6 +169,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-134: Import policy & circular dependency checks (2h)**
+
 - Install madge: `npm install --save-dev madge`
 - Add script: `"check:circular": "madge --circular --extensions ts src/"`
 - Document import policy in docs/ARCHITECTURE.md
@@ -171,6 +180,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ### Phase 2: Templates & YAML (5 hours)
 
 **MCP-135: Move template system (3h)**
+
 - Move 4 files to modules/templates/
 - Create barrel export
 - Update 6-8 import statements
@@ -179,6 +189,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-136: Move YAML processing (2h)**
+
 - Move 1 file to modules/yaml/
 - Create barrel export
 - Update 4-5 import statements
@@ -189,6 +200,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ### Phase 3: Search & NLP (5 hours)
 
 **MCP-137: Move search engine & query parser (3h)**
+
 - Move 2 files to modules/search/
 - Create barrel export
 - Update 5-6 import statements
@@ -197,6 +209,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-138: Move NLP & response truncator (2h)**
+
 - Move 2 files to modules/search/
 - Update barrel export
 - Update 3-4 import statements
@@ -207,6 +220,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ### Phase 4: Vault Decomposition ⚠️ CRITICAL PATH (18 hours)
 
 **MCP-139: Extract file I/O operations (3h)**
+
 - Create modules/files/file-io.ts (7 methods)
 - Update vault-utils.ts to import
 - Add unit tests for retry logic
@@ -215,6 +229,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-140: Extract note CRUD operations (3h)**
+
 - Create modules/files/note-crud.ts (6 methods)
 - Update vault-utils.ts to import/re-export
 - Add unit tests for CRUD
@@ -222,6 +237,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-141: Extract daily note operations (2h)**
+
 - Create modules/files/daily-note-service.ts (3 methods)
 - Update vault-utils.ts to import/re-export
 - Add unit tests
@@ -229,6 +245,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-142: Extract content insertion logic (3h)**
+
 - Create modules/files/content-insertion.ts (6 methods)
 - Update vault-utils.ts to import/re-export
 - Add unit tests
@@ -236,6 +253,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-143: Extract YAML operations (3h)**
+
 - Create modules/files/yaml-operations.ts (4 methods)
 - Update vault-utils.ts to import/re-export
 - Add unit tests for YAML edge cases
@@ -243,6 +261,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **MCP-144: Extract folder operations & finalize (4h) 🔥**
+
 - Create modules/files/folder-operations.ts (3 methods)
 - Create modules/files/index.ts barrel export
 - Reduce vault-utils.ts to ~400 lines
@@ -254,6 +273,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 ### Phase 5: Links & Transactions (6 hours)
 
 **MCP-145: Move link management (3h)**
+
 - Move 3 files to modules/links/
 - Create barrel export
 - Update 5-6 import statements
@@ -262,6 +282,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: REQUIRED (test rename_note with link updates)
 
 **MCP-146: Move transaction management (3h)**
+
 - Move 2 files to modules/transactions/
 - Create barrel export
 - Update 4-5 import statements
@@ -274,6 +295,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 **MCP-147: Complete modularization (8h)**
 
 **Part A: Analytics (2h)**
+
 - Move 2 files to modules/analytics/
 - Update output paths to var/analytics/
 - Update dashboard script and HTTP server
@@ -282,6 +304,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Verify dashboard at localhost:19832
 
 **Part B: Shared Utilities (2h)**
+
 - Move 8 files to src/shared/
 - Create barrel export
 - Update 10-15 import statements
@@ -289,6 +312,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 - **Smoke test**: Not required
 
 **Part C: Documentation Sweep (4h)**
+
 - Update 7 Serena memories
 - Update ARCHITECTURE.md with module diagram
 - Update 6+ tool docs
@@ -305,6 +329,7 @@ Issue: https://linear.app/agilecode-studio/issue/MCP-133"
 After completing all 15 issues, perform final validation:
 
 ### 1. Full Test Suite Verification
+
 ```bash
 # Must all pass:
 npm run typecheck           # Zero TypeScript errors
@@ -316,6 +341,7 @@ npm run build               # Build succeeds
 ```
 
 ### 2. Comprehensive Smoke Test
+
 ```bash
 # Start server
 npm run dev
@@ -334,6 +360,7 @@ npm run dev
 ```
 
 ### 3. Code Quality Checks
+
 ```bash
 # Check for TODO/FIXME comments (should be none)
 rg "TODO|FIXME" src/
@@ -346,6 +373,7 @@ wc -l src/modules/files/vault-utils.ts
 ```
 
 ### 4. Documentation Verification
+
 ```bash
 # All markdown passes linting
 markdownlint-cli2 "docs/**/*.md"
@@ -358,6 +386,7 @@ ls -la .serena/memories/
 ```
 
 ### 5. Git Status Check
+
 ```bash
 # Verify clean working directory
 git status
@@ -370,6 +399,7 @@ git ls-files --stage | awk '$4 > 100000 {print $4, $5}'
 ```
 
 ### 6. Sanity Checks
+
 - [ ] All 15 Linear issues marked as "Done"
 - [ ] No regression in test count (724/728 baseline maintained)
 - [ ] No new TypeScript errors introduced
@@ -452,6 +482,7 @@ Please provide:
 ```
 
 **Codex Review Checklist:**
+
 - [ ] Codex review executed with full context
 - [ ] Overall assessment received (approve/request changes)
 - [ ] Critical issues documented (if any)
@@ -461,6 +492,7 @@ Please provide:
 - [ ] No hidden coupling or anti-patterns identified
 
 **Action Required:**
+
 - If codex identifies **critical issues**: Fix immediately, re-run tests, re-submit to codex
 - If codex identifies **recommendations only**: Document in PR description for future work
 - If codex **approves**: Proceed to PR submission
@@ -475,11 +507,13 @@ Please provide:
 Only after ALL 15 issues complete and final validation passes:
 
 ### 1. Push to Remote
+
 ```bash
 git push origin feature/modularize-core-mcp-layout
 ```
 
 ### 2. Create Pull Request
+
 ```bash
 # Use GitHub CLI or web interface
 gh pr create --title "feat: modularize core MCP source layout" --body "$(cat <<'EOF'
@@ -608,6 +642,7 @@ EOF
 ```
 
 ### 3. PR Metadata
+
 - **Base branch**: `master`
 - **Labels**: `Technical Debt`, `Refactoring`, `Documentation`
 - **Reviewers**: Request review from team
@@ -615,6 +650,7 @@ EOF
 - **Milestone**: Current cycle
 
 ### 4. Post-PR Actions
+
 - Monitor CI/CD pipeline (if configured)
 - Address any review feedback
 - Merge when approved
@@ -628,6 +664,7 @@ EOF
 If critical issues discovered during any phase:
 
 ### Rollback Single Issue
+
 ```bash
 # Identify last good commit
 git log --oneline -20
@@ -639,6 +676,7 @@ git reset --hard <commit-sha>
 ```
 
 ### Rollback Multiple Issues
+
 ```bash
 # Create backup branch first
 git checkout -b backup/modularize-core-mcp-layout
@@ -651,6 +689,7 @@ git reset --hard <last-good-commit>
 ```
 
 ### Complete Rollback
+
 ```bash
 # Return to master
 git checkout master
@@ -711,6 +750,6 @@ After each issue completes:
 
 ---
 
-**Status**: Ready to execute
-**Branch**: `feature/modularize-core-mcp-layout` ✅ Created
+**Status**: Ready to execute  
+**Branch**: `feature/modularize-core-mcp-layout` ✅ Created  
 **Next Step**: Start with MCP-133
