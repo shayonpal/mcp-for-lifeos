@@ -24,9 +24,6 @@ export interface TestVaultIsolationContract {
 
   /** Cleanup function that restores original config */
   cleanup: () => Promise<void>;
-
-  /** Validates vault is NOT production vault */
-  isProductionVault(): boolean;
 }
 
 /**

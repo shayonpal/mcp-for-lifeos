@@ -186,7 +186,7 @@ describe('Legacy Alias Handlers Module', () => {
 
       // Verify the note exists in the test vault
       const notePath = join(testVault.vaultPath, '05 - Fleeting Notes', `${uniqueTitle}.md`);
-      await expect(access(notePath)).resolves.not.toThrow();
+      await access(notePath); // Will throw if file doesn't exist, causing test to fail
     });
 
     it('should work in legacy-only mode (list aliases)', async () => {

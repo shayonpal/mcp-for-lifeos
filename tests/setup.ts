@@ -3,8 +3,6 @@
  * Global test configuration and utilities
  */
 
-import { LIFEOS_CONFIG } from '../src/config.js';
-
 // Extend Jest timeout for integration tests
 jest.setTimeout(30000);
 
