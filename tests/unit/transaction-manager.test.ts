@@ -10,7 +10,7 @@
  *
  * Test Pattern:
  * - Use temp vault directory for all tests (protect production vault)
- * - Call VaultUtils.resetSingletons() between tests
+ * - Call resetTestSingletons() between tests
  * - Comprehensive cleanup in afterEach hooks
  * - Mock WALManager where needed for isolation
  * - Use proper TypeScript types from contracts
@@ -37,6 +37,7 @@ import {
 } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 // Test directories (isolated from production)
 const TEST_VAULT_DIR = join(process.cwd(), 'test-transaction-vault');
@@ -58,8 +59,8 @@ describe('MCP-117: TransactionManager', () => {
     // Create fresh test directories
     mkdirSync(TEST_VAULT_DIR, { recursive: true });
 
-    // Reset VaultUtils singleton
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
 
     // Create TransactionManager with test directories
     walManager = new WALManager(TEST_WAL_DIR);
@@ -75,8 +76,8 @@ describe('MCP-117: TransactionManager', () => {
       rmSync(TEST_WAL_DIR, { recursive: true, force: true });
     }
 
-    // Reset VaultUtils singleton
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
   });
 
   // ============================================================================

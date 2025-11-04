@@ -89,7 +89,7 @@ See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support r
 
 - `src/index.ts` - MCP server entry point
 - `src/tool-router.ts` - Tool routing and consolidation
-- `src/modules/files/vault-utils.ts` - Vault operations and YAML validation
+- `src/modules/files/` - File operations (note-crud, daily-note-service, file-io, yaml-operations, content-insertion, folder-operations)
 - `src/modules/search/search-engine.ts` - Search functionality
 - `src/modules/links/` - Link scanning and updates
 - `src/modules/transactions/` - Atomic operations with WAL

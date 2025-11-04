@@ -281,9 +281,9 @@ When a heading, pattern, or block reference isn't found, the tool provides helpf
 - **By path**: Direct file system access with path normalization
 - **Path handling**: Supports both absolute and vault-relative paths
 
-### Content Insertion Engine  
+### Content Insertion Engine
 
-- **Core method**: `VaultUtils.insertContent()`
+- **Core method**: `insertContent()` from files module
 - **Pattern matching**: Exact string search with case sensitivity
 - **Section detection**: Parses markdown heading hierarchy to find section boundaries
 
@@ -568,6 +568,6 @@ When adding to existing sections (like task lists):
 ## See Also
 
 - [Use Cases Documentation](../specs/use-cases/insert-content-usecases.md)
-- [Implementation Plan](../specs/implementation/insert-content-implementation-plan.md)  
+- [Implementation Plan](../specs/implementation/insert-content-implementation-plan.md)
 - [Related Tools](README.md)
-- [VaultUtils API](../../src/modules/files/vault-utils.ts)
+- [File Operations](../../src/modules/files/index.ts)

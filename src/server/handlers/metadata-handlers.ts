@@ -7,7 +7,7 @@ import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { METADATA_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
-import { VaultUtils } from '../../modules/files/index.js';
+import { getYamlPropertyValues } from '../../modules/files/index.js';
 import { addVersionMetadata } from '../tool-registry.js';
 
 /**
@@ -93,7 +93,7 @@ const listYamlPropertyValuesHandler: ToolHandler = async (
   };
 
   // Get all values for the specified property
-  const propertyInfo = VaultUtils.getYamlPropertyValues(property, options);
+  const propertyInfo = getYamlPropertyValues(property, options);
 
   // Format the response
   let responseText = `# YAML Property Values: "${property}"\n\n`;

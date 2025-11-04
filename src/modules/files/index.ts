@@ -36,6 +36,3 @@ export {
 
 // Folder operations
 export { moveItem } from "./folder-operations.js";
-
-// VaultUtils - main utility class (will be moved here)
-export { VaultUtils } from "./vault-utils.js";

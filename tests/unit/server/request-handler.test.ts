@@ -22,7 +22,7 @@ import type {
 import type { MaxResultsValidation } from '../../../dev/contracts/MCP-38-contracts.js';
 import type { AnalyticsCollector } from '../../../src/analytics/analytics-collector.js';
 import { ObsidianLinks } from '../../../src/modules/links/index.js';
-import { VaultUtils } from '../../../src/modules/files/index.js';
+import * as NoteCrud from '../../../src/modules/files/note-crud.js';
 import { NaturalLanguageProcessor } from '../../../src/modules/search/index.js';
 
 // ============================================================================
@@ -307,7 +307,7 @@ describe('Request Handler - createRequestHandler', () => {
     });
     mockRouter.routeList.mockResolvedValue(mockListResult);
 
-    jest.spyOn(VaultUtils, 'createNote').mockReturnValue(mockVaultNote);
+    jest.spyOn(NoteCrud, 'createNote').mockReturnValue(mockVaultNote);
     jest.spyOn(ObsidianLinks, 'formatSearchResult').mockReturnValue('• Result');
     jest.spyOn(ObsidianLinks, 'extractNoteTitle').mockReturnValue('Test Note');
     jest.spyOn(ObsidianLinks, 'createClickableLink').mockReturnValue('[Test](Test)');
@@ -385,7 +385,7 @@ describe('Request Handler - createRequestHandler', () => {
       const result = await handler(createRequest);
 
       expect(mockRouter.routeCreateNote).toHaveBeenCalledWith({ title: 'Registry Test Note' });
-      expect(VaultUtils.createNote).toHaveBeenCalledWith(
+      expect(NoteCrud.createNote).toHaveBeenCalledWith(
         'Registry Test Note',
         expect.any(Object),
         expect.any(String),

@@ -8,10 +8,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { MoveItemsInput } from '../../shared/index.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { UTILITY_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
-import { VaultUtils } from '../../modules/files/index.js';
+import { getDailyNote, createDailyNote, readNote, moveItem } from '../../modules/files/index.js';
+import { findNotes } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
-import { DynamicTemplateEngine } from '../../modules/templates/index.js';
-import { DateResolver } from '../../shared/index.js';
+import { DynamicTemplateEngine, TemplateManager } from '../../modules/templates/index.js';
+import { DateResolver, getLocalDate } from '../../shared/index.js';
 import { addVersionMetadata, getToolsForMode } from '../tool-registry.js';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
@@ -98,14 +99,14 @@ const getDailyNoteHandler: ToolHandler = async (
     const resolvedDateStr = dateResolver.resolveDailyNoteDate(dateInput);
     logger.info(`[get_daily_note] DateResolver output: ${resolvedDateStr}`);
 
-    const date = VaultUtils.getLocalDate(resolvedDateStr);
+    const date = getLocalDate(resolvedDateStr);
     logger.info(`[get_daily_note] Final Date object: ${date.toISOString()} (${format(date, 'yyyy-MM-dd')})`);
 
     // Check parameters with defaults
     const createIfMissing = args.createIfMissing !== false;  // default true
     const confirmCreation = args.confirmCreation === true;   // default false
 
-    let note = await VaultUtils.getDailyNote(date);
+    let note = await getDailyNote(date, getLocalDate);
 
     if (!note) {
       if (!createIfMissing) {
@@ -126,7 +127,7 @@ const getDailyNoteHandler: ToolHandler = async (
         }, context.registryConfig) as CallToolResult;
       }
 
-      note = await VaultUtils.createDailyNote(date);
+      note = await createDailyNote(date, getLocalDate, () => new TemplateManager(LIFEOS_CONFIG.vaultPath));
     }
 
     const obsidianLink = ObsidianLinks.createClickableLink(note.path, `Daily Note: ${format(date, 'MMMM dd, yyyy')}`);
@@ -175,7 +176,7 @@ const diagnoseVaultHandler: ToolHandler = async (
   const checkYaml = (args.checkYaml as boolean) !== false; // Default true
   const maxFiles = (args.maxFiles as number) || 100;
 
-  const files = await VaultUtils.findNotes('**/*.md');
+  const files = await findNotes('**/*.md');
   const filesToCheck = files.slice(0, maxFiles);
 
   let totalFiles = filesToCheck.length;
@@ -185,7 +186,7 @@ const diagnoseVaultHandler: ToolHandler = async (
 
   for (const file of filesToCheck) {
     try {
-      const note = VaultUtils.readNote(file);
+      const note = readNote(file);
       successfulFiles++;
 
       // Check for common YAML issues
@@ -279,7 +280,7 @@ const moveItemsHandler: ToolHandler = async (
   };
 
   for (const item of itemsToMove) {
-    const result = VaultUtils.moveItem(item.path, destination, options);
+    const result = moveItem(item.path, destination, options);
 
     if (result.success) {
       const relativePath = result.newPath.replace(LIFEOS_CONFIG.vaultPath + '/', '');

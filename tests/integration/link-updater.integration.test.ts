@@ -16,7 +16,8 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import { updateVaultLinks } from '../../src/modules/links/index.js';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { updateNoteLinks } from '../../src/modules/links/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Link Updater Integration', () => {
   let vaultPath: string;
@@ -33,8 +34,8 @@ describe('Link Updater Integration', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singleton to use new config
-    VaultUtils.resetSingletons();
+    // Reset singletons to use new config
+    resetTestSingletons();
   });
 
   afterEach(async () => {
@@ -64,7 +65,7 @@ See [[OldNote]] for details about the project.
 
 More content with [[OldNote|custom alias]].`;
 
-      const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
+      const result = updateNoteLinks(content, 'OldNote', 'NewNote');
 
       // Verify frontmatter preserved
       expect(result).toMatch(/---[\s\S]*?title: Test Note[\s\S]*?---/);
@@ -81,7 +82,7 @@ More content with [[OldNote|custom alias]].`;
 
 Just a reference to [[OldNote]] here.`;
 
-      const result = VaultUtils.updateNoteLinks(content, 'OldNote', 'NewNote');
+      const result = updateNoteLinks(content, 'OldNote', 'NewNote');
 
       expect(result).toContain('[[NewNote]]');
       expect(result).toContain('# Simple Note');

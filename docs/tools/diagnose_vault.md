@@ -453,7 +453,7 @@ rating: 5
 
 ### Scanner Architecture
 
-- **File Discovery**: Uses `VaultUtils.findNotes('**/*.md')` for comprehensive file finding
+- **File Discovery**: Uses `findNotes('**/*.md')` from files module for comprehensive file finding
 - **Sequential Processing**: Processes files one at a time to avoid memory issues
 - **Error Isolation**: Continues scanning even when individual files fail
 - **Result Aggregation**: Collects all errors and statistics for final report
@@ -468,7 +468,7 @@ rating: 5
 ### Handler Location
 
 - **Main Implementation**: `src/index.ts` (lines 1699-1763)
-- **File Operations**: `VaultUtils.readNote()` and `VaultUtils.findNotes()`
+- **File Operations**: `readNote()` and `findNotes()` from files module
 - **YAML Processing**: gray-matter library with custom parseWithFallback()
 - **Error Handling**: Graceful degradation with detailed error capture
 

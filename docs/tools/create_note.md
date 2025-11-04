@@ -321,7 +321,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ### Handler Location
 
 - **Primary Handler**: Direct implementation in `src/index.ts` (case 'create_note')
-- **File Creation**: `VaultUtils.createNote()` method
+- **File Creation**: `createNote()` from files module
 - **Template Processing**: `DynamicTemplateEngine.createNoteFromTemplate()`
 
 ### Template Engine Integration
@@ -338,7 +338,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 
 ### File Operations
 
-- **Creation**: `VaultUtils.createNote()` handles file system operations
+- **Creation**: `createNote()` from files module handles file system operations
 - **Sanitization**: Automatic filename sanitization for Obsidian compatibility
 - **Link Generation**: `ObsidianLinks.createClickableLink()` for vault integration
 

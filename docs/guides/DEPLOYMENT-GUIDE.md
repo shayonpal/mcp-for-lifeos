@@ -551,8 +551,8 @@ lsof -p $(pgrep -f "node dist/index.js")
 
 # Test response times
 time node -e "
-const { VaultUtils } = require('./dist/vault-utils.js');
-console.log('Search test:', VaultUtils.searchNotes({}).length);
+const { searchNotes } = require('./dist/modules/search/search-engine.js');
+console.log('Search test:', searchNotes({}).length);
 "
 ```
 

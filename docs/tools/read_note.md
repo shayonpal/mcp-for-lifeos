@@ -187,8 +187,8 @@ Error: Note not found: /path/to/missing/note.md
 
 ### Core Functions Used
 
-- **Reader**: `VaultUtils.readNote()` - Handles file reading and YAML parsing
-- **Tag Handler**: `VaultUtils.normalizeTagsToArray()` - Converts tags to consistent format
+- **Reader**: `readNote()` from files module - Handles file reading and YAML parsing
+- **Tag Handler**: `normalizeTagsToArray()` from shared module - Converts tags to consistent format
 - **Link Generator**: `ObsidianLinks.createClickableLink()` - Creates working Obsidian URLs
 - **Path Resolver**: Built-in normalization for spaces and relative paths
 

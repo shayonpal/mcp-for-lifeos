@@ -313,7 +313,7 @@ The tool provides structured error responses with specific error codes and actio
 ### Architecture
 
 - **Handler Location**: `src/server/handlers/note-handlers.ts`
-- **Core Logic**: Uses enhanced `VaultUtils.moveItem()` with optional `newFilename` parameter
+- **Core Logic**: Uses enhanced `moveItem()` from files module with optional `newFilename` parameter
 - **Zero Duplication**: Leverages existing move infrastructure (adds only 1 line to moveItem)
 - **Registry Integration**: Registered in `src/server/tool-registry.ts` as 13th always-available tool
 - **Contracts**: TypeScript contracts in `dev/contracts/MCP-105-contracts.ts`
@@ -326,9 +326,9 @@ The tool provides structured error responses with specific error codes and actio
 4. **Relative Path Resolution**: Resolves relative paths against vault root
 5. **Cross-Platform Compatibility**: Handles Windows, macOS, Linux path formats
 
-### Integration with VaultUtils
+### Integration with Files Module
 
-The rename operation uses the enhanced `VaultUtils.moveItem()` method:
+The rename operation uses the enhanced `moveItem()` method from the files module:
 
 ```typescript
 const itemName = options.newFilename || basename(normalizedSource);

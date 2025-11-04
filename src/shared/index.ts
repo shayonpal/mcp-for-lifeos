@@ -36,3 +36,11 @@ export {
 
 // Date utilities
 export { DateResolver } from './date-resolver.js';
+
+// Metadata utilities
+export {
+  getLocalDate,
+  normalizeTagsToArray,
+  matchesContentType,
+  hasAnyTag
+} from './metadata-utils.js';

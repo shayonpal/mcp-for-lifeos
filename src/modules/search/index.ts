@@ -27,3 +27,11 @@ export {
   createDefaultTruncator,
   createTruncator
 } from './response-truncator.js';
+
+// Search Utilities - High-level search functions
+export {
+  findNoteByTitle,
+  findNotes,
+  getAllNotes,
+  searchNotes
+} from './search-utilities.js';

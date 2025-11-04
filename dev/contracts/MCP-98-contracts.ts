@@ -234,7 +234,7 @@ export interface ListYamlPropertyValuesInput {
  * Dependencies for note operation handlers
  */
 export interface NoteHandlerDependencies {
-  VaultUtils: typeof import('../../src/modules/files/index.js').VaultUtils;
+  // VaultUtils phased out - using direct imports from modules/files
   ObsidianLinks: typeof import('../../src/modules/links/index.js').ObsidianLinks;
   normalizePath: typeof import('../../src/shared/index.js').normalizePath;
   addVersionMetadata: (response: any, config: any) => any;
@@ -245,7 +245,7 @@ export interface NoteHandlerDependencies {
  * Dependencies for metadata operation handlers
  */
 export interface MetadataHandlerDependencies {
-  VaultUtils: typeof import('../../src/modules/files/index.js').VaultUtils;
+  // VaultUtils phased out - using direct imports from modules/files
   YamlRulesManager: typeof import('../../src/modules/yaml/index.js').YamlRulesManager;
   addVersionMetadata: (response: any, config: any) => any;
 }
@@ -254,7 +254,7 @@ export interface MetadataHandlerDependencies {
  * Dependencies for utility operation handlers
  */
 export interface UtilityHandlerDependencies {
-  VaultUtils: typeof import('../../src/modules/files/index.js').VaultUtils;
+  // VaultUtils phased out - using direct imports from modules/files
   ObsidianLinks: typeof import('../../src/modules/links/index.js').ObsidianLinks;
   DynamicTemplateEngine: typeof import('../../src/modules/templates/index.js').DynamicTemplateEngine;
   DateResolver: typeof import('../../src/shared/index.js').DateResolver;

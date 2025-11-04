@@ -13,7 +13,7 @@ Following ADR-001's OpenWebUI integration and subsequent LinuxServer.io Obsidian
 
 - Technical debt score: 7.8/10 (high debt)
 - Test suite failure rate: 33% (3 of 9 suites failing)
-- Monolithic files: index.ts (✅ 503 lines - decomposed, target achieved), vault-utils.ts (⚠️ 1,687 lines - pending)
+- Monolithic files: index.ts (✅ 503 lines - decomposed, target achieved), vault-utils.ts (✅ eliminated - decomposed into 7 modules via MCP-91)
 - Analytics data loss in concurrent instances
 - 37 tools with inconsistent documentation
 
@@ -74,7 +74,7 @@ Following ADR-001's OpenWebUI integration and subsequent LinuxServer.io Obsidian
 #### Phase 2: Architecture Decomposition (P1)
 
 - Server decomposition: index.ts from 2,224 to 503 lines (✅ completed, 77% reduction, within acceptable variance of optional ≤500 target)
-- vault-utils.ts god class elimination
+- vault-utils.ts god class elimination (✅ completed MCP-91, decomposed into 7 focused modules)
 - Tool consolidation validation and legacy retirement
 
 #### Phase 3: Enhancement (P2-P3)

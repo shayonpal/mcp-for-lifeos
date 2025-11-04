@@ -12,6 +12,7 @@ import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import type { ToolHandlerContext } from '../../dev/contracts/MCP-8-contracts.js';
 import type { RenameNoteOutput, RenameNoteError } from '../../dev/contracts/MCP-105-contracts.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Rename Note Integration (Handler)', () => {
   let vaultPath: string;
@@ -34,8 +35,8 @@ describe('Rename Note Integration (Handler)', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+    // Reset singletons to use new config
+    resetTestSingletons();
 
     // Import the handler
     const { registerNoteHandlers } = await import('../../src/server/handlers/note-handlers.js');

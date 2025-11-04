@@ -25,8 +25,9 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { createNote } from '../../src/modules/files/index.js';
 import { LIFEOS_CONFIG } from '../../src/shared/index.js';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
 describe('Claude Desktop Integration (Direct)', () => {
   let vaultPath: string;
@@ -63,8 +64,8 @@ describe('Claude Desktop Integration (Direct)', () => {
     LIFEOS_CONFIG.attachmentsPath = join(vaultPath, 'Attachments');
     LIFEOS_CONFIG.yamlRulesPath = join(vaultPath, 'yaml-rules.md');
 
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+    // Reset singletons to use new config
+    resetTestSingletons();
 
     // Runtime assertion: Verify temp vault configuration (MCP-61 safety check)
     expect(LIFEOS_CONFIG.vaultPath).toBe(vaultPath);
@@ -89,7 +90,7 @@ describe('Claude Desktop Integration (Direct)', () => {
       const testNotePaths: string[] = [];
 
       for (let i = 0; i < 3; i++) {
-        const note = VaultUtils.createNote(
+        const note = createNote(
           `Integration Test Note ${i}`,
           { title: `Integration Test Note ${i}`, tags: ['test', 'integration'] },
           'This note should ONLY exist in temp vault',
@@ -131,7 +132,7 @@ describe('Claude Desktop Integration (Direct)', () => {
   describe('Vault Isolation Verification', () => {
     it('should read/write/search only in temp vault', async () => {
       // Create a note
-      const note = VaultUtils.createNote(
+      const note = createNote(
         'Vault Isolation Test',
         { title: 'Vault Isolation Test', tags: ['test'] },
         'Content to verify isolation',
@@ -179,7 +180,7 @@ describe('Claude Desktop Integration (Direct)', () => {
   describe('Cleanup Verification', () => {
     it('should clean up temp vault in afterEach', async () => {
       // Create a note
-      const note = VaultUtils.createNote(
+      const note = createNote(
         'Cleanup Test',
         { title: 'Cleanup Test' },
         'Will be cleaned up',

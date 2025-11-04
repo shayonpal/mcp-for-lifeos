@@ -1,0 +1,416 @@
+{
+  "summary": {
+    "total_failures": 337,
+    "failed_suites": 28,
+    "passed_tests": 468,
+    "root_cause": "vault-utils.ts deleted but test infrastructure still references it",
+    "impact": "Cascading failures from 2 helper files affect all test suites",
+    "categories": {
+      "helper_import_failures": {
+        "count": "~337 (all tests)",
+        "description": "test-utils.ts and vault-setup.ts import deleted vault-utils.js",
+        "severity": "CRITICAL",
+        "impact": "Every test fails at setup/teardown phase"
+      },
+      "direct_method_calls": {
+        "count": "~60+ occurrences",
+        "description": "Tests call VaultUtils.method() directly",
+        "severity": "HIGH",
+        "files_affected": 10
+      },
+      "spy_failures": {
+        "count": "2 occurrences",
+        "description": "jest.spyOn(VaultUtils, 'method')",
+        "severity": "MEDIUM",
+        "files_affected": 2
+      }
+    }
+  },
+
+  "root_cause_analysis": {
+    "primary_blocker": {
+      "file": "tests/helpers/test-utils.ts",
+      "line": 22,
+      "issue": "require('../../src/modules/files/vault-utils.js')",
+      "error": "Configuration error: Could not locate module vault-utils.js",
+      "cascade": "Every test calling resetTestSingletons() fails at module load"
+    },
+    "secondary_blocker": {
+      "file": "tests/helpers/vault-setup.ts",
+      "lines": [18, 79, 89],
+      "issue": "import { VaultUtils } + VaultUtils.resetSingletons()",
+      "error": "TypeError: Cannot read properties of undefined (reading 'resetSingletons')",
+      "cascade": "All integration tests using createTestVault() fail at setup"
+    },
+    "missing_functionality": {
+      "deleted_class": "VaultUtils",
+      "deleted_method": "resetSingletons()",
+      "replacement": "None exists",
+      "singletons_affected": [
+        "TemplateManager (no static getInstance)",
+        "ObsidianSettings (no static getInstance)",
+        "DateResolver (has getInstance)",
+        "AnalyticsCollector (has getInstance)"
+      ]
+    }
+  },
+
+  "affected_files": {
+    "critical_helpers": [
+      {
+        "file": "tests/helpers/test-utils.ts",
+        "issue": "Imports deleted vault-utils.js",
+        "impact": "Blocks all 18 test files using resetTestSingletons()",
+        "priority": "URGENT"
+      },
+      {
+        "file": "tests/helpers/vault-setup.ts",
+        "issue": "Imports VaultUtils + calls resetSingletons()",
+        "impact": "Blocks all integration tests using createTestVault()",
+        "priority": "URGENT"
+      }
+    ],
+
+    "files_with_direct_calls": {
+      "insertContent": [
+        {
+          "file": "tests/unit/insert-content-sections.test.ts",
+          "calls": 8,
+          "pattern": "VaultUtils.insertContent()",
+          "new_import": "import { insertContent } from '../../src/modules/files/index.js'",
+          "estimate_min": 7
+        },
+        {
+          "file": "tests/unit/task-formatting.test.ts",
+          "calls": 7,
+          "pattern": "VaultUtils.insertContent()",
+          "new_import": "import { insertContent } from '../../src/modules/files/index.js'",
+          "estimate_min": 7
+        },
+        {
+          "file": "tests/unit/insert-content.test.ts",
+          "calls": 15,
+          "pattern": "VaultUtils.insertContent()",
+          "new_import": "import { insertContent } from '../../src/modules/files/index.js'",
+          "estimate_min": 10
+        },
+        {
+          "file": "tests/integration/daily-note-task-workflow.test.ts",
+          "calls": 20,
+          "pattern": "VaultUtils.insertContent()",
+          "new_import": "import { insertContent } from '../../src/modules/files/index.js'",
+          "estimate_min": 10
+        }
+      ],
+      "createDailyNote": [
+        {
+          "file": "tests/unit/task-formatting.test.ts",
+          "calls": 1,
+          "pattern": "VaultUtils.createDailyNote()",
+          "new_import": "import { createDailyNote } from '../../src/modules/files/index.js'",
+          "estimate_min": 5
+        },
+        {
+          "file": "tests/integration/daily-note-task-workflow.test.ts",
+          "calls": 3,
+          "pattern": "VaultUtils.createDailyNote()",
+          "new_import": "import { createDailyNote } from '../../src/modules/files/index.js'",
+          "estimate_min": 7
+        },
+        {
+          "file": "tests/integration/daily-note-simple.test.ts",
+          "calls": 2,
+          "pattern": "VaultUtils.createDailyNote()",
+          "new_import": "import { createDailyNote } from '../../src/modules/files/index.js'",
+          "estimate_min": 5
+        }
+      ],
+      "createNote": [
+        {
+          "file": "tests/integration/claude-desktop-integration.test.ts",
+          "calls": 3,
+          "pattern": "VaultUtils.createNote()",
+          "new_import": "import { createNote } from '../../src/modules/files/index.js'",
+          "estimate_min": 10
+        }
+      ],
+      "moveItem": [
+        {
+          "file": "tests/unit/rename-note.test.ts",
+          "calls": 10,
+          "pattern": "VaultUtils.moveItem()",
+          "new_import": "import { moveItem } from '../../src/modules/files/index.js'",
+          "estimate_min": 10
+        }
+      ],
+      "link_utilities": [
+        {
+          "file": "tests/unit/link-updater.test.ts",
+          "calls": 27,
+          "patterns": [
+            "VaultUtils.updateNoteLinks()",
+            "VaultUtils.buildNewLinkText()"
+          ],
+          "new_import": "import { updateNoteLinks, buildNewLinkText } from '../../src/modules/links/index.js'",
+          "estimate_min": 15
+        },
+        {
+          "file": "tests/integration/link-updater.integration.test.ts",
+          "calls": 2,
+          "pattern": "VaultUtils.updateNoteLinks()",
+          "new_import": "import { updateNoteLinks } from '../../src/modules/links/index.js'",
+          "estimate_min": 5
+        }
+      ]
+    },
+
+    "files_with_spies": [
+      {
+        "file": "tests/unit/server/request-handler.test.ts",
+        "line": 310,
+        "pattern": "jest.spyOn(VaultUtils, 'createNote')",
+        "solution": "import * as NoteCrud; jest.spyOn(NoteCrud, 'createNote')",
+        "estimate_min": 15
+      },
+      {
+        "file": "tests/integration/request-handler-empty-registry.test.ts",
+        "line": 87,
+        "pattern": "jest.spyOn(VaultUtils, 'createNote')",
+        "solution": "import * as NoteCrud; jest.spyOn(NoteCrud, 'createNote')",
+        "estimate_min": 10
+      }
+    ]
+  },
+
+  "fix_patterns": {
+    "helper_files": {
+      "test_utils_fix": {
+        "file": "tests/helpers/test-utils.ts",
+        "old_code": "const { VaultUtils } = require('../../src/modules/files/vault-utils.js');\nVaultUtils.resetSingletons();",
+        "new_code": "// TODO MCP-91: Singleton reset logic needed\n// Currently no-op until singleton managers implement reset methods",
+        "rationale": "No singleton reset methods exist yet; no-op is safe short-term"
+      },
+      "vault_setup_fix": {
+        "file": "tests/helpers/vault-setup.ts",
+        "old_import": "import { VaultUtils } from '../../src/modules/files/index.js';",
+        "new_import": "import { resetTestSingletons } from './test-utils.js';",
+        "old_calls": "VaultUtils.resetSingletons();",
+        "new_calls": "resetTestSingletons();",
+        "locations": [79, 89]
+      }
+    },
+
+    "method_replacement": {
+      "pattern": "VaultUtils.methodName(...args)",
+      "replacement": "methodName(...args)",
+      "import_change": {
+        "old": "import { VaultUtils } from '../../src/modules/files/index.js'",
+        "new_files_module": "import { createNote, readNote, ... } from '../../src/modules/files/index.js'",
+        "new_links_module": "import { updateNoteLinks, buildNewLinkText } from '../../src/modules/links/index.js'"
+      },
+      "steps": [
+        "1. Remove VaultUtils import",
+        "2. Add specific function imports",
+        "3. Replace VaultUtils.method() with method()",
+        "4. Run tests to verify"
+      ]
+    },
+
+    "spy_replacement": {
+      "option_a_namespace_import": {
+        "old": "jest.spyOn(VaultUtils, 'createNote')",
+        "new": "import * as NoteCrud from '../../../src/modules/files/note-crud.js';\njest.spyOn(NoteCrud, 'createNote')",
+        "pros": "Minimal changes, works with existing test structure",
+        "cons": "Requires namespace import"
+      },
+      "option_b_module_mock": {
+        "old": "jest.spyOn(VaultUtils, 'createNote')",
+        "new": "jest.mock('../../../src/modules/files/note-crud.js', () => ({\n  createNote: jest.fn()\n}));",
+        "pros": "Full control over mock behavior",
+        "cons": "Requires more refactoring"
+      }
+    }
+  },
+
+  "execution_plan": {
+    "phase_1_critical": {
+      "priority": "URGENT",
+      "goal": "Unblock all tests by fixing helper files",
+      "time_estimate_min": 30,
+      "tasks": [
+        {
+          "task": "Fix tests/helpers/test-utils.ts",
+          "action": "Replace require() and method call with no-op",
+          "estimate_min": 5,
+          "validation": "File loads without errors"
+        },
+        {
+          "task": "Fix tests/helpers/vault-setup.ts",
+          "action": "Replace VaultUtils import and calls with resetTestSingletons()",
+          "estimate_min": 5,
+          "validation": "createTestVault() works"
+        },
+        {
+          "task": "Test single unit test",
+          "command": "npm test -- tests/unit/link-updater.test.ts",
+          "estimate_min": 5,
+          "expected": "Tests load and run (may still fail logic)"
+        },
+        {
+          "task": "Test single integration test",
+          "command": "npm test -- tests/integration/mcp-server-factory.test.ts",
+          "estimate_min": 5,
+          "expected": "Tests load and run (may still fail logic)"
+        }
+      ],
+      "success_criteria": [
+        "No module load errors",
+        "Test suites execute (even if failing)",
+        "Setup/teardown phases complete"
+      ]
+    },
+
+    "phase_2_method_calls": {
+      "priority": "HIGH",
+      "goal": "Replace all VaultUtils method calls with direct function imports",
+      "time_estimate_min": 90,
+      "batches": [
+        {
+          "batch": "insertContent files",
+          "files": [
+            "tests/unit/insert-content-sections.test.ts",
+            "tests/unit/task-formatting.test.ts",
+            "tests/unit/insert-content.test.ts",
+            "tests/integration/daily-note-task-workflow.test.ts"
+          ],
+          "estimate_min": 30,
+          "validation": "npm test -- tests/unit/insert-content.test.ts"
+        },
+        {
+          "batch": "link utility files",
+          "files": [
+            "tests/unit/link-updater.test.ts",
+            "tests/integration/link-updater.integration.test.ts"
+          ],
+          "estimate_min": 20,
+          "validation": "npm test -- tests/unit/link-updater.test.ts"
+        },
+        {
+          "batch": "createDailyNote files",
+          "files": [
+            "tests/unit/task-formatting.test.ts",
+            "tests/integration/daily-note-task-workflow.test.ts",
+            "tests/integration/daily-note-simple.test.ts"
+          ],
+          "estimate_min": 20,
+          "validation": "npm test -- tests/integration/daily-note-simple.test.ts"
+        },
+        {
+          "batch": "createNote + moveItem files",
+          "files": [
+            "tests/integration/claude-desktop-integration.test.ts",
+            "tests/unit/rename-note.test.ts"
+          ],
+          "estimate_min": 20,
+          "validation": "npm test -- tests/unit/rename-note.test.ts"
+        }
+      ],
+      "success_criteria": [
+        "All VaultUtils.method() replaced",
+        "Import statements updated",
+        ">80% unit tests pass",
+        ">70% integration tests pass"
+      ]
+    },
+
+    "phase_3_spy_patterns": {
+      "priority": "MEDIUM",
+      "goal": "Fix jest.spyOn() patterns for 2 files",
+      "time_estimate_min": 30,
+      "tasks": [
+        {
+          "file": "tests/unit/server/request-handler.test.ts",
+          "action": "Replace VaultUtils spy with NoteCrud namespace spy",
+          "estimate_min": 15,
+          "validation": "Test passes createNote spy assertions"
+        },
+        {
+          "file": "tests/integration/request-handler-empty-registry.test.ts",
+          "action": "Replace VaultUtils spy with NoteCrud namespace spy",
+          "estimate_min": 10,
+          "validation": "Test passes createNote spy assertions"
+        },
+        {
+          "task": "Full test suite",
+          "command": "npm test",
+          "estimate_min": 5,
+          "expected": "0 failures"
+        }
+      ],
+      "success_criteria": [
+        "All spies work correctly",
+        "request-handler tests pass",
+        "Full test suite: 0 failures"
+      ]
+    }
+  },
+
+  "time_estimate": {
+    "phase_1_critical": "30 minutes",
+    "phase_2_method_calls": "90 minutes",
+    "phase_3_spy_patterns": "30 minutes",
+    "testing_validation": "60 minutes",
+    "total_hours": "3.5 hours",
+    "conservative_total": "4 hours"
+  },
+
+  "validation_strategy": {
+    "after_phase_1": [
+      "npm test -- tests/unit/link-updater.test.ts",
+      "npm test -- tests/integration/mcp-server-factory.test.ts"
+    ],
+    "after_each_batch_phase_2": [
+      "Run one test file from batch",
+      "Check for new error patterns",
+      "Proceed if no regressions"
+    ],
+    "after_phase_3": [
+      "npm test (full suite)",
+      "Verify 0 failures",
+      "Check test count matches expected (~808 total)"
+    ]
+  },
+
+  "risk_mitigation": {
+    "singleton_pollution": {
+      "risk": "No-op resetTestSingletons() may cause test pollution",
+      "severity": "LOW",
+      "mitigation": "Acceptable short-term; tests should still pass",
+      "followup": "MCP-92: Implement proper singleton reset methods"
+    },
+    "function_signature_changes": {
+      "risk": "Function signatures may differ from VaultUtils methods",
+      "severity": "MEDIUM",
+      "mitigation": "Test one file first, verify signatures, adjust if needed"
+    },
+    "spy_pattern_failures": {
+      "risk": "Namespace spies may not work as expected",
+      "severity": "LOW",
+      "mitigation": "Fall back to jest.mock() if namespace import fails"
+    }
+  },
+
+  "rollback_plan": {
+    "if_phase_1_fails": "git checkout tests/helpers/*.ts",
+    "if_phase_2_fails": "git checkout tests/unit/ tests/integration/",
+    "nuclear_option": "git checkout master -- src/modules/files/vault-utils.ts (restore deleted file)"
+  },
+
+  "next_steps": [
+    "START: Phase 1, fix test-utils.ts and vault-setup.ts",
+    "VALIDATE: Run single unit and integration test",
+    "CONTINUE: Phase 2 in batches, validate after each",
+    "FINISH: Phase 3 spy fixes, full test run",
+    "SUCCESS: 0 test failures, commit changes"
+  ]
+}

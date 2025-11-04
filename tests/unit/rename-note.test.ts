@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { VaultUtils } from '../../src/modules/files/index.js';
+import { moveItem } from '../../src/modules/files/index.js';
 import { LIFEOS_CONFIG } from '../../src/shared/index.js';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import * as fs from 'fs/promises';
+import { resetTestSingletons } from '../helpers/test-utils.js';
 
-describe('VaultUtils.moveItem with newFilename', () => {
+describe('moveItem with newFilename', () => {
   let vaultPath: string;
   let testDir: string;
   let originalConfig: any;
@@ -25,8 +26,8 @@ describe('VaultUtils.moveItem with newFilename', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singletons to use new config
-    VaultUtils.resetSingletons();
+    // Reset singletons to use new config
+    resetTestSingletons();
 
     // Create test directory
     await fs.mkdir(testDir, { recursive: true });
@@ -51,7 +52,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       writeFileSync(originalPath, '---\ntitle: Original Note\n---\n\nContent here.');
 
       // Rename using newFilename option
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         originalPath,
         testDir,
         { newFilename: 'renamed.md' }
@@ -72,7 +73,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       writeFileSync(originalPath, 'Test content');
 
       // Move without newFilename (existing behavior)
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         originalPath,
         destFolder
       );
@@ -90,7 +91,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       writeFileSync(originalPath, 'Content');
 
       // Move to different folder AND rename
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         originalPath,
         destFolder,
         { newFilename: 'new-name.md' }
@@ -107,7 +108,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
     it('should return error if source file does not exist', () => {
       const nonExistentPath = join(testDir, 'does-not-exist.md');
 
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         nonExistentPath,
         testDir,
         { newFilename: 'renamed.md' }
@@ -125,7 +126,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       writeFileSync(existingPath, 'Existing content');
 
       // Try to rename to existing filename
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         testDir,
         { newFilename: 'existing.md' }
@@ -143,7 +144,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       writeFileSync(existingPath, 'Existing content');
 
       // Rename with overwrite
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         testDir,
         { newFilename: 'existing.md', overwrite: true }
@@ -162,7 +163,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       const nonExistentFolder = join(vaultPath, 'does-not-exist');
       writeFileSync(sourcePath, 'Content');
 
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         nonExistentFolder,
         { newFilename: 'renamed.md' }
@@ -177,7 +178,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       const newFolder = join(vaultPath, 'auto-created');
       writeFileSync(sourcePath, 'Content');
 
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         newFolder,
         { newFilename: 'renamed.md', createDestination: true }
@@ -194,7 +195,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       const sourcePath = join(testDir, 'file with spaces.md');
       writeFileSync(sourcePath, 'Content');
 
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         testDir,
         { newFilename: 'renamed file.md' }
@@ -209,7 +210,7 @@ describe('VaultUtils.moveItem with newFilename', () => {
       const originalContent = '---\ntitle: Test\ntags: [test, rename]\n---\n\n# Content\n\nSome text.';
       writeFileSync(sourcePath, originalContent);
 
-      const result = VaultUtils.moveItem(
+      const result = moveItem(
         sourcePath,
         testDir,
         { newFilename: 'renamed.md' }

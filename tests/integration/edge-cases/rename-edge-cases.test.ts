@@ -18,6 +18,7 @@ import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { RenameNoteOutput } from '../../../dev/contracts/MCP-105-contracts.js';
+import { resetTestSingletons } from '../../helpers/test-utils.js';
 
 describe('Edge Case Tests: rename_note Boundary Conditions', () => {
   let vaultPath: string;
@@ -35,8 +36,8 @@ describe('Edge Case Tests: rename_note Boundary Conditions', () => {
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
-    // Reset VaultUtils singletons
-    VaultUtils.resetSingletons();
+    // Reset singletons
+    resetTestSingletons();
 
     // Import the handler
     const { registerNoteHandlers } = await import('../../../src/server/handlers/note-handlers.js');
