@@ -460,10 +460,23 @@ Proceed with recommended phase? (y/n)
 
 **Document results in Linear issue** (including codex insights if consulted).
 
-**If Issues Found**: List specific fixes with file:line references
+Use `linear-expert` to add comment:
 
-**If Review Passes**: Execute recommended next step
+```
+Code review complete
 
-**Critical Issues**: TypeScript failures, MCP violations, security issues, breaking changes
+[IF ISSUES:]
+Issues found:
+- [file:line] - [issue]
+
+Status: needs fixes
+
+[IF NO ISSUES:]
+No issues found
+TypeScript: clean
+MCP compliance: verified
+
+Ready for [next phase]
+```
 
 Use Serena analysis during review to understand code, but document results in Linear comments, not Serena memory.

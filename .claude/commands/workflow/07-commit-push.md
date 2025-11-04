@@ -439,34 +439,19 @@ fi
 Team ID: d1aae15e-d5b9-418d-a951-adcf8c7e39a8  
 Issue ID: [from user input]
 
-If WORKFLOW_MODE = "feature-pr":  
-  Status: "In Review"  
+If WORKFLOW_MODE = "feature-pr":
+  Status: "In Review"
   Comment:
-    ## 🔀 Pull Request Created
-    **PR**: [PR_URL]  
-    **Number**: #[PR_NUMBER]  
-    **Branch**: `[branch-name]` → master  
-    **Commit**: [COMMIT_SHA]
+    PR: [PR_URL] (#[PR_NUMBER])
+    Branch: `[branch-name]` → master
+    Commit: [COMMIT_SHA]
 
-    ### Review Required
-    - Code review
-    - Tests passing
-    - Documentation updated
-
-    ### Strategic Context
-    **CURRENT-FOCUS Impact**: [needs update / aligned / N/A]
-
-If WORKFLOW_MODE = "direct-master":  
-  Status: "Done"  
+If WORKFLOW_MODE = "direct-master":
+  Status: "Done"
   Comment:
-    ## ✅ Deployed to Master
-    **Commit**: [COMMIT_SHA]  
-    **Branch**: master  
-    **Status**: Deployed  
-    ⚠️ Direct commit - code review skipped
-
-    ### Strategic Context
-    **CURRENT-FOCUS Impact**: [needs update / aligned / N/A]
+    Deployed to master
+    Commit: [COMMIT_SHA]
+    (Code review skipped)
 ```
 
 ### Step 8: Deployment Complete
