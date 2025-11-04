@@ -228,8 +228,8 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockResolvedValue('Content with [[OldNote]]');
-      writeFileSpy.mockResolvedValue(undefined);
+      readFileSpy.mockReturnValue('Content with [[OldNote]]');
+      writeFileSpy.mockImplementation(() => {});
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 
@@ -253,10 +253,10 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockResolvedValueOnce('Content')
-        .mockResolvedValueOnce('Content')
-        .mockRejectedValueOnce(new Error('Permission denied'));
-      writeFileSpy.mockResolvedValue(undefined);
+      readFileSpy.mockReturnValueOnce('Content')
+        .mockReturnValueOnce('Content')
+        .mockImplementationOnce(() => { throw new Error('Permission denied'); });
+      writeFileSpy.mockImplementation(() => {});
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 
@@ -278,7 +278,7 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockRejectedValue(new Error('File not found'));
+      readFileSpy.mockImplementation(() => { throw new Error('File not found'); });
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 
