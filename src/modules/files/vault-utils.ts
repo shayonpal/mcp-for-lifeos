@@ -17,36 +17,37 @@ import {
   YAMLFrontmatter,
   SearchOptions,
   NoteTemplate,
-} from "./types.js";
-import { stripMdExtension } from "./path-utils.js";
-import { LIFEOS_CONFIG, YAML_RULES } from "./config.js";
-import { TemplateManager } from "./modules/templates/index.js";
-import { ObsidianSettings } from "./obsidian-settings.js";
-import { DateResolver } from "./date-resolver.js";
-import { TemplateContext } from "./modules/templates/index.js";
-import { logger } from "./logger.js";
-import { normalizePath } from "./path-utils.js";
-import { WIKILINK_PATTERN } from "./regex-utils.js";
+} from "../../types.js";
+import { stripMdExtension } from "../../path-utils.js";
+import { LIFEOS_CONFIG, YAML_RULES } from "../../config.js";
+import { TemplateManager } from "../templates/index.js";
+import { ObsidianSettings } from "../../obsidian-settings.js";
+import { DateResolver } from "../../date-resolver.js";
+import { TemplateContext } from "../templates/index.js";
+import { logger } from "../../logger.js";
+import { normalizePath } from "../../path-utils.js";
+import { WIKILINK_PATTERN } from "../../regex-utils.js";
 import {
   readFileWithRetry,
   writeFileWithRetry,
   AtomicWriteOptions,
-} from "./modules/files/file-io.js";
+} from "./file-io.js";
 import {
   readNote as readNoteImpl,
   writeNote as writeNoteImpl,
   createNote as createNoteImpl,
   updateNote as updateNoteImpl,
-} from "./modules/files/note-crud.js";
+} from "./note-crud.js";
 import {
   getDailyNote as getDailyNoteImpl,
   createDailyNote as createDailyNoteImpl,
-} from "./modules/files/daily-note-service.js";
-import { insertContent as insertContentImpl } from "./modules/files/content-insertion.js";
+} from "./daily-note-service.js";
+import { insertContent as insertContentImpl } from "./content-insertion.js";
 import {
   getYamlPropertyValues as getYamlPropertyValuesImpl,
   getAllYamlProperties as getAllYamlPropertiesImpl,
-} from "./modules/files/yaml-operations.js";
+} from "./yaml-operations.js";
+import { moveItem as moveItemImpl } from "./folder-operations.js";
 
 export class VaultUtils {
   private static templateManager: TemplateManager | null = null;
@@ -139,7 +140,7 @@ export class VaultUtils {
    */
   static async findNoteByTitle(title: string): Promise<string> {
     // Import SearchEngine dynamically to avoid circular dependency
-    const { SearchEngine } = await import('./modules/search/index.js');
+    const { SearchEngine } = await import('../search/index.js');
 
     const searchResults = await SearchEngine.quickSearch(title, 1);
 
@@ -432,127 +433,7 @@ export class VaultUtils {
       newFilename?: string;
     } = {},
   ): { success: boolean; newPath: string; itemType: 'note' | 'folder'; error?: string } {
-    // Normalize paths using shared utility (MCP-64)
-    // Replaces previous string prefix check with cross-platform path.isAbsolute()
-    const normalizedSource = normalizePath(sourcePath, LIFEOS_CONFIG.vaultPath);
-    const normalizedDest = normalizePath(destinationFolder, LIFEOS_CONFIG.vaultPath);
-
-    // Validate source exists
-    if (!existsSync(normalizedSource)) {
-      return { success: false, newPath: "", itemType: 'note', error: "Source item not found" };
-    }
-
-    // Check if source is file or folder
-    const isDirectory = statSync(normalizedSource).isDirectory();
-
-    // Prevent moving folder into itself or its subdirectories
-    if (isDirectory && normalizedDest.startsWith(normalizedSource)) {
-      return {
-        success: false,
-        newPath: "",
-        itemType: 'folder',
-        error: "Cannot move folder into itself or its subdirectories",
-      };
-    }
-
-    // Create destination if needed
-    if (!existsSync(normalizedDest)) {
-      if (options.createDestination) {
-        mkdirSync(normalizedDest, { recursive: true });
-      } else {
-        return {
-          success: false,
-          newPath: "",
-          itemType: isDirectory ? 'folder' : 'note',
-          error: "Destination folder does not exist",
-        };
-      }
-    }
-
-    // Ensure destination is a directory
-    if (!statSync(normalizedDest).isDirectory()) {
-      return {
-        success: false,
-        newPath: "",
-        itemType: isDirectory ? 'folder' : 'note',
-        error: "Destination must be a folder",
-      };
-    }
-
-    const itemName = options.newFilename || basename(normalizedSource);
-    const newPath = join(normalizedDest, itemName);
-
-    // Handle existing items
-    if (existsSync(newPath)) {
-      if (isDirectory && options.mergeFolders) {
-        // Merge folder contents
-        return this.mergeFolders(normalizedSource, newPath);
-      } else if (!options.overwrite) {
-        return {
-          success: false,
-          newPath: "",
-          itemType: isDirectory ? 'folder' : 'note',
-          error: "Item already exists in destination",
-        };
-      } else if (!isDirectory) {
-        // For files with overwrite=true, remove the existing file first
-        rmSync(newPath);
-      } else {
-        // For directories with overwrite=true but mergeFolders=false, remove existing directory
-        rmSync(newPath, { recursive: true });
-      }
-    }
-
-    try {
-      renameSync(normalizedSource, newPath);
-      return { success: true, newPath, itemType: isDirectory ? 'folder' : 'note' };
-    } catch (error) {
-      return { success: false, newPath: "", itemType: isDirectory ? 'folder' : 'note', error: String(error) };
-    }
-  }
-
-  private static mergeFolders(
-    source: string,
-    destination: string,
-  ): { success: boolean; newPath: string; itemType: 'note' | 'folder'; error?: string } {
-    try {
-      const items = readdirSync(source, { withFileTypes: true });
-
-      for (const item of items) {
-        const sourcePath = join(source, item.name);
-        const destPath = join(destination, item.name);
-
-        if (item.isDirectory()) {
-          if (existsSync(destPath)) {
-            // Recursively merge subdirectories
-            const result = this.mergeFolders(sourcePath, destPath);
-            if (!result.success) {
-              return result;
-            }
-          } else {
-            // Move the subdirectory
-            renameSync(sourcePath, destPath);
-          }
-        } else {
-          // Move the file (overwriting if exists)
-          if (existsSync(destPath)) {
-            rmSync(destPath);
-          }
-          renameSync(sourcePath, destPath);
-        }
-      }
-
-      // Remove the now-empty source directory
-      rmSync(source, { recursive: true });
-      return { success: true, newPath: destination, itemType: 'folder' };
-    } catch (error) {
-      return {
-        success: false,
-        newPath: "",
-        itemType: 'folder',
-        error: `Failed to merge folders: ${String(error)}`,
-      };
-    }
+    return moveItemImpl(sourcePath, destinationFolder, options);
   }
 
   /**

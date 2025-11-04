@@ -8,7 +8,7 @@
  */
 
 import { SearchEngine, AdvancedSearchOptions, SearchResult } from './modules/search/index.js';
-import { VaultUtils } from './vault-utils.js';
+import { VaultUtils } from './modules/files/index.js';
 import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';

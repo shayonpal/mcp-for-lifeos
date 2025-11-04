@@ -8,7 +8,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { MoveItemsInput } from '../../types.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { UTILITY_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { VaultUtils } from '../../modules/files/index.js';
 import { ObsidianLinks } from '../../obsidian-links.js';
 import { DynamicTemplateEngine } from '../../modules/templates/index.js';
 import { DateResolver } from '../../date-resolver.js';

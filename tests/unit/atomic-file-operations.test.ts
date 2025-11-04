@@ -14,7 +14,7 @@ import {
   readdirSync,
   chmodSync,
 } from "fs";
-import { VaultUtils } from "../../src/vault-utils.js";
+import { VaultUtils } from "../../src/modules/files/index.js";
 import { writeFileWithRetry } from "../../src/modules/files/file-io.js";
 
 const TEST_VAULT_PATH = join(process.cwd(), "test-vault-atomic");

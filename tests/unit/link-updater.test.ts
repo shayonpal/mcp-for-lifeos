@@ -11,7 +11,7 @@
 
 import { updateVaultLinks } from '../../src/link-updater.js';
 import { LinkScanner } from '../../src/link-scanner.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 import type { LinkScanResult } from '../../src/link-scanner.js';
 import * as fileIo from '../../src/modules/files/file-io.js';
 

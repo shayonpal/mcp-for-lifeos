@@ -11,7 +11,7 @@ import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-c
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
 import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { VaultUtils } from '../../modules/files/index.js';
 import { ObsidianLinks } from '../../obsidian-links.js';
 import { normalizePath } from '../../path-utils.js';
 import { addVersionMetadata } from '../tool-registry.js';

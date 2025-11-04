@@ -2,20 +2,21 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import type { LifeOSNote } from '../../src/types.js';
 import { QueryParser } from '../../src/modules/search/index.js';
 
-jest.mock('../../src/vault-utils.js', () => ({
-  VaultUtils: {
-    findNotes: jest.fn(),
-    readNote: jest.fn(),
-    resetSingletons: jest.fn()
-  }
+jest.mock('../../src/modules/files/note-crud.js', () => ({
+  readNote: jest.fn(),
+}));
+
+jest.mock('glob', () => ({
+  glob: jest.fn(),
 }));
 
 import { SearchEngine } from '../../src/modules/search/index.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { readNote } from '../../src/modules/files/note-crud.js';
+import { glob } from 'glob';
 
 describe('SearchEngine MCP-59 regressions', () => {
-  const findNotesMock = VaultUtils.findNotes as jest.MockedFunction<typeof VaultUtils.findNotes>;
-  const readNoteMock = VaultUtils.readNote as jest.MockedFunction<typeof VaultUtils.readNote>;
+  const globMock = glob as jest.MockedFunction<typeof glob>;
+  const readNoteMock = readNote as jest.MockedFunction<typeof readNote>;
 
   const query = 'trip to india november planning';
   const firstNotePath = '/vault/projects/travel/first-note.md';
@@ -61,7 +62,7 @@ describe('SearchEngine MCP-59 regressions', () => {
       [targetNotePath]: targetNote
     };
 
-    findNotesMock.mockResolvedValue([firstNotePath, targetNotePath]);
+    globMock.mockResolvedValue([firstNotePath, targetNotePath] as any);
     readNoteMock.mockImplementation((path: string) => {
       const note = notesByPath[path];
       if (!note) {

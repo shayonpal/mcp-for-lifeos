@@ -14,7 +14,7 @@ import type { ToolMode } from '../../dev/contracts/MCP-6-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import type { RequestHandlerWithClientContext } from '../../dev/contracts/MCP-96-contracts.js';
 import { ObsidianLinks } from '../../src/obsidian-links.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 import { NaturalLanguageProcessor } from '../../src/modules/search/index.js';
 
 describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {

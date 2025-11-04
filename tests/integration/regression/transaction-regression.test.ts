@@ -17,7 +17,7 @@ import { promises as fs, existsSync } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
-import { VaultUtils } from '../../../src/vault-utils.js';
+import { VaultUtils } from '../../../src/modules/files/index.js';
 import { TransactionManager } from '../../../src/transaction-manager.js';
 import { WALManager, type WALEntry } from '../../../src/wal-manager.js';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';

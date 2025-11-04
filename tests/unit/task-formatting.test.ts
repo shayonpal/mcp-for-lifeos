@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import { VaultUtils } from "../../src/vault-utils.js";
+import { VaultUtils } from "../../src/modules/files/index.js";
 import { promises as fs } from "fs";
 import * as path from "path";
 import { tmpdir } from "os";

@@ -1,6 +1,9 @@
 import { readFileSync } from 'fs';
+import { join } from 'path';
+import { glob } from 'glob';
 import { LifeOSNote, YAMLFrontmatter, SearchOptions } from '../../types.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { readNote } from '../files/note-crud.js';
+import { LIFEOS_CONFIG } from '../../config.js';
 import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
 import { QueryParser } from './query-parser.js';
 import type { QueryStrategy } from '../../../dev/contracts/MCP-59-contracts.js';
@@ -667,24 +670,27 @@ export class SearchEngine {
   }
 
   public static async getAllNotes(): Promise<LifeOSNote[]> {
-    const files = await VaultUtils.findNotes('**/*.md');
+    const searchPath = join(LIFEOS_CONFIG.vaultPath, '**/*.md');
+    const files = await glob(searchPath, {
+      ignore: ["**/node_modules/**", "**/.*"],
+    });
     const notes: LifeOSNote[] = [];
     let skippedCount = 0;
     const now = Date.now();
-    
+
     for (const file of files) {
       try {
         // Check cache first
         const cachedNote = this.noteCache.get(file);
         const cacheTime = this.cacheTimestamp.get(file);
-        
+
         if (cachedNote && cacheTime && (now - cacheTime) < this.CACHE_TTL) {
           notes.push(cachedNote);
           continue;
         }
-        
+
         // Read and cache the note
-        const note = VaultUtils.readNote(file);
+        const note = readNote(file);
         this.noteCache.set(file, note);
         this.cacheTimestamp.set(file, now);
         notes.push(note);

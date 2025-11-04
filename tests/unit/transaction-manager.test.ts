@@ -26,7 +26,7 @@ import type {
   TransactionState,
   WALEntry,
 } from '../../dev/contracts/MCP-108-contracts.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 import { TransactionErrorCode } from '../../src/error-types.js';
 import {
   existsSync,

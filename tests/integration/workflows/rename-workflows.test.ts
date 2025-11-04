@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { VaultUtils } from '../../../src/vault-utils.js';
+import { VaultUtils } from '../../../src/modules/files/index.js';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
