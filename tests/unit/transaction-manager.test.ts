@@ -27,7 +27,7 @@ import type {
   WALEntry,
 } from '../../dev/contracts/MCP-108-contracts.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
-import { TransactionErrorCode } from '../../src/error-types.js';
+import { TransactionErrorCode } from '../../src/shared/index.js';
 import {
   existsSync,
   mkdirSync,

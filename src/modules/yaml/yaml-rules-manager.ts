@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { LifeOSConfig } from '../../types.js';
+import { LifeOSConfig } from '../../shared/index.js';
 
 export class YamlRulesManager {
   private config: LifeOSConfig;

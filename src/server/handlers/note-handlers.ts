@@ -5,7 +5,7 @@
 
 import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { EditNoteInput, InsertContentInput } from '../../types.js';
+import type { EditNoteInput, InsertContentInput } from '../../shared/index.js';
 import type { RenameNoteInput, RenameNoteOutput, RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
@@ -13,11 +13,11 @@ import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDe
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
 import { VaultUtils } from '../../modules/files/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
-import { normalizePath } from '../../path-utils.js';
+import { normalizePath } from '../../shared/index.js';
 import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
-import { LIFEOS_CONFIG } from '../../config.js';
-import { logger } from '../../logger.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { logger } from '../../shared/index.js';
 import { updateVaultLinks } from '../../modules/links/index.js';
 
 /**

@@ -9,7 +9,7 @@ import { join, basename } from "path";
 import { glob } from "glob";
 import matter from "gray-matter";
 import { readFileWithRetry } from "./file-io.js";
-import { LIFEOS_CONFIG } from "../../config.js";
+import { LIFEOS_CONFIG } from "../../shared/index.js";
 
 /**
  * Get all unique values for a specific YAML property across the vault

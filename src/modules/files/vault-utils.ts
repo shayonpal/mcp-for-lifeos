@@ -1,13 +1,8 @@
 import { join } from "path";
 import { glob } from "glob";
-import { LifeOSNote, YAMLFrontmatter, SearchOptions } from "../../types.js";
-import { stripMdExtension } from "../../path-utils.js";
-import { LIFEOS_CONFIG } from "../../config.js";
+import { LifeOSNote, YAMLFrontmatter, SearchOptions, LIFEOS_CONFIG, stripMdExtension, DateResolver, normalizePath, WIKILINK_PATTERN } from "../../shared/index.js";
 import { TemplateManager } from "../templates/index.js";
 import { ObsidianSettings } from "../../obsidian-settings.js";
-import { DateResolver } from "../../date-resolver.js";
-import { normalizePath } from "../../path-utils.js";
-import { WIKILINK_PATTERN } from "../../regex-utils.js";
 import {
   readFileWithRetry,
   writeFileWithRetry,

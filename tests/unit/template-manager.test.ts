@@ -14,7 +14,7 @@ jest.mock('fs', () => ({
 }));
 jest.mock('../../src/obsidian-settings.js');
 jest.mock('../../src/modules/templates/template-parser.js');
-jest.mock('../../src/logger.js', () => ({
+jest.mock('../../src/shared/logger.js', () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),

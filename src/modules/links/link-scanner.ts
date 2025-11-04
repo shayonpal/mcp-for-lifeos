@@ -16,11 +16,11 @@
  */
 
 import { basename } from 'path';
-import type { LifeOSNote } from '../../types.js';
+import type { LifeOSNote } from '../../shared/index.js';
 import { SearchEngine } from '../search/index.js';
 import { readFileWithRetry } from '../files/file-io.js';
-import { WIKILINK_PATTERN } from '../../regex-utils.js';
-import { stripMdExtension } from '../../path-utils.js';
+import { WIKILINK_PATTERN } from '../../shared/index.js';
+import { stripMdExtension } from '../../shared/index.js';
 
 /**
  * Options for configuring link scanning behavior

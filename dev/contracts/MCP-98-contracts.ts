@@ -10,7 +10,7 @@
  */
 
 import type { ToolHandler, ToolHandlerContext } from './MCP-8-contracts.js';
-import type { EditNoteInput, InsertContentInput, MoveItemsInput } from '../../src/types.js';
+import type { EditNoteInput, InsertContentInput, MoveItemsInput } from '../../src/shared/index.js';
 
 // ============================================================================
 // HANDLER ORGANIZATION CONTRACTS
@@ -236,7 +236,7 @@ export interface ListYamlPropertyValuesInput {
 export interface NoteHandlerDependencies {
   VaultUtils: typeof import('../../src/modules/files/index.js').VaultUtils;
   ObsidianLinks: typeof import('../../src/modules/links/index.js').ObsidianLinks;
-  normalizePath: typeof import('../../src/path-utils.js').normalizePath;
+  normalizePath: typeof import('../../src/shared/index.js').normalizePath;
   addVersionMetadata: (response: any, config: any) => any;
   format: typeof import('date-fns').format;
 }
@@ -257,7 +257,7 @@ export interface UtilityHandlerDependencies {
   VaultUtils: typeof import('../../src/modules/files/index.js').VaultUtils;
   ObsidianLinks: typeof import('../../src/modules/links/index.js').ObsidianLinks;
   DynamicTemplateEngine: typeof import('../../src/modules/templates/index.js').DynamicTemplateEngine;
-  DateResolver: typeof import('../../src/date-resolver.js').DateResolver;
+  DateResolver: typeof import('../../src/shared/index.js').DateResolver;
   AnalyticsCollector: typeof import('../../src/modules/analytics/index.js').AnalyticsCollector;
   addVersionMetadata: (response: any, config: any) => any;
   extractClientInfo: (server: any) => { name: string; version: string };

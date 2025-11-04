@@ -6,8 +6,8 @@
  */
 
 import type { QueryStrategy, ParsedQuery } from '../../../dev/contracts/MCP-59-contracts';
-import { escapeRegex } from '../../regex-utils.js';
-import { normalizeText } from '../../text-utils.js';
+import { escapeRegex } from '../../shared/index.js';
+import { normalizeText } from '../../shared/index.js';
 
 /**
  * Utility class for parsing and analyzing search queries

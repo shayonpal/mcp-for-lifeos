@@ -4,7 +4,7 @@ import { promises as fs } from "fs";
 import * as path from "path";
 import { tmpdir } from "os";
 import { randomBytes } from "crypto";
-import { LIFEOS_CONFIG } from "../../src/config.js";
+import { LIFEOS_CONFIG } from "../../src/shared/index.js";
 import { format } from "date-fns";
 
 describe("Task Formatting with Obsidian Tasks Plugin", () => {

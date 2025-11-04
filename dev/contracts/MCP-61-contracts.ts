@@ -11,7 +11,7 @@
  * Labels: Backend, Bug
  */
 
-import { LifeOSConfig } from '../../src/types.js';
+import { LifeOSConfig } from '../../src/shared/index.js';
 
 // ============================================================================
 // CONFIG CONTRACTS

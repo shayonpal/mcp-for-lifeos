@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { DateResolver } from '../../src/date-resolver.js';
+import { DateResolver } from '../../src/shared/index.js';
 import { startOfToday, format, addDays, subDays } from 'date-fns';
 import { TZDate } from '@date-fns/tz';
 

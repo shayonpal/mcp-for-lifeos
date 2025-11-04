@@ -8,12 +8,12 @@ import {
 import { ObsidianLinks } from './modules/links/index.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
-import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
-import { LIFEOS_CONFIG } from './config.js';
-import { normalizePath } from './path-utils.js';
+import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './shared/index.js';
+import { LIFEOS_CONFIG } from './shared/index.js';
+import { normalizePath } from './shared/index.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
-import { logger } from './logger.js';
+import { logger } from './shared/index.js';
 import { statSync } from 'fs';
 import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
 import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';

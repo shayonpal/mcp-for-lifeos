@@ -8,8 +8,8 @@
  */
 
 import { LinkScanner, type LinkReference } from '../../src/modules/links/index.js';
-import { WIKILINK_PATTERN } from '../../src/regex-utils.js';
-import type { LifeOSNote } from '../../src/types.js';
+import { WIKILINK_PATTERN } from '../../src/shared/index.js';
+import type { LifeOSNote } from '../../src/shared/index.js';
 
 describe('LinkScanner', () => {
   describe('WIKILINK_PATTERN regex', () => {

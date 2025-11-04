@@ -1,7 +1,7 @@
-import { LIFEOS_CONFIG } from '../../config.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 import { basename } from 'path';
 import { parseISO, format } from 'date-fns';
-import type { YAMLFrontmatter } from '../../types.js';
+import type { YAMLFrontmatter } from '../../shared/index.js';
 
 export class ObsidianLinks {
   /**

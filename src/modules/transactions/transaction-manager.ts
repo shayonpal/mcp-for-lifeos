@@ -43,8 +43,8 @@ import { WALManager } from './wal-manager.js';
 import { updateVaultLinks } from '../links/index.js';
 import type { LinkRenderResult } from '../links/index.js';
 import { writeFileWithRetry } from '../files/file-io.js';
-import { TransactionErrorCode } from '../../error-types.js';
-import { LIFEOS_CONFIG } from '../../config.js';
+import { TransactionErrorCode } from '../../shared/index.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 
 /**
  * TransactionManager - Coordinates atomic rename operations with rollback

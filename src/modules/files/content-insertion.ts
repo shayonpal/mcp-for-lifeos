@@ -9,8 +9,8 @@ import { existsSync } from "fs";
 import { basename } from "path";
 import { format } from "date-fns";
 import { readNote, updateNote } from "./note-crud.js";
-import { logger } from "../../logger.js";
-import type { LifeOSNote, YAMLFrontmatter } from "../../types.js";
+import { logger } from "../../shared/index.js";
+import type { LifeOSNote, YAMLFrontmatter } from "../../shared/index.js";
 
 /**
  * Find where a section ends (next heading of same or higher level)
