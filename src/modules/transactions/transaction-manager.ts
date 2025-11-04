@@ -38,13 +38,13 @@ import type {
   TransactionResult,
   RollbackResult,
   WALEntry,
-} from '../dev/contracts/MCP-108-contracts.js';
+} from '../../../dev/contracts/MCP-108-contracts.js';
 import { WALManager } from './wal-manager.js';
-import { updateVaultLinks } from './link-updater.js';
-import type { LinkRenderResult } from './link-updater.js';
-import { VaultUtils } from './vault-utils.js';
-import { TransactionErrorCode } from './error-types.js';
-import { LIFEOS_CONFIG } from './config.js';
+import { updateVaultLinks } from '../links/index.js';
+import type { LinkRenderResult } from '../links/index.js';
+import { writeFileWithRetry } from '../files/file-io.js';
+import { TransactionErrorCode } from '../../shared/index.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 
 /**
  * TransactionManager - Coordinates atomic rename operations with rollback
@@ -254,7 +254,7 @@ export class TransactionManager {
       // Step 1: Stage source note to temp location
       const stagedNotePath = `${manifest.noteRename.to}.mcp-staged-${correlationId}`;
       const noteContent = readFileSync(manifest.noteRename.from, 'utf-8');
-      VaultUtils.writeFileWithRetry(stagedNotePath, noteContent, 'utf-8', {
+      writeFileWithRetry(stagedNotePath, noteContent, 'utf-8', {
         atomic: false, // Temp file doesn't need atomicity
         transactional: true,
       });
@@ -268,7 +268,7 @@ export class TransactionManager {
           throw new Error(`Missing rendered content for ${linkUpdate.path}`);
         }
 
-        VaultUtils.writeFileWithRetry(stagedPath, linkUpdate.renderedContent, 'utf-8', {
+        writeFileWithRetry(stagedPath, linkUpdate.renderedContent, 'utf-8', {
           atomic: false, // Temp file doesn't need atomicity
           transactional: true,
         });

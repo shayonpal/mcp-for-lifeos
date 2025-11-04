@@ -35,12 +35,14 @@ Health check for your Obsidian vault. Scans notes for YAML parsing errors, malfo
 ### Parameter Details
 
 **`checkYaml`** (boolean, optional, default: `true`)
+
 - Enables detailed YAML frontmatter validation
 - Checks for undefined/null values in frontmatter
 - Validates YAML structure and syntax
 - Set to `false` to skip YAML validation and focus on file access only
 
 **`maxFiles`** (number, optional, default: `100`)
+
 - Limits the number of files processed in a single scan
 - Default of 100 provides good performance for regular health checks
 - Increase for comprehensive vault audits
@@ -49,6 +51,7 @@ Health check for your Obsidian vault. Scans notes for YAML parsing errors, malfo
 ## Diagnostic Checks Performed
 
 ### YAML Parsing Validation
+
 When `checkYaml` is enabled (default), the tool performs:
 
 - **Syntax Validation**: Ensures YAML frontmatter follows proper syntax
@@ -58,6 +61,7 @@ When `checkYaml` is enabled (default), the tool performs:
 - **Delimiter Completeness**: Ensures opening and closing `---` markers are present
 
 ### File Access Verification
+
 For all scanned files, the tool checks:
 
 - **File Existence**: Verifies files exist at expected paths
@@ -67,6 +71,7 @@ For all scanned files, the tool checks:
 - **Content Parsing**: Tests basic content extraction capabilities
 
 ### Frontmatter Structure Analysis
+
 Advanced YAML checks include:
 
 - **Required Field Validation**: Checks for LifeOS-compliant field structure
@@ -78,6 +83,7 @@ Advanced YAML checks include:
 ## Usage Examples
 
 ### Quick Health Check (Default)
+
 ```javascript
 // Scan up to 100 files with full YAML validation
 {
@@ -87,6 +93,7 @@ Advanced YAML checks include:
 ```
 
 ### Full Vault Scan
+
 ```javascript
 // Comprehensive scan of entire vault
 {
@@ -96,6 +103,7 @@ Advanced YAML checks include:
 ```
 
 ### YAML-Only Check
+
 ```javascript
 // Focus on YAML issues, default file limit
 {
@@ -104,6 +112,7 @@ Advanced YAML checks include:
 ```
 
 ### Skip YAML Validation
+
 ```javascript
 // File access check only, no YAML parsing
 {
@@ -113,6 +122,7 @@ Advanced YAML checks include:
 ```
 
 ### Limited Performance Scan
+
 ```javascript
 // Quick check with reduced file count
 {
@@ -122,6 +132,7 @@ Advanced YAML checks include:
 ```
 
 ### Large Vault Audit
+
 ```javascript
 // Thorough scan for large vaults
 {
@@ -137,24 +148,28 @@ The diagnostic report includes comprehensive scanning results:
 ### Report Sections
 
 **Header Statistics**:
+
 - Total files checked
 - Successfully parsed files count
 - Number of problematic files identified
 - Scan configuration summary
 
 **Problematic Files List**:
+
 - File path (relative to vault root)
 - Specific error message
 - Error type classification
 - Context information when available
 
 **Performance Metrics**:
+
 - Processing time
 - Files per second scan rate
 - Memory usage indicators
 - iCloud sync status (macOS)
 
 **Recommendations**:
+
 - Specific fix suggestions for common issues
 - Best practices for prevention
 - Related tools for repairs
@@ -198,6 +213,7 @@ The diagnostic report includes comprehensive scanning results:
 ### YAML Structure Problems
 
 **Missing Closing Delimiter**:
+
 ```yaml
 ---
 title: My Note
@@ -206,6 +222,7 @@ content type: article
 ```
 
 **Invalid YAML Indentation**:
+
 ```yaml
 ---
 title: My Note
@@ -216,6 +233,7 @@ tags:
 ```
 
 **Unquoted Special Characters**:
+
 ```yaml
 ---
 title: My Note: A Study  # Colon needs quoting
@@ -226,6 +244,7 @@ description: 100% complete  # Percent needs quoting
 ### Data Type Issues
 
 **Mixed Array/String Values**:
+
 ```yaml
 ---
 tags: "work, project"  # Should be array
@@ -236,6 +255,7 @@ people:
 ```
 
 **Undefined/Null Values**:
+
 ```yaml
 ---
 title: My Note
@@ -247,11 +267,13 @@ rating: undefined  # Invalid YAML value
 ### File Access Problems
 
 **Permission Errors**:
+
 - Files locked by other applications
 - Insufficient read permissions
 - iCloud sync conflicts on macOS
 
 **Path Issues**:
+
 - Special characters in filenames
 - Spaces not properly handled
 - Broken symbolic links
@@ -261,30 +283,35 @@ rating: undefined  # Invalid YAML value
 The tool classifies errors into specific categories:
 
 ### YAML Parse Error
+
 - **Cause**: Malformed YAML syntax in frontmatter
 - **Symptoms**: YAMLException messages, parsing failures
 - **Impact**: Note frontmatter not accessible for metadata operations
 - **Fix**: Correct YAML syntax, add missing delimiters, fix indentation
 
 ### File Read Error
+
 - **Cause**: File system access denied or file not found
 - **Symptoms**: ENOENT, EPERM, EBUSY error codes
 - **Impact**: Note completely inaccessible to MCP operations
 - **Fix**: Check file permissions, resolve iCloud sync issues
 
 ### Encoding Error
+
 - **Cause**: Invalid character encoding in file content
 - **Symptoms**: UTF-8 parsing failures, character replacement
 - **Impact**: Content corruption, search indexing problems
 - **Fix**: Re-save file with UTF-8 encoding
 
 ### Structure Error
+
 - **Cause**: Missing or malformed frontmatter delimiters
 - **Symptoms**: Frontmatter not recognized, content parsing issues
 - **Impact**: Metadata extraction failures, template processing problems
 - **Fix**: Add proper `---` delimiters at start and end of frontmatter
 
 ### Value Type Error
+
 - **Cause**: Inappropriate data types in YAML fields
 - **Symptoms**: Undefined/null values, type mismatches
 - **Impact**: Search filtering problems, template variable issues
@@ -293,18 +320,21 @@ The tool classifies errors into specific categories:
 ## Performance Considerations
 
 ### Default Limits
+
 - **100 File Default**: Balances thoroughness with response time
 - **Processing Speed**: ~50-100 files per second typical
 - **Memory Usage**: Minimal, files processed sequentially
 - **Response Time**: Usually under 5 seconds for default scan
 
 ### Large Vault Handling
+
 - **Staged Scanning**: Process vault in chunks for large collections
 - **Performance Impact**: Scanning 1000+ files may take 30+ seconds
 - **Memory Management**: Tool processes files individually to minimize RAM usage
 - **iCloud Considerations**: Sync delays may slow scanning on macOS
 
 ### Optimization Strategies
+
 - **Regular Small Scans**: Run default 100-file checks frequently
 - **Targeted Scans**: Focus on specific folders or recently modified files
 - **Disable YAML**: Use `checkYaml: false` for faster file access checks
@@ -315,6 +345,7 @@ The tool classifies errors into specific categories:
 ### Fixing YAML Errors
 
 **Step 1: Identify the Problem**
+
 ```bash
 # Use read_note to examine the problematic file
 {
@@ -326,6 +357,7 @@ The tool classifies errors into specific categories:
 ```
 
 **Step 2: Common YAML Fixes**
+
 ```yaml
 # Before (problematic)
 ---
@@ -345,6 +377,7 @@ rating: 5
 ```
 
 **Step 3: Validate Changes**
+
 ```javascript
 // Re-run diagnostic on specific files
 {
@@ -356,12 +389,14 @@ rating: 5
 ### Fixing File Access Issues
 
 **Permission Problems**:
+
 1. Check file permissions in Finder (macOS) or file manager
 2. Ensure Obsidian isn't exclusively locking files
 3. Close other applications accessing the vault
 4. Restart if iCloud sync appears stuck
 
 **Path Resolution Issues**:
+
 1. Verify file paths don't contain invalid characters
 2. Check for broken symbolic links
 3. Ensure vault path configuration is correct
@@ -370,6 +405,7 @@ rating: 5
 ### Bulk Repair Strategies
 
 **Template-Based Fixes**:
+
 ```javascript
 // Use edit_note to fix common patterns
 {
@@ -386,6 +422,7 @@ rating: 5
 ```
 
 **Systematic Approach**:
+
 1. Run diagnostic to identify all problematic files
 2. Group errors by type (YAML vs file access)
 3. Fix YAML issues first (easier to automate)
@@ -395,16 +432,19 @@ rating: 5
 ### Prevention Best Practices
 
 **Template Management**:
+
 - Validate templates before deploying
 - Use consistent YAML structure across templates
 - Test templates with edge cases
 
 **Import Procedures**:
+
 - Run diagnostic immediately after bulk imports
 - Validate external content before importing
 - Use consistent character encoding (UTF-8)
 
 **Regular Maintenance**:
+
 - Schedule weekly diagnostic scans
 - Monitor vault health after major changes
 - Keep backup of working configurations
@@ -412,25 +452,30 @@ rating: 5
 ## Implementation Details
 
 ### Scanner Architecture
+
 - **File Discovery**: Uses `VaultUtils.findNotes('**/*.md')` for comprehensive file finding
 - **Sequential Processing**: Processes files one at a time to avoid memory issues
 - **Error Isolation**: Continues scanning even when individual files fail
 - **Result Aggregation**: Collects all errors and statistics for final report
 
 ### Error Detection Methods
+
 - **YAML Validation**: Uses gray-matter library with custom error handling
 - **Fallback Parsing**: Attempts graceful recovery from malformed YAML
 - **Value Analysis**: Checks for undefined/null values in parsed frontmatter
 - **File System Integration**: Leverages Node.js fs operations with retry logic
 
 ### Handler Location
+
 - **Main Implementation**: `src/index.ts` (lines 1699-1763)
 - **File Operations**: `VaultUtils.readNote()` and `VaultUtils.findNotes()`
 - **YAML Processing**: gray-matter library with custom parseWithFallback()
 - **Error Handling**: Graceful degradation with detailed error capture
 
 ### Retry Logic
+
 The tool incorporates iCloud-aware retry mechanisms:
+
 - **iCloud Sync Delays**: Automatically retries file access on sync-related errors
 - **File Lock Handling**: Waits and retries when files are temporarily locked
 - **Permission Recovery**: Attempts multiple access methods for edge cases
@@ -461,7 +506,9 @@ The tool incorporates iCloud-aware retry mechanisms:
 ## Use Cases
 
 ### Post-Migration Validation
+
 After migrating notes from other systems:
+
 ```javascript
 // Comprehensive scan to validate migration
 {
@@ -471,7 +518,9 @@ After migrating notes from other systems:
 ```
 
 ### Template Debugging
+
 When template-generated notes have issues:
+
 ```javascript
 // Quick scan to identify template problems
 {
@@ -481,7 +530,9 @@ When template-generated notes have issues:
 ```
 
 ### Import Troubleshooting
+
 After importing external markdown files:
+
 ```javascript
 // Focus on YAML validation for imports
 {
@@ -491,7 +542,9 @@ After importing external markdown files:
 ```
 
 ### Regular Maintenance
+
 For routine vault health checks:
+
 ```javascript
 // Standard weekly health check
 {
@@ -501,7 +554,9 @@ For routine vault health checks:
 ```
 
 ### Performance Investigation
+
 When vault operations seem slow:
+
 ```javascript
 // Quick file access check
 {
@@ -511,7 +566,9 @@ When vault operations seem slow:
 ```
 
 ### Quality Assurance
+
 Before sharing vault or templates:
+
 ```javascript
 // Thorough validation scan
 {
@@ -523,22 +580,26 @@ Before sharing vault or templates:
 ## Related Tools
 
 ### For Problem Resolution
+
 - **`read_note`**: Examine specific problematic files identified by diagnostic
 - **`edit_note`**: Fix frontmatter and content issues in flagged files
 - **`list`**: Find files in specific folders to target diagnostic scans
 - **`search`**: Locate notes with specific error patterns or characteristics
 
 ### For Vault Management
+
 - **`get_yaml_rules`**: Understand LifeOS YAML requirements for compliance
 - **`list_yaml_property_values`**: Analyze property usage across the vault
 - **`create_note_smart`**: Create properly formatted notes to avoid future issues
 - **`move_items`**: Reorganize files that have path-related problems
 
 ### For Template Development
+
 - **`list_templates`**: Review available templates for validation
 - **`create_note_from_template`**: Test template output before deployment
 
 ### Diagnostic Workflow Integration
+
 1. **`diagnose_vault`** → Identify problems
 2. **`read_note`** → Examine specific issues  
 3. **`edit_note`** → Fix identified problems
@@ -549,18 +610,21 @@ Before sharing vault or templates:
 When analytics are enabled (`DISABLE_USAGE_ANALYTICS=false`), the diagnostic tool tracks:
 
 ### Usage Metrics
+
 - **Scan Frequency**: How often diagnostics are run
 - **File Coverage**: Average and maximum files scanned per run
 - **Error Patterns**: Most common error types and affected file patterns
 - **Performance Trends**: Scan times and processing efficiency over time
 
 ### Health Insights  
+
 - **Vault Quality Score**: Percentage of files passing validation
 - **Error Rate Trends**: Whether vault health is improving or degrading
 - **Problem File Hotspots**: Folders or file types with frequent issues
 - **Resolution Effectiveness**: Whether fixes resolve problems permanently
 
 ### Performance Analytics
+
 - **Scan Duration Patterns**: Identify performance bottlenecks
 - **File Processing Rate**: Monitor scanning efficiency
 - **Resource Usage**: Memory and CPU impact tracking

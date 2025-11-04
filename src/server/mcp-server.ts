@@ -10,7 +10,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { AnalyticsCollector } from '../analytics/analytics-collector.js';
+import { AnalyticsCollector } from '../modules/analytics/index.js';
 import { ToolRouter } from '../tool-router.js';
 import { v4 as uuidv4 } from 'uuid';
 import { accessSync, constants } from 'fs';

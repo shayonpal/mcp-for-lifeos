@@ -9,10 +9,10 @@ import type { ToolHandlerContext } from '../../dev/contracts/MCP-8-contracts.js'
 import type { ToolRegistryConfig } from '../../dev/contracts/MCP-7-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import { ToolRouter } from '../../src/tool-router.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 // Mock VaultUtils to prevent actual file creation
-jest.mock('../../src/vault-utils.js', () => ({
+jest.mock('../../src/modules/files/index.js', () => ({
   VaultUtils: {
     createNote: jest.fn((fileName, frontmatter, content, targetFolder) => ({
       path: `${targetFolder}/${fileName}.md`,

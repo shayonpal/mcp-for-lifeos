@@ -14,7 +14,7 @@ import {
   DEFAULT_TOKEN_BUDGET,
   TRUNCATION_MESSAGES,
   validateTokenBudgetConfig
-} from '../dev/contracts/MCP-38-contracts.js';
+} from '../../../dev/contracts/MCP-38-contracts.js';
 
 /**
  * ResponseTruncator implementation

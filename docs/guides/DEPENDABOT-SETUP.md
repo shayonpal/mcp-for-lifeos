@@ -51,11 +51,13 @@ The configuration is designed to support auto-merge for low-risk updates. Howeve
 ### What Should Auto-Merge
 
 ✅ **Automatically merge after CI passes:**
+
 - Patch updates to development dependencies
 - Patch updates to GitHub Actions
 - **Minor updates to MCP SDK** (backward-compatible changes)
 
 ⚠️ **Require manual review:**
+
 - All major version updates
 - Minor/major updates to production dependencies (except MCP SDK)
 
@@ -121,6 +123,7 @@ jobs:
 ```
 
 This workflow:
+
 1. Detects Dependabot PRs
 2. Checks if the update is a patch (any dependency) or minor (MCP SDK only)
 3. Approves and enables auto-merge if criteria are met
@@ -174,16 +177,19 @@ Dependabot runs on schedule, but you can manually trigger updates:
 ### Troubleshooting
 
 **Dependabot not creating PRs?**
+
 - Check `.github/dependabot.yml` syntax with [GitHub's validator](https://github.com/<your-username>/<repo>/network/updates)
 - Verify Dependabot is enabled in repository settings
 - Check Dependabot logs in the Dependency graph section
 
 **Auto-merge not working?**
+
 - Ensure "Allow auto-merge" is enabled in repository settings
 - Verify branch protection rules don't block auto-merge
 - Check if GitHub Actions workflow has proper permissions
 
 **Too many PRs?**
+
 - Adjust `open-pull-requests-limit` in dependabot.yml
 - Close unwanted PRs with `@dependabot close` comment
 - Add more dependencies to ignore list
@@ -206,6 +212,7 @@ To modify the Dependabot configuration:
 4. Changes take effect on next scheduled run
 
 Common adjustments:
+
 - Change schedule: Modify `schedule.day` or `schedule.time`
 - Add dependencies to groups: Add patterns to `groups.<group-name>.patterns`
 - Block specific updates: Add to `ignore` list

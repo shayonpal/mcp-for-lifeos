@@ -27,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Prepare test configuration
-        run: cp src/config.example.ts src/config.ts
+        run: cp src/shared/config.example.ts src/shared/config.ts
 
       - name: Typecheck
         run: npm run typecheck

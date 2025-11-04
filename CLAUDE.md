@@ -62,9 +62,8 @@ markdownlint-cli2 <file>          # Check without fixing
 
 - **MCP Server:** `src/index.ts` (main entry point)
 - **Tool Router:** `src/tool-router.ts` (unified tool consolidation)
-- **Search Engine:** `src/search-engine.ts` (full-text search with relevance)
-- **Vault Utils:** `src/vault-utils.ts` (file ops, YAML validation)
-- **Template System:** `src/template-*.ts` (discovery, processing, Templater syntax)
+- **Modules:** Organized domain logic in `src/modules/` (files, templates, yaml, search, links, transactions, analytics)
+- **Shared:** Core utilities in `src/shared/` (types, config, logger, path/regex/text utils)
 
 **See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for:**
 
@@ -77,6 +76,7 @@ markdownlint-cli2 <file>          # Check without fixing
 ## Platform Support
 
 **Supported Platforms:**
+
 - ✅ **macOS** (primary development and testing platform)
 - ✅ **Linux** (Ubuntu 18.04+, other distros)
 - ⚠️ **Windows**: WSL2 only (native Windows not supported)
@@ -89,8 +89,11 @@ See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support r
 
 - `src/index.ts` - MCP server entry point
 - `src/tool-router.ts` - Tool routing and consolidation
-- `src/vault-utils.ts` - Vault operations and YAML validation
-- `src/search-engine.ts` - Search functionality
+- `src/modules/files/vault-utils.ts` - Vault operations and YAML validation
+- `src/modules/search/search-engine.ts` - Search functionality
+- `src/modules/links/` - Link scanning and updates
+- `src/modules/transactions/` - Atomic operations with WAL
+- `src/shared/` - Core utilities and types
 
 **Tests:**
 

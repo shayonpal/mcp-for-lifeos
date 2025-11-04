@@ -9,17 +9,18 @@
  * @since MCP-107
  */
 
-import { updateVaultLinks } from '../../src/link-updater.js';
-import { LinkScanner } from '../../src/link-scanner.js';
-import { VaultUtils } from '../../src/vault-utils.js';
-import type { LinkScanResult } from '../../src/link-scanner.js';
+import { updateVaultLinks } from '../../src/modules/links/index.js';
+import { LinkScanner } from '../../src/modules/links/index.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
+import type { LinkScanResult } from '../../src/modules/links/index.js';
+import * as fileIo from '../../src/modules/files/file-io.js';
 
 // Mock only I/O dependencies (not helper functions)
-jest.mock('../../src/link-scanner.js');
+jest.mock('../../src/modules/links/link-scanner.js');
 
-// Spy on VaultUtils for updateVaultLinks tests
-const readFileSpy = jest.spyOn(VaultUtils, 'readFileWithRetry');
-const writeFileSpy = jest.spyOn(VaultUtils, 'writeFileWithRetry');
+// Spy on file I/O functions for updateVaultLinks tests
+const readFileSpy = jest.spyOn(fileIo, 'readFileWithRetry');
+const writeFileSpy = jest.spyOn(fileIo, 'writeFileWithRetry');
 
 describe('Link Updater', () => {
   describe('VaultUtils.buildNewLinkText', () => {
@@ -227,8 +228,8 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockResolvedValue('Content with [[OldNote]]');
-      writeFileSpy.mockResolvedValue(undefined);
+      readFileSpy.mockReturnValue('Content with [[OldNote]]');
+      writeFileSpy.mockImplementation(() => {});
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 
@@ -252,10 +253,10 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockResolvedValueOnce('Content')
-        .mockResolvedValueOnce('Content')
-        .mockRejectedValueOnce(new Error('Permission denied'));
-      writeFileSpy.mockResolvedValue(undefined);
+      readFileSpy.mockReturnValueOnce('Content')
+        .mockReturnValueOnce('Content')
+        .mockImplementationOnce(() => { throw new Error('Permission denied'); });
+      writeFileSpy.mockImplementation(() => {});
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 
@@ -277,7 +278,7 @@ Paragraph with [[OldNote]] link.
       };
 
       (LinkScanner.scanVaultForLinks as jest.Mock).mockResolvedValue(mockScanResult);
-      readFileSpy.mockRejectedValue(new Error('File not found'));
+      readFileSpy.mockImplementation(() => { throw new Error('File not found'); });
 
       const result = await updateVaultLinks('OldNote', 'NewNote');
 

@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { VaultUtils } from '../../../src/vault-utils.js';
+import { VaultUtils } from '../../../src/modules/files/index.js';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
@@ -31,7 +31,7 @@ describe('Edge Case Tests: rename_note Boundary Conditions', () => {
     await fs.mkdir(vaultPath, { recursive: true });
 
     // Mock the LIFEOS_CONFIG
-    const { LIFEOS_CONFIG } = await import('../../../src/config.js');
+    const { LIFEOS_CONFIG } = await import('../../../src/shared/index.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
@@ -48,7 +48,7 @@ describe('Edge Case Tests: rename_note Boundary Conditions', () => {
   afterEach(async () => {
     // Restore original config
     if (originalConfig) {
-      const { LIFEOS_CONFIG } = await import('../../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../../src/shared/index.js');
       Object.assign(LIFEOS_CONFIG, originalConfig);
     }
 

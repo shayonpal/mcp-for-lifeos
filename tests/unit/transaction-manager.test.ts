@@ -19,15 +19,15 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-117
  */
 
-import { TransactionManager } from '../../src/transaction-manager.js';
-import { WALManager } from '../../src/wal-manager.js';
+import { TransactionManager } from '../../src/modules/transactions/index.js';
+import { WALManager } from '../../src/modules/transactions/index.js';
 import type {
   TransactionManifest,
   TransactionState,
   WALEntry,
 } from '../../dev/contracts/MCP-108-contracts.js';
-import { VaultUtils } from '../../src/vault-utils.js';
-import { TransactionErrorCode } from '../../src/error-types.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
+import { TransactionErrorCode } from '../../src/shared/index.js';
 import {
   existsSync,
   mkdirSync,

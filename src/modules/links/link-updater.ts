@@ -12,7 +12,8 @@
  */
 
 import { LinkScanner } from './link-scanner.js';
-import { VaultUtils } from './vault-utils.js';
+import { VaultUtils } from '../files/index.js';
+import { readFileWithRetry, writeFileWithRetry } from '../files/file-io.js';
 import type { LinkScanResult, LinkReference } from './link-scanner.js';
 
 // ============================================================================
@@ -171,7 +172,7 @@ export async function updateVaultLinks(
  * **COMMIT Mode** ({ mode: 'commit', commitInput }):
  * 1. Receive pre-rendered content map from RENDER phase
  * 2. Validate manifest entries (optional for MCP-116)
- * 3. Write each file atomically using VaultUtils.writeFileWithRetry
+ * 3. Write each file atomically using writeFileWithRetry
  * 4. Track success/failure for each file
  * 5. Return LinkUpdateResult
  *
@@ -288,7 +289,7 @@ async function renderLinkUpdates(
   for (const [sourcePath, _references] of fileGroups.entries()) {
     try {
       // Read file content
-      const content = await VaultUtils.readFileWithRetry(sourcePath);
+      const content = readFileWithRetry(sourcePath);
 
       // Update links in content using VaultUtils
       const updatedContent = VaultUtils.updateNoteLinks(content, oldNoteName, newNoteName);
@@ -339,7 +340,7 @@ async function commitLinkUpdates(
     try {
       // Write updated content atomically (will use MCP-114's atomic write in future)
       // For now, use standard write with retry
-      await VaultUtils.writeFileWithRetry(sourcePath, updatedContent);
+      writeFileWithRetry(sourcePath, updatedContent);
 
       updatedCount++;
     } catch (error) {
@@ -394,13 +395,13 @@ async function directLinkUpdates(
   for (const [sourcePath, references] of fileGroups.entries()) {
     try {
       // Read file content
-      const content = await VaultUtils.readFileWithRetry(sourcePath);
+      const content = readFileWithRetry(sourcePath);
 
       // Update links in content using VaultUtils
       const updatedContent = VaultUtils.updateNoteLinks(content, oldNoteName, newNoteName);
 
       // Write updated content back
-      await VaultUtils.writeFileWithRetry(sourcePath, updatedContent);
+      writeFileWithRetry(sourcePath, updatedContent);
 
       updatedCount++;
     } catch (error) {

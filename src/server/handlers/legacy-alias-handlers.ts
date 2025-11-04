@@ -20,10 +20,10 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { NaturalLanguageProcessor } from '../../natural-language-processor.js';
-import { ObsidianLinks } from '../../obsidian-links.js';
-import { LIFEOS_CONFIG } from '../../config.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { NaturalLanguageProcessor } from '../../modules/search/index.js';
+import { ObsidianLinks } from '../../modules/links/index.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { VaultUtils } from '../../modules/files/index.js';
 import type {
   SmartCreateNoteOptions,
   UniversalListOptions,

@@ -10,7 +10,7 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-106
  */
 
-import type { LifeOSNote } from '../../src/types.js';
+import type { LifeOSNote } from '../../src/shared/index.js';
 
 // ============================================================================
 // WIKILINK PATTERN CONTRACTS

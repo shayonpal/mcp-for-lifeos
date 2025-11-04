@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { DateResolver } from '../../src/date-resolver.js';
+import { DateResolver } from '../../src/shared/index.js';
 import { format } from 'date-fns';
 
 describe('DateResolver - Timezone Edge Cases', () => {

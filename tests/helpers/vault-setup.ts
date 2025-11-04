@@ -14,8 +14,8 @@ import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promises as fs } from 'node:fs';
-import { LIFEOS_CONFIG } from '../../src/config.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { LIFEOS_CONFIG } from '../../src/shared/index.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 /**
  * Test vault setup result with cleanup function
