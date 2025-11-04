@@ -353,7 +353,7 @@ export class InstructionProcessor {
     // Future phases will implement actual context modification
     modified = true;
 
-    // TODO: Implement actual rule parsing and application
+    // TODO (MCP-150): Implement actual rule parsing and application
     // For now, return context with tracking that rules were found
     return {
       context,

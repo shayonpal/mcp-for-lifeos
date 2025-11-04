@@ -87,7 +87,7 @@ export interface NoteTemplate {
   targetFolder?: string;
 }
 
-// TODO: Plan eventual split to types/tool-inputs.ts if file becomes unwieldy
+// TODO (MCP-151): Plan eventual split to types/tool-inputs.ts if file becomes unwieldy
 
 // ============================================================================
 // TOOL INPUT INTERFACES

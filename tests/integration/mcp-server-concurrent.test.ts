@@ -42,9 +42,9 @@ describe('MCP Server Concurrent Operations', () => {
   });
 
   describe('Multiple Server Instances', () => {
-    // TODO: Re-enable after analytics implementation is fixed
+    // TODO (MCP-154): Re-enable after analytics implementation is fixed
     // Analytics feature is currently broken, preventing these spawned-process tests from working
-    // Tracked in MCP-65
+    // Previously tracked in MCP-65
     it.skip('should handle multiple MCP server instances writing analytics concurrently', async () => {
       const NUM_SERVERS = 3;
       const servers: ChildProcess[] = [];
@@ -206,9 +206,9 @@ describe('MCP Server Concurrent Operations', () => {
   });
 
   describe('Analytics Collection Behavior', () => {
-    // TODO: Re-enable after analytics implementation is fixed
+    // TODO (MCP-154): Re-enable after analytics implementation is fixed
     // Analytics feature is currently broken, preventing these spawned-process tests from working
-    // Tracked in MCP-65
+    // Previously tracked in MCP-65
     it.skip('should append to existing JSONL file', async () => {
       // Create initial JSONL file
       const initialMetric = {
