@@ -1,4 +1,7 @@
 {
+  "customRules": [
+    "/Users/shayon/.config/vscode-markdownlint/markdown-double-space-rule.js"
+  ],
   "config": {
     "extends": "~/.markdownlint.jsonc"
   }

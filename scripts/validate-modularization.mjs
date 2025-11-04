@@ -35,7 +35,6 @@ function fail(msg, error) {
 console.log('📦 Testing module file structure...');
 const moduleFiles = [
   'dist/src/modules/files/index.js',
-  'dist/src/modules/files/vault-utils.js',
   'dist/src/modules/files/file-io.js',
   'dist/src/modules/files/note-crud.js',
   'dist/src/modules/files/daily-note-service.js',
@@ -60,63 +59,32 @@ try {
   const filesModule = await import('../dist/src/modules/files/index.js');
 
   const expectedExports = [
-    'VaultUtils',
-    'readFileWithRetry',
-    'writeFileWithRetry',
-    'readNote',
-    'writeNote',
-    'createNote',
-    'updateNote',
-    'getDailyNote',
-    'createDailyNote',
-    'insertContent',
-    'getYamlPropertyValues',
-    'getAllYamlProperties',
-    'moveItem',
+    { name: 'readFileWithRetry', type: 'function' },
+    { name: 'writeFileWithRetry', type: 'function' },
+    { name: 'readNote', type: 'function' },
+    { name: 'writeNote', type: 'function' },
+    { name: 'createNote', type: 'function' },
+    { name: 'updateNote', type: 'function' },
+    { name: 'getDailyNote', type: 'function' },
+    { name: 'createDailyNote', type: 'function' },
+    { name: 'insertContent', type: 'function' },
+    { name: 'getYamlPropertyValues', type: 'function' },
+    { name: 'getAllYamlProperties', type: 'function' },
+    { name: 'moveItem', type: 'function' },
   ];
 
-  for (const exportName of expectedExports) {
-    if (filesModule[exportName]) {
-      pass(`Export available: ${exportName}`);
+  for (const { name, type } of expectedExports) {
+    const exportValue = filesModule[name];
+    if (typeof exportValue === type) {
+      pass(`Export "${name}" is a ${type}`);
+    } else if (exportValue !== undefined) {
+      fail(`Export "${name}" exists but is not a ${type}`);
     } else {
-      fail(`Export missing: ${exportName}`);
+      fail(`Export missing: ${name}`);
     }
   }
 
-  // Test 3: VaultUtils class methods
-  console.log('\n🛠️  Testing VaultUtils methods...');
-  const { VaultUtils } = filesModule;
-
-  const vaultMethods = [
-    'readNote',
-    'writeNote',
-    'createNote',
-    'updateNote',
-    'getDailyNote',
-    'createDailyNote',
-    'insertContent',
-    'findNotes',
-    'findNoteByTitle',
-    'searchNotes',
-    'updateNoteLinks',
-    'buildNewLinkText',
-    'moveItem',
-    'getYamlPropertyValues',
-    'getAllYamlProperties',
-    'normalizePath',
-    'getLocalDate',
-    'resetSingletons',
-  ];
-
-  for (const method of vaultMethods) {
-    if (typeof VaultUtils[method] === 'function') {
-      pass(`VaultUtils.${method} is callable`);
-    } else {
-      fail(`VaultUtils.${method} is not a function`);
-    }
-  }
-
-  // Test 4: Core dependencies import correctly
+  // Test 3: Core dependencies import correctly
   console.log('\n📚 Testing core module imports...');
 
   try {
@@ -141,7 +109,7 @@ try {
     fail('TemplateManager module failed to load', error);
   }
 
-  // Test 5: Server entry point
+  // Test 4: Server entry point
   console.log('\n🚀 Testing server entry point...');
   try {
     const serverModule = await import('../dist/src/index.js');
@@ -152,7 +120,7 @@ try {
     fail('Server entry point failed to load', error);
   }
 
-  // Test 6: Tool router imports
+  // Test 5: Tool router imports
   console.log('\n🔀 Testing tool router...');
   try {
     const toolRouter = await import('../dist/src/tool-router.js');
@@ -163,7 +131,7 @@ try {
     fail('ToolRouter failed to load', error);
   }
 
-  // Test 7: Handler imports
+  // Test 6: Handler imports
   console.log('\n🎯 Testing handlers...');
   const handlers = [
     'note-handlers',

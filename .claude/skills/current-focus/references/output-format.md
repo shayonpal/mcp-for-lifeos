@@ -169,9 +169,9 @@ Reduced from 1,956 to 483 lines. Full domain module migration to `src/modules/fi
 
 ### Line Length Requirements
 
-- **Target:** <100 lines total
-- **Maximum:** 120 lines (hard limit)
-- **Strategy:** Prioritize recent/urgent items, truncate descriptions
+- **Target:** ≤75 lines total (STRICT - forces focus on future work, minimal past work)
+- **Maximum:** 85 lines (hard limit)
+- **Strategy:** Prioritize future/urgent items, heavily truncate completions, NO descriptions in Planned Work
 
 ### Emoji Usage
 
@@ -188,12 +188,13 @@ Reduced from 1,956 to 483 lines. Full domain module migration to `src/modules/fi
 
 ### Description Truncation
 
-**Rules for keeping document concise:**
+**Rules for 75-line limit (STRICT):**
 
-1. **Planned Work**: First 200 characters of description
-2. **Recent Completions**: First 150 characters + key metric
-3. **Test Fixes**: Maximum 2 bullet points
-4. **Recommended Work**: Brief reason only (1 line)
+1. **Recommended Work Order**: Top 3 issues maximum, 1 line reason each (no verbose descriptions)
+2. **Planned Work**: Issue ID + title ONLY (NO descriptions, NO labels, NO context)
+3. **Recent Completions**: Maximum 5 issues, issue ID + 1 sentence summary ONLY (NO metrics, NO verbose descriptions)
+4. **Test Status**: Pass/fail counts + duration ONLY (NO "Recent Fixes" section unless absolutely critical)
+5. **Gaps Section**: ONLY if detected in chat context (omit entirely if none)
 
 ### UTF-8 Encoding Verification
 
@@ -215,11 +216,12 @@ grep -o "[🎯📋✅⚠️📊]" docs/CURRENT-FOCUS.md | wc -l
 |--------------|------------------|---------------|
 | In Progress | Recommended Work Order | Show in priority order |
 | In Review | Recommended Work Order | Show in priority order |
-| Todo | Planned (This Cycle) | Top 3-4 only |
-| Backlog (in cycle) | Planned (This Cycle) | Lower priority |
-| Done (last 3d) | Recent Completions | All (max 10) |
+| Todo | Planned (This Cycle) | ID + title only (no descriptions) |
+| Backlog | Planned (This Cycle) | ID + title only (no descriptions) |
+| Deferred | Blocked/Deferred note | Flag as blocked in Recommended Work Order |
+| Done (last 3d) | Recent Completions | Max 5 issues, 1 sentence each |
 | Done (>3d) | Omit | Not shown |
-| Blocked | Note in Recommended Work Order | Flag as deferred |
+| Canceled, Duplicate | Omit | Not shown |
 
 ### Priority Indicators
 

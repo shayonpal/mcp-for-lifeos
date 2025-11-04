@@ -5,180 +5,310 @@ description: Sync Linear cycle data with CURRENT-FOCUS.md, analyze chat context 
 
 # Current Focus Skill
 
-Generate and update the CURRENT-FOCUS.md document by combining Linear cycle data, git history, test results, and chat context analysis. Provides work prioritization recommendations based on blocking dependencies and test failures.
+Update CURRENT-FOCUS.md by combining Linear cycle data, git history, test results, and chat context analysis. Prioritize work and identify gaps.
 
 ## Trigger Keywords
 
-- "show current focus" - Display current CURRENT-FOCUS.md
-- "update current focus" - Full workflow with fresh data collection
-- "current focus" - Context-dependent (show if recently updated, else update)
+- "show current focus" → Read and display existing CURRENT-FOCUS.md
+- "update current focus" → Execute full workflow below
+- "current focus" → If recently updated (<1 hour), show; else update
 
-## Core Capabilities
+## Project Constants
 
-1. **Linear Cycle Synchronization** - Fetch current cycle data using cycle ID (not number)
-2. **Chat Context Analysis** - Scan conversation for Linear issues, commits, test results
-3. **Work Prioritization** - Recommend issue order based on dependencies and test failures
-4. **Gap Analysis** - Identify missing work from context and prompt user action
-5. **UTF-8 Document Generation** - Atomic write with encoding verification
+```
+Team ID: d1aae15e-d5b9-418d-a951-adcf8c7e39a8
+Project Dir: /Users/shayon/DevProjects/mcp-for-lifeos
+Document: docs/CURRENT-FOCUS.md
+Line Limit: 75 lines (STRICT)
+```
 
-## When to Use This Skill
+## Workflow: Update Current Focus
 
-Use this skill when:
-- User explicitly requests "show/update current focus"
-- Discussing project status and asking about priorities
-- Completing work and need to know what's next
-- Planning cycle work and need dependency analysis
-- After merging PRs or completing Linear issues
+### Phase 1: Analyze Chat Context
 
-## Workflow
+Scan the current conversation for relevant context.
 
-### Phase 1: Context Analysis
+**Step 1:** Scan last 20-30 messages for:
 
-**Scan chat session for relevant context:**
+- Linear issue mentions (MCP-XXX pattern)
+- File modifications (Write/Edit tool usage)
+- Git operations (commits, PRs mentioned)
+- Test failures or results discussed
+- Work mentioned as needed but not in Linear
 
-1. **Recency-weighted scan** (last 20-30 messages):
-   - Linear issue mentions (MCP-XXX pattern)
-   - File modifications (Write/Edit tool usage)
-   - Git operations (commits, merges, PRs)
-   - Test results (npm test output)
+**Step 2:** Scan entire session for patterns:
 
-2. **Pattern-based detection** (entire session):
-   - Uncompleted work mentioned but not in Linear
-   - Blocking issues mentioned in discussion
-   - Test failures that need addressing
-   - Architecture changes requiring follow-up
+- Uncompleted work mentioned
+- Blocking issues preventing progress
+- Test failures needing fixes
+- Architecture changes requiring follow-up
 
-3. **Context categorization**:
-   - **Active work**: Issues discussed and in progress
-   - **Planned work**: Mentioned but not started
-   - **Gaps**: Work needed but not in current cycle
-   - **Blockers**: Dependencies preventing progress
+**Step 3:** Categorize findings:
 
-**Output context summary:**
+- **Active work**: Issues being discussed/worked on
+- **Gaps**: Work needed but not in current cycle
+- **Blockers**: Dependencies preventing progress
+
+**Step 4:** Display context summary to user:
 
 ```
 📊 Chat Context Analysis
 
-Active Work:
-- MCP-150: Custom instruction parsing (discussed 5 messages ago)
-- Feature X: Implementation ongoing (Write tool usage detected)
+Active Work Detected:
+- {Issue mentions from conversation}
 
 Gaps Detected:
-- Documentation updates for Phase 6 (mentioned but no Linear issue)
-- Integration test for feature Y (test failure detected)
+- {Work mentioned but not in Linear}
 
 Blockers:
-- MCP-150 depends on MCP-92 (completed)
+- {Dependencies or issues blocking progress}
 ```
 
-### Phase 2: Data Collection
+If no significant context found, say: "No active work detected in chat context."
 
-Use helper scripts for deterministic data collection:
+### Phase 2: Collect Linear Cycle Data
 
-1. **Linear cycle data** - `scripts/collect-linear-data.sh`
-   - Get current cycle ID from list_cycles
-   - Query issues by state (In Progress, Todo, Done)
-   - Extract dependencies and blocking relationships
-   - Collect issue metadata (ID, title, labels, status)
+**Step 1:** Call `mcp__linear-server__list_cycles` with:
 
-2. **Git history** - `scripts/analyze-git-history.sh`
-   - Recent commits (last 3 days)
-   - Merge commits and PR references
-   - Linear issue references in commit messages
+- `teamId`: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+- `type`: "current"
 
-3. **Test results** - `scripts/parse-test-results.sh`
-   - Run npm test and parse output
-   - Extract pass/fail counts, duration
-   - Identify failing test names
+**Step 2:** From the response, extract:
 
-4. **Validation checkpoints**:
-   - Verify cycle ID extracted successfully
-   - Check issue count > 3 (warn if suspiciously low)
-   - Confirm emoji encoding in test output
+- `cycleId` = `response[0].id` (e.g., "c82d7f64-689c-42e5-8dea-17ccc8572317")
+- `cycleName` = `response[0].title`
+- `cycleStart` = `response[0].startsAt`
+- `cycleEnd` = `response[0].endsAt`
+- `completedCount` = last value in `response[0].completedIssueCountHistory`
+- `totalCount` = last value in `response[0].issueCountHistory`
 
-**Always show verbose data collection summary** (no debug flag needed):
+**Step 3:** CHECKPOINT - Display to user:
+
+```
+✓ Current Cycle: {cycleName}
+  ID: {cycleId}
+  Dates: {cycleStart} → {cycleEnd}
+  Progress: {completedCount}/{totalCount} issues
+```
+
+**Step 4:** If `cycleId` is empty or null, STOP and show error:
+
+```
+❌ Error: No current cycle found
+Check Linear MCP server connection in Claude Code settings
+```
+
+**Step 5:** Call `mcp__linear-server__list_issues` SIX TIMES with these exact parameters:
+
+**Query 1 - In Progress:**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "In Progress"
+limit: 25
+```
+
+**Query 2 - In Review:**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "In Review"
+limit: 25
+```
+
+**Query 3 - Todo:**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "Todo"
+limit: 20
+```
+
+**Query 4 - Backlog:**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "Backlog"
+limit: 20
+```
+
+**Query 5 - Deferred:**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "Deferred"
+limit: 10
+```
+
+**Query 6 - Done (last 3 days):**
+
+```
+team: "d1aae15e-d5b9-418d-a951-adcf8c7e39a8"
+cycle: {cycleId}  ← USE THE ID FROM STEP 2
+state: "Done"
+updatedAt: "-P3D"
+limit: 20
+```
+
+**Step 6:** Count results from each query:
+
+- activeCount = Query 1 length
+- reviewCount = Query 2 length
+- todoCount = Query 3 length
+- backlogCount = Query 4 length
+- deferredCount = Query 5 length
+- doneCount = Query 6 length
+- totalIncomplete = activeCount + reviewCount + todoCount + backlogCount + deferredCount
+
+**Step 7:** CHECKPOINT - Display to user:
 
 ```
 === Linear Data Collection ===
-Cycle: Modular Transition (c82d7f64-689c-42e5-8dea-17ccc8572317)
-Active Issues: 2
-Planned Issues: 15
-Recent Completions: 6
-Total Issues: 23
+Cycle: {cycleName} ({cycleId})
+Dates: {cycleStart} → {cycleEnd}
+Progress: {completedCount}/{totalCount} issues
 
-=== Git History ===
-Recent Commits: 12
-Merge Commits: 3
-Linear References: MCP-92, MCP-91, MCP-90
+Issues in Current Cycle ONLY:
+- In Progress: {activeCount}
+- In Review: {reviewCount}
+- Todo: {todoCount}
+- Backlog: {backlogCount}
+- Deferred: {deferredCount}
+- Done (last 3d): {doneCount}
 
-=== Test Status ===
-Passing: 805 / 808 (99.6%)
-Duration: 29s
+Total Incomplete: {totalIncomplete}
+Total Issues: {totalIncomplete + doneCount}
 ```
 
-### Phase 3: Work Prioritization Analysis
+**Step 8:** If total issues = 0, warn user:
 
-**Priority factors (in order):**
+```
+⚠️ Warning: No issues found in current cycle
+This may indicate:
+- Cycle filter not applied correctly
+- All work complete
+- Wrong team ID
+```
 
-1. **Blocking dependencies** (highest priority):
-   - Issues that block others → prioritize
-   - Issues blocked by incomplete work → deprioritize
-   - Circular dependencies → flag for resolution
+### Phase 3: Collect Git and Test Data
 
-2. **Test failures**:
-   - Issues related to failing tests → high priority
-   - Issues with passing tests → normal priority
+**Step 1:** Run bash command to get git history:
 
-3. **Cycle deadline proximity**:
-   - Cycle ends in <2 days → urgent
-   - Cycle ends in 2-5 days → high priority
-   - Cycle ends in >5 days → normal priority
+```bash
+cd /Users/shayon/DevProjects/mcp-for-lifeos && git log --since="3 days ago" --no-merges --pretty=format:'%h %s' | head -20
+```
 
-**Note:** Ignore Linear priority labels (often missed or mislabeled)
+Count lines and extract Linear issue references (MCP-XXX pattern).
 
-**Generate prioritization report:**
+**Step 2:** Run bash command to get merge commits:
+
+```bash
+cd /Users/shayon/DevProjects/mcp-for-lifeos && git log --since="3 days ago" --merges --pretty=format:'%h %s' | head -10
+```
+
+Extract PR numbers (#XXX pattern).
+
+**Step 3:** Run test suite:
+
+```bash
+cd /Users/shayon/DevProjects/mcp-for-lifeos && npm test 2>&1
+```
+
+**Step 4:** Parse test output for:
+
+- Passing count (look for "XXX passed")
+- Total count (look for "XXX total")
+- Skipped count (look for "XXX skipped")
+- Test suites (look for "Test Suites: XXX passed")
+- Duration (look for "Time: XXX")
+
+**Step 5:** Display test summary to user:
+
+```
+=== Test Status ===
+Passing: {passing}/{total} ({passRate}%)
+Skipped: {skipped}
+Duration: {duration}s
+```
+
+### Phase 4: Prioritize Work
+
+**Step 1:** Combine all incomplete issues:
+
+- In Progress issues
+- In Review issues
+- Todo issues
+- Backlog issues
+- Deferred issues (flag as blocked)
+
+**Step 2:** For each issue, analyze:
+
+- **Blocking dependencies**: Does description mention "BLOCKED BY" or "REQUIRES"?
+- **Test failures**: Are there failing tests related to this issue?
+- **Cycle deadline**: Days until cycle ends
+
+**Step 3:** Sort issues by priority:
+
+**URGENT (highest priority):**
+
+- Issues with test failures
+- Issues blocking other work
+- Issues with cycle ending in <2 days
+
+**HIGH PRIORITY:**
+
+- Issues with dependencies completed
+- Issues with cycle ending in 2-5 days
+
+**NORMAL PRIORITY:**
+
+- Issues with no blockers
+- Issues with cycle ending in >5 days
+
+**DEFERRED (lowest priority):**
+
+- Issues in "Deferred" state
+- Issues with incomplete dependencies
+
+**Step 4:** Display prioritization to user:
 
 ```
 🎯 Recommended Work Order
 
 URGENT (Next):
-1. MCP-148 - Unit test vault pollution (test failures detected)
-   Reason: Blocking test suite reliability
+1. {Issue ID} - {Title}
+   Reason: {Why this is urgent}
 
 HIGH PRIORITY:
-2. MCP-150 - Custom instruction parsing (unblocks future work)
-   Reason: Blocks 3 downstream issues in next cycle
+2. {Issue ID} - {Title}
+   Reason: {Why this matters}
 
-3. MCP-147 - Documentation updates (cycle ends in 1 day)
-   Reason: Cycle deadline approaching
-
-NORMAL PRIORITY:
-4. MCP-132 - Pagination for YAML properties
-   Reason: No blockers, no test failures
-
-DEFERRED:
-5. MCP-93 - "Last weekday" date parsing (low priority enhancement)
-   Reason: Blocked by MCP-150 completion
+(Show top 3 issues maximum)
 ```
 
-### Phase 4: Gap Analysis
+### Phase 5: Gap Analysis
 
-**Compare chat context against Linear cycle:**
+**Step 1:** Compare chat context (Phase 1) against Linear issues (Phase 2).
 
-1. **Missing work detection**:
-   - Work mentioned in chat but not in Linear
-   - Follow-up tasks implied by recent changes
-   - Technical debt identified during discussion
+**Step 2:** Identify gaps:
 
-2. **User prompt for gaps**:
+- Work mentioned in chat but no Linear issue exists
+- Follow-up tasks implied by recent changes
+- Test failures without corresponding issues
+
+**Step 3:** If gaps found, prompt user:
 
 ```
-⚠️ Gap Analysis: Work Detected Outside Current Cycle
+⚠️ Gaps Detected: Work Outside Current Cycle
 
 Gaps Identified:
-1. Documentation for modularization (mentioned 10 messages ago)
-2. Integration test for custom instructions (test gap)
-3. Performance benchmarks for search consolidation
+1. {Gap description}
+2. {Gap description}
 
 Actions:
 [A] Search Linear for existing issues
@@ -188,153 +318,267 @@ Actions:
 Your choice (A/B/C):
 ```
 
-3. **Execute user choice**:
-   - **A**: Search Linear using `mcp__linear-server__list_issues` with query
-   - **B**: Present issue templates for user approval before creation
-   - **C**: Document gaps in CURRENT-FOCUS.md "Future Work" section
+**Step 4:** Execute user's choice:
 
-### Phase 5: Document Generation
+- **A**: Call `mcp__linear-server__list_issues` with `query` parameter to search
+- **B**: Present issue templates for approval, then create via `mcp__linear-server__create_issue`
+- **C**: Note gaps in document under "⚠️ Future Work" section
 
-**Use bash heredoc for UTF-8 encoding** (not Edit tool):
+If no gaps, skip this phase entirely.
 
-1. **Preserve existing Project Health section**:
+### Phase 6: Generate Document
+
+**Step 1:** Read existing document to preserve Project Health:
 
 ```bash
-PROJECT_HEALTH=$(awk '/## 📊 Project Health/,EOF' "$FOCUS_DOC" 2>/dev/null || echo "")
+awk '/## 📊 Project Health/,EOF' /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md
 ```
 
-2. **Generate document atomically**:
+Save this to a variable.
+
+**Step 2:** Build document sections in memory:
+
+**VERBOSITY RULES (STRICT - to meet 75-line limit):**
+
+- **Recommended Work**: Top 3 issues, 1-line reason each
+- **Planned Work**: Issue ID + title ONLY (NO descriptions, NO context, NO labels)
+- **Recent Completions**: Max 5 issues, Issue ID + 1 sentence ONLY (NO metrics, NO grouping)
+- **Test Status**: Pass/fail + duration ONLY (NO "Recent Fixes" unless critical failure)
+- **Gaps Section**: ONLY include if gaps detected (omit if none)
+
+**Step 3:** Write document using bash heredoc (NOT Edit tool):
 
 ```bash
-cat > "$FOCUS_DOC" << 'EOF'
+cat > /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md << 'EOF'
 # Current Development Focus
 
-**Last Updated:** {timestamp EST}
-**Cycle:** {cycle_name} ({dates})
-**Progress:** {%} ({completed}/{total} issues)
+**Last Updated:** {current timestamp in EST}
+**Cycle:** {cycleName} ({cycleStart} - {cycleEnd})
+**Progress:** {completedCount}/{totalCount} issues
 
 ## 🎯 Recommended Work Order
 
-{Prioritization report from Phase 3}
+{Top 3 prioritized issues from Phase 4 - max 10 lines}
 
 ## 📋 Planned (This Cycle)
 
-{Todo/Backlog issues - brief context only}
+{Issue ID}: {Title}
+{Issue ID}: {Title}
+(ID + title only, NO descriptions)
 
 ## ✅ Recent Completions (Last 3 Days)
 
-{Done issues from last 3d - minimal bullets}
+{Issue ID}: {Title} - {1-sentence summary}
+(Max 5 issues, NO verbose descriptions)
 
 ## ✅ Test Status
 
-{Latest npm test results}
+**Latest Run ({date}):**
+- {passing}/{total} passing ({skipped} skipped)
+- {testSuites} suites, {duration}s
 
-## ⚠️ Gaps & Future Work
+{If gaps detected, include this section:}
+## ⚠️ Future Work
 
-{Gap analysis results from Phase 4}
+{Gap items from Phase 5}
 
-## 📊 Project Health
-
-{Preserved from existing document}
+{Preserved Project Health section}
 EOF
 ```
 
-3. **Verify encoding**:
+**Step 4:** Verify encoding:
 
 ```bash
-# Check UTF-8 encoding
-file "$FOCUS_DOC" | grep -q "UTF-8" || (echo "❌ Encoding error" && exit 1)
-
-# Verify emoji count (should be ≥5)
-EMOJI_COUNT=$(grep -o "[🎯📋✅⚠️📊]" "$FOCUS_DOC" | wc -l | xargs)
-[ "$EMOJI_COUNT" -lt 5 ] && echo "⚠️ Warning: Emoji encoding may have failed"
+file /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md
 ```
 
-### Phase 6: Output & Next Steps
+Must show "UTF-8". If not, STOP and error.
 
-**Present update summary:**
+**Step 5:** Count emojis:
+
+```bash
+grep -o "[🎯📋✅⚠️📊]" /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md | wc -l
+```
+
+Must be ≥4. If not, warn about encoding failure.
+
+**Step 6:** Run markdown linting (REQUIRED):
+
+Use the `/md-lint` slash command:
+
+```bash
+/md-lint docs/CURRENT-FOCUS.md --fix
+```
+
+The command will:
+
+- Auto-fix supported violations
+- Apply manual fixes if violations remain
+- Use project + user-level markdown rules
+- Display final results
+
+Wait for /md-lint to complete before proceeding.
+
+**Step 7:** Check final line count:
+
+```bash
+wc -l /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md
+```
+
+**Step 8:** CHECKPOINT - Display to user:
+
+```
+📄 Document Generated: {lineCount} lines
+
+{If lineCount > 75:}
+⚠️ Warning: Exceeds 75-line target by {lineCount - 75} lines
+Verbosity reduction needed - consider:
+- Fewer Recent Completions (currently showing {count})
+- Remove descriptions from Planned Work
+- Omit Gaps section if not critical
+```
+
+### Phase 7: Present Results
+
+**Step 1:** Display summary:
 
 ```
 ✅ CURRENT-FOCUS.md Updated
 
 📊 Summary:
-- Active Work: 2 issues
-- Planned Work: 15 issues
-- Recent Completions: 6 issues
-- Gaps Detected: 3 (action required)
+- Cycle: {cycleName} ({completedCount}/{totalCount})
+- Incomplete Issues: {totalIncomplete}
+- Recent Completions: {doneCount}
+- Gaps Detected: {gapCount}
 
 🎯 Next Recommended Issue:
-MCP-148 - Unit test vault pollution
-Reason: Test failures blocking reliability
+{Top issue from prioritization}
+Reason: {Why this is next}
 
-📄 Document: docs/CURRENT-FOCUS.md (78 lines, UTF-8 ✓)
+📄 Document: docs/CURRENT-FOCUS.md ({lineCount} lines, UTF-8 ✓)
 ```
 
-**Prompt for immediate action:**
+**Step 2:** Prompt user for immediate action:
 
 ```
-Ready to start MCP-148? (y/n)
+Ready to start {next issue ID}? (y/n)
 ```
 
-If yes, provide:
-- Issue details (description, acceptance criteria)
-- Branch name suggestion
-- Testing strategy
+**Step 3:** If user says yes, call `mcp__linear-server__get_issue` with the issue ID and display:
 
-## Helper Scripts
+- Full description
+- Acceptance criteria
+- Dependencies
+- Suggested branch name: `feature/{issue-id-lowercase}-{brief-slug}`
 
-All scripts located in `.claude/skills/current-focus/scripts/`:
+## Workflow: Show Current Focus
 
-1. **`collect-linear-data.sh`**
-   - Inputs: Team ID, cycle type
-   - Outputs: JSON with cycle metadata and issues
-   - Features: Cycle ID extraction, token-limited queries, validation
+**Step 1:** Read existing document:
 
-2. **`analyze-git-history.sh`**
-   - Inputs: Project directory, days back
-   - Outputs: Commits, merges, Linear references
-   - Features: Pattern extraction, PR detection
+```bash
+cat /Users/shayon/DevProjects/mcp-for-lifeos/docs/CURRENT-FOCUS.md
+```
 
-3. **`parse-test-results.sh`**
-   - Inputs: npm test output
-   - Outputs: Pass/fail counts, duration, failing tests
-   - Features: Error extraction, timing analysis
+**Step 2:** Display content to user with formatting preserved.
 
-4. **`generate-document.sh`**
-   - Inputs: All collected data + template
-   - Outputs: Final CURRENT-FOCUS.md content
-   - Features: UTF-8 heredoc, emoji verification, section preservation
+**Step 3:** Show last updated timestamp and suggest:
+
+```
+Last updated: {timestamp}
+
+To refresh with latest data: "update current focus"
+```
+
+## Critical Validation Checkpoints
+
+Execute these validations at each phase:
+
+**After Phase 2, Step 2:**
+
+```
+CHECKPOINT: Verify cycleId extracted
+If cycleId is null/empty → STOP, show error
+```
+
+**After Phase 2, Step 5:**
+
+```
+CHECKPOINT: Verify cycle filter applied
+Show user: "Querying {state} issues FROM CYCLE {cycleId}"
+```
+
+**After Phase 2, Step 7:**
+
+```
+CHECKPOINT: Validate issue counts
+If totalIssues = 0 → Warn user about possible query error
+If totalIssues > 30 → Warn user about possible missing cycle filter
+```
+
+**After Phase 6, Step 6:**
+
+```
+CHECKPOINT: Linting complete
+/md-lint command handles auto-fix + manual fixes
+Verify "0 error(s)" in output before proceeding
+```
+
+**After Phase 6, Step 7:**
+
+```
+CHECKPOINT: Line count validation
+If > 75 lines → Show warning with reduction suggestions
+If > 85 lines → MANDATORY reduction required
+```
 
 ## Reference Materials
 
-See `references/output-format.md` for:
-- Document structure examples
-- Section formatting guidelines
+Consult `references/output-format.md` for:
+
+- Section templates
+- Verbosity reduction strategies for meeting 75-line limit
 - Emoji usage patterns
-- Line length requirements (<100 lines)
+- Data mapping (which Linear states go where)
 
-## Integration with Existing Workflow
+## Error Recovery
 
-This skill **replaces** the `/current-focus` slash command for complex workflows while keeping the command available for simple "show current focus" requests.
+**If Linear MCP fails:**
 
-**Division of responsibility:**
-- **Slash command**: View-only mode (`/current-focus view`)
-- **Skill**: Full update workflow with context analysis and prioritization
+1. Show user the error
+2. Ask: "Retry query or skip Linear data?"
+3. If skip, generate document with git/test data only
 
-## Error Handling
+**If test suite fails:**
 
-**Common errors and recovery:**
+1. Show failure details
+2. Flag test failures in Recommended Work Order
+3. Continue with document generation
 
-1. **No cycle found**: Verify Linear MCP server connection
-2. **Empty issue list**: Check team ID and cycle ID extraction
-3. **Encoding failure**: Verify bash heredoc syntax and file command
-4. **Token limit exceeded**: Reduce query limits in collect-linear-data.sh
+**If linting fails:**
+
+1. /md-lint command automatically handles manual fixes
+2. Review /md-lint output for final status
+3. If still failing after /md-lint, investigate markdown syntax errors
+
+**If exceeds 75 lines:**
+
+1. Identify verbose sections (check Recent Completions first)
+2. Reduce to 5 issues maximum in Recent Completions
+3. Remove ALL descriptions from Planned Work
+4. Regenerate and re-lint
 
 ## Project Context
 
-**MCP for LifeOS specifics:**
-- Team ID: `d1aae15e-d5b9-418d-a951-adcf8c7e39a8`
-- Cycle-based development workflow
-- Direct master branch (no CI/CD)
-- Test suite: 805/808 passing (99.6%)
-- Document location: `docs/CURRENT-FOCUS.md`
+**MCP for LifeOS Team:**
+
+- Team ID: d1aae15e-d5b9-418d-a951-adcf8c7e39a8
+- Cycle-based development (weekly cycles)
+- Direct master branch workflow (no CI/CD)
+- Test suite: ~805/808 passing (99.6% typical)
+
+**Document Purpose:**
+
+- Focus on FUTURE work (what's next)
+- Minimal PAST work (what's done)
+- Actionable priorities
+- Updated after each PR merge

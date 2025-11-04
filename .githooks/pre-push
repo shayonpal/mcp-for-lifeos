@@ -1,0 +1,15 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ "${SKIP_MCP_MODULAR_SMOKE:=0}" = "1" ]; then
+  echo "⚠️  SKIP_MCP_MODULAR_SMOKE=1 set; skipping modularization smoke test."
+  exit 0
+fi
+
+echo "➡️  Running TypeScript build (npm run build)..."
+npm run build
+
+echo "➡️  Running modularization validation (node scripts/validate-modularization.mjs)..."
+node scripts/validate-modularization.mjs
+
+echo "✅ Pre-push checks passed."
