@@ -1,66 +1,178 @@
-# Repository Guidelines
+# CLAUDE.md - LifeOS MCP Server
 
-## Project Structure & Module Organization
+**Repository:** https://github.com/shayonpal/mcp-for-lifeos
+**Linear Team ID:** d1aae15e-d5b9-418d-a951-adcf8c7e39a8
 
-TypeScript sources live in `src/`, grouped by capability (`search-engine.ts`,  
-`tool-router.ts`, analytics, YAML managers). Contract definitions that agents  
-rely on sit in `dev/contracts`, and automation utilities live under `scripts/`.  
-Guides and reference docs are in `docs/`, static assets in `public/`, and build  
-artefacts in `dist/` (do not edit generated code). Example configuration stays  
-in `config-examples/`. Tests are held in `tests/` split into `unit`,  
-`integration`, `contracts`, and reusable `fixtures`.
+Model Context Protocol server for LifeOS Obsidian vault management with YAML compliance, PARA method organization, and template system.
 
-## Build, Test, and Development Commands
+**Current Focus**: Core MCP server functionality, technical debt reduction, and user experience.
 
-- `npm run dev` – start the MCP server with `tsx` hot reload.
-- `npm run build` – compile TypeScript into ESM output in `dist/`.
-- `npm run start` – run the compiled server for production parity.
-- `npm run lint` / `npm run typecheck` – run ESLint and `tsc --noEmit`.
-- `npm run test` (or `test:unit`, `test:integration`) – launch Jest suites;
-  append `--watch` while iterating.
+**Platform Compatibility**: This project officially supports **Unix-only platforms** (macOS, Linux, WSL2). Native Windows is not supported. See [ADR-007](docs/adr/007-unix-only-platform-support.md) for rationale.
 
-## Coding Style & Naming Conventions
+## Current Focus
 
-Use 2-space indentation, ES module imports, and prefer named exports. Adopt  
-`PascalCase` for classes, `camelCase` for functions and variables, and  
-`SCREAMING_SNAKE_CASE` for environment-derived constants. Create new files with  
-`kebab-case.ts` names, keeping side effects in entry points like `src/index.ts`.  
-Run `npm run lint` before PRs and rely on inline `eslint-disable` comments only  
-when documented in the review.
+**See [docs/CURRENT-FOCUS.md](docs/CURRENT-FOCUS.md) for:**
 
-## Testing Guidelines
+- Active work and branch information
+- Cycle plan vs execution status
+- Immediate queue and upcoming priorities
+- Recent completions and test status
+- Update this after merging PRs to master
 
-Place unit specs in `tests/unit` with shared mocks in `tests/fixtures`; broader  
-flows belong in `tests/integration`, and protocol checks in `tests/contracts`.  
-Name files `*.spec.ts` so Jest auto-discovers them and keep executions  
-deterministic by relying on fixtures instead of real vault mutations. Run  
-`npm run test -- --coverage` before releases, especially after adding tools or  
-routes.
+## Common Commands
 
-## Commit & Pull Request Guidelines
+### Development
 
-Follow Conventional Commits (`type(scope): summary`) and reference issues or PRs  
-when relevant (e.g., `fix(core): stabilize analytics session ids (#123)`).  
-Before opening a PR, confirm lint, typecheck, and targeted Jest suites pass,  
-link the tracking issue, describe config or documentation impacts, and attach  
-screenshots or logs when behaviour shifts.
+```bash
+npm install          # Install dependencies
+npm run dev          # Run with auto-reload (tsx)
+npm run build        # Compile TypeScript
+npm run typecheck    # Type checking (this project uses typecheck, NOT eslint)
+npm test             # Run all tests before committing
 
-## Configuration & Security Notes
+# Integration tests with memory management
+node --expose-gc ./node_modules/.bin/jest tests/integration
+```
 
-Copy `src/config.example.ts` to `src/config.ts`, update vault paths, and keep  
-vault-specific data out of version control. Store secrets in `.env` (see  
-`.env.example`) and verify `.gitignore` catches them. For debugging, export  
-`CONSOLIDATED_TOOLS_ENABLED=false` before `npm run dev` to disable consolidated  
-tooling.
+### Testing
 
-## Issue Lookup Protocol
+```bash
+npm run test:unit         # Unit tests only
+npm run test:integration  # Integration tests
+npm test                  # All tests (run before commits)
+```
 
-When a request references a Linear issue identifier such as `MCP-XXX`, always
-query the Linear MCP tools for the full context before responding. Fetch:
-- core issue details (title, description, status, priority)
-- comments or timeline notes
-- parent and sub-issue relationships
-- associated project metadata (if present)
+### Analytics Dashboard
 
-Use these tool responses as the authoritative source when summarizing or
-reasoning about the issue.
+```bash
+# View test coverage and quality metrics
+node scripts/start-analytics-dashboard.js
+```
+
+### Markdown Linting
+
+```bash
+markdownlint-cli2 --fix <file>   # Fix markdown issues
+markdownlint-cli2 <file>          # Check without fixing
+```
+
+## MCP Server Architecture
+
+**Core Components:**
+
+- **MCP Server:** `src/index.ts` (main entry point)
+- **Tool Router:** `src/tool-router.ts` (unified tool consolidation)
+- **Modules:** Organized domain logic in `src/modules/` (files, templates, yaml, search, links, transactions, analytics)
+- **Shared:** Core utilities in `src/shared/` (types, config, logger, path/regex/text utils)
+
+**See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for:**
+
+- Key design patterns (Unified Tool Architecture, YAML Compliance)
+- Integration points (Claude Desktop, Raycast, Linear)
+- Performance characteristics and scalability
+
+**Deployment:** See [docs/guides/DEPLOYMENT-GUIDE.md](docs/guides/DEPLOYMENT-GUIDE.md)
+
+## Platform Support
+
+**Supported Platforms:**
+
+- ✅ **macOS** (primary development and testing platform)
+- ✅ **Linux** (Ubuntu 18.04+, other distros)
+- ⚠️ **Windows**: WSL2 only (native Windows not supported)
+
+See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support rationale.
+
+## Key File Locations
+
+**Core:**
+
+- `src/index.ts` - MCP server entry point
+- `src/tool-router.ts` - Tool routing and consolidation
+- `src/modules/files/` - File operations (note-crud, daily-note-service, file-io, yaml-operations, content-insertion, folder-operations)
+- `src/modules/search/search-engine.ts` - Search functionality
+- `src/modules/links/` - Link scanning and updates
+- `src/modules/transactions/` - Atomic operations with WAL
+- `src/shared/` - Core utilities and types
+
+**Tests:**
+
+- `tests/unit/` - Unit tests
+- `tests/integration/` - Integration tests (require `--expose-gc`)
+
+**Documentation:**
+
+- `docs/` - See CURRENT-FOCUS.md, ARCHITECTURE.md, guides/, tools/
+
+**Project Management:**
+
+- Linear Team: "MCP for LifeOS" (ID: `d1aae15e-d5b9-418d-a951-adcf8c7e39a8`)
+- Use Linear MCP Server for issue operations
+- Direct master branch workflow (no CI/CD automation)
+
+## Important Behavioral Rules
+
+**NEVER:**
+
+- Create files unless absolutely necessary (prefer editing existing files)
+- Commit without running `npm test` first
+- Ignore type errors (run `npm run typecheck`)
+- Copy-paste code without understanding context
+
+**ALWAYS:**
+
+- Check docs/CURRENT-FOCUS.md for current priorities
+- Run tests before committing changes
+- Update CURRENT-FOCUS.md after merging PRs
+- Use Linear Team ID `d1aae15e-d5b9-418d-a951-adcf8c7e39a8` for issue operations
+- Reference architecture docs rather than duplicating patterns
+
+**Approach:**
+
+- Be pragmatic and collaborative (treat user as peer, not boss)
+- Push back on ideas when genuinely unconvinced
+- Focus on core server functionality over UI/web interfaces
+- Prefer logic, English, and pseudocode over raw code for explanations
+
+**See Also**: `~/.claude/guidelines/git-strategy.md` (commit workflow, branching, PR process, release strategy)
+
+## Agent Usage
+
+Use specialized agents for complex tasks: `web-researcher` (external docs), `doc-search` (internal patterns), `linear-expert` (issues), `git-expert` (commits).
+
+**Project-Specific Agents**: [docs/guides/AGENT-USAGE.md](docs/guides/AGENT-USAGE.md) - Full roster, use cases, Serena MCP integration
+
+**General Patterns**: `~/.claude/guidelines/agent-patterns.md` - Parallel execution, scratchpad patterns, context management
+
+## Project-Specific Skills
+
+**current-focus** (`.claude/skills/current-focus/`)
+- **Trigger keywords:** "show current focus", "update current focus"
+- **Purpose:** Sync Linear cycle data with CURRENT-FOCUS.md, analyze chat context for gaps, prioritize work based on dependencies and test failures
+- **Key features:**
+  - Context analysis (recency-weighted + pattern-based)
+  - Work prioritization (blocking dependencies > test failures > deadlines)
+  - Gap analysis with user prompting (search Linear / create issues / ignore)
+  - UTF-8 document generation via bash heredoc
+- **Helper scripts:** `collect-linear-data.sh`, `analyze-git-history.sh`, `parse-test-results.sh`, `generate-document.sh`
+- **Documentation:** See `.claude/skills/current-focus/README.md` for full workflow
+
+**Note:** The `/current-focus` slash command remains available for view-only mode. Use the skill for complex updates with prioritization.
+
+## Output Style Preferences
+
+- **Audience:** Product manager perspective (logic, English, pseudocode over code)
+- **Responses:** Concise and actionable
+- **Action Items:** Summarize as bullet points
+- **Next Steps:** Always suggest what to do next
+- **Parallel Work:** Use multiple agent instances when applicable
+
+**See Also**: `~/.claude/guidelines/code-style.md` (documentation standards, naming conventions, testing practices)
+
+## Tool Preferences
+
+- Use `fd` instead of `find`
+- Use `rg` instead of `grep`
+- Use `eza` instead of `ls` (when listing directories)
+- Use `bat` instead of `cat` (when viewing files)
+- Reference `~/.claude/guidelines/stack-preferences.md` for technology choices
