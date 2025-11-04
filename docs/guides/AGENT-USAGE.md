@@ -110,7 +110,7 @@ When multiple agents could handle a task, use this priority:
 
 **Serena MCP** provides advanced code analysis, memory management, and symbolic operations.
 
-**Reference**: `/Users/shayon/DevProjects/~meta/docs/apis/serena/serena-mcp-api.md`
+**Reference**: See Serena MCP documentation for full API details
 
 **Use Serena for**:
 
@@ -136,7 +136,7 @@ When multiple agents could handle a task, use this priority:
 
 **Provide clear context**:
 
-- Share relevant Linear issue IDs
+- Share relevant issue IDs (if using issue tracking)
 - Specify which files or components are involved
 - Mention any constraints or requirements
 - Reference related documentation
@@ -149,7 +149,7 @@ When multiple agents could handle a task, use this priority:
 2. **Code Patterns**: doc-search locates similar implementations
 3. **Code Exploration**: agent-Plan explores architecture and patterns
 4. **Implementation**: Use Serena MCP for code navigation and analysis
-5. **Issue Tracking**: linear-expert updates issue status
+5. **Issue Tracking**: Update issue tracking system (if using)
 6. **Deployment**: git-expert commits and creates PR
 
 ### Bug Fix Workflow
@@ -158,5 +158,5 @@ When multiple agents could handle a task, use this priority:
 2. **Code Exploration**: agent-Plan analyzes affected code areas
 3. **Research**: web-researcher investigates external solutions if needed
 4. **Implementation**: Serena MCP for precise code changes
-5. **Issue Updates**: linear-expert tracks progress
-6. **Deployment**: git-expert commits with Linear reference
+5. **Issue Updates**: Track progress in issue tracking system
+6. **Deployment**: git-expert commits with issue reference

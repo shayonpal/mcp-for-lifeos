@@ -453,8 +453,8 @@ describe('YourTest', () => {
 ## Related Documentation
 
 - **[Architecture](../ARCHITECTURE.md)** - Config module architecture
-- **[MCP-90](https://linear.app/agilecode-studio/issue/MCP-90)** - Phase 1 implementation issue
-- **[MCP-17](https://linear.app/agilecode-studio/issue/MCP-17)** - Parent issue (custom instructions project)
+- **[Configuration Guide](CONFIGURATION.md)** - Full configuration options
+- **[Tool Documentation](../api/TOOLS.md)** - MCP tool reference
 
 ---
 
