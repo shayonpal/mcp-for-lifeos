@@ -177,7 +177,7 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 
 **Phase 2 (MCP-106) Results**:
 
-- Created `src/link-scanner.ts` (426 lines) with LinkScanner class
+- Created `src/modules/links/link-scanner.ts` (426 lines) with LinkScanner class
 - Centralized `WIKILINK_PATTERN` in `src/regex-utils.ts`
 - 42 tests (30 unit, 12 integration) - 100% pass rate
 - Performance: Consistently <5000ms for 1000+ notes
@@ -254,7 +254,7 @@ const WIKILINK_PATTERN = /(!)?\\[\\[(?:(.+?)\\|)?(.+?)(?:#([^|\\]]+))?(?:\\^([^|
 
 - Linear Issue MCP-2: Add rename_note tool (parent epic)
 - Linear Issue MCP-106: Link Detection Infrastructure (Phase 2 implementation)
-- `src/link-scanner.ts`: Implementation using regex patterns
+- `src/modules/links/link-scanner.ts`: Implementation using regex patterns
 - `src/regex-utils.ts`: Centralized WIKILINK_PATTERN constant
 - Test coverage: `tests/unit/link-scanner.test.ts`, `tests/integration/link-scanner.integration.test.ts`
 

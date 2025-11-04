@@ -155,7 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Transaction Manager Core Protocol** (MCP-117, 2025-11-01 18:39): Implemented five-phase atomic transaction protocol for file rename operations with full rollback capability, Write-Ahead Logging (WAL), and staleness detection
-  - Created `src/transaction-manager.ts` (691 lines) with TransactionManager class providing execute(), plan(), prepare(), validate(), commit(), success(), abort(), rollback() methods for managing atomic rename transactions
+  - Created `src/modules/transactions/transaction-manager.ts` (691 lines) with TransactionManager class providing execute(), plan(), prepare(), validate(), commit(), success(), abort(), rollback() methods for managing atomic rename transactions
   - Five-phase protocol ensures vault consistency: PLAN (build manifest with SHA-256 hashes), PREPARE (stage files and write WAL), VALIDATE (detect stale content), COMMIT (atomically promote staged files), SUCCESS/ABORT (cleanup or rollback)
   - SHA-256 hash validation detects file modifications during transaction (staleness detection) throwing TRANSACTION_STALE_CONTENT error to prevent writing stale content
   - Integrates with two-phase link updater (MCP-116): render mode during plan phase for preview, commit mode during commit phase for atomic link updates

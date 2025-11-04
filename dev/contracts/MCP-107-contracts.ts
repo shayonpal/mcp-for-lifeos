@@ -271,25 +271,25 @@ export interface RenameHandlerIntegration {
  */
 export interface MCP106Dependencies {
   /**
-   * LinkScanner class from src/link-scanner.ts
+   * LinkScanner class from src/modules/links/link-scanner.ts
    * - Use: LinkScanner.scanVaultForLinks() to find all references
    * - Do NOT: Duplicate link detection logic
    */
-  LinkScanner: 'src/link-scanner.ts';
+  LinkScanner: 'src/modules/links/link-scanner.ts';
 
   /**
-   * LinkReference interface from src/link-scanner.ts
+   * LinkReference interface from src/modules/links/link-scanner.ts
    * - Use: Extract sourcePath for file updates
    * - Contains: All link metadata (target, alias, heading, block, line/column)
    */
-  LinkReference: 'src/link-scanner.ts';
+  LinkReference: 'src/modules/links/link-scanner.ts';
 
   /**
-   * LinkScanResult interface from src/link-scanner.ts
+   * LinkScanResult interface from src/modules/links/link-scanner.ts
    * - Use: Get totalReferences and scanTimeMs for LinkUpdateResult
    * - Contains: All scan results and metadata
    */
-  LinkScanResult: 'src/link-scanner.ts';
+  LinkScanResult: 'src/modules/links/link-scanner.ts';
 
   /**
    * WIKILINK_PATTERN constant from src/regex-utils.ts

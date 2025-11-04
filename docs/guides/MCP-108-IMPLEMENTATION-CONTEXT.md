@@ -193,7 +193,7 @@ static writeFileWithRetry(
 **Create Class**:
 
 ```typescript
-// src/wal-manager.ts
+// src/modules/transactions/wal-manager.ts
 export class WALManager {
   private walDir = '~/.config/mcp-lifeos/wal/';
 
@@ -278,7 +278,7 @@ Contact support if manual intervention is needed.
 
 ### Files to Create
 
-- `src/wal-manager.ts` (WALManager class, ~150 lines)
+- `src/modules/transactions/wal-manager.ts` (WALManager class, ~150 lines)
 - `~/.config/mcp-lifeos/wal/README.md` (auto-generated on first use)
 
 ### Test Requirements
@@ -481,7 +481,7 @@ export async function updateVaultLinks(
 **Create Class**:
 
 ```typescript
-// src/transaction-manager.ts
+// src/modules/transactions/transaction-manager.ts
 import { WALManager } from './wal-manager.js';
 import { updateVaultLinks } from './link-updater.js';
 import { VaultUtils } from './vault-utils.js';
@@ -680,7 +680,7 @@ export class TransactionManager {
 
 ### Files to Create
 
-- `src/transaction-manager.ts` (TransactionManager class, ~400 lines)
+- `src/modules/transactions/transaction-manager.ts` (TransactionManager class, ~400 lines)
 - `src/error-types.ts` (if not exists - add TransactionErrorCode enum)
 
 **Error Codes to Add**:
