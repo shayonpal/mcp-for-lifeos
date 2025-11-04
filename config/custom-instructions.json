@@ -1,5 +1,172 @@
 {
-  "noteCreationRules": "Daily notes in the Journals/Daily/ directory must use YYYY-MM-DD format (e.g., 2025-02-27.md). The filename should be the date only, no titles or prefixes.",
-  "editingRules": "When editing daily notes, preserve the YYYY-MM-DD filename format. Do not rename daily notes.",
-  "templateRules": "Daily note templates should follow the tpl-daily template structure with proper YAML frontmatter including 'date created' field matching the filename date."
+  "noteCreationRules": {
+    "general": {
+      "urlFieldName": "source",
+      "countryFormat": "{{country}} [{{code}}]",
+      "autoManagedFields": ["date created", "date modified"],
+      "forbiddenValues": ["Documentation"]
+    },
+    "dailyNotes": {
+      "filenameFormat": "YYYY-MM-DD",
+      "directory": "20 - Areas/21 - Myself/Journals/Daily",
+      "yaml": {
+        "aliases": ["MMMM DD, YYYY"],
+        "content type": "Daily Note",
+        "tags": ["dailyNote"]
+      }
+    },
+    "restaurant": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Restaurant"],
+        "tags": ["restaurant"],
+        "requiredFields": ["city", "state", "country", "cuisine", "source"]
+      },
+      "locationFormat": {
+        "city": "required",
+        "state": "required",
+        "country": "{{name}} [{{code}}]"
+      }
+    },
+    "recipe": {
+      "yaml": {
+        "content type": ["Recipe"],
+        "category": ["Food & Drinks"],
+        "requiredFields": ["sub-category", "cuisine", "major ingredients"]
+      },
+      "subCategoryRules": {
+        "Beverage": ["Smoothie", "Cocktail", "Mocktail", "Shake", "Juice", "Tea", "Coffee"],
+        "Food": ["Breakfast", "Lunch", "Dinner", "Side", "Appetizer", "Main Course", "Salad", "Curry", "Vegetarian", "Non-vegetarian"]
+      }
+    },
+    "book": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Book"],
+        "requiredFields": ["author", "genre"],
+        "optionalFields": ["reading date", "source"]
+      }
+    },
+    "article": {
+      "yaml": {
+        "content type": "Article",
+        "requiredFields": ["source"]
+      }
+    },
+    "writingByMe": {
+      "yaml": {
+        "content type": ["Writing"],
+        "author": ["[[About Me|Shayon Pal]]"]
+      },
+      "types": {
+        "article": ["Writing", "Article"],
+        "blog": ["Writing", "Blog Post"],
+        "newsletter": ["Writing", "Newsletter"]
+      }
+    },
+    "newsletter": {
+      "yaml": {
+        "content type": ["Writing", "Newsletter"],
+        "project": "Newsletter",
+        "requiredFields": ["slug", "datetime", "summary", "theme", "cover_image_url"],
+        "defaults": {
+          "theme": "light",
+          "cover_image_url": ""
+        }
+      }
+    },
+    "game": {
+      "yaml": {
+        "content type": "Reference",
+        "category": "Game",
+        "tags": ["game"],
+        "requiredFields": ["genre", "platform", "release year", "source"]
+      }
+    },
+    "touristSpot": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Tourist Spot", "Travel"],
+        "tags": ["toVisit"],
+        "requiredFields": ["city", "country", "sub-category", "source"]
+      }
+    },
+    "medical": {
+      "yaml": {
+        "content type": "Medical"
+      },
+      "types": {
+        "invoice": "Invoice",
+        "prescription": "Prescription",
+        "record": "Record",
+        "report": "Report",
+        "research": "Research"
+      }
+    },
+    "specialPeople": {
+      "sugar": {
+        "people": ["[[Sugar]]"],
+        "tags": ["sugar"]
+      },
+      "mishti": {
+        "people": ["[[Mishti]]"],
+        "tags": ["mishti"]
+      },
+      "sakshi": {
+        "people": ["[[Sakshi Chopra|Sakshi]]"],
+        "tags": ["sakshi"]
+      },
+      "vidushi": {
+        "people": ["[[Vidushi Soni|Vidushi]]"],
+        "tags": ["vidushi"]
+      },
+      "drFrancis": {
+        "people": ["[[Dr Francis Okoroh]]"]
+      }
+    }
+  },
+  "editingRules": {
+    "preserveFields": ["date created", "date modified"],
+    "removeValues": ["Documentation"],
+    "dailyNotes": {
+      "preserveFilename": true,
+      "filenamePattern": "YYYY-MM-DD"
+    },
+    "locationEnrichment": {
+      "enabled": true,
+      "inferFromContent": true,
+      "addMissingFields": ["city", "state", "country"]
+    },
+    "countryNormalization": {
+      "enabled": true,
+      "format": "{{name}} [{{code}}]",
+      "examples": {
+        "Canada": "Canada [CA]",
+        "India": "India [IN]"
+      }
+    }
+  },
+  "templateRules": {
+    "daily": {
+      "template": "tpl-daily",
+      "yamlCompliance": true,
+      "includeAlias": true,
+      "aliasFormat": "MMMM DD, YYYY"
+    },
+    "restaurant": {
+      "template": "tpl-restaurant",
+      "enforceStructure": true,
+      "requiredSections": ["Overview", "Details", "Known For"]
+    },
+    "recipe": {
+      "template": "tpl-recipe",
+      "enforceCategories": true,
+      "validateSubCategory": true
+    },
+    "book": {
+      "template": "tpl-books",
+      "enforceGenreArray": true,
+      "enforceAuthorArray": true
+    }
+  }
 }

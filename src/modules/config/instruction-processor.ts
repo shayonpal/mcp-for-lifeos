@@ -230,11 +230,25 @@ export class InstructionProcessor {
         );
       }
 
-      // Return with expected shape (rules as strings)
+      // Convert to strings for storage (backward compatible with inline string format)
+      // File-based instructions can be structured objects - stringify them for storage
+      // MCP-150 will parse them back into objects when applying
       return {
-        noteCreationRules: parsed.noteCreationRules,
-        editingRules: parsed.editingRules,
+        noteCreationRules: parsed.noteCreationRules
+          ? (typeof parsed.noteCreationRules === 'string'
+              ? parsed.noteCreationRules
+              : JSON.stringify(parsed.noteCreationRules))
+          : undefined,
+        editingRules: parsed.editingRules
+          ? (typeof parsed.editingRules === 'string'
+              ? parsed.editingRules
+              : JSON.stringify(parsed.editingRules))
+          : undefined,
         templateRules: parsed.templateRules
+          ? (typeof parsed.templateRules === 'string'
+              ? parsed.templateRules
+              : JSON.stringify(parsed.templateRules))
+          : undefined
       };
     } catch (error: any) {
       if (error instanceof SyntaxError) {
