@@ -1,0 +1,1 @@
+Please thoroughly investigate the codebase and validate/invalidate both the issues identified and solutions proposed in the PR comments made by Github Copilot. Even if you find the issues identified as valid, suggest a solution that you think is right. I can match the solution suggested by Copilot, but doesn't necessarily has to. Use your best judgement.

@@ -144,6 +144,21 @@ Use specialized agents for complex tasks: `web-researcher` (external docs), `doc
 
 **General Patterns**: `~/.claude/guidelines/agent-patterns.md` - Parallel execution, scratchpad patterns, context management
 
+## Project-Specific Skills
+
+**current-focus** (`.claude/skills/current-focus/`)
+- **Trigger keywords:** "show current focus", "update current focus"
+- **Purpose:** Sync Linear cycle data with CURRENT-FOCUS.md, analyze chat context for gaps, prioritize work based on dependencies and test failures
+- **Key features:**
+  - Context analysis (recency-weighted + pattern-based)
+  - Work prioritization (blocking dependencies > test failures > deadlines)
+  - Gap analysis with user prompting (search Linear / create issues / ignore)
+  - UTF-8 document generation via bash heredoc
+- **Helper scripts:** `collect-linear-data.sh`, `analyze-git-history.sh`, `parse-test-results.sh`, `generate-document.sh`
+- **Documentation:** See `.claude/skills/current-focus/README.md` for full workflow
+
+**Note:** The `/current-focus` slash command remains available for view-only mode. Use the skill for complex updates with prioritization.
+
 ## Output Style Preferences
 
 - **Audience:** Product manager perspective (logic, English, pseudocode over code)

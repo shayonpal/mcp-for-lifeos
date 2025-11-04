@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- 2025-11-04 - docs: prepare documentation for external users
+  - Generalized ARCHITECTURE.md to remove internal-only references and private Linear workflows
+  - Pruned guides for external users (removed private team references and internal tooling details)
+  - Linked all TODO comments to Linear issues and created tracking issues for technical debt
+
 ### Added
 
 - 2025-11-04 07:01 - feat: implement hot-reload custom instructions (MCP-92)
@@ -22,28 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **TypeScript Compliance**: Zero type errors, successful build, `NonNullable<CustomInstructionsConfig['inline']>` return type for strict null safety
   - **Zero Breaking Changes**: Pass-through default when no instructions configured, existing tools work unchanged, feature flag ready for future granular control
   - **Future Work**: Full rule parsing/application (YAML defaults, naming conventions, content boilerplate), additional tool integration points (updateNote, insertContent, template processing), comprehensive integration tests
-
-### Changed
-
-- 2025-11-04 05:30 - refactor: eliminate VaultUtils facade, migrate to domain modules (MCP-91)
-
-- **VaultUtils Facade Elimination** (MCP-91, 2025-11-04): Completed Phase 4/5 of vault-utils decomposition by fully eliminating the 483-line VaultUtils facade class and migrating all consumers to direct domain module imports
-  - **Core Refactoring**: Deleted `src/modules/files/vault-utils.ts` (483 lines) - eliminated god class anti-pattern and completed architectural decomposition that began with MCP-141 through MCP-144
-  - **New Domain Modules Created**:
-    - `src/modules/links/link-text-builder.ts`: buildNewLinkText(), updateNoteLinks() for wikilink construction and replacement
-    - `src/shared/metadata-utils.ts`: getLocalDate(), normalizeTagsToArray(), matchesContentType(), hasAnyTag() for date/tag/content-type utilities
-    - `src/modules/search/search-utilities.ts`: findNoteByTitle(), findNotes(), getAllNotes(), searchNotes() for search and discovery operations
-  - **Module Organization**: Files module now exports 7 focused domain functions (note-crud, daily-note-service, file-io, content-insertion, yaml-operations, folder-operations); Links module exports link-text-builder + existing link-scanner/updater; Search module exports search-utilities + existing SearchEngine/QueryParser; Shared module exports metadata-utils + existing path/text/config utilities
-  - **Production Files Updated** (7): Updated tool-router.ts and 6 server handlers (utility, note, legacy-alias, consolidated, metadata, link-updater) to use direct domain imports instead of VaultUtils facade
-  - **Test Infrastructure Updated** (25 files): Created `tests/helpers/test-utils.ts` with resetTestSingletons() placeholder (no-op pending MCP-92), updated vault-setup.ts to use new helper, migrated 18 test files for resetSingletons pattern, updated 7 test files for direct method imports
-  - **Documentation Complete** (18 files): Updated 11 tool docs, 3 architecture docs (ARCHITECTURE.md, ADR-002, ADR-004), 4 development guides (TESTING.md, DEPLOYMENT-GUIDE.md, MCP-108-IMPLEMENTATION-CONTEXT.md, README.md) to reflect domain module architecture
-  - **Memory Consolidation** (5 files): Updated testing_guide.md, vault_integration_patterns.md, obsidian_integration.md, wal_transaction_patterns.md, code_quality_patterns.md to document facade elimination pattern and migration path
-  - **Implementation Contracts**: Created `dev/contracts/MCP-91-contracts.ts` (800+ lines) defining interfaces, behavioral contracts (MUST/MUST NOT), validation gates, and module responsibility boundaries
-  - **Test Results**: 805/808 tests passing (100% of non-skipped tests), TypeScript compilation: 0 errors, net code reduction: 448 lines (254 insertions, 702 deletions across 36 files)
-  - **Zero Breaking Changes**: Internal refactoring only - all MCP tools remain unchanged, no user-facing impact
-  - **Follow-up Work**: MCP-92 will implement proper singleton reset methods to replace no-op placeholder
-
-### Added
 
 - 2025-11-04 03:54 - feat: extract config & instruction scaffolding from vault-utils (MCP-90)
 
@@ -195,6 +180,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Foundation for reliable crash recovery ensuring vault consistency after unexpected server termination
 
 ### Changed
+
+- 2025-11-04 05:30 - refactor: eliminate VaultUtils facade, migrate to domain modules (MCP-91)
+
+- **VaultUtils Facade Elimination** (MCP-91, 2025-11-04): Completed Phase 4/5 of vault-utils decomposition by fully eliminating the 483-line VaultUtils facade class and migrating all consumers to direct domain module imports
+  - **Core Refactoring**: Deleted `src/modules/files/vault-utils.ts` (483 lines) - eliminated god class anti-pattern and completed architectural decomposition that began with MCP-141 through MCP-144
+  - **New Domain Modules Created**:
+    - `src/modules/links/link-text-builder.ts`: buildNewLinkText(), updateNoteLinks() for wikilink construction and replacement
+    - `src/shared/metadata-utils.ts`: getLocalDate(), normalizeTagsToArray(), matchesContentType(), hasAnyTag() for date/tag/content-type utilities
+    - `src/modules/search/search-utilities.ts`: findNoteByTitle(), findNotes(), getAllNotes(), searchNotes() for search and discovery operations
+  - **Module Organization**: Files module now exports 7 focused domain functions (note-crud, daily-note-service, file-io, content-insertion, yaml-operations, folder-operations); Links module exports link-text-builder + existing link-scanner/updater; Search module exports search-utilities + existing SearchEngine/QueryParser; Shared module exports metadata-utils + existing path/text/config utilities
+  - **Production Files Updated** (7): Updated tool-router.ts and 6 server handlers (utility, note, legacy-alias, consolidated, metadata, link-updater) to use direct domain imports instead of VaultUtils facade
+  - **Test Infrastructure Updated** (25 files): Created `tests/helpers/test-utils.ts` with resetTestSingletons() placeholder (no-op pending MCP-92), updated vault-setup.ts to use new helper, migrated 18 test files for resetSingletons pattern, updated 7 test files for direct method imports
+  - **Documentation Complete** (18 files): Updated 11 tool docs, 3 architecture docs (ARCHITECTURE.md, ADR-002, ADR-004), 4 development guides (TESTING.md, DEPLOYMENT-GUIDE.md, MCP-108-IMPLEMENTATION-CONTEXT.md, README.md) to reflect domain module architecture
+  - **Memory Consolidation** (5 files): Updated testing_guide.md, vault_integration_patterns.md, obsidian_integration.md, wal_transaction_patterns.md, code_quality_patterns.md to document facade elimination pattern and migration path
+  - **Implementation Contracts**: Created `dev/contracts/MCP-91-contracts.ts` (800+ lines) defining interfaces, behavioral contracts (MUST/MUST NOT), validation gates, and module responsibility boundaries
+  - **Test Results**: 805/808 tests passing (100% of non-skipped tests), TypeScript compilation: 0 errors, net code reduction: 448 lines (254 insertions, 702 deletions across 36 files)
+  - **Zero Breaking Changes**: Internal refactoring only - all MCP tools remain unchanged, no user-facing impact
+  - **Follow-up Work**: MCP-92 implemented proper singleton reset methods to replace no-op placeholder
 
 - **Transaction Integration with rename_note** (MCP-118, 2025-11-01 21:56): Integrated TransactionManager with rename_note tool providing atomic rename operations with automatic rollback
   - Refactored `renameNoteHandler` in `src/server/handlers/note-handlers.ts` to delegate all rename operations to TransactionManager.execute()

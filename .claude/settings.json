@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.command' | grep -qE '^npm[[:space:]]+run[[:space:]]+test([[:space:]]|$)'; then echo -e '\\n📋 MCP for LifeOS Test Options:\\n\\n   npm run test:unit              # Unit tests only\\n   npm run test:integration       # Integration tests only\\n   npm run test:claude-desktop:accuracy  # Tool selection accuracy\\n   npm run test:tool-parity       # Consolidated vs legacy tools\\n   npx jest tests/unit/date-resolver.test.ts  # Single test file\\n\\n💡 Remember: Use npm run typecheck instead of linting\\n\\nPress Enter to continue with full test suite...\\n'; read -t 10 -n 1 || true; fi"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // .edits[].file_path // empty' | grep -E '/Users/shayon/DevProjects/mcp-for-lifeos/.*\\.ts$' | while read f; do echo \"$f\" >> ~/.claude/.mcp-edited-files-list 2>/dev/null || true; done"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f ~/.claude/.mcp-edited-files-list ]; then echo -e '\\n📝 MCP FOR LIFEOS CODE QUALITY\\n\\nEdited TypeScript files:\\n'; cat ~/.claude/.mcp-edited-files-list | sort | uniq | sed 's/^/   - /'; echo -e '\\n✅ Run type checking:\\n   npm run typecheck\\n\\n🔗 Linear Issues: Team ID d1aae15e-d5b9-418d-a951-adcf8c7e39a8\\n'; rm -f ~/.claude/.mcp-edited-files-list; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
