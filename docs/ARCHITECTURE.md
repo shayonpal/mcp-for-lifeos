@@ -245,7 +245,7 @@ The file operations module (`src/modules/files/`) provides focused, single-purpo
 
 **Module Components:**
 
-- **file-io.ts** - File reading/writing with iCloud retry logic and atomic operations
+- **file-io.ts** - File reading/writing with cloud sync retry logic and atomic operations
 - **note-crud.ts** - Note CRUD operations (read, write, create, update)
 - **yaml-operations.ts** - YAML parsing, validation, property analysis
 - **folder-operations.ts** - Folder/item movement and organization
@@ -255,7 +255,7 @@ The file operations module (`src/modules/files/`) provides focused, single-purpo
 
 **Key Responsibilities:**
 
-- File I/O with iCloud sync retry logic and atomic write capability
+- File I/O with cloud storage sync retry logic and atomic write capability
 - Atomic file operations via temp-file-then-rename pattern (native Node.js fs)
 - YAML frontmatter parsing and validation
 - Obsidian-compliant file naming
@@ -265,7 +265,7 @@ The file operations module (`src/modules/files/`) provides focused, single-purpo
 
 - Opt-in atomic writes via `writeFileWithRetry({ atomic: true })`
 - Uses `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic `fs.renameSync()`
-- Full iCloud retry integration with existing retry logic
+- Full cloud sync retry integration with existing retry logic
 - Zero new dependencies - native Node.js fs only
 - Foundation for MCP-108 transaction safety
 
@@ -355,7 +355,7 @@ Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanu
 - UUID v4 correlation ID validation for transaction tracking
 - Graceful corrupted JSON handling during scans
 - Async method signatures for future remote storage support
-- External to vault storage (avoids iCloud sync conflicts)
+- External to vault storage (avoids cloud storage sync conflicts)
 
 **Created:** 2025-11-01 (MCP-115) - 291 lines  
 **Test Coverage:** 15+ unit tests (535 lines) with 100% pass rate  
@@ -671,11 +671,11 @@ src/
 
 ### Error Resilience
 
-Graceful handling of malformed YAML, missing templates, iCloud sync delays with automatic retry logic.
+Graceful handling of malformed YAML, missing templates, cloud storage sync delays with automatic retry logic.
 
 **Resilience Features:**
 
-- **iCloud Sync:** 3 retry attempts with exponential backoff
+- **Cloud Storage Sync:** 3 retry attempts with exponential backoff
 - **YAML Parsing:** Diagnostic error messages with line numbers
 - **Missing Templates:** Fallback to basic YAML frontmatter
 - **File Conflicts:** Safe overwrite confirmation
@@ -712,15 +712,15 @@ AI commands with `@lifeos-mcp` mention support for quick vault operations.
 - Note creation via AI commands
 - Clickable Obsidian links
 
-### Linear
+### Issue Tracking Integration
 
-Issue tracking via Linear MCP Server for project management.
+Supports integration with issue tracking systems via MCP servers (e.g., Linear, GitHub Issues).
 
-**Team Details:**
+**Integration Pattern:**
 
-- **Team Name:** MCP for LifeOS
-- **Team ID:** `d1aae15e-d5b9-418d-a951-adcf8c7e39a8`
-- **Workflow:** Manual validation, direct master commits
+- Direct issue tracking via MCP server protocols
+- Workflow: Manual validation, feature branch development
+- See project documentation for specific issue tracker configuration
 
 ---
 
@@ -739,12 +739,12 @@ Issue tracking via Linear MCP Server for project management.
 - **Purpose:** Performance optimization
 - **Invalidation:** Server restart or cache expiry
 
-### iCloud Sync
+### Cloud Storage Sync Retry Logic
 
 - **Retry Logic:** 3 attempts with exponential backoff
 - **Delay:** 100ms, 200ms, 400ms between retries
-- **Platform:** macOS only
-- **Rationale:** Handle iCloud Drive sync delays
+- **Platform:** Unix-based (macOS, Linux, WSL2)
+- **Rationale:** Handle cloud storage sync delays (iCloud, Dropbox, OneDrive, etc.)
 
 ### Type Checking
 
