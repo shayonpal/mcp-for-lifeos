@@ -1,4 +1,5 @@
 import { LifeOSConfig } from './types.js';
+import { join } from 'path';
 
 /**
  * LifeOS Configuration with Environment Variable Support
@@ -20,7 +21,11 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
   templatesPath: process.env.LIFEOS_TEMPLATES_PATH || '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/Templates',
   dailyNotesPath: process.env.LIFEOS_DAILY_NOTES_PATH || '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily',
   yamlRulesPath: process.env.LIFEOS_YAML_RULES_PATH || '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/System/YAML Rules for LifeOS Vault.md',
-  customInstructions: undefined
+  customInstructions: {
+    // Relative to project root (working directory when server runs)
+    filePath: join(process.cwd(), 'config/custom-instructions.json'),
+    enableHotReload: true
+  }
 };
 
 export const YAML_RULES = {

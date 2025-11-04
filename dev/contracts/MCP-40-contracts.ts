@@ -39,7 +39,7 @@
  * 4. Add interfaces in logical groups (edit, insert, move)
  */
 
-// TODO: Plan eventual split to types/tool-inputs.ts if file becomes unwieldy
+// TODO (MCP-151): Plan eventual split to types/tool-inputs.ts if file becomes unwieldy
 
 // ============================================================================
 // TOOL INPUT INTERFACES

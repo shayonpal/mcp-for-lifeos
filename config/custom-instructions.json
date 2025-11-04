@@ -1,0 +1,434 @@
+{
+  "noteCreationRules": {
+    "general": {
+      "urlFieldName": "source",
+      "countryFormat": "{{country}} [{{code}}]",
+      "autoManagedFields": ["date created", "date modified"],
+      "forbiddenValues": ["Documentation"]
+    },
+    "dailyNotes": {
+      "filenameFormat": "YYYY-MM-DD",
+      "directory": "20 - Areas/21 - Myself/Journals/Daily",
+      "yaml": {
+        "title": "YYYY-MM-DD",
+        "aliases": ["MMMM DD, YYYY"],
+        "content type": ["Daily Note"],
+        "tags": ["dailyNote"],
+        "publish": false
+      },
+      "contentStructure": {
+        "requiredHeadings": [
+          "Day's Notes",
+          "Linked Notes",
+          "Notes Created On This Day"
+        ],
+        "includeDataviewQueries": true
+      }
+    },
+    "restaurant": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Restaurant"],
+        "tags": ["restaurant"],
+        "requiredFields": ["city", "state", "country", "cuisine", "source", "known for"]
+      },
+      "locationFormat": {
+        "city": "required",
+        "state": "required",
+        "country": "{{name}} [{{code}}]"
+      },
+      "contentStructure": {
+        "requiredHeadings": ["Remarks"]
+      }
+    },
+    "recipe": {
+      "yaml": {
+        "content type": ["Recipe"],
+        "category": ["Food & Drinks"],
+        "requiredFields": ["sub-category", "cuisine", "major ingredients"]
+      },
+      "subCategoryRules": {
+        "Beverage": ["Smoothie", "Cocktail", "Mocktail", "Shake", "Juice", "Tea", "Coffee"],
+        "Food": ["Breakfast", "Lunch", "Dinner", "Side", "Appetizer", "Main Course", "Salad", "Curry", "Vegetarian", "Non-vegetarian"]
+      },
+      "websiteContent": {
+        "additionalYaml": {
+          "content type": ["Recipe", "Website Content"],
+          "permalink": "auto-generate-from-title",
+          "description": "150-160 chars SEO description",
+          "author": ["[[About Me|Shayon Pal]]"],
+          "project": ["ShayonPal.com"],
+          "publish": "true for published, false for draft",
+          "cover": "[[00 - Meta/Attachments/Recipes/filename.jpg]]",
+          "tags": ["🌐", "recipe", "cuisine", "dietary"]
+        },
+        "structure": {
+          "order": ["title", "metadata-callout", "hero-images", "intro", "prep-time", "ingredients", "instructions", "notes"],
+          "metadataCallout": {
+            "format": ">[!metadata]- Metadata\n>**Published:** [[YYYY-MM-DD|Month DD, YYYY]]\n>**Key Ingredients:** Ingredient1, Ingredient2, Ingredient3, Ingredient4\n>**Tags:** #🌐 #recipe #cuisine #dietary",
+            "keyIngredients": "4-5 most distinctive from major ingredients array"
+          },
+          "heroImages": {
+            "location": "00 - Meta/Attachments/Recipes/",
+            "format": ".jpeg or .jpg only",
+            "naming": "{recipe-slug}-1.jpg, {recipe-slug}-2.jpg",
+            "maxImages": 2
+          },
+          "intro": "1-2 sentences maximum",
+          "notesSection": {
+            "maxBullets": 5,
+            "focusOn": ["substitutions", "heat-level", "storage", "allergens"],
+            "avoid": ["obvious suggestions", "verbose explanations"]
+          }
+        }
+      }
+    },
+    "book": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Book"],
+        "requiredFields": ["author", "genre"],
+        "optionalFields": ["reading date", "source"],
+        "arrayFields": ["author", "genre", "source"]
+      }
+    },
+    "article": {
+      "yaml": {
+        "content type": "Article",
+        "requiredFields": ["source"]
+      }
+    },
+    "writingByMe": {
+      "yaml": {
+        "content type": ["Writing"],
+        "author": ["[[About Me|Shayon Pal]]"]
+      },
+      "types": {
+        "article": ["Writing", "Article"],
+        "blog": ["Writing", "Blog Post"],
+        "newsletter": ["Writing", "Newsletter"],
+        "learning": ["Writing", "Learning"],
+        "rambling": ["Writing", "Rambling"]
+      },
+      "websiteContent": {
+        "requiredYaml": {
+          "permalink": "auto-from-title",
+          "description": "150-160 chars",
+          "author": ["[[About Me|Shayon Pal]]"],
+          "project": ["ShayonPal.com"],
+          "publish": "boolean",
+          "cover": "[[00 - Meta/Attachments/filename.jpg]]",
+          "tags": ["🌐", "content-tags"]
+        },
+        "seoRules": {
+          "titleMaxLength": 60,
+          "descriptionLength": "150-160",
+          "permalinkFormat": "lowercase-hyphenated-no-special-chars"
+        },
+        "structure": {
+          "order": ["title", "metadata-callout", "hero-image", "content"],
+          "metadataCallout": {
+            "format": ">[!metadata]- Metadata\n>**Published:** [[YYYY-MM-DD|Month DD, YYYY]]\n>**Tags:** #🌐 #tag1 #tag2 #tag3"
+          }
+        }
+      }
+    },
+    "newsletter": {
+      "yaml": {
+        "content type": ["Writing", "Newsletter", "Website Content"],
+        "project": ["Newsletter", "ShayonPal.com"],
+        "requiredFields": ["slug", "datetime", "summary", "theme", "cover_image_url", "permalink", "description"],
+        "defaults": {
+          "theme": "light",
+          "cover_image_url": ""
+        }
+      }
+    },
+    "game": {
+      "yaml": {
+        "content type": "Reference",
+        "category": "Game",
+        "tags": ["game"],
+        "requiredFields": ["genre", "platform", "release year", "source"],
+        "arrayFields": ["genre", "platform"]
+      }
+    },
+    "touristSpot": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Tourist Spot", "Travel"],
+        "tags": ["toVisit"],
+        "requiredFields": ["city", "country", "sub-category", "source", "known for"]
+      }
+    },
+    "placeToVisit": {
+      "yaml": {
+        "content type": ["Reference"],
+        "category": ["Tourist Spot", "Travel"],
+        "tags": ["toVisit"]
+      }
+    },
+    "medical": {
+      "yaml": {
+        "content type": "Medical"
+      },
+      "types": {
+        "invoice": "Invoice",
+        "prescription": "Prescription",
+        "record": "Record",
+        "report": "Report",
+        "research": "Research"
+      }
+    },
+    "application": {
+      "yaml": {
+        "content type": "Reference",
+        "category": "Application",
+        "requiredFields": ["platform", "pricing", "source"],
+        "arrayFields": ["platform", "pricing"]
+      },
+      "platformOptions": ["Web App", "iOS", "iPadOS", "Android", "macOS", "Windows", "Linux", "Self-Hosted"],
+      "pricingOptions": ["Free", "Paid", "Freemium", "Subscription", "One-time"]
+    },
+    "person": {
+      "yaml": {
+        "content type": "MOC",
+        "category": ["Relationships"],
+        "tags": ["type/person"],
+        "requiredFields": ["sub-category"]
+      },
+      "contentStructure": {
+        "requiredHeadings": ["Overview"],
+        "optionalSections": ["Related Notes", "Daily Notes Mentions"],
+        "includeDataviewQueries": true
+      }
+    },
+    "specialPeople": {
+      "sugar": {
+        "people": ["[[Sugar]]"],
+        "tags": ["sugar"]
+      },
+      "mishti": {
+        "people": ["[[Mishti]]"],
+        "tags": ["mishti"]
+      },
+      "sakshi": {
+        "people": ["[[Sakshi Chopra|Sakshi]]"],
+        "tags": ["sakshi"]
+      },
+      "vidushi": {
+        "people": ["[[Vidushi Soni|Vidushi]]"],
+        "tags": ["vidushi"]
+      },
+      "drFrancis": {
+        "people": ["[[Dr Francis Okoroh]]"]
+      }
+    },
+    "websiteContent": {
+      "detectionKeywords": ["publish: true", "ShayonPal.com"],
+      "requiredYaml": {
+        "permalink": "lowercase-hyphenated-from-title",
+        "description": "150-160 character SEO meta description",
+        "author": ["[[About Me|Shayon Pal]]"],
+        "project": ["ShayonPal.com"],
+        "publish": "boolean - true for published",
+        "cover": "[[00 - Meta/Attachments/filename.jpg]]",
+        "tags": ["🌐", "...content-tags"]
+      },
+      "seo": {
+        "titleMaxLength": 60,
+        "descriptionLength": "150-160",
+        "keywordPlacement": "first 100 chars of description",
+        "permalinkRules": {
+          "lowercase": true,
+          "hyphenSeparated": true,
+          "noSpecialChars": true,
+          "removeLeadingTrailing": true,
+          "collapseMultipleHyphens": true
+        }
+      },
+      "images": {
+        "format": "jpeg or jpg only",
+        "quality": "85% JPEG",
+        "locations": {
+          "recipes": "00 - Meta/Attachments/Recipes/",
+          "other": "00 - Meta/Attachments/"
+        },
+        "namingConvention": {
+          "recipes": "{slug}-1.jpg, {slug}-2.jpg",
+          "blogPosts": "{slug}-hero.jpg"
+        },
+        "coverProperty": "Must match first hero image in content"
+      },
+      "metadataCallout": {
+        "position": "After title (H1), before hero images",
+        "formats": {
+          "default": ">[!metadata]- Metadata\n>**Published:** [[YYYY-MM-DD|Month DD, YYYY]]\n>**Tags:** #🌐 #tag1 #tag2",
+          "recipe": ">[!metadata]- Metadata\n>**Published:** [[YYYY-MM-DD|Month DD, YYYY]]\n>**Key Ingredients:** Ing1, Ing2, Ing3, Ing4\n>**Tags:** #🌐 #recipe #cuisine"
+        }
+      },
+      "linting": {
+        "exempted": true,
+        "reason": "Obsidian-specific syntax (callouts, wikilinks, embeds)"
+      }
+    }
+  },
+  "editingRules": {
+    "preserveFields": ["date created", "date modified"],
+    "removeValues": ["Documentation"],
+    "dailyNotes": {
+      "preserveFilename": true,
+      "filenamePattern": "YYYY-MM-DD",
+      "preserveHeadings": ["Day's Notes", "Linked Notes", "Notes Created On This Day"]
+    },
+    "locationEnrichment": {
+      "enabled": true,
+      "inferFromContent": true,
+      "addMissingFields": ["city", "state", "country"],
+      "rules": {
+        "hasLocationButMissingDetails": "Infer city/state/country from note content and YAML"
+      }
+    },
+    "countryNormalization": {
+      "enabled": true,
+      "format": "{{name}} [{{code}}]",
+      "examples": {
+        "Canada": "Canada [CA]",
+        "India": "India [IN]"
+      }
+    },
+    "websiteContent": {
+      "titleValidation": {
+        "maxLength": 60,
+        "enforceForPublish": true
+      },
+      "descriptionValidation": {
+        "minLength": 150,
+        "maxLength": 160,
+        "enforceForPublish": true
+      },
+      "permalinkGeneration": {
+        "autoGenerate": true,
+        "source": "title field",
+        "rules": ["lowercase", "hyphenate", "remove-special-chars"]
+      },
+      "imageValidation": {
+        "coverMatchesFirstHero": true,
+        "formatEnforcement": "jpeg/jpg only",
+        "locationValidation": {
+          "recipes": "00 - Meta/Attachments/Recipes/",
+          "other": "00 - Meta/Attachments/"
+        }
+      },
+      "tagsEnforcement": {
+        "requireWebEmoji": true,
+        "webEmojiTag": "🌐",
+        "minTags": 4,
+        "maxTags": 8
+      }
+    },
+    "arrayFieldNormalization": {
+      "enabled": true,
+      "fields": ["author", "genre", "platform", "pricing", "source", "cuisine", "major ingredients"],
+      "ensureArray": true
+    }
+  },
+  "templateRules": {
+    "daily": {
+      "template": "tpl-daily",
+      "yamlCompliance": true,
+      "includeAlias": true,
+      "aliasFormat": "MMMM DD, YYYY",
+      "titleFormat": "YYYY-MM-DD",
+      "requiredHeadings": ["Day's Notes", "Linked Notes", "Notes Created On This Day"],
+      "includeDataviewQueries": true,
+      "defaultPublish": false
+    },
+    "restaurant": {
+      "template": "tpl-restaurant",
+      "enforceStructure": true,
+      "requiredHeadings": ["Remarks"],
+      "requiredYaml": ["title", "content type", "category", "tags", "city", "state", "country", "cuisine", "known for", "source"]
+    },
+    "recipe": {
+      "template": "tpl-recipe",
+      "enforceCategories": true,
+      "validateSubCategory": true,
+      "websitePublishing": {
+        "enabled": true,
+        "structure": "visual-first",
+        "metadataCallout": {
+          "position": "after-title-before-images",
+          "includeKeyIngredients": true,
+          "keyIngredientsCount": "4-5"
+        },
+        "imageRules": {
+          "maxHeroImages": 2,
+          "showBeforeIntro": true,
+          "location": "00 - Meta/Attachments/Recipes/",
+          "format": "jpeg/jpg"
+        },
+        "introMaxLength": "1-2 sentences",
+        "notesMaxBullets": 5,
+        "requiredSections": ["Preparation Time", "Ingredients", "Instructions", "Notes"]
+      }
+    },
+    "book": {
+      "template": "tpl-books",
+      "enforceGenreArray": true,
+      "enforceAuthorArray": true,
+      "requiredYaml": ["title", "content type", "category", "genre", "author"],
+      "optionalYaml": ["source", "reading date", "tags", "aliases"]
+    },
+    "person": {
+      "template": "tpl-person",
+      "requiredYaml": ["title", "content type", "category", "tags"],
+      "defaultYaml": {
+        "content type": "MOC",
+        "category": ["Relationships"],
+        "tags": ["type/person"]
+      },
+      "requiredHeadings": ["Overview"],
+      "optionalSections": ["Related Notes", "Daily Notes Mentions"],
+      "includeDataviewQueries": true
+    },
+    "application": {
+      "template": "Application",
+      "requiredYaml": ["title", "content type", "category", "platform", "pricing", "source"],
+      "arrayFields": ["platform", "pricing"]
+    },
+    "websiteContent": {
+      "blogPost": {
+        "yaml": {
+          "content type": ["Website Content", "Writing", "Blog Post"],
+          "category": ["Digital Garden"],
+          "requiredFields": ["permalink", "description", "author", "project", "publish", "cover", "tags"]
+        },
+        "structure": {
+          "order": ["title", "metadata-callout", "hero-image", "content"],
+          "metadataFormat": ">[!metadata]- Metadata\n>**Published:** [[YYYY-MM-DD|Month DD, YYYY]]\n>**Tags:** #🌐 #tag1 #tag2"
+        }
+      },
+      "learning": {
+        "yaml": {
+          "content type": ["Website Content", "Writing", "Learning"]
+        }
+      },
+      "rambling": {
+        "yaml": {
+          "content type": ["Website Content", "Writing", "Rambling"]
+        }
+      },
+      "newsletter": {
+        "yaml": {
+          "content type": ["Website Content", "Writing", "Newsletter"],
+          "project": ["Newsletter", "ShayonPal.com"],
+          "requiredFields": ["slug", "summary", "theme"],
+          "defaults": {
+            "theme": "light"
+          }
+        }
+      }
+    }
+  }
+}

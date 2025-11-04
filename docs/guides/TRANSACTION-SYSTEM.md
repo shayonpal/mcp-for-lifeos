@@ -343,7 +343,7 @@ for (const linkUpdate of manifest.linkUpdates) {
 **Prevention:**
 
 - Avoid manual edits during rename operations
-- Pause sync services (iCloud, Dropbox) during bulk operations
+- Pause cloud storage sync services during bulk operations
 - Use dry-run mode to preview changes first
 
 ---
@@ -510,7 +510,7 @@ Max = 140 × 1.3 = 182ms
 1. **Batch Operations**: Group related renames into single transactions when possible
 2. **Link Updates**: Set `updateLinks: false` for performance-critical renames (manual link cleanup)
 3. **Dry-Run First**: Use dry-run mode to validate operations before execution
-4. **Pause Sync**: Disable iCloud/Dropbox sync during bulk rename operations
+4. **Pause Sync**: Disable cloud storage sync during bulk rename operations
 5. **Monitor Metrics**: Use correlation ID and phase timings to identify bottlenecks
 
 ---
@@ -715,7 +715,7 @@ Recommendation: Retry operation
 
 1. **Use Dry-Run First**: Preview high-impact operations before executing
 2. **Avoid Concurrent Edits**: Don't edit files during rename operations
-3. **Pause Sync Services**: Disable iCloud/Dropbox during bulk renames
+3. **Pause Sync Services**: Disable cloud storage sync during bulk renames
 4. **Monitor Errors**: Check for `TRANSACTION_STALE_CONTENT` and retry
 5. **Review WAL Files**: Preserved WAL files indicate recovery needed
 
@@ -746,7 +746,7 @@ Recommendation: Retry operation
 
 **Solutions:**
 
-- Disable sync services (iCloud, Dropbox)
+- Disable cloud storage sync services
 - Close other applications editing vault files
 - Retry operation after ensuring files are stable
 - Use dry-run mode to validate before executing

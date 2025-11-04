@@ -52,6 +52,7 @@ jest.mock('../src/modules/analytics/analytics-collector.js', () => ({
       trackToolCall: jest.fn(),
       trackError: jest.fn(),
       recordToolExecution: jest.fn(async (_toolName, fn) => await fn()), // Execute the wrapped function
+      recordUsage: jest.fn(), // MCP-92: Added for instruction application tracking
       shutdown: jest.fn().mockResolvedValue(undefined),
     }),
   },

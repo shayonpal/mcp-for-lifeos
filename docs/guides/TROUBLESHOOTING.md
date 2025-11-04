@@ -446,8 +446,7 @@ The transaction system (MCP-108) provides atomic rename operations with automati
 2. **Disable sync services:**
 
    ```bash
-   # Pause iCloud sync during rename
-   # Or disable Dropbox temporarily
+   # Pause cloud storage sync (iCloud/Dropbox/etc.) during rename
    ```
 
 3. **Avoid concurrent edits:**
@@ -553,7 +552,7 @@ If rollback fails, see [WAL Recovery Guide](WAL-RECOVERY.md) for manual procedur
 - Disk full during recovery
 - Rollback logic errors
 
-**Critical Error - Manual Recovery Required**
+### Critical Error - Manual Recovery Required
 
 **Immediate Actions:**
 
@@ -670,12 +669,12 @@ npm start
 
 **Symptom**: `TRANSACTION_STALE_CONTENT` error
 
-**Cause**: iCloud sync or manual edit during transaction
+**Cause**: Cloud storage sync or manual edit during transaction
 
 **Solution**:
 
 ```bash
-# 1. Disable iCloud sync temporarily
+# 1. Disable cloud storage sync temporarily (iCloud/Dropbox/etc.)
 # 2. Close file in Obsidian
 # 3. Retry rename operation
 ```
@@ -739,8 +738,7 @@ find /vault -name "*.mcp-staged-*" -delete
    ```
 
 2. **Pause sync services during bulk renames:**
-   - Disable iCloud sync
-   - Pause Dropbox
+   - Disable cloud storage sync (iCloud/Dropbox/OneDrive)
    - Wait for operations to complete
 
 3. **Avoid concurrent edits:**
@@ -764,7 +762,7 @@ find /vault -name "*.mcp-staged-*" -delete
 
 **Workflow 1: Simple Retry**
 
-```
+```text
 TRANSACTION_STALE_CONTENT
   ↓
 Wait 5 seconds
@@ -776,7 +774,7 @@ Success ✅
 
 **Workflow 2: Manual Recovery**
 
-```
+```text
 TRANSACTION_ROLLBACK_FAILED
   ↓
 Stop server
@@ -914,7 +912,7 @@ Restart server
    - Reduce template file size
    - Remove unnecessary processing
 
-### iCloud Sync Delays
+### Cloud Storage Sync Delays
 
 **Symptoms:**
 
@@ -925,17 +923,17 @@ Restart server
 **Solutions:**
 
 1. **Server has automatic retry:**
-   - Waits for iCloud sync
+   - Waits for cloud storage sync
    - Retries up to 3 times
    - Usually resolves automatically
 
-2. **Check iCloud status:**
-   - Ensure iCloud Drive is active
+2. **Check cloud storage status:**
+   - Ensure cloud storage service is active
    - Verify folder is syncing
    - Check network connection
 
 3. **Use local vault:**
-   - Store vault outside iCloud
+   - Store vault in local directory (outside cloud sync)
    - Or wait for sync to complete
    - Consider local-only development vault
 

@@ -1,6 +1,6 @@
 # Custom Instructions Guide
 
-**Status:** Phase 1 Scaffolding (MCP-90) - Infrastructure in place, awaiting implementation
+**Status:** Phase 1 Scaffolding (MCP-90) - Infrastructure in place, awaiting implementation  
 **Last Updated:** 2025-11-04
 
 This guide explains how to configure and use custom instructions with the LifeOS MCP Server. Custom instructions allow you to define rules and behaviors for note creation, editing, and template processing.
@@ -453,11 +453,11 @@ describe('YourTest', () => {
 ## Related Documentation
 
 - **[Architecture](../ARCHITECTURE.md)** - Config module architecture
-- **[MCP-90](https://linear.app/agilecode-studio/issue/MCP-90)** - Phase 1 implementation issue
-- **[MCP-17](https://linear.app/agilecode-studio/issue/MCP-17)** - Parent issue (custom instructions project)
+- **[Configuration Guide](CONFIGURATION.md)** - Full configuration options
+- **[Tool Documentation](../api/TOOLS.md)** - MCP tool reference
 
 ---
 
-**Last Updated:** 2025-11-04
-**Status:** Phase 1 Scaffolding Complete
+**Last Updated:** 2025-11-04  
+**Status:** Phase 1 Scaffolding Complete  
 **Next:** Phase 2 (File Reading Implementation) - TBD

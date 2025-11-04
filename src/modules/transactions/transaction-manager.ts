@@ -306,7 +306,7 @@ export class TransactionManager {
    * 3. Throw TRANSACTION_STALE_CONTENT if mismatch detected
    * 4. Update WAL to 'validate' phase
    *
-   * TODO: Parallelize hash computation using Promise.all() for better performance
+   * TODO (MCP-153): Parallelize hash computation using Promise.all() for better performance
    * @see Code review MCP-117 - sequential hash validation optimization
    *
    * @param state - Current transaction state
@@ -317,7 +317,7 @@ export class TransactionManager {
       const staleFiles: string[] = [];
 
       // Step 1 & 2: Validate source note hash
-      // TODO: Parallelize with link update validation below
+      // TODO (MCP-153): Parallelize with link update validation below
       if (existsSync(manifest.noteRename.from)) {
         const currentContent = readFileSync(manifest.noteRename.from, 'utf-8');
         const currentHash = this.computeSHA256(currentContent);
@@ -328,7 +328,7 @@ export class TransactionManager {
       }
 
       // Step 1 & 2: Validate link update file hashes
-      // TODO: Parallelize with Promise.all() for I/O-bound hash checks
+      // TODO (MCP-153): Parallelize with Promise.all() for I/O-bound hash checks
       for (const linkUpdate of manifest.linkUpdates) {
         if (existsSync(linkUpdate.path)) {
           const currentContent = readFileSync(linkUpdate.path, 'utf-8');
@@ -635,7 +635,7 @@ export class TransactionManager {
   /**
    * Extract note name from file path (without .md extension)
    *
-   * TODO: Extract to shared path-utils.ts utility (pattern used in 14+ locations)
+   * TODO (MCP-152): Extract to shared path-utils.ts utility (pattern used in 14+ locations)
    * @see Code review MCP-117 - minor duplication opportunity
    *
    * @param filePath - Full file path

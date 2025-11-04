@@ -13,6 +13,7 @@ import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './shared/index.js';
 import { AnalyticsCollector } from './modules/analytics/index.js';
 import { ObsidianLinks } from './modules/links/index.js';
+import { InstructionProcessor, InstructionContext } from './modules/config/index.js';
 
 /**
  * Universal Search Tool - Consolidates 6 search tools into 1
@@ -471,6 +472,27 @@ export class ToolRouter {
   private static async executeCreateNote(options: SmartCreateNoteOptions): Promise<any> {
     try {
       const { title, auto_template = true, template } = options;
+
+      // Apply custom instructions if configured
+      const instructionContext: InstructionContext = {
+        operation: 'create',
+        noteType: template || 'generic',
+        targetPath: title
+      };
+      const instructionResult = InstructionProcessor.applyInstructions(instructionContext);
+
+      // Log instruction application for observability
+      if (instructionResult.modified) {
+        this.analytics.recordUsage({
+          toolName: 'instruction_application',
+          executionTime: 0, // Instruction application already complete
+          success: true,
+          resultCount: instructionResult.appliedRules.length,
+          clientName: this.clientInfo.name,
+          clientVersion: this.clientInfo.version,
+          sessionId: this.sessionId
+        });
+      }
 
       // Template detection logic
       let finalTemplate = template;

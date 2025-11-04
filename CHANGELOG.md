@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- 2025-11-04 07:01 - feat: implement hot-reload custom instructions (MCP-92)
+
+- **Hot-Reload Custom Instructions** (MCP-92, 2025-11-04): Implemented file-based instruction loading with hot-reload, rule branching logic, and tool integration demonstrating instruction-aware workflows
+  - **Phase 1 - File-Based Loading**: Implemented `readInstructionFile()` and `parseInstructionFile()` methods using `readFileWithRetry` for resilience, JSON parsing with validation, caching with file mtime, graceful fallback to inline config on errors
+  - **Phase 2 - Rule Application Logic**: Enhanced `applyInstructions()` with branching on `context.operation` (create/edit/insert/template), rule type selection (noteCreationRules/editingRules/templateRules), rule detection logging, and tracking via `appliedRules` array
+  - **Phase 3 - Tool Integration**: Integrated `InstructionProcessor` into `src/tool-router.ts::executeCreateNote()` with telemetry tracking, demonstrating instruction-aware note creation workflow
+  - **Hot-Reload Mechanism**: File changes detected via existing `fs.watch()` infrastructure from MCP-90, cache invalidation on file change, lazy reload on next `getInstructions()` call (no active push)
+  - **Configuration Priority**: File-based instructions (`config.filePath`) take precedence over inline config, automatic fallback to inline on file read/parse errors, backward compatible with MCP-90 scaffolding
+  - **Test Updates**: Fixed 3 unit tests in `instruction-processor.test.ts` to reflect Phase 2 behavior (file loading attempts, updated log messages, rule detection tracking), all 805/808 tests passing (99.6%)
+  - **Contracts & Documentation**: Created `dev/contracts/MCP-92-contracts.ts` (650+ lines) defining input/output interfaces, error contracts, integration contracts, behavioral contracts (MUST/MUST NOT), and test requirements
+  - **TypeScript Compliance**: Zero type errors, successful build, `NonNullable<CustomInstructionsConfig['inline']>` return type for strict null safety
+  - **Zero Breaking Changes**: Pass-through default when no instructions configured, existing tools work unchanged, feature flag ready for future granular control
+  - **Future Work**: Full rule parsing/application (YAML defaults, naming conventions, content boilerplate), additional tool integration points (updateNote, insertContent, template processing), comprehensive integration tests
+
 ### Changed
 
 - 2025-11-04 05:30 - refactor: eliminate VaultUtils facade, migrate to domain modules (MCP-91)

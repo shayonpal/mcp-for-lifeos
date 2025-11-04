@@ -30,7 +30,7 @@ Write-Ahead Logging (WAL) provides crash recovery for atomic rename operations b
 ```
 
 **XDG-Compliant**: Follows XDG Base Directory specification for application config
-**External to Vault**: Prevents iCloud/Dropbox sync conflicts
+**External to Vault**: Prevents cloud storage sync conflicts
 **Persistent**: Survives vault deletions and relocations
 
 ### Directory Contents
@@ -67,23 +67,23 @@ Write-Ahead Logging (WAL) provides crash recovery for atomic rename operations b
   "version": "1.0",
   "correlationId": "550e8400-e29b-41d4-a716-446655440000",
   "timestamp": "2024-11-02T10:30:15.123Z",
-  "vaultPath": "/Users/shayon/vault",
+  "vaultPath": "/path/to/your/vault",
   "phase": "prepare",
   "operation": "rename_note",
   "manifest": {
     "noteRename": {
-      "from": "/Users/shayon/vault/Projects/note.md",
-      "to": "/Users/shayon/vault/Archive/note.md",
+      "from": "/path/to/your/vault/Projects/note.md",
+      "to": "/path/to/your/vault/Archive/note.md",
       "sha256Before": "abc123def456...",
-      "stagedPath": "/Users/shayon/vault/Archive/note.md.mcp-staged-550e8400",
+      "stagedPath": "/path/to/your/vault/Archive/note.md.mcp-staged-550e8400",
       "completed": false
     },
     "linkUpdates": [
       {
-        "path": "/Users/shayon/vault/Daily/2024-11-01.md",
+        "path": "/path/to/your/vault/Daily/2024-11-01.md",
         "sha256Before": "789ghi012jkl...",
         "renderedContent": "Updated content with new link...",
-        "stagedPath": "/Users/shayon/vault/Daily/2024-11-01.md.mcp-staged-550e8400",
+        "stagedPath": "/path/to/your/vault/Daily/2024-11-01.md.mcp-staged-550e8400",
         "referenceCount": 3,
         "completed": false
       }
