@@ -1,0 +1,13 @@
+{
+  "issueId": "MCP-94",
+  "branchName": "test/MCP-94-enable-instance-id-integration-test",
+  "worktreePath": "/Users/shayon/DevProjects/worktrees/test/MCP-94-enable-instance-id-integration-test",
+  "executedPhases": [1, 2, 3],
+  "prUrl": null,
+  "prNumber": null,
+  "pausePoints": {
+    "planApproved": true,
+    "implementationVerified": true,
+    "testsVerified": true
+  }
+}
