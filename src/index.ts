@@ -5,11 +5,7 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { VaultUtils } from './modules/files/index.js';
-import { SearchEngine, AdvancedSearchOptions } from './modules/search/index.js';
 import { ObsidianLinks } from './obsidian-links.js';
-import { NaturalLanguageProcessor } from './modules/search/index.js';
-import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
 import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';

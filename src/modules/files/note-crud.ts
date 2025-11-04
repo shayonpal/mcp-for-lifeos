@@ -58,7 +58,7 @@ function parseWithFallback(content: string): {
       // Simple key-value extraction
       const keyValueMatch = line.match(/^(\s*)([^:]+):\s*(.*)$/);
       if (keyValueMatch) {
-        const [, indent, key, value] = keyValueMatch;
+        const [, , key, value] = keyValueMatch;
         const cleanKey = key.trim();
         let cleanValue = value.trim();
 

@@ -1,30 +1,11 @@
-import {
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  readdirSync,
-  statSync,
-  renameSync,
-  mkdirSync,
-  rmSync,
-} from "fs";
-import { join, dirname, basename, extname } from "path";
-import matter from "gray-matter";
+import { join } from "path";
 import { glob } from "glob";
-import { format } from "date-fns";
-import {
-  LifeOSNote,
-  YAMLFrontmatter,
-  SearchOptions,
-  NoteTemplate,
-} from "../../types.js";
+import { LifeOSNote, YAMLFrontmatter, SearchOptions } from "../../types.js";
 import { stripMdExtension } from "../../path-utils.js";
-import { LIFEOS_CONFIG, YAML_RULES } from "../../config.js";
+import { LIFEOS_CONFIG } from "../../config.js";
 import { TemplateManager } from "../templates/index.js";
 import { ObsidianSettings } from "../../obsidian-settings.js";
 import { DateResolver } from "../../date-resolver.js";
-import { TemplateContext } from "../templates/index.js";
-import { logger } from "../../logger.js";
 import { normalizePath } from "../../path-utils.js";
 import { WIKILINK_PATTERN } from "../../regex-utils.js";
 import {

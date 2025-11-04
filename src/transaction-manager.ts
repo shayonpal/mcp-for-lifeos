@@ -42,7 +42,6 @@ import type {
 import { WALManager } from './wal-manager.js';
 import { updateVaultLinks } from './link-updater.js';
 import type { LinkRenderResult } from './link-updater.js';
-import { VaultUtils } from './modules/files/index.js';
 import { writeFileWithRetry } from './modules/files/file-io.js';
 import { TransactionErrorCode } from './error-types.js';
 import { LIFEOS_CONFIG } from './config.js';

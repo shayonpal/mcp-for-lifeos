@@ -148,7 +148,6 @@ export function getYamlPropertyValues(
       // Sort single values by their usage count
       const singleValueCounts = new Map<any, number>();
       singleValues.forEach((v) => {
-        const key = String(v);
         singleValueCounts.set(v, (singleValueCounts.get(v) || 0) + 1);
       });
       sortedSingleValues = Array.from(new Set(singleValues)).sort((a, b) => {

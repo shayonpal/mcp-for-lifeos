@@ -51,13 +51,6 @@ const ICLOUD_RETRY_CONFIG = {
 };
 
 /**
- * Asynchronous sleep utility
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
  * Check if an error is retryable (likely due to iCloud sync conflicts)
  */
 function isRetryableError(error: any): boolean {
