@@ -21,7 +21,7 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
   dailyNotesPath: process.env.LIFEOS_DAILY_NOTES_PATH || '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/20 - Areas/21 - Myself/Journals/Daily',
   yamlRulesPath: process.env.LIFEOS_YAML_RULES_PATH || '/Users/shayon/Library/Mobile Documents/iCloud~md~obsidian/Documents/LifeOS (iCloud)/00 - Meta/System/YAML Rules for LifeOS Vault.md',
   customInstructions: undefined
-};;
+};
 
 export const YAML_RULES = {
   // Never edit these fields - managed by Linter plugin
