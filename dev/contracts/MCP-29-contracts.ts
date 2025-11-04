@@ -10,7 +10,7 @@
  * @see https://linear.app/agilecode-studio/issue/MCP-29
  */
 
-import { YAMLFrontmatter, LifeOSNote } from '../../src/shared/index.js';
+import { YAMLFrontmatter } from '../../src/shared/index.js';
 
 // ============================================================================
 // SUB-ISSUE TRACKING

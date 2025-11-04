@@ -18,7 +18,6 @@ import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
 import { logger } from '../../shared/index.js';
-import { updateVaultLinks } from '../../modules/links/index.js';
 
 /**
  * Transaction service cache for singleton pattern

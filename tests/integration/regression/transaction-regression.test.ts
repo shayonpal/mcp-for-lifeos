@@ -18,7 +18,7 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
 import { VaultUtils } from '../../../src/modules/files/index.js';
-import { TransactionManager, WALManager, type WALEntry } from '../../../src/modules/transactions/index.js';
+import { WALManager, type WALEntry } from '../../../src/modules/transactions/index.js';
 import type { ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 

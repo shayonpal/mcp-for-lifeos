@@ -5,12 +5,9 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ObsidianLinks } from './modules/links/index.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
-import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './shared/index.js';
 import { LIFEOS_CONFIG } from './shared/index.js';
-import { normalizePath } from './shared/index.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
 import { logger } from './shared/index.js';
