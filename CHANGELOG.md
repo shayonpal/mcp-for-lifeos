@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 2025-11-03 19:38 - test: enable instance ID integration test (MCP-94)
 
+- 2025-11-03 19:14 - test: prevent unit tests from polluting production Obsidian vault (MCP-148)
+
 - 2025-11-03 14:30 - test: integration testing and documentation refresh (MCP-10)
 
 - **Instance ID Uniqueness Test** (MCP-94, 2025-11-03 19:38): Enabled integration test validating unique instance ID generation across server restarts

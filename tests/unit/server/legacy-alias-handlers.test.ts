@@ -12,12 +12,18 @@ import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP
 import type { ToolRegistryConfig } from '../../../dev/contracts/MCP-7-contracts.js';
 import type { AnalyticsCollector } from '../../../src/analytics/analytics-collector.js';
 import { ToolRouter } from '../../../src/tool-router.js';
+import { createTestVault, type TestVaultSetup } from '../../helpers/vault-setup.js';
+import { join } from 'path';
+import { access } from 'fs/promises';
 
 describe('Legacy Alias Handlers Module', () => {
   let mockContext: ToolHandlerContext;
   let mockRegistryConfig: ToolRegistryConfig;
+  let testVault: TestVaultSetup;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Create isolated test vault to prevent production pollution
+    testVault = await createTestVault();
     // Create mock registry config
     mockRegistryConfig = {
       mode: 'consolidated-with-aliases',
@@ -42,6 +48,11 @@ describe('Legacy Alias Handlers Module', () => {
       clientName: 'test-client',
       clientVersion: '1.0.0'
     };
+  });
+
+  afterEach(async () => {
+    // Clean up test vault and restore original config
+    await testVault.cleanup();
   });
 
   describe('LEGACY_ALIAS_TOOL_NAMES constant', () => {
@@ -168,6 +179,14 @@ describe('Legacy Alias Handlers Module', () => {
       const result = await handler!({ title: uniqueTitle, template: 'default' }, legacyOnlyContext);
       expect(result).toBeDefined();
       expect(result.content).toBeDefined();
+
+      // Verify note was created in test vault, NOT production vault
+      expect(testVault.vaultPath).toContain('test-vault');
+      expect(testVault.vaultPath).not.toContain('iCloud');
+
+      // Verify the note exists in the test vault
+      const notePath = join(testVault.vaultPath, '05 - Fleeting Notes', `${uniqueTitle}.md`);
+      await access(notePath); // Will throw if file doesn't exist, causing test to fail
     });
 
     it('should work in legacy-only mode (list aliases)', async () => {
