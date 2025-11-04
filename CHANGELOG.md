@@ -27,6 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 2025-11-03 19:14 - test: prevent unit tests from polluting production Obsidian vault (MCP-148)
 
+- **Test Isolation for Unit Tests** (MCP-148, 2025-11-04): Fixed unit test vault pollution by implementing proper test isolation with createTestVault() helper pattern
+  - **Problem**: Unit test in `tests/unit/server/legacy-alias-handlers.test.ts` was writing test artifacts directly to production Obsidian vault (10+ `Test-MCP99-{timestamp}.md` files in `05 - Fleeting Notes/`)
+  - **Root Cause**: Test did not use `createTestVault()` helper, defaulting to production vault path from `LIFEOS_CONFIG.vaultPath` with no cleanup hooks
+  - **Solution**: Implemented proper test isolation using `createTestVault()` with beforeEach/afterEach lifecycle hooks for automatic cleanup
+  - **Test Contract**: Created `dev/contracts/MCP-148-contracts.ts` defining test isolation requirements and production vault detection patterns
+  - **Production Safeguards**: Added global vault detection guard in `tests/setup.ts` beforeAll() hook with documentation explaining LIFEOS_CONFIG override pattern
+  - **PR Review Fixes**: Corrected incorrect `fs.promises.access()` test assertion, removed unused import, fixed contract-implementation mismatch
+  - **Validation**: All 544 unit tests pass (543 passed, 1 skipped), production vault remains clean (git status shows no test artifacts)
+  - **Test Results**: Smoke test confirmed no vault pollution after full test suite execution (782/785 total tests passing)
+  - **Zero Breaking Changes**: No production code modifications, test-only changes for isolation compliance
+
 - 2025-11-03 14:30 - test: integration testing and documentation refresh (MCP-10)
 
 - **Instance ID Uniqueness Test** (MCP-94, 2025-11-03 19:38): Enabled integration test validating unique instance ID generation across server restarts
