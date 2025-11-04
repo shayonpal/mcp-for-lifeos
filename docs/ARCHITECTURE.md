@@ -9,7 +9,7 @@ This document provides a high-level overview of the LifeOS MCP Server architectu
 
 ## Module Structure
 
-**Status:** Modularized (Phase 5 complete - MCP-145, MCP-146, MCP-147)
+**Status:** Modularized (Phase 5 complete)
 
 The codebase is organized into focused modules following domain-driven design:
 
@@ -77,8 +77,8 @@ Reusable factory module for MCP server instantiation and configuration. Centrali
 function createMcpServer(config: McpServerConfig): McpServerInstance
 ```
 
-**Created:** 2025-10-28 (MCP-6) - 238 lines  
-**Status:** MCP-7 (tool registration) complete; request handler infrastructure landed in MCP-95
+**Created:** 2025-10-28 - 238 lines  
+**Status:** Tool registration complete; request handler infrastructure implemented
 
 ### Tool Registry (`src/server/tool-registry.ts`)
 
@@ -109,67 +109,67 @@ Pure function module that centralizes tool registration, configuration, and mode
 - Contract-driven development with TypeScript interfaces
 - Shared constants to eliminate duplication (LEGACY_TOOL_DEFINITIONS)
 
-**Created:** 2025-10-28 (MCP-7) - 856 lines  
+**Created:** 2025-10-28 - 856 lines  
 **Test Coverage:** 100% (17 unit tests)  
-**Status:** Complete, supports request handler infrastructure (MCP-95) and upcoming handler extraction
+**Status:** Complete, supports request handler infrastructure and handler extraction
 
 ### Request Handler Infrastructure (`src/server/request-handler.ts`)
 
-Factory module for MCP request handling with registry-based tool dispatch. Introduced in MCP-95 and fully populated in MCP-96, MCP-97, and MCP-98.
+Factory module for MCP request handling with registry-based tool dispatch.
 
 **Key Responsibilities:**
 
 - Provide `createRequestHandler()` factory that compiles shared context once and dispatches tool requests via handler registry
 - Offer `isToolAllowed()` utility with cached tool-name sets per mode, replacing scattered availability checks
 - Wrap tool handlers with analytics logging via `wrapHandlerWithAnalytics()` to maintain telemetry parity (with exemptions for handlers with manual tracking)
-- Define structural contracts in `dev/contracts/MCP-95-contracts.ts` and align `validateMaxResults()` to return structured metadata
+- Define structural contracts and align `validateMaxResults()` to return structured metadata
 
 **Handler Registration Chain:**
 
-1. **Consolidated Handlers** (MCP-96): search, create_note, list
-2. **Legacy Alias Handlers** (MCP-97): 11 backward compatibility aliases
-3. **Note Handlers** (MCP-98): read_note, edit_note, insert_content
-4. **Utility Handlers** (MCP-98): get_server_version, get_daily_note, diagnose_vault, move_items
-5. **Metadata Handlers** (MCP-98): get_yaml_rules, list_yaml_property_values
+1. **Consolidated Handlers**: search, create_note, list
+2. **Legacy Alias Handlers**: 11 backward compatibility aliases
+3. **Note Handlers**: read_note, edit_note, insert_content
+4. **Utility Handlers**: get_server_version, get_daily_note, diagnose_vault, move_items
+5. **Metadata Handlers**: get_yaml_rules, list_yaml_property_values
 
 **Status:** Complete with 29 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 9 always-available + 6 remaining in hybrid dispatch)
 
-**Switch Statement Removal (MCP-99):** Completed 2025-10-30 - All inline tool logic removed from index.ts, achieving pure factory pattern with 100% registry-based routing
+**Switch Statement Removal:** Completed 2025-10-30 - All inline tool logic removed from index.ts, achieving pure factory pattern with 100% registry-based routing
 
 **Test Coverage:** Unit and integration suites validate tool-mode enforcement, registry dispatch, and analytics wrapping
 
 ### Handler Modules (`src/server/handlers/`)
 
-Extracted handler implementations organized by functional responsibility. Introduced across MCP-96, MCP-97, MCP-98, and finalized in MCP-99 with complete switch statement removal.
+Extracted handler implementations organized by functional responsibility.
 
-**Consolidated Handlers** (`consolidated-handlers.ts` - MCP-96):
+**Consolidated Handlers** (`consolidated-handlers.ts`):
 
 - `search` - Universal search with auto-routing (replaces 6 legacy search tools)
 - `create_note` - Smart note creation with template auto-detection
 - `list` - Universal listing with auto-type detection
 
-**Legacy Alias Handlers** (`legacy-alias-handlers.ts` - MCP-97, updated MCP-99):
+**Legacy Alias Handlers** (`legacy-alias-handlers.ts`):
 
 - 11 backward compatibility aliases for deprecated tool names
 - Parameter translation (contentType→query, pattern→query)
 - Deprecation warnings in responses
-- Mode guard removal (MCP-99): Legacy aliases now work in all tool modes including legacy-only
+- Legacy aliases work in all tool modes including legacy-only
 
-**Note Handlers** (`note-handlers.ts` - MCP-98, MCP-105):
+**Note Handlers** (`note-handlers.ts`):
 
 - `read_note` - Read notes with formatted content and metadata
 - `edit_note` - Update note frontmatter and/or content (merge/replace modes)
-- `rename_note` - Rename note files with validation (Phase 1: basic rename without link updates)
+- `rename_note` - Rename note files with validation
 - `insert_content` - Insert content at specific locations (heading, blockRef, pattern, lineNumber)
 
-**Utility Handlers** (`utility-handlers.ts` - MCP-98):
+**Utility Handlers** (`utility-handlers.ts`):
 
 - `get_server_version` - Server information and capabilities
 - `get_daily_note` - Daily note handling with auto-creation and analytics tracking
 - `diagnose_vault` - Vault health diagnostics and YAML validation
 - `move_items` - Move notes/folders with various options
 
-**Metadata Handlers** (`metadata-handlers.ts` - MCP-98):
+**Metadata Handlers** (`metadata-handlers.ts`):
 
 - `get_yaml_rules` - YAML frontmatter rules document
 - `list_yaml_property_values` - Property value analysis with usage statistics
@@ -212,8 +212,8 @@ Main entry point implementing Model Context Protocol server. Coordinates server 
 - Helper function consolidation (`executeWithHybridFallback()`)
 - Analytics double-counting prevention via exemption list
 
-**Status:** Reduced from 1,797 lines (baseline) → 724 lines (pre-MCP-99) → 307 lines (post-MCP-99), total reduction of 1,490 lines (-83% from baseline)  
-**Decomposition Progress:** Complete as of 2025-10-30 - all 35+ handlers extracted to dedicated modules, 418-line switch statement removed (MCP-99), achieved pure factory pattern with 100% registry-based routing
+**Status:** Reduced from 1,797 lines (baseline) → 724 lines → 307 lines (current), total reduction of 1,490 lines (-83% from baseline)  
+**Decomposition Progress:** Complete as of 2025-10-30 - all 35+ handlers extracted to dedicated modules, 418-line switch statement removed, achieved pure factory pattern with 100% registry-based routing
 
 ### Tool Router (`src/tool-router.ts`)
 
@@ -261,46 +261,46 @@ The file operations module (`src/modules/files/`) provides focused, single-purpo
 - Obsidian-compliant file naming
 - PARA method folder structure enforcement
 
-**Atomic Operations** (MCP-114, 2025-11-01):
+**Atomic Operations** (2025-11-01):
 
 - Opt-in atomic writes via `writeFileWithRetry({ atomic: true })`
 - Uses `.mcp-tmp-{timestamp}-{filename}` temp files and POSIX atomic `fs.renameSync()`
 - Full cloud sync retry integration with existing retry logic
 - Zero new dependencies - native Node.js fs only
-- Foundation for MCP-108 transaction safety
+- Foundation for transaction safety
 
 **Design Patterns:**
 
-Each module exposes pure functions with clear contracts. See `dev/contracts/MCP-91-contracts.ts` for interface definitions.
+Each module exposes pure functions with clear contracts. See `dev/contracts/` for interface definitions.
 
-**Status:** Completed (MCP-91, Phase 4) - vault-utils.ts fully decomposed into 7 focused modules
+**Status:** Completed (Phase 4) - vault-utils.ts fully decomposed into 7 focused modules
 
 ### Link Update Infrastructure
 
 Two-phase system for vault-wide wikilink updates after note rename operations.
 
-**`src/modules/links/link-scanner.ts`** (MCP-106, Phase 2):
+**`src/modules/links/link-scanner.ts`** (Phase 2):
 
 - Vault-wide wikilink detection with regex-based scanning
 - Performance: <5000ms for 1000+ notes, <50ms per note
 - Supports all Obsidian wikilink formats (basic, alias, heading, block reference, embed)
 
-**`src/modules/links/link-updater.ts`** (MCP-107/MCP-116, Phase 3):
+**`src/modules/links/link-updater.ts`** (Phase 3):
 
 - Three-mode operation: RENDER, COMMIT, DIRECT
 - **RENDER mode**: Read-only content map generation without writes (returns LinkRenderResult)
-- **COMMIT mode**: Atomic writes from pre-rendered content map (uses MCP-114 atomic operations)
-- **DIRECT mode**: Legacy Phase 3 behavior (read + update + write), default for backward compatibility
+- **COMMIT mode**: Atomic writes from pre-rendered content map (uses atomic file operations)
+- **DIRECT mode**: Legacy behavior (read + update + write), default for backward compatibility
 - Function overloading with TypeScript signatures for type safety per mode
 - Shared helper `scanAndGroupReferences()` eliminates code duplication
 - Memory characteristics: ~1-2KB per note, 1-10MB for 1000 files, 100-200MB for 10K+ files
-- Foundation for MCP-117 TransactionManager atomic rename transactions
+- Foundation for TransactionManager atomic rename transactions
 
 **Design Pattern:**
 
 - Separation of rendering phase (read + compute) from commit phase (write)
 - Enables validation before committing changes
-- Supports future rollback mechanisms via WAL integration
+- Supports rollback mechanisms via WAL integration
 
 ### Template System
 
@@ -357,9 +357,9 @@ Write-Ahead Log infrastructure for transaction persistence, recovery, and cleanu
 - Async method signatures for future remote storage support
 - External to vault storage (avoids cloud storage sync conflicts)
 
-**Created:** 2025-11-01 (MCP-115) - 291 lines  
+**Created:** 2025-11-01 - 291 lines  
 **Test Coverage:** 15+ unit tests (535 lines) with 100% pass rate  
-**Status:** Foundation for MCP-117 TransactionManager integration
+**Status:** Foundation for TransactionManager integration
 
 ### Transaction Manager (`src/modules/transactions/transaction-manager.ts`)
 
@@ -404,14 +404,14 @@ Five-phase atomic transaction protocol for file rename operations with full roll
 
 **Integration Points:**
 
-- WALManager (MCP-115) for crash recovery
-- Link Updater (MCP-116) for two-phase link updates
-- writeFileWithRetry() from file-io module (MCP-114) for atomic writes
+- WALManager for crash recovery
+- Link Updater for two-phase link updates
+- writeFileWithRetry() from file-io module for atomic writes
 - Zero external dependencies (Node.js built-ins: crypto, fs, path)
 
-**Created:** 2025-11-01 (MCP-117) - 691 lines  
+**Created:** 2025-11-01 - 691 lines  
 **Test Coverage:** 31 comprehensive unit tests (869 lines) with 100% pass rate  
-**Status:** Integrated with rename_note tool (MCP-118), boot recovery enabled (MCP-119)
+**Status:** Integrated with rename_note tool, boot recovery enabled
 
 ### Boot Recovery System (`src/index.ts`)
 
@@ -450,9 +450,9 @@ Automatic recovery mechanism that detects and rolls back incomplete transactions
 - Manual recovery path via preserved WAL files
 - Status symbol logging for operator visibility
 
-**Created:** 2025-11-02 (MCP-119) - 92 lines in src/index.ts  
+**Created:** 2025-11-02 - 92 lines in src/index.ts  
 **Test Coverage:** 15 integration tests in `tests/integration/boot-recovery.test.ts`  
-**Status:** Operational with full test suite (674/679 passing, 99.3%)
+**Status:** Operational with full test suite
 
 ### Transaction System
 
@@ -489,7 +489,7 @@ The transaction system provides atomic rename operations with vault-wide link up
 
 **Integration with rename_note:**
 
-The `rename_note` tool (MCP-118) delegates all rename operations to TransactionManager, ensuring atomic execution with automatic rollback. Breaking change from Phase 3: success responses no longer include warnings array - operations either fully succeed or fully fail.
+The `rename_note` tool delegates all rename operations to TransactionManager, ensuring atomic execution with automatic rollback. Breaking change from Phase 3: success responses no longer include warnings array - operations either fully succeed or fully fail.
 
 **Performance Characteristics:**
 
@@ -507,13 +507,6 @@ Boot recovery automatically scans WAL directory on server startup, identifies or
 - **[Transaction System Guide](guides/TRANSACTION-SYSTEM.md)** - Complete architecture and error code reference
 - **[WAL Recovery Guide](guides/WAL-RECOVERY.md)** - Manual recovery procedures and troubleshooting
 - **[rename_note Tool](tools/rename_note.md)** - Tool documentation with transaction examples
-
-**Implementation Issues:**
-
-- MCP-108: Transaction infrastructure foundation
-- MCP-114 through MCP-119: Component implementations
-- MCP-122, MCP-123: Dry-run preview mode
-- MCP-124: Block reference support
 
 ### Analytics (`src/modules/analytics/`)
 
@@ -538,7 +531,7 @@ Custom instruction processing and hot-reload infrastructure. Provides scaffoldin
 - `instruction-processor.ts` - Instruction application hooks and file watching
 - `index.ts` - Barrel exports for module interface
 
-**Current Status:** Phase 1 scaffolding (MCP-90) - pass-through mode with no branching logic
+**Current Status:** Phase 1 scaffolding - pass-through mode with no branching logic
 
 **Features:**
 
@@ -667,7 +660,7 @@ src/
 └── server/           # MCP server infrastructure
 ```
 
-**Status:** Import policy established (MCP-134), enforcement begins at MCP-135
+**Status:** Import policy established and enforced
 
 ### Error Resilience
 
@@ -714,13 +707,13 @@ AI commands with `@lifeos-mcp` mention support for quick vault operations.
 
 ### Issue Tracking Integration
 
-Supports integration with issue tracking systems via MCP servers (e.g., Linear, GitHub Issues).
+Supports integration with issue tracking systems via MCP servers (e.g., Linear, GitHub Issues, etc.).
 
 **Integration Pattern:**
 
 - Direct issue tracking via MCP server protocols
 - Workflow: Manual validation, feature branch development
-- See project documentation for specific issue tracker configuration
+- Configure your preferred issue tracker via MCP server settings
 
 ---
 

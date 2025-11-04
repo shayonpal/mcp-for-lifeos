@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Check for Linear issue references in ARCHITECTURE.md and docs/guides/
+STAGED_FILES=$(git diff --cached --name-only | grep -E '(docs/ARCHITECTURE.md|docs/guides/.*\.md)')
+
+if [ -n "$STAGED_FILES" ]; then
+  for file in $STAGED_FILES; do
+    if git diff --cached "$file" | grep -E '^\+.*MCP-[0-9]+' > /dev/null; then
+      echo "❌ Error: Linear issue references (MCP-XXX) found in $file"
+      echo "   External users cloning this repo won't have access to Linear. Keep docs self-contained."
+      echo "   Remove issue references or use --no-verify to bypass this check."
+      exit 1
+    fi
+  done
+fi
+
+exit 0
