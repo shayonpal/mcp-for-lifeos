@@ -31,7 +31,7 @@ describe('Vault Configuration Tests', () => {
     await fs.mkdir(vaultPath, { recursive: true });
 
     // Mock the LIFEOS_CONFIG
-    const { LIFEOS_CONFIG } = await import('../../src/config.js');
+    const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
@@ -48,7 +48,7 @@ describe('Vault Configuration Tests', () => {
   afterEach(async () => {
     // Restore original config
     if (originalConfig) {
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       Object.assign(LIFEOS_CONFIG, originalConfig);
     }
 

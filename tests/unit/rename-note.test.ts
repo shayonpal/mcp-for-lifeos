@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { VaultUtils } from '../../src/modules/files/index.js';
-import { LIFEOS_CONFIG } from '../../src/config.js';
+import { LIFEOS_CONFIG } from '../../src/shared/index.js';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';

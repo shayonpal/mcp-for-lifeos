@@ -1,7 +1,7 @@
-import { LIFEOS_CONFIG } from './config.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 import { basename } from 'path';
 import { parseISO, format } from 'date-fns';
-import type { YAMLFrontmatter } from './types.js';
+import type { YAMLFrontmatter } from '../../shared/index.js';
 
 export class ObsidianLinks {
   /**
@@ -163,7 +163,7 @@ export class ObsidianLinks {
     score?: number,
     additionalInfo?: string,
     format: 'concise' | 'detailed' = 'detailed',
-    tokenBudget?: import('./modules/search/index.js').ResponseTruncator
+    tokenBudget?: import('../search/index.js').ResponseTruncator
   ): string {
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
 
@@ -211,7 +211,7 @@ export class ObsidianLinks {
     items: string[] | any[] | Record<string, number>,
     listType: 'folders' | 'daily_notes' | 'templates' | 'yaml_properties',
     format: 'concise' | 'detailed' = 'detailed',
-    tokenBudget?: import('./modules/search/index.js').ResponseTruncator
+    tokenBudget?: import('../search/index.js').ResponseTruncator
   ): string {
     // Concise mode formatting
     if (format === 'concise') {

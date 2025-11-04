@@ -1,9 +1,9 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { logger } from '../../logger.js';
+import { logger } from '../../shared/index.js';
 import { ObsidianSettings } from '../../obsidian-settings.js';
 import { TemplateParser, TemplateContext } from './template-parser.js';
-import { stripMdExtension } from '../../path-utils.js';
+import { stripMdExtension } from '../../shared/index.js';
 
 interface TemplateData {
   name: string;

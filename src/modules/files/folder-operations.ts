@@ -14,8 +14,8 @@ import {
   readdirSync,
 } from "fs";
 import { basename, join } from "path";
-import { normalizePath } from "../../path-utils.js";
-import { LIFEOS_CONFIG } from "../../config.js";
+import { normalizePath } from "../../shared/index.js";
+import { LIFEOS_CONFIG } from "../../shared/index.js";
 
 /**
  * Recursively merge source folder into destination folder

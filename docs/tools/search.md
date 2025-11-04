@@ -99,23 +99,27 @@ The `search` tool accepts a comprehensive set of parameters through the `Univers
 The `format` parameter controls the level of detail in search results to optimize AI context window usage:
 
 **`'detailed'` (default)**:
+
 - Full metadata including score, content type, match excerpts
 - Obsidian clickable links
 - ~200-500 tokens per result
 - Best for: Comprehensive analysis, metadata inspection, content verification
 
 **`'concise'`**:
+
 - Title and path only
 - ~50-100 tokens per result (50-70% reduction vs detailed)
 - Best for: Quick lookups, high-level browsing, large result sets, token budget constraints
 
 **Example concise output**:
+
 ```
 **1. Meeting Notes 2025-08-30** - `20 - Areas/21 - Myself/Journals/Daily/2025-08-30.md`
 **2. Project Roadmap** - `10 - Projects/Project Alpha/roadmap.md`
 ```
 
 **Example detailed output**:
+
 ```
 **1. Meeting Notes 2025-08-30** (Score: 9.2)
 *Daily Note*
@@ -133,6 +137,7 @@ The `format` parameter controls the level of detail in search results to optimiz
 Auto mode intelligently detects the optimal search strategy based on the provided parameters:
 
 **Auto-Detection Logic**:
+
 1. **Pattern Mode**: Triggered by `pattern` parameter or glob patterns (`*`, `**/`) in query
 2. **Content Type Mode**: Triggered by `contentType` parameter
 3. **Recent Mode**: Triggered by `days`, date parameters, or temporal keywords in query
@@ -211,11 +216,13 @@ Auto mode intelligently detects the optimal search strategy based on the provide
 Quick mode now includes intelligent multi-word query parsing with automatic strategy detection:
 
 **Query Strategies** (Auto-detected):
+
 - **Exact Phrase**: Quoted strings or 2-word queries → `"trip planning"` or `india trip`
 - **All Terms**: 3+ word queries → `trip to india november planning` (all terms must appear)
 - **Any Term**: OR operators → `react or vue or angular` (any term can match)
 
 **Multi-Word Search Features** (Added in MCP-59):
+
 - Cross-field matching: Searches across title + content + frontmatter simultaneously
 - Term normalization: Case-insensitive matching with whitespace handling
 - Regex lookaheads: Optimized `(?=[\s\S]*\bword\b)` patterns for each term
@@ -362,8 +369,9 @@ The `search` tool replaces all legacy search tools. Here's the migration guide:
 ## Implementation Details
 
 ### Handler Location
+
 - **Main Router**: `ToolRouter.routeSearch()` in `src/tool-router.ts`
-- **Execution**: `ToolRouter.executeSearch()` 
+- **Execution**: `ToolRouter.executeSearch()`
 - **Mode Detection**: `ToolRouter.detectSearchMode()`
 - **Search Engine**: `SearchEngine.search()` in `src/search-engine.ts`
 
@@ -485,7 +493,7 @@ The search tool provides graceful error handling:
 - [Search Engine Implementation](../../src/search-engine.ts) - Core search functionality
 - [Natural Language Processor](../../src/natural-language-processor.ts) - NLP query interpretation
 - [MCP Tools Overview](README.md) - Complete tool inventory
-- [Vault Utils](../../src/vault-utils.ts) - File system operations
+- [Vault Utils](../../src/modules/files/vault-utils.ts) - File system operations
 
 ## Analytics and Monitoring
 

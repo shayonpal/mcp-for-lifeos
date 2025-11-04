@@ -5,15 +5,12 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { ObsidianLinks } from './obsidian-links.js';
 import { YamlRulesManager } from './modules/yaml/index.js';
 import { ToolRouter, UniversalSearchOptions, SmartCreateNoteOptions, UniversalListOptions } from './tool-router.js';
-import { EditNoteInput, InsertContentInput, MoveItemsInput, EditNoteFrontmatter, InsertContentTarget, MoveItemType } from './types.js';
-import { LIFEOS_CONFIG } from './config.js';
-import { normalizePath } from './path-utils.js';
+import { LIFEOS_CONFIG } from './shared/index.js';
 import { format } from 'date-fns';
 import { MCPHttpServer } from './server/http-server.js';
-import { logger } from './logger.js';
+import { logger } from './shared/index.js';
 import { statSync } from 'fs';
 import { createMcpServer, SERVER_VERSION, parseToolMode, extractClientInfo } from './server/mcp-server.js';
 import type { ToolMode, McpServerInstance } from '../dev/contracts/MCP-6-contracts.js';
@@ -26,8 +23,7 @@ import { CONSOLIDATED_TOOL_NAMES, isUnknownToolError } from '../dev/contracts/MC
 import { getConsolidatedHandler } from './server/handlers/consolidated-handlers.js';
 import { getLegacyAliasHandler, LEGACY_ALIAS_TOOL_NAMES } from './server/handlers/legacy-alias-handlers.js';
 import { ALWAYS_AVAILABLE_TOOL_NAMES } from '../dev/contracts/MCP-98-contracts.js';
-import { WALManager } from './wal-manager.js';
-import { TransactionManager } from './transaction-manager.js';
+import { WALManager, TransactionManager } from './modules/transactions/index.js';
 import { join } from 'path';
 import { homedir } from 'os';
 

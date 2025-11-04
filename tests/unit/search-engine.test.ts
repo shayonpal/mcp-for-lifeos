@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import type { LifeOSNote } from '../../src/types.js';
+import type { LifeOSNote } from '../../src/shared/index.js';
 
 jest.mock('../../src/modules/files/note-crud.js', () => ({
   readNote: jest.fn(),

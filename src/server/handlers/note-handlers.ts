@@ -5,20 +5,19 @@
 
 import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { EditNoteInput, InsertContentInput } from '../../types.js';
+import type { EditNoteInput, InsertContentInput } from '../../shared/index.js';
 import type { RenameNoteInput, RenameNoteOutput, RenameNoteError } from '../../../dev/contracts/MCP-105-contracts.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { NOTE_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
 import type { LinkUpdatePreview, EnhancedRenamePreviewOutput, TransactionPhaseDescription } from '../../../dev/contracts/MCP-123-contracts.js';
 import { TIME_ESTIMATION } from '../../../dev/contracts/MCP-123-contracts.js';
 import { VaultUtils } from '../../modules/files/index.js';
-import { ObsidianLinks } from '../../obsidian-links.js';
-import { normalizePath } from '../../path-utils.js';
+import { ObsidianLinks } from '../../modules/links/index.js';
+import { normalizePath } from '../../shared/index.js';
 import { addVersionMetadata } from '../tool-registry.js';
 import { format } from 'date-fns';
-import { LIFEOS_CONFIG } from '../../config.js';
-import { logger } from '../../logger.js';
-import { updateVaultLinks } from '../../link-updater.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { logger } from '../../shared/index.js';
 
 /**
  * Transaction service cache for singleton pattern
@@ -33,8 +32,7 @@ let walManagerInstance: any = null;
  */
 async function getTransactionManager() {
   if (!transactionManagerInstance) {
-    const { TransactionManager } = await import('../../transaction-manager.js');
-    const { WALManager } = await import('../../wal-manager.js');
+    const { TransactionManager, WALManager } = await import('../../modules/transactions/index.js');
 
     walManagerInstance = new WALManager();
     transactionManagerInstance = new TransactionManager(LIFEOS_CONFIG.vaultPath, walManagerInstance);
@@ -243,7 +241,7 @@ async function previewRenameOperation(
 
     // Scan for links if updateLinks is enabled (MCP-123 enhancement)
     if (updateLinks) {
-      const { LinkScanner } = await import('../../link-scanner.js');
+      const { LinkScanner } = await import('../../modules/links/index.js');
       
       // Extract note name from oldPath (without .md extension)
       const oldNoteName = basename(oldPath, '.md');

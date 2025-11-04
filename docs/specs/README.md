@@ -5,6 +5,7 @@ This directory contains product requirements, feature specifications, implementa
 ## Directory Structure
 
 ### 📋 **Features** (`features/`)
+
 Product requirements and feature specifications for user-facing capabilities.
 
 | Spec | Status | Description |
@@ -12,6 +13,7 @@ Product requirements and feature specifications for user-facing capabilities.
 | [Tool Consolidation Optimization](./features/tool-consolidation-optimization.md) | **Implemented** | AI Tool Caller Optimization: 21→11 tools with intelligent routing |
 
 ### 🏗️ **Implementation Plans** (`implementation/`)
+
 Detailed technical implementation guides and development roadmaps.
 
 | Plan | Status | Description |
@@ -19,6 +21,7 @@ Detailed technical implementation guides and development roadmaps.
 | [Insert Content Implementation](./implementation/insert-content-implementation-plan.md) | **Implemented** | Context-aware content insertion within notes |
 
 ### 📖 **Use Cases** (`use-cases/`)
+
 User scenarios, workflow documentation, and usage examples.
 
 | Use Case | Status | Description |
@@ -26,6 +29,7 @@ User scenarios, workflow documentation, and usage examples.
 | [Insert Content Use Cases](./use-cases/insert-content-usecases.md) | **Reference** | Comprehensive usage scenarios for content insertion |
 
 ### 💭 **RFCs** (`rfcs/`)
+
 Request for Comments - Major architectural changes and technical proposals.
 
 | RFC | Status | Description |
@@ -35,6 +39,7 @@ Request for Comments - Major architectural changes and technical proposals.
 ## Specification Lifecycle
 
 ### Status Definitions
+
 - **Proposed**: Under consideration, gathering feedback
 - **Approved**: Accepted for development, detailed planning
 - **In Progress**: Active development underway
@@ -42,6 +47,7 @@ Request for Comments - Major architectural changes and technical proposals.
 - **Reference**: Historical documentation, feature complete
 
 ### From Idea to Implementation
+
 1. **Feature Specs**: Start in `features/` with user requirements
 2. **Implementation Plans**: Move to `implementation/` with technical details
 3. **Use Cases**: Document in `use-cases/` with real-world scenarios
@@ -50,6 +56,7 @@ Request for Comments - Major architectural changes and technical proposals.
 ## Current Development Focus
 
 **Active Priority**: Core MCP server development (per ADR-002)
+
 - Server decomposition and technical debt reduction
 - Test suite health and reliability improvements
 - Tool consolidation validation and legacy retirement
@@ -59,6 +66,7 @@ Request for Comments - Major architectural changes and technical proposals.
 ## Creating New Specifications
 
 ### Feature Specification Template
+
 ```markdown
 # Feature Name
 
@@ -86,6 +94,7 @@ What this feature explicitly does NOT include
 ```
 
 ### Implementation Plan Template
+
 ```markdown
 # Implementation Plan: Feature Name
 

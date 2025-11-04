@@ -30,7 +30,7 @@ Rename notes atomically with full transaction safety, automatic rollback on fail
 
 **BREAKING CHANGE**: Transaction-based atomic rename operations:
 
-- **TransactionManager Integration** (`src/transaction-manager.ts`): Five-phase atomic protocol with full rollback
+- **TransactionManager Integration** (`src/modules/transactions/transaction-manager.ts`): Five-phase atomic protocol with full rollback
 - **Write-Ahead Logging** (`src/wal-manager.ts`): WAL persistence for crash recovery at `~/.config/mcp-lifeos/wal/`
 - **All-or-Nothing Semantics**: Operations fully succeed or fully fail - no partial states
 - **Warnings Array Removed**: Success responses no longer include warnings field (breaking change)
@@ -43,7 +43,7 @@ Rename notes atomically with full transaction safety, automatic rollback on fail
 
 Automatic link updates integrated with transactions:
 
-- **Link Updater Module** (`src/link-updater.ts`): Two-phase commit protocol (render + commit modes)
+- **Link Updater Module** (`src/modules/links/link-updater.ts`): Two-phase commit protocol (render + commit modes)
 - **Link Rewriting**: Preserves all wikilink formats (basic, alias, heading, embed)
 - **Atomic Link Updates**: Integrated into transaction commit phase
 - **Performance Metrics**: Tracks scan time and update time separately
@@ -53,7 +53,7 @@ Automatic link updates integrated with transactions:
 
 Internal link detection infrastructure:
 
-- **LinkScanner Module** (`src/link-scanner.ts`): Vault-wide wikilink detection with regex-based approach
+- **LinkScanner Module** (`src/modules/links/link-scanner.ts`): Vault-wide wikilink detection with regex-based approach
 - **Performance**: <5000ms for 1000+ notes, <50ms per note
 - **Supported Formats**: All Obsidian wikilink formats (basic, alias, heading, block reference, embed)
 

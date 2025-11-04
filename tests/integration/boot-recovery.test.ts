@@ -13,8 +13,8 @@ import { promises as fs, existsSync, utimesSync } from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
-import { WALManager, type WALEntry } from '../../src/wal-manager.js';
-import { TransactionManager } from '../../src/transaction-manager.js';
+import { WALManager, type WALEntry } from '../../src/modules/transactions/index.js';
+import { TransactionManager } from '../../src/modules/transactions/index.js';
 import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('Boot Recovery System', () => {
@@ -34,7 +34,7 @@ describe('Boot Recovery System', () => {
     walManager = new WALManager(walDir);
 
     // Mock the LIFEOS_CONFIG
-    const { LIFEOS_CONFIG } = await import('../../src/config.js');
+    const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
 
@@ -45,7 +45,7 @@ describe('Boot Recovery System', () => {
   afterEach(async () => {
     // Restore original config
     if (originalConfig) {
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       Object.assign(LIFEOS_CONFIG, originalConfig);
     }
 

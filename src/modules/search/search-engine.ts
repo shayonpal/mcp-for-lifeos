@@ -1,15 +1,14 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { glob } from 'glob';
-import { LifeOSNote, YAMLFrontmatter, SearchOptions } from '../../types.js';
+import { LifeOSNote } from '../../shared/index.js';
 import { readNote } from '../files/note-crud.js';
-import { LIFEOS_CONFIG } from '../../config.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 import { NaturalLanguageProcessor, QueryInterpretation } from './natural-language-processor.js';
 import { QueryParser } from './query-parser.js';
 import type { QueryStrategy } from '../../../dev/contracts/MCP-59-contracts.js';
-import { escapeRegex } from '../../regex-utils.js';
-import { normalizeText } from '../../text-utils.js';
-import { stripMdExtension } from '../../path-utils.js';
+import { escapeRegex } from '../../shared/index.js';
+import { stripMdExtension } from '../../shared/index.js';
 
 export interface AdvancedSearchOptions {
   // Text search

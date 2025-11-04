@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { LIFEOS_CONFIG } from '../../config.js';
-import { YAMLFrontmatter } from '../../types.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { YAMLFrontmatter } from '../../shared/index.js';
 import matter from 'gray-matter';
 import { format } from 'date-fns';
 

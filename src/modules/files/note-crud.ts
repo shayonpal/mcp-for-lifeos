@@ -9,9 +9,9 @@ import { existsSync, statSync } from "fs";
 import { basename, join } from "path";
 import matter from "gray-matter";
 import { readFileWithRetry, writeFileWithRetry } from "./file-io.js";
-import { normalizePath } from "../../path-utils.js";
-import { LIFEOS_CONFIG, YAML_RULES } from "../../config.js";
-import type { LifeOSNote, YAMLFrontmatter } from "../../types.js";
+import { normalizePath } from "../../shared/index.js";
+import { LIFEOS_CONFIG, YAML_RULES } from "../../shared/index.js";
+import type { LifeOSNote, YAMLFrontmatter } from "../../shared/index.js";
 
 /**
  * Parse note content with fallback for malformed YAML

@@ -5,6 +5,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 ## Tool Categories
 
 ### Search Tools
+
 **Recommended: Use `search` for all search operations**
 
 | Tool | Status | Description |
@@ -18,6 +19,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 | find_notes_by_pattern | ⚠️ Legacy | Pattern matching → use `search` with mode="pattern" |
 
 ### Note Creation Tools
+
 **Recommended: Use `create_note_smart` for intelligent template detection**
 
 | Tool | Status | Description |
@@ -27,6 +29,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 | create_note_from_template | ⚠️ Legacy | Template-based creation → use `create_note_smart` |
 
 ### Listing Tools
+
 **Recommended: Use `list` for all listing operations**
 
 | Tool | Status | Description |
@@ -73,12 +76,14 @@ The MCP server implements a consolidation strategy to simplify AI interactions w
 ## Usage Guidelines
 
 ### For AI Tool Callers
+
 - **Always prefer consolidated tools** when available
 - Use `search` instead of any legacy search variant
 - Use `create_note_smart` for note creation with templates
 - Use `list` for any listing operation
 
 ### For Developers
+
 - Legacy tools are implemented as thin wrappers around consolidated tools
 - New features should be added to consolidated tools, not legacy variants
 - Tool router (`src/tool-router.ts`) handles intelligent routing logic
@@ -86,9 +91,11 @@ The MCP server implements a consolidation strategy to simplify AI interactions w
 ## Tool Documentation
 
 Individual tool documentation can be found in:
+
 - `[tool-name].md` - Detailed documentation for each tool (coming soon)
 
 ## Related Documentation
+
 - [`/docs/architecture/`](../architecture/) - System architecture
 - [`/docs/guides/`](../guides/) - Integration guides
 - [`/src/tool-router.ts`](../../src/tool-router.ts) - Tool routing implementation

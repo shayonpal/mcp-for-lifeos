@@ -9,7 +9,7 @@
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
+import type { AnalyticsCollector } from '../../src/modules/analytics/index.js';
 
 // ============================================================================
 // TYPE DEFINITIONS (From src/index.ts)

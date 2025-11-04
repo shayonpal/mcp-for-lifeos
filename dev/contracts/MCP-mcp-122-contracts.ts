@@ -348,7 +348,7 @@ export interface PreviewRenameFunction {
  *   - Add preview response format examples
  *
  * NO CHANGES NEEDED:
- * - src/transaction-manager.ts (reuses existing plan() method)
+ * - src/modules/transactions/transaction-manager.ts (reuses existing plan() method)
  * - src/server/tool-registry.ts (dryRun already in schema)
  * - dev/contracts/MCP-105-contracts.ts (RenameNoteInput already has dryRun)
  */
@@ -360,7 +360,7 @@ export interface PreviewRenameFunction {
 /**
  * Required dependencies (all existing)
  *
- * - TransactionManager (src/transaction-manager.ts)
+ * - TransactionManager (src/modules/transactions/transaction-manager.ts)
  *   - Uses plan() method for validation
  * - RenameNoteInput (dev/contracts/MCP-105-contracts.ts)
  *   - Already includes dryRun parameter

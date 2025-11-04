@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { logger } from './logger.js';
-import { stripMdExtension } from './path-utils.js';
+import { logger } from './shared/index.js';
+import { stripMdExtension } from './shared/index.js';
 
 export interface DailyNoteSettings {
   format: string;

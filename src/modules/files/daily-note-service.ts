@@ -10,8 +10,8 @@ import { join } from "path";
 import { format } from "date-fns";
 import matter from "gray-matter";
 import { readNote, createNote } from "./note-crud.js";
-import { LIFEOS_CONFIG } from "../../config.js";
-import type { LifeOSNote, YAMLFrontmatter } from "../../types.js";
+import { LIFEOS_CONFIG } from "../../shared/index.js";
+import type { LifeOSNote, YAMLFrontmatter } from "../../shared/index.js";
 import type { TemplateContext } from "../templates/index.js";
 
 /**

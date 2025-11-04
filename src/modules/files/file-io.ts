@@ -13,7 +13,7 @@ import {
   rmSync,
 } from "fs";
 import { join, dirname, basename } from "path";
-import { logger } from "../../logger.js";
+import { logger } from "../../shared/index.js";
 
 /**
  * Options for atomic file writes
