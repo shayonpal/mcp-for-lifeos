@@ -7,10 +7,10 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { TemplateManager } from '../../src/template-manager.js';
-import { DateResolver } from '../../src/date-resolver.js';
+import { TemplateManager } from '../../src/modules/templates/index.js';
+import { DateResolver } from '../../src/shared/index.js';
 import { ObsidianSettings } from '../../src/obsidian-settings.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 
@@ -83,8 +83,8 @@ tags:
     obsidianSettings = new ObsidianSettings(vaultPath);
     
     // Mock the LIFEOS_CONFIG for VaultUtils
-    const { LIFEOS_CONFIG } = await import('../../src/config.js');
-    const { VaultUtils } = await import('../../src/vault-utils.js');
+    const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
+    const { VaultUtils } = await import('../../src/modules/files/index.js');
     originalConfig = { ...LIFEOS_CONFIG };
     LIFEOS_CONFIG.vaultPath = vaultPath;
     LIFEOS_CONFIG.dailyNotesPath = path.join(vaultPath, 'Daily');
@@ -97,7 +97,7 @@ tags:
   afterEach(async () => {
     // Restore original config
     if (originalConfig) {
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       Object.assign(LIFEOS_CONFIG, originalConfig);
     }
     
@@ -320,7 +320,7 @@ Today is <% tp.date.now("dddd") %> in week <% tp.date.now("ww") %>`
       await fs.mkdir(journalPath, { recursive: true });
       
       // Update config to use simple Daily folder for testing
-      const { LIFEOS_CONFIG } = await import('../../src/config.js');
+      const { LIFEOS_CONFIG } = await import('../../src/shared/index.js');
       LIFEOS_CONFIG.dailyNotesPath = path.join(vaultPath, 'Daily');
       
       const dateString = '2025-07-01';

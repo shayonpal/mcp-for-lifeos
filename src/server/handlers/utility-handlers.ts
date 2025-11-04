@@ -5,18 +5,18 @@
 
 import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP-8-contracts.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { MoveItemsInput } from '../../types.js';
+import type { MoveItemsInput } from '../../shared/index.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { UTILITY_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
-import { VaultUtils } from '../../vault-utils.js';
-import { ObsidianLinks } from '../../obsidian-links.js';
-import { DynamicTemplateEngine } from '../../template-engine-dynamic.js';
-import { DateResolver } from '../../date-resolver.js';
+import { VaultUtils } from '../../modules/files/index.js';
+import { ObsidianLinks } from '../../modules/links/index.js';
+import { DynamicTemplateEngine } from '../../modules/templates/index.js';
+import { DateResolver } from '../../shared/index.js';
 import { addVersionMetadata, getToolsForMode } from '../tool-registry.js';
 import { format } from 'date-fns';
-import { LIFEOS_CONFIG } from '../../config.js';
+import { LIFEOS_CONFIG } from '../../shared/index.js';
 import { SERVER_VERSION, extractClientInfo } from '../mcp-server.js';
-import { logger } from '../../logger.js';
+import { logger } from '../../shared/index.js';
 
 /**
  * Handler registry (lazy initialization)

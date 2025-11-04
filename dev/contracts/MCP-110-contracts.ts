@@ -11,7 +11,7 @@
 // ============================================================================
 
 /**
- * LinkScanOptions interface already exists in src/link-scanner.ts
+ * LinkScanOptions interface already exists in src/modules/links/link-scanner.ts
  *
  * The skipFrontmatter parameter is already defined:
  * ```typescript
@@ -144,7 +144,7 @@ export const ImplementationScope = {
    * Primary implementation file
    */
   linkScanner: {
-    file: 'src/link-scanner.ts',
+    file: 'src/modules/links/link-scanner.ts',
     method: 'identifySkipRegions',
     lineRange: '382-436',
     change: 'Conditional frontmatter skip region logic',
@@ -177,7 +177,7 @@ export const ImplementationScope = {
    */
   documentation: {
     linkScanner: {
-      file: 'src/link-scanner.ts',
+      file: 'src/modules/links/link-scanner.ts',
       update: 'Update LinkScanOptions.skipFrontmatter JSDoc',
     },
     renameTool: {

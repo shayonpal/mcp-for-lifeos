@@ -1,8 +1,8 @@
 {
-  "issueId": "MCP-148",
-  "branchName": "bugfix/MCP-148-fix-unit-test-vault-isolation",
-  "worktreePath": "/Users/shayon/DevProjects/worktrees/bugfix-MCP-148-fix-unit-test-vault-isolation",
-  "executedPhases": [1, 2, 3, 4, 5, 6],
+  "issueId": "MCP-94",
+  "branchName": "test/MCP-94-enable-instance-id-integration-test",
+  "worktreePath": "/Users/shayon/DevProjects/worktrees/test/MCP-94-enable-instance-id-integration-test",
+  "executedPhases": [1, 2, 3],
   "prUrl": null,
   "prNumber": null,
   "pausePoints": {

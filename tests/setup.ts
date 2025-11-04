@@ -46,7 +46,7 @@ process.env.DISABLE_USAGE_ANALYTICS = 'true'; // MCP-61: Disable analytics for t
 
 // MCP-61: Mock analytics module to avoid import.meta.url ESM parsing issues in Jest
 // This must come after environment setup but before any imports that use analytics
-jest.mock('../src/analytics/analytics-collector.js', () => ({
+jest.mock('../src/modules/analytics/analytics-collector.js', () => ({
   AnalyticsCollector: {
     getInstance: jest.fn().mockReturnValue({
       trackToolCall: jest.fn(),
@@ -54,6 +54,15 @@ jest.mock('../src/analytics/analytics-collector.js', () => ({
       recordToolExecution: jest.fn(async (_toolName, fn) => await fn()), // Execute the wrapped function
       shutdown: jest.fn().mockResolvedValue(undefined),
     }),
+  },
+}));
+
+// Mock usage-metrics to avoid import.meta.url issues
+jest.mock('../src/modules/analytics/usage-metrics.js', () => ({
+  DEFAULT_ANALYTICS_CONFIG: {
+    enabled: false,
+    outputPath: '/tmp/test-analytics.jsonl',
+    flushInterval: 60000,
   },
 }));
 

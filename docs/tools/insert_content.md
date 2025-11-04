@@ -46,31 +46,41 @@ Surgical content insertion at precise locations. Target by heading, block refere
 ## Target Methods
 
 ### Heading
+
 Match markdown headings with exact text match. The heading level matters:
+
 - Target: `"## Tasks"` will match `## Tasks` but not `# Tasks`
 - Case-sensitive matching required
 - Apostrophes matter: `"Day's Notes"` ≠ `"Days Notes"`
 
 ### Block Reference
+
 Target Obsidian block IDs:
+
 - Use with or without caret: `"^block-id"` or `"block-id"`
 - Searches for blocks at end of lines: `Some text ^block-id`
 
 ### Pattern
+
 Search for specific text anywhere in the document:
+
 - Exact string matching
 - Case-sensitive
 - First occurrence used
 
 ### Line Number
+
 Insert at specific line (1-based indexing):
+
 - Must be within document bounds
 - Useful for precise positioning
 
 ## Position Options Explained
 
 ### before
+
 Insert immediately before the target line:
+
 ```markdown
 ## Tasks
 [INSERTED CONTENT HERE]
@@ -78,7 +88,9 @@ Insert immediately before the target line:
 ```
 
 ### after (default)
+
 Insert immediately after the target line:
+
 ```markdown
 ## Tasks
 [INSERTED CONTENT HERE]
@@ -86,7 +98,9 @@ Insert immediately after the target line:
 ```
 
 ### append
+
 Add to end of file (ignores target):
+
 ```markdown
 ## Tasks
 - Existing task
@@ -95,7 +109,9 @@ Add to end of file (ignores target):
 ```
 
 ### prepend  
+
 Add to beginning of file (ignores target):
+
 ```markdown
 [INSERTED CONTENT HERE]
 
@@ -104,7 +120,9 @@ Add to beginning of file (ignores target):
 ```
 
 ### end-of-section
+
 Insert at end of heading's content section:
+
 ```markdown
 ## Tasks
 - Existing task 1
@@ -132,14 +150,16 @@ Morning thoughts and observations.
 ```
 
 **Common daily note sections:**
+
 - "Day's Notes" (main journal content)
 - "Tasks" or "Today's Tasks"
-- "Meeting Notes" 
+- "Meeting Notes"
 - "Reflections"
 
 ## Usage Examples
 
 ### Insert into Daily Note's "Day's Notes" Section
+
 ```json
 {
   "title": "2024-01-15",
@@ -152,6 +172,7 @@ Morning thoughts and observations.
 ```
 
 ### Add Task to "Tasks" Heading
+
 ```json
 {
   "path": "Projects/Project Alpha.md", 
@@ -164,6 +185,7 @@ Morning thoughts and observations.
 ```
 
 ### Insert After Specific Pattern
+
 ```json
 {
   "title": "Meeting Notes",
@@ -176,6 +198,7 @@ Morning thoughts and observations.
 ```
 
 ### Add Content at Line Number
+
 ```json
 {
   "path": "draft.md",
@@ -188,6 +211,7 @@ Morning thoughts and observations.
 ```
 
 ### Append to End of File
+
 ```json
 {
   "title": "Research Notes",
@@ -202,15 +226,18 @@ Morning thoughts and observations.
 ## Heading Matching
 
 ### Exact Text Match Required
+
 - **Correct**: `"## Tasks"` matches `## Tasks`
 - **Incorrect**: `"Tasks"` does NOT match `## Tasks`
 - **Incorrect**: `"## tasks"` does NOT match `## Tasks` (case-sensitive)
 
 ### Apostrophes Matter
+
 - **Correct**: `"Day's Notes"` matches `## Day's Notes`  
 - **Incorrect**: `"Days Notes"` does NOT match `## Day's Notes`
 
 ### Heading Level Included
+
 - **Correct**: `"## Tasks"` matches `## Tasks`
 - **Incorrect**: `"# Tasks"` does NOT match `## Tasks`
 - **Incorrect**: `"### Tasks"` does NOT match `## Tasks`
@@ -218,48 +245,59 @@ Morning thoughts and observations.
 ## Error Handling
 
 ### Target Not Found
+
 When a heading, pattern, or block reference isn't found, the tool provides helpful suggestions:
+
 - Lists all available headings in the document
 - Suggests similar headings (handles common variations like "Day's Notes" vs "Days Notes")
 - Shows line numbers for debugging
 
 ### Invalid Line Number
+
 - Error if line number is out of range (< 1 or > document length)
 - Clear error message with valid range
 
 ### Note Not Found  
+
 - When using `title` parameter, searches with quickSearch
 - Error if no matching note found
 - Suggests checking note title spelling
 
 ### Multiple Matching Patterns
+
 - Uses first occurrence found
 - Consider using more specific patterns for precision
 
 ### Corrupted Block References
+
 - Error if block reference format is invalid
 - Suggests proper format: `^block-id`
 
 ## Implementation Details
 
 ### Note Discovery
+
 - **By title**: Uses `SearchEngine.quickSearch()` for fuzzy matching
 - **By path**: Direct file system access with path normalization
 - **Path handling**: Supports both absolute and vault-relative paths
 
 ### Content Insertion Engine  
+
 - **Core method**: `VaultUtils.insertContent()`
 - **Pattern matching**: Exact string search with case sensitivity
 - **Section detection**: Parses markdown heading hierarchy to find section boundaries
 
 ### Smart List Detection
-- Detects list items in content: `- `, `* `, `1. `, `- [ ]`, etc.
+
+- Detects list items in content: `-`, `*`, `1.`, `- [ ]`, etc.
 - When inserting list items, finds existing lists in target section
 - Maintains proper indentation and list formatting
 - Handles nested lists with appropriate spacing
 
 ### Section Boundary Detection
+
 For `end-of-section` position:
+
 1. Find target heading and its level (e.g., `## Tasks` = level 2)
 2. Scan forward until next heading of same or higher level
 3. Insert content before that boundary
@@ -268,24 +306,32 @@ For `end-of-section` position:
 ## Best Practices
 
 ### Read Note First
+
 Always use `read_note` before insertion to verify:
+
 - Target heading/pattern exists
 - Current document structure
 - Appropriate insertion point
 
 ### Use Specific Headings
+
 Avoid ambiguous headings:
+
 - **Good**: `"## Project Alpha Tasks"`
 - **Risky**: `"## Tasks"` (if multiple task sections exist)
 
 ### Test After Insertion
+
 Use `read_note` after insertion to verify:
+
 - Content was placed correctly
 - Formatting was preserved
 - No unintended side effects
 
 ### Use end-of-section for Sections
+
 When adding to existing sections (like task lists):
+
 ```json
 {
   "target": { "heading": "## Tasks" },
@@ -296,7 +342,9 @@ When adding to existing sections (like task lists):
 ## Common Use Cases
 
 ### Daily Journaling
+
 **Scenario**: Add thoughts to today's "Day's Notes" section
+
 ```json
 {
   "title": "2024-01-15", 
@@ -307,7 +355,9 @@ When adding to existing sections (like task lists):
 ```
 
 ### Task Management
+
 **Scenario**: Add new task to existing task list
+
 ```json
 {
   "path": "Projects/Website Redesign.md",
@@ -318,7 +368,9 @@ When adding to existing sections (like task lists):
 ```
 
 ### Meeting Notes
+
 **Scenario**: Insert agenda item results under specific heading
+
 ```json
 {
   "title": "Weekly Team Meeting - Jan 15",
@@ -329,7 +381,9 @@ When adding to existing sections (like task lists):
 ```
 
 ### Research Notes
+
 **Scenario**: Append findings to research document
+
 ```json
 {
   "path": "Research/Market Analysis.md",
@@ -340,7 +394,9 @@ When adding to existing sections (like task lists):
 ```
 
 ### Template Completion
+
 **Scenario**: Fill in template placeholders
+
 ```json
 {
   "title": "Project Kickoff Template",
@@ -353,16 +409,19 @@ When adding to existing sections (like task lists):
 ## Performance Considerations
 
 ### Large File Handling
+
 - Tool loads entire file into memory for processing
 - Performance may degrade with very large documents (>1MB)
 - Consider breaking large documents into smaller sections
 
 ### Pattern Search Efficiency  
+
 - Simple string search is O(n) where n = document size
 - For frequent insertions, consider more specific targets
 - Block references are faster than pattern searches
 
 ### Section Boundary Detection
+
 - Requires parsing entire document to find section end
 - Cached during single operation but not between operations
 - More expensive than simple line-based insertion
@@ -370,28 +429,37 @@ When adding to existing sections (like task lists):
 ## Related Tools
 
 ### read_note
+
 **Use before insert_content**:
+
 - Verify target exists in document
 - Understand current document structure
 - Plan insertion strategy
 
 **Use after insert_content**:
+
 - Confirm content was inserted correctly
 - Verify formatting preserved
 
 ### edit_note  
+
 **Alternative for**:
+
 - Replacing entire content sections
 - Modifying YAML frontmatter
 - Complete document restructuring
 
 ### get_daily_note
+
 **Use together**:
+
 - Create daily note if it doesn't exist
 - Then use insert_content to add entries
 
 ### search
+
 **Use together**:
+
 - Find notes that need content insertion
 - Identify patterns across multiple documents
 - Discover similar content for consistency
@@ -399,6 +467,7 @@ When adding to existing sections (like task lists):
 ## Advanced Examples
 
 ### Chain Insertions for Complex Updates
+
 ```json
 // First insertion
 {
@@ -418,6 +487,7 @@ When adding to existing sections (like task lists):
 ```
 
 ### Template Variable Replacement
+
 ```json
 {
   "path": "templates/meeting-template.md",
@@ -428,6 +498,7 @@ When adding to existing sections (like task lists):
 ```
 
 ### Structured Data Insertion
+
 ```json
 {
   "title": "Contact Database",
@@ -438,6 +509,7 @@ When adding to existing sections (like task lists):
 ```
 
 ### Multi-Section Updates
+
 ```json
 // Add to multiple sections in sequence
 [
@@ -459,24 +531,28 @@ When adding to existing sections (like task lists):
 ## Troubleshooting
 
 ### "Heading not found" Error
+
 1. **Check exact heading format**: Include `##` and proper spacing
 2. **Verify case sensitivity**: "Tasks" ≠ "tasks"  
 3. **Check for typos**: Especially apostrophes in "Day's Notes"
 4. **Use read_note first**: Confirm heading exists and get exact format
 
 ### Content Not Appearing Where Expected
+
 1. **Wrong position parameter**: Try different position values
 2. **Multiple matching targets**: Pattern might match unexpected location
 3. **Section boundary confusion**: Use line numbers for debugging
 4. **Formatting issues**: Check if content needs newlines
 
 ### List Formatting Not Preserved
+
 1. **Check content format**: Ensure list markers match existing format
 2. **Position setting**: Use "end-of-section" for list continuation
 3. **Indentation**: Manually specify indentation if needed
 4. **Mixed list types**: Stick to consistent markers (- vs * vs 1.)
 
 ### Performance Issues
+
 1. **Large documents**: Consider document size limits
 2. **Complex patterns**: Use simpler, more specific targets  
 3. **Frequent insertions**: Batch operations when possible
@@ -494,4 +570,4 @@ When adding to existing sections (like task lists):
 - [Use Cases Documentation](../specs/use-cases/insert-content-usecases.md)
 - [Implementation Plan](../specs/implementation/insert-content-implementation-plan.md)  
 - [Related Tools](README.md)
-- [VaultUtils API](../../src/vault-utils.ts)
+- [VaultUtils API](../../src/modules/files/vault-utils.ts)

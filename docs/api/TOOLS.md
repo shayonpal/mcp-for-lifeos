@@ -22,17 +22,20 @@ The LifeOS MCP server supports three tool visibility modes controlled by the `TO
 ### Available Modes
 
 **`consolidated-only` (Default - 13 tools)**
+
 - Modern consolidated tools: `search`, `create_note`, `list`
 - Always-available tools: `get_server_version`, `get_yaml_rules`, `read_note`, `edit_note`, `get_daily_note`, `diagnose_vault`, `move_items`, `rename_note`, `insert_content`, `list_yaml_property_values`
 - Recommended for most users
 - Cleaner interface, easier navigation
 
 **`legacy-only` (20 tools)**
+
 - All original legacy tools without consolidated versions
 - Useful for backward compatibility testing
 - Legacy search tools, creation tools, and listing tools
 
 **`consolidated-with-aliases` (34 tools)**
+
 - Both consolidated AND legacy tools visible
 - Maximum compatibility mode
 - Shows all 12 consolidated-only tools + 22 additional legacy tools
@@ -236,11 +239,13 @@ Rename note files in the vault with path validation and error handling (Phase 1:
 - **dryRun** (optional, forward-compatible): Will preview changes without executing in Phase 5 (MCP-109) - currently ignored with warning
 
 **Phase 1 Limitations:**
+
 - Link detection NOT implemented (Phase 2 - MCP-106)
 - Link updates NOT implemented (Phase 3 - MCP-107) - existing links will NOT be updated automatically
 - Dry-run mode NOT implemented (Phase 5 - MCP-109)
 
 **Error Codes:**
+
 - `FILE_NOT_FOUND`: Source file does not exist (suggestion: use list tool to find correct path)
 - `FILE_EXISTS`: Destination file already exists (suggestion: choose different name)
 - `INVALID_PATH`: Invalid filename or path characters (suggestion: use valid characters and .md extension)
@@ -261,6 +266,7 @@ rename_note oldPath: "Projects/old.md" newPath: "Projects/new.md" updateLinks: t
 ```
 
 **Comparison with move_items:**
+
 - Use `rename_note` for renaming single note files with structured error handling
 - Use `move_items` for moving notes without renaming, batch operations, or folder moves
 - `rename_note` always operates on individual files; `move_items` supports batch and folder operations

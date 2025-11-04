@@ -13,7 +13,7 @@
 
 /**
  * Extended LinkReference interface with block reference support
- * Extends existing interface from src/link-scanner.ts
+ * Extends existing interface from src/modules/links/link-scanner.ts
  */
 export interface LinkReferenceWithBlockSupport {
   // ========== Existing fields (from LinkReference) ==========
@@ -151,7 +151,7 @@ export type BlockRefValidationError =
  */
 export interface ModifiedComponents {
   linkScanner: {
-    file: 'src/link-scanner.ts';
+    file: 'src/modules/links/link-scanner.ts';
     changes: [
       'Update WIKILINK_PATTERN regex to capture block refs',
       'Modify parsing logic in extractLinksFromContent',
@@ -164,7 +164,7 @@ export interface ModifiedComponents {
   };
 
   linkUpdater: {
-    file: 'src/link-updater.ts';
+    file: 'src/modules/links/link-updater.ts';
     changes: [
       'Update link reconstruction logic in renderLinkUpdates',
       'Preserve ^ prefix when rebuilding block refs',
@@ -335,11 +335,11 @@ export interface BackwardCompatibilityContract {
  * Steps to complete implementation (in order)
  */
 export const IMPLEMENTATION_STEPS = [
-  '1. Update WIKILINK_PATTERN regex in src/link-scanner.ts',
+  '1. Update WIKILINK_PATTERN regex in src/modules/links/link-scanner.ts',
   '2. Modify LinkReference interface to add blockRef field',
   '3. Update extractLinksFromContent parsing logic',
   '4. Add anchor classification logic (heading vs blockRef)',
-  '5. Update link reconstruction in src/link-updater.ts',
+  '5. Update link reconstruction in src/modules/links/link-updater.ts',
   '6. Add unit tests for block ref parsing',
   '7. Add unit tests for block ref reconstruction',
   '8. Add integration tests for E2E rename with block refs',

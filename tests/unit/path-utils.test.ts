@@ -5,7 +5,7 @@
  * @since MCP-89
  */
 
-import { stripMdExtension, MD_EXTENSION_REGEX, normalizePath } from '../../src/path-utils.js';
+import { stripMdExtension, MD_EXTENSION_REGEX, normalizePath } from '../../src/shared/index.js';
 import * as path from 'path';
 
 describe('path-utils', () => {

@@ -33,6 +33,7 @@ The creation date is added in the correct position according to the Obsidian Tas
 5. 🔁 Recurrence
 
 Example with multiple properties:
+
 ```
 - [ ] Important task ➕ 2025-06-28 🛫 2025-06-29 📅 2025-06-30
 ```

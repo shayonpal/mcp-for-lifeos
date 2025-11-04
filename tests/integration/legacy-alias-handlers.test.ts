@@ -9,13 +9,13 @@ import type { ToolHandlerContext } from '../../dev/contracts/MCP-8-contracts.js'
 import type { ToolRegistryConfig } from '../../dev/contracts/MCP-7-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import { ToolRouter } from '../../src/tool-router.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 // MCP-148: Safety net mock to prevent file creation if any code path bypasses ToolRouter
 // These tests focus on parameter mapping by mocking ToolRouter methods directly.
 // This VaultUtils mock is intentionally minimal as it should never be reached.
 // For tests that actually create files, use createTestVault() instead (see unit tests).
-jest.mock('../../src/vault-utils.js', () => ({
+jest.mock('../../src/modules/files/index.js', () => ({
   VaultUtils: {
     createNote: jest.fn((fileName, frontmatter, content, targetFolder) => ({
       path: `${targetFolder}/${fileName}.md`,

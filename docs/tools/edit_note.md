@@ -52,6 +52,7 @@ The `edit_note` tool accepts the following parameters:
 ## Update Modes
 
 ### Merge Mode (Default)
+
 - **Behavior**: Updates only the specified frontmatter fields, preserves all existing fields
 - **Safety**: Safest option, prevents accidental data loss
 - **Use Case**: Adding tags, updating specific metadata, making incremental changes
@@ -68,6 +69,7 @@ The `edit_note` tool accepts the following parameters:
 ```
 
 ### Replace Mode
+
 - **Behavior**: Replaces entire frontmatter with provided fields
 - **Safety**: ⚠️ **Dangerous** - can lose existing data if not careful
 - **Protection**: Auto-managed fields are automatically preserved
@@ -210,37 +212,45 @@ The tool automatically maps API field names to proper YAML frontmatter structure
 ## YAML Rules Compliance
 
 ### Auto-Managed Fields
+
 The following fields are automatically managed by the system and preserved during updates:
+
 - `created` - Note creation timestamp
 - `modified` - Last modification timestamp  
 - `id` - Unique note identifier
 
 These fields are:
+
 - **Never overwritten** in either merge or replace mode
 - **Automatically updated** when appropriate (e.g., `modified` timestamp)
 - **Excluded from manual editing** to maintain data integrity
 
 ### Best Practice
+
 Always consult `get_yaml_rules` before modifying frontmatter to understand current YAML schema and validation rules.
 
 ## Path Resolution
 
 ### Absolute Paths
+
 - Used as-is without modification
 - Must point to valid file within the vault
 - Example: `/Users/username/Obsidian/MyVault/Notes/file.md`
 
 ### Relative Paths
+
 - Resolved from vault root directory
 - Automatically prepended with vault path
 - Example: `Notes/file.md` → `/vault/path/Notes/file.md`
 
 ### Escaped Spaces
+
 - Automatically handles escaped spaces in paths
 - `My\ Note.md` becomes `My Note.md`
 - No manual unescaping required
 
 ### Title Search
+
 - Uses `SearchEngine.quickSearch()` with limit of 1 result
 - Returns first matching note by title
 - Case-sensitive exact match preferred
@@ -248,6 +258,7 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Response Format
 
 ### Success Response
+
 ```
 ✅ Updated note: **Note Title**
 
@@ -259,6 +270,7 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ```
 
 ### Error Responses
+
 - **Note not found**: `No note found with title: [title]`
 - **Invalid path**: `Note not found: [path]`
 - **Missing parameters**: `Either path or title is required`
@@ -267,12 +279,14 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Implementation Details
 
 ### Core Components Used
+
 - **SearchEngine**: `quickSearch()` for title-based note discovery
 - **VaultUtils**: `updateNote()` for file operations and YAML processing
 - **ObsidianLinks**: `createClickableLink()` for response formatting
 - **YamlRulesManager**: YAML validation and compliance checking
 
 ### Update Pipeline
+
 1. **Note Discovery**: Resolve note path from path or title parameter
 2. **Path Normalization**: Handle escaped spaces and relative paths
 3. **Update Preparation**: Map API fields to YAML structure
@@ -281,6 +295,7 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 6. **Response Generation**: Create formatted response with clickable links
 
 ### Error Handling
+
 - **File Not Found**: Comprehensive error messages with context
 - **Path Resolution**: Graceful handling of invalid paths
 - **YAML Validation**: Detailed validation error reporting
@@ -289,18 +304,21 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Best Practices
 
 ### Safety First
+
 - **Use merge mode** unless complete frontmatter replacement is needed
 - **Backup important notes** before using replace mode
 - **Test with non-critical notes** when learning the tool
 - **Check YAML rules** before adding custom fields
 
 ### Efficiency Tips
+
 - **Use path for precision** when you know the exact file location
 - **Use title for convenience** when searching for notes by name
 - **Batch similar updates** to minimize tool calls
 - **Leverage auto-field protection** instead of manual field management
 
 ### Content Management
+
 - **Preserve existing content** by omitting the content parameter
 - **Use consistent formatting** in content updates
 - **Maintain note structure** when making partial updates
@@ -309,24 +327,28 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Common Use Cases
 
 ### Metadata Maintenance
+
 - Adding tags to existing notes for better organization
 - Updating source URLs for reference articles
 - Correcting content type classifications
 - Adding people references to meeting notes
 
 ### Content Updates
+
 - Appending new information to existing notes
 - Correcting factual errors in note content
 - Updating outdated information with current data
 - Adding cross-references and links
 
 ### Bulk Operations
+
 - Standardizing frontmatter across note collections
 - Migrating notes to new category structures
 - Updating templates with improved metadata
 - Correcting systematic data entry errors
 
 ### Template Maintenance
+
 - Updating template content with improved structures
 - Adding new frontmatter fields to existing templates
 - Correcting template formatting and YAML structure
@@ -337,26 +359,32 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ### Common Errors
 
 #### "Note not found" Error
+
 **Problem**: Path doesn't exist or title search failed
 **Solutions**:
+
 - Verify file path accuracy and file existence
 - Check spelling of title in title-based searches
 - Use absolute path for guaranteed resolution
 - Confirm note is within the configured vault
 
 #### "Either path or title is required" Error
+
 **Problem**: Neither parameter provided
 **Solution**: Always include either `path` or `title` parameter
 
 #### YAML Validation Errors
+
 **Problem**: Frontmatter doesn't comply with LifeOS schema
 **Solutions**:
+
 - Consult `get_yaml_rules` for current schema requirements
 - Validate field names and value types
 - Use supported content types and categories
 - Check array formatting for tags and people fields
 
 ### Recovery Strategies
+
 - **Backup first**: Always backup notes before complex operations
 - **Incremental updates**: Make small changes and verify results
 - **Validation checks**: Use `get_yaml_rules` and `read_note` for verification
@@ -365,18 +393,21 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Related Tools
 
 ### Complementary Tools
+
 - **`read_note`**: Read note content before editing to understand current state
 - **`search`**: Find notes to edit using advanced search capabilities
 - **`get_yaml_rules`**: Understand frontmatter schema and validation rules
 - **`insert_content`**: Add content at specific locations within notes
 
 ### Tool Combinations
+
 1. **Search → Edit**: Find notes by criteria, then update them
 2. **Read → Edit**: Examine current state, then make informed changes  
 3. **Rules → Edit**: Check YAML schema, then update compliant frontmatter
 4. **Edit → Read**: Update note, then verify changes took effect
 
 ### Alternative Approaches
+
 - Use `create_note_smart` for new notes instead of editing non-existent ones
 - Use `insert_content` for adding content at specific locations
 - Use search tools for finding multiple notes that need similar updates
@@ -384,21 +415,25 @@ Always consult `get_yaml_rules` before modifying frontmatter to understand curre
 ## Security and Data Integrity
 
 ### Auto-Managed Field Protection
+
 - System automatically preserves critical metadata fields
 - Prevents accidental modification of timestamps and IDs
 - Maintains data consistency across all operations
 
 ### YAML Schema Compliance
+
 - Validates all frontmatter changes against current schema
 - Prevents invalid data from corrupting note metadata
 - Maintains compatibility with Obsidian and LifeOS systems
 
 ### File Operation Safety
+
 - Checks file existence before attempting updates
 - Uses atomic file operations to prevent partial writes
 - Includes retry logic for file system reliability
 
 ### Best Security Practices
+
 - Always validate parameters before calling the tool
 - Use least-privilege approach (merge vs replace mode)
 - Test changes on non-critical notes first

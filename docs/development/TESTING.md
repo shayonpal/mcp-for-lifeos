@@ -7,6 +7,7 @@ Comprehensive guide to the LifeOS MCP Server test suite.
 The test suite ensures reliability, regression protection, and edge case handling for the MCP server. Tests are organized into unit and integration categories with specialized test suites for workflows, regression, edge cases, and vault configurations.
 
 **Test Statistics**:
+
 - Total: 726 tests (721 passing, 5 skipped)
 - Test Suites: 42 suites
 - Coverage: >95%
@@ -45,10 +46,12 @@ npm run test:vault-config   # Vault configuration variations
 
 ### Integration Tests with Memory Management
 
-Integration tests require memory management flags:
+Integration tests require memory management flags for garbage collection testing. The `npm test` command now automatically includes `--expose-gc`:
 
 ```bash
-node --expose-gc ./node_modules/.bin/jest tests/integration
+npm test                                                  # Includes --expose-gc automatically
+npm run test:integration                                  # Integration tests with --expose-gc
+node --expose-gc ./node_modules/.bin/jest tests/integration  # Manual invocation
 ```
 
 ### Specific Test Files
@@ -421,11 +424,13 @@ describe('Edge Case: [Boundary Condition]', () => {
 **Note**: This project uses direct master branch workflow without CI/CD automation.
 
 **Manual Validation Required**:
+
 1. Run `npm test` locally before committing
 2. Run `npm run typecheck` to verify types
 3. Manual testing with Claude Desktop/Raycast
 
 **Future CI Setup** (if needed):
+
 - GitHub Actions configuration
 - Automated test runs on PR
 - Coverage reporting
@@ -436,6 +441,7 @@ describe('Edge Case: [Boundary Condition]', () => {
 ### Updating Tests After API Changes
 
 1. Use Serena to find affected tests:
+
    ```bash
    mcp__serena__search_for_pattern with pattern: "method.*name"
    ```
@@ -473,6 +479,7 @@ npm test 2>&1 | grep "Time:"
 ## Support
 
 For test-related questions:
+
 - Review existing test files for patterns
 - Check Serena memories for testing knowledge
 - Reference this guide for common pitfalls

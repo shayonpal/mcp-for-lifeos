@@ -47,18 +47,23 @@ Manual note creation with full control over frontmatter and content. Use this wh
 ## Usage Modes
 
 ### Basic Creation
+
 Simple note with title and optional content - no template processing.
 
 ### With Metadata
+
 Note creation with explicit frontmatter fields specified manually.
 
 ### Template Mode
+
 Using a specific template with optional custom data injection.
 
 ### Discovery Mode
+
 Set `useTemplate=true` to list all available templates in the vault.
 
 ### Custom Folder
+
 Specify `targetFolder` to override default folder placement.
 
 ## Usage Examples
@@ -120,6 +125,7 @@ Specify `targetFolder` to override default folder placement.
 ```
 
 **Result**: Returns list of all available templates instead of creating a note:
+
 ```
 Available templates:
 
@@ -175,16 +181,19 @@ template: "template-name"
 The tool automatically generates YAML frontmatter with the following structure:
 
 ### Core Fields
+
 - **`title`**: Note title (required)
 - **`created`**: Auto-generated creation timestamp
 - **`modified`**: Auto-generated modification timestamp
 
 ### Content Classification
+
 - **`content type`**: Type of content (string or array)
 - **`category`**: PARA method category
 - **`sub-category`**: Sub-category classification
 
 ### Metadata Fields
+
 - **`tags`**: Array of tags for organization
 - **`people`**: Array of people mentioned
 - **`source`**: Source URL for references
@@ -261,12 +270,15 @@ Common templates in the system include:
 ## Folder Organization
 
 ### Default Behavior
+
 - **Default Folder**: `01-Inbox` (if no `targetFolder` specified)
 - **Template Override**: Templates can specify their own target folders
 - **Custom Override**: `targetFolder` parameter takes precedence over template defaults
 
 ### PARA Method Structure
+
 The tool respects the PARA method folder organization:
+
 - **Projects**: `10 - Projects/`
 - **Areas**: `20 - Areas/`
 - **Resources**: `30 - Resources/`
@@ -274,6 +286,7 @@ The tool respects the PARA method folder organization:
 - **Inbox**: `01-Inbox/`
 
 ### Auto-creation of Folders
+
 Folders are automatically created if they don't exist when using `targetFolder`.
 
 ## Comparison with create_note_smart
@@ -289,6 +302,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ### When to Use Each Tool
 
 **Use `create_note` when:**
+
 - You need explicit control over all parameters
 - The note doesn't fit standard template patterns
 - You want to bypass auto-detection logic
@@ -296,6 +310,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 - You need to specify exact folder placement
 
 **Use `create_note_smart` when:**
+
 - You want automatic template detection
 - You're creating standard note types (restaurants, people, articles)
 - You prefer intelligent defaults and routing
@@ -304,21 +319,25 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ## Implementation Details
 
 ### Handler Location
+
 - **Primary Handler**: Direct implementation in `src/index.ts` (case 'create_note')
 - **File Creation**: `VaultUtils.createNote()` method
 - **Template Processing**: `DynamicTemplateEngine.createNoteFromTemplate()`
 
 ### Template Engine Integration
+
 - **Discovery**: `TemplateManager.getTemplateNames()` for template listing
 - **Processing**: `DynamicTemplateEngine` with Templater syntax support
 - **Caching**: Templates cached for 30 seconds to improve performance
 
 ### YAML Compliance
+
 - **Validation**: `YamlRulesManager` ensures compliance with LifeOS rules
 - **Sanitization**: Automatic frontmatter sanitization and structure validation
 - **Auto-managed Fields**: Never modifies auto-managed timestamps and IDs
 
 ### File Operations
+
 - **Creation**: `VaultUtils.createNote()` handles file system operations
 - **Sanitization**: Automatic filename sanitization for Obsidian compatibility
 - **Link Generation**: `ObsidianLinks.createClickableLink()` for vault integration
@@ -354,6 +373,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ### Error Cases
 
 **Missing Title:**
+
 ```json
 {
   "error": "Title is required"
@@ -361,6 +381,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ```
 
 **Invalid Template:**
+
 ```json
 {
   "content": [{
@@ -371,6 +392,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ```
 
 **File Already Exists:**
+
 ```json
 {
   "error": "Note already exists: /path/to/existing/note.md"
@@ -378,6 +400,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ```
 
 **Invalid Target Folder:**
+
 ```json
 {
   "error": "Target folder does not exist: /invalid/folder/path"
@@ -387,26 +410,31 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ## Best Practices
 
 ### Use Explicit Control When Needed
+
 - Leverage `create_note` when you need precise control over frontmatter
 - Specify exact metadata that doesn't fit standard templates
 - Use custom folder placement for specialized organization
 
 ### Discover Templates First
+
 - Use `useTemplate=true` to explore available templates
 - Understand template capabilities before manual specification
 - Keep template names consistent with vault structure
 
 ### Validate YAML Rules
+
 - Use `get_yaml_rules` tool to understand current YAML compliance requirements
 - Follow LifeOS YAML structure for consistency
 - Avoid modifying auto-managed fields
 
 ### Optimize Folder Structure  
+
 - Use PARA method folder organization for consistency
 - Specify `targetFolder` when default placement isn't appropriate
 - Ensure target folders exist or can be auto-created
 
 ### Provide Meaningful Metadata
+
 - Include relevant tags for discoverability
 - Add people references for relationship tracking
 - Include source URLs for articles and references
@@ -422,15 +450,18 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ## Related Tools
 
 ### Primary Alternatives
+
 - **`create_note_smart`**: Intelligent note creation with auto-detection
 - **`create_note_from_template`**: Legacy template-based creation (deprecated)
 
 ### Supporting Tools
+
 - **`get_yaml_rules`**: Understand YAML frontmatter compliance rules
 - **`list`** with `type='templates'`: List all available templates with details
 - **`search`**: Find existing notes to avoid duplicates
 
 ### Integration Tools
+
 - **`read_note`**: Read created notes for verification
 - **`update_note`**: Modify notes after creation
 - **`move_items`**: Reorganize notes and folders
@@ -438,6 +469,7 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 ## Analytics and Monitoring
 
 The tool automatically tracks:
+
 - Note creation success/failure rates
 - Template usage patterns when templates are used
 - Folder placement decisions
@@ -451,23 +483,28 @@ View analytics with the dashboard at `http://localhost:19832` (when `ENABLE_WEB_
 ### Common Issues
 
 **"Title is required" Error**
+
 - Ensure `title` parameter is provided and not empty
 - Check that title string is valid
 
 **"Note already exists" Error**  
+
 - Use `search` tool to check for existing notes with same title
 - Consider using different title or updating existing note
 
 **"Target folder does not exist" Error**
+
 - Verify `targetFolder` path is correct and exists in vault
 - Use `list` tool with `type='folders'` to see available folders
 
 **Template Not Found**
+
 - Use `useTemplate=true` to list available templates
 - Ensure template name is spelled correctly
 - Check that template files exist in templates folder
 
 **YAML Validation Errors**
+
 - Use `get_yaml_rules` to understand compliance requirements
 - Ensure frontmatter structure follows LifeOS standards
 - Avoid conflicting or invalid YAML syntax

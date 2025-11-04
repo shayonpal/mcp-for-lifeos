@@ -517,7 +517,7 @@ Max = 140 × 1.3 = 182ms
 
 ## Integration Points
 
-### TransactionManager (`src/transaction-manager.ts`)
+### TransactionManager (`src/modules/transactions/transaction-manager.ts`)
 
 **Responsibilities:**
 
@@ -542,7 +542,7 @@ async rollback(manifest: TransactionManifest, walPath: string): Promise<Rollback
 
 ---
 
-### WALManager (`src/wal-manager.ts`)
+### WALManager (`src/modules/transactions/wal-manager.ts`)
 
 **Responsibilities:**
 

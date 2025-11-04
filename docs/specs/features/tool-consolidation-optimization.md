@@ -1,4 +1,5 @@
 # AI Tool Caller Optimization PRD
+
 ## Intelligent Tool Consolidation for Enhanced LLM Decision-Making
 
 **Document Version**: 1.1
@@ -11,16 +12,20 @@
 ## 1. Project Overview
 
 ### Purpose
+
 Transform the LifeOS MCP server's 21-tool interface into an optimized, intelligent system designed specifically for AI tool callers (Claude Desktop, OpenWebUI, etc.) to make better, faster, and more consistent tool selection decisions.
 
 ### Core Problem Statement
+
 AI language models experience "decision paralysis" when presented with multiple similar tools (e.g., 6 different search tools), leading to:
+
 - Suboptimal tool selection
 - Inconsistent user experiences
 - Performance degradation from trial-and-error approaches
 - Reduced overall system efficiency
 
 ### Target Audience
+
 - **Primary**: AI tool callers (Claude Desktop, OpenWebUI, custom LLM applications)
 - **Secondary**: Human developers integrating with the MCP server
 - **Tertiary**: End users experiencing improved AI interaction quality
@@ -30,12 +35,14 @@ AI language models experience "decision paralysis" when presented with multiple 
 ## 2. Objectives and Goals
 
 ### Primary Objectives
+
 1. **Reduce AI Decision Complexity**: Consolidate 21 tools to ~11 intelligent tools (48% reduction)
 2. **Improve Tool Selection Accuracy**: Enable AI callers to choose the right tool on first attempt >90% of the time
 3. **Maintain 100% Functionality**: Preserve all existing capabilities through intelligent routing
 4. **Enhance Performance**: Reduce average tool selection time by 40%
 
 ### Measurable Success Criteria
+
 - Tool count reduction: 21 → 11 tools
 - AI tool selection accuracy: >90% first-attempt success rate
 - Backward compatibility: 100% existing functionality preserved
@@ -49,9 +56,11 @@ AI language models experience "decision paralysis" when presented with multiple 
 ### 3.1 Core Consolidation Targets
 
 #### Universal Search Tool (6→1)
+
 **Current Tools**: `search_notes`, `advanced_search`, `quick_search`, `search_by_content_type`, `search_recent`, `find_notes_by_pattern`
 
 **New Tool**: `search`
+
 ```typescript
 search({
   query?: string,
@@ -61,14 +70,17 @@ search({
 ```
 
 **Intelligence Features**:
+
 - Auto-mode detects optimal search strategy based on query characteristics
 - Natural language processing integration for query interpretation
 - Relevance-based result ranking across all search modes
 
 #### Smart Note Creation Tool (2→1)
+
 **Current Tools**: `create_note`, `create_note_from_template`
 
 **New Tool**: `create_note`
+
 ```typescript
 create_note({
   title: string,
@@ -79,14 +91,17 @@ create_note({
 ```
 
 **Intelligence Features**:
+
 - Automatic template detection based on title/content patterns
 - Smart YAML frontmatter generation
 - Context-aware default values
 
 #### Universal Listing Tool (4→1)
+
 **Current Tools**: `list_folders`, `list_daily_notes`, `list_templates`, `list_yaml_properties`
 
 **New Tool**: `list`
+
 ```typescript
 list({
   type: "folders" | "daily_notes" | "templates" | "yaml_properties" | "auto",
@@ -97,7 +112,9 @@ list({
 ### 3.2 ToolRouter Architecture
 
 #### Core ToolRouter Design
+
 Leverage existing SearchEngine architecture that already consolidates search logic internally:
+
 ```typescript
 class ToolRouter {
   async route(toolName: string, params: any) {
@@ -112,12 +129,14 @@ class ToolRouter {
 ```
 
 #### Key Implementation Principles
+
 - **Dispatch Pattern**: Route consolidated tools to existing implementations
 - **Zero Refactoring**: Use current SearchEngine, template engine as-is
 - **Simple Logic**: Pattern-based routing, not complex AI classification
 - **Fast Fallback**: Emergency rollback to legacy tools via environment flags
 
 #### Backward Compatibility Strategy
+
 - Tool aliases for deprecated names (e.g., `quick_search` → `search`)
 - 100% parameter compatibility through translation layer
 - Feature flags for gradual rollout (`CONSOLIDATED_TOOLS_ENABLED=true`)
@@ -128,6 +147,7 @@ class ToolRouter {
 ## 4. Non-functional Requirements
 
 ### Performance Expectations
+
 - **Tool Routing Overhead**: <200ms for routing decisions
 - **Search Response Time**: <500ms for typical queries (unchanged from current)
 - **Memory Overhead**: <2MB additional for ToolRouter (using existing Map-based cache)
@@ -135,18 +155,21 @@ class ToolRouter {
 - **Cache Performance**: Maintain current Map-based cache efficiency (no Redis needed for single-user Mac Mini)
 
 ### iCloud Sync Reliability
+
 - **Retry Logic**: Implement exponential backoff for iCloud sync conflicts
 - **Conflict Detection**: Monitor for file lock errors and temporary failures
 - **Graceful Degradation**: Fallback strategies for sync-related failures
 - **Timeout Handling**: Reasonable timeouts for file operations in sync-heavy environments
 
 ### Compatibility and Portability
+
 - **MCP Protocol**: Full compliance with MCP specification
 - **Node.js**: Support for Node.js 18+
 - **TypeScript**: Maintain strong typing throughout
 - **API Stability**: Semantic versioning with clear migration paths
 
 ### Reliability
+
 - **Uptime**: 99.9% availability maintained
 - **Error Handling**: Graceful degradation to basic tool functionality
 - **Logging**: Comprehensive tool usage analytics
@@ -159,6 +182,7 @@ class ToolRouter {
 ### Recommended Architecture
 
 #### Simplified ToolRouter Architecture
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   AI Caller     │───▶│   ToolRouter     │───▶│ Existing Tools  │
@@ -174,6 +198,7 @@ class ToolRouter {
 ```
 
 #### Technology Stack
+
 - **Base**: Existing TypeScript/Node.js MCP server (unchanged)
 - **ToolRouter**: Simple dispatch layer, no complex AI classification needed
 - **Cache**: Continue using existing Map-based cache (perfect for single-user Mac Mini)
@@ -182,6 +207,7 @@ class ToolRouter {
 - **Telemetry**: Lightweight routing decision tracking
 
 ### Dependencies and Integrations
+
 - **Existing**: All current dependencies maintained (no new external dependencies)
 - **New**:
   - Custom ToolRouter class (internal implementation)
@@ -195,6 +221,7 @@ class ToolRouter {
 ## 6. User Experience (UX)
 
 ### Design Principles
+
 1. **Invisible Intelligence**: AI callers shouldn't need to understand the consolidation
 2. **Progressive Enhancement**: Simple queries work simply, complex queries unlock advanced features
 3. **Consistent Responses**: Unified response formats across consolidated tools
@@ -203,6 +230,7 @@ class ToolRouter {
 ### Intended Interaction Patterns
 
 #### For AI Tool Callers
+
 ```
 User: "Find my restaurant notes from last month"
 AI Caller: Uses search({ query: "restaurant", mode: "auto", dateRange: "last_month" })
@@ -211,6 +239,7 @@ Result: Relevant restaurant notes with consistent formatting
 ```
 
 #### For Human Developers
+
 ```javascript
 // Simple usage - intelligence layer handles complexity
 await mcp.search({ query: "restaurants" });
@@ -220,6 +249,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ```
 
 ### Accessibility Considerations
+
 - Tool descriptions optimized for AI comprehension
 - Clear parameter documentation with examples
 - Consistent error message formatting
@@ -230,7 +260,9 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ## 7. Implementation Milestones
 
 ### Phase 1: ToolRouter Foundation (Week 1)
+
 **Goal**: Implement basic dispatch infrastructure
+
 - [ ] #71: Implement Universal Search Tool with ToolRouter dispatch
 - [ ] #72: Add auto-mode detection to search routing
 - [ ] #77: Create backward compatibility aliases for search tools
@@ -238,7 +270,9 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 - [ ] #75: Add iCloud retry logic for file operations
 
 ### Phase 2: Creation & Listing Consolidation (Week 2)
+
 **Goal**: Complete core tool consolidation
+
 - [ ] #73: Consolidate create_note and create_note_from_template
 - [ ] #74: Create universal list tool dispatcher
 - [ ] #78: Add feature flags for gradual rollout
@@ -246,7 +280,9 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 - [ ] Comprehensive unit test coverage for all consolidated tools
 
 ### Phase 3: Testing & Validation (Week 3)
+
 **Goal**: Ensure reliability and compatibility
+
 - [ ] #82: Integration tests with Claude Desktop
 - [ ] Performance benchmarking (routing overhead <200ms)
 - [ ] iCloud sync conflict testing and retry validation
@@ -254,7 +290,9 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 - [ ] Cache hit ratio optimization
 
 ### Phase 4: Documentation & Migration (Week 4)
+
 **Goal**: Support adoption and smooth transition
+
 - [ ] #79: Write comprehensive migration documentation
 - [ ] Create rollback procedures and emergency protocols
 - [ ] Monitor tool usage patterns and AI caller behavior
@@ -266,6 +304,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ## 8. Risks and Considerations
 
 ### Technical Risks
+
 - **iCloud Sync Conflicts**: File operations failing during sync, causing tool failures
   - *Mitigation*: Implement retry logic with exponential backoff, graceful error handling
 - **ToolRouter Complexity**: Dispatch logic becoming overly complex
@@ -276,6 +315,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
   - *Mitigation*: Comprehensive backward compatibility aliases, feature flags for gradual rollout
 
 ### User Experience Risks
+
 - **AI Caller Adaptation Time**: Claude Desktop may need time to adapt to consolidated tools
   - *Mitigation*: Extensive testing with actual Claude Desktop, clear tool descriptions
 - **Feature Regression**: Loss of functionality during consolidation
@@ -284,6 +324,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
   - *Mitigation*: `FORCE_LEGACY_TOOLS=true` environment variable for immediate fallback
 
 ### Business Risks
+
 - **Development Timeline**: Consolidation taking longer than expected
   - *Mitigation*: Incremental delivery, feature flags for gradual rollout
 - **User Adoption**: Users preferring to stick with legacy tools
@@ -296,6 +337,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ### Issue Creation Standards
 
 #### Priority Classification
+
 - **P0 (Critical)**: Core consolidation features blocking AI caller optimization
 - **P1 (High)**: Essential intelligence features and backward compatibility
 - **P2 (Medium)**: Performance optimizations and enhanced analytics
@@ -306,6 +348,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 **Parent Issue: #62 - Tool Consolidation for AI Optimization**
 
 **Proposed Child Issues:**
+
 - [ ] P1: #71 - Implement Universal Search Tool with ToolRouter
 - [ ] P1: #72 - Add auto-mode detection to search routing
 - [ ] P1: #73 - Consolidate create_note and create_note_from_template
@@ -320,6 +363,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 - [ ] P1: #82 - Claude Desktop integration tests
 
 #### Issue Description Template
+
 ```markdown
 ## Objective
 [Single, clear goal this issue accomplishes]
@@ -343,6 +387,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ### Issue Lifecycle Management
 
 #### Status Progression
+
 1. **Backlog**: Issue created, awaiting prioritization
 2. **Ready**: Dependencies met, can be started immediately
 3. **In Progress**: Actively being worked on
@@ -350,6 +395,7 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 5. **Done**: Completed and verified
 
 #### Dependency Tracking
+
 - Update parent issues when child issues are completed
 - Maintain clear dependency chains in project board 5
 
@@ -358,12 +404,14 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ## Change Log
 
 ### June 4, 2025 at 2:30 PM
+
 - **Created**: Initial PRD based on AI Tool Caller Optimization analysis
 - **Scope**: Evolved from simple tool consolidation to AI-optimized intelligent routing
 - **Focus**: Primary target changed from human UX to AI caller decision optimization
 - **GitHub Issues**: Addresses evolution of Issue #62 and child issues #63-#69
 
 ### June 4, 2025 at 3:45 PM
+
 - **Updated**: Incorporated technical implementation insights and refined approach
 - **Architecture**: Simplified to ToolRouter dispatch pattern leveraging existing SearchEngine
 - **Infrastructure**: Removed Redis requirement, emphasized existing Map-based cache
@@ -377,16 +425,19 @@ await mcp.search({ query: "restaurants", mode: "advanced", includeContent: true 
 ## Appendix
 
 ### Current Tool Inventory (21 tools)
+
 **Search Tools (6)**: search_notes, advanced_search, quick_search, search_by_content_type, search_recent, find_notes_by_pattern
 **Creation Tools (2)**: create_note, create_note_from_template
 **Listing Tools (4)**: list_folders, list_daily_notes, list_templates, list_yaml_properties
 **Management Tools (9)**: read_note, edit_note, insert_content, move_items, get_daily_note, get_server_version, get_yaml_rules, diagnose_vault, list_yaml_property_values
 
 ### Target Tool Inventory (11 tools)
+
 **Consolidated (3)**: search, create_note, list
 **Unchanged (8)**: read_note, edit_note, insert_content, move_items, get_daily_note, get_server_version, get_yaml_rules, diagnose_vault, list_yaml_property_values
 
 ### Related Documentation
+
 - `docs/01-current-poc/Claude-Session-Onboarding.md` - Session startup guidelines
 - Issue #62 - Original consolidation proposal
 - Issues #63-#69 - Implementation child issues

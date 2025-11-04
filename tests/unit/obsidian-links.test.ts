@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { ObsidianLinks } from '../../src/obsidian-links.js';
-import type { YAMLFrontmatter } from '../../src/types.js';
+import { ObsidianLinks } from '../../src/modules/links/index.js';
+import type { YAMLFrontmatter } from '../../src/shared/index.js';
 
 describe('ObsidianLinks.extractNoteTitle()', () => {
   describe('Priority 1: Frontmatter title field', () => {

@@ -25,8 +25,8 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
-import { VaultUtils } from '../../src/vault-utils.js';
-import { LIFEOS_CONFIG } from '../../src/config.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
+import { LIFEOS_CONFIG } from '../../src/shared/index.js';
 
 describe('Claude Desktop Integration (Direct)', () => {
   let vaultPath: string;

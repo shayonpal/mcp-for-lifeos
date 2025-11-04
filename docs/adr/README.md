@@ -23,6 +23,7 @@ This directory contains Architecture Decision Records documenting significant ar
 ## ADR Template
 
 New ADRs should follow this structure:
+
 - **Status**: Proposed/Accepted/Superseded
 - **Context**: What prompted this decision?
 - **Decision Drivers**: Key factors influencing the choice
@@ -33,6 +34,6 @@ New ADRs should follow this structure:
 ## Related Documentation
 
 - **Product Specifications**: `../specs/` - Feature specs, implementation plans, use cases
-- **Archived Analysis**: `../archive/openwebui-poc/` 
+- **Archived Analysis**: `../archive/openwebui-poc/`
 - **Implementation Plans**: Linear project management
 - **Tool Optimization**: `../specs/features/tool-consolidation-optimization.md`
