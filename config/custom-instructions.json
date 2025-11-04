@@ -1,0 +1,5 @@
+{
+  "noteCreationRules": "Daily notes in the Journals/Daily/ directory must use YYYY-MM-DD format (e.g., 2025-02-27.md). The filename should be the date only, no titles or prefixes.",
+  "editingRules": "When editing daily notes, preserve the YYYY-MM-DD filename format. Do not rename daily notes.",
+  "templateRules": "Daily note templates should follow the tpl-daily template structure with proper YAML frontmatter including 'date created' field matching the filename date."
+}
