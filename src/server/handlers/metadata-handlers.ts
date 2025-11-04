@@ -7,7 +7,7 @@ import type { ToolHandler, ToolHandlerContext } from '../../../dev/contracts/MCP
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { MutableToolHandlerRegistry } from '../../../dev/contracts/MCP-98-contracts.js';
 import { METADATA_HANDLER_TOOL_NAMES } from '../../../dev/contracts/MCP-98-contracts.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { VaultUtils } from '../../modules/files/index.js';
 import { addVersionMetadata } from '../tool-registry.js';
 
 /**

@@ -163,7 +163,7 @@ export class ObsidianLinks {
     score?: number,
     additionalInfo?: string,
     format: 'concise' | 'detailed' = 'detailed',
-    tokenBudget?: import('./response-truncator.js').ResponseTruncator
+    tokenBudget?: import('./modules/search/index.js').ResponseTruncator
   ): string {
     const relativePath = filePath.replace(LIFEOS_CONFIG.vaultPath + '/', '');
 
@@ -211,7 +211,7 @@ export class ObsidianLinks {
     items: string[] | any[] | Record<string, number>,
     listType: 'folders' | 'daily_notes' | 'templates' | 'yaml_properties',
     format: 'concise' | 'detailed' = 'detailed',
-    tokenBudget?: import('./response-truncator.js').ResponseTruncator
+    tokenBudget?: import('./modules/search/index.js').ResponseTruncator
   ): string {
     // Concise mode formatting
     if (format === 'concise') {

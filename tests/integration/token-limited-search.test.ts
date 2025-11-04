@@ -10,9 +10,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { ResponseTruncator } from '../../src/response-truncator.js';
+import { ResponseTruncator } from '../../src/modules/search/index.js';
 import { ObsidianLinks } from '../../src/obsidian-links.js';
-import type { SearchResult } from '../../src/search-engine.js';
+import type { SearchResult } from '../../src/modules/search/index.js';
 import {
   TokenBudgetConfig,
   TruncationMetadata,

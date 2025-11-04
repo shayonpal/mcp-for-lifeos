@@ -15,7 +15,7 @@ import { tmpdir } from 'os';
 import { randomBytes, randomUUID } from 'crypto';
 import { WALManager, type WALEntry } from '../../src/wal-manager.js';
 import { TransactionManager } from '../../src/transaction-manager.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('Boot Recovery System', () => {
   let vaultPath: string;

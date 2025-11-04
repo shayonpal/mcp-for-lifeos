@@ -13,7 +13,7 @@ import type { ToolMode } from './MCP-6-contracts.js';
 import type { ToolRegistryConfig } from './MCP-7-contracts.js';
 import type { AnalyticsCollector } from '../../src/analytics/analytics-collector.js';
 import type { ToolRouter } from '../../src/tool-router.js';
-import type { YamlRulesManager } from '../../src/yaml-rules-manager.js';
+import type { YamlRulesManager } from '../../src/modules/yaml/index.js';
 
 // ============================================================================
 // INPUT CONTRACTS

@@ -286,7 +286,7 @@ validate_installation() {
     log_info "Testing configuration..."
     if node -e "
         try {
-            const config = require('./dist/config.js');
+            const config = require('./dist/src/config.js');
             console.log('✓ Configuration loaded successfully');
             console.log('✓ Vault path:', config.LIFEOS_CONFIG.vaultPath);
         } catch (e) {
@@ -303,9 +303,9 @@ validate_installation() {
     # Test vault access
     log_info "Testing vault access..."
     if node -e "
-        const { VaultUtils } = require('./dist/vault-utils.js');
+        const { VaultUtils } = require('./dist/src/modules/files/index.js');
         try {
-            const { LIFEOS_CONFIG } = require('./dist/config.js');
+            const { LIFEOS_CONFIG } = require('./dist/src/config.js');
             const fs = require('fs');
             fs.accessSync(LIFEOS_CONFIG.vaultPath, fs.constants.R_OK | fs.constants.W_OK);
             console.log('✓ Vault access verified');

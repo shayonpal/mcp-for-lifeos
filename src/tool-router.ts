@@ -7,9 +7,9 @@
  * @see docs/AI-Tool-Caller-Optimization-PRD.md for complete specification
  */
 
-import { SearchEngine, AdvancedSearchOptions, SearchResult } from './search-engine.js';
-import { VaultUtils } from './vault-utils.js';
-import { DynamicTemplateEngine } from './template-engine-dynamic.js';
+import { SearchEngine, AdvancedSearchOptions, SearchResult } from './modules/search/index.js';
+import { VaultUtils } from './modules/files/index.js';
+import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './config.js';
 import { AnalyticsCollector } from './analytics/analytics-collector.js';
 import { ObsidianLinks } from './obsidian-links.js';

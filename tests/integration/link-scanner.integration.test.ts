@@ -13,8 +13,7 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomBytes } from 'crypto';
 import { LinkScanner } from '../../src/link-scanner.js';
-import { VaultUtils } from '../../src/vault-utils.js';
-import { SearchEngine } from '../../src/search-engine.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 describe('LinkScanner Integration', () => {
   let vaultPath: string;

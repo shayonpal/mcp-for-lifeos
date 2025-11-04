@@ -22,7 +22,7 @@ import {
   type LinkUpdateResult,
   type LinkCommitInput
 } from '../../src/link-updater.js';
-import { VaultUtils } from '../../src/vault-utils.js';
+import { VaultUtils } from '../../src/modules/files/index.js';
 
 // ============================================================================
 // TEST SETUP

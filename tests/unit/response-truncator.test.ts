@@ -14,7 +14,7 @@ import {
   ResponseTruncator,
   createDefaultTruncator,
   createTruncator
-} from '../../src/response-truncator.js';
+} from '../../src/modules/search/index.js';
 import {
   TokenBudgetConfig,
   DEFAULT_TOKEN_BUDGET,

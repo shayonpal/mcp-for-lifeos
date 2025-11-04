@@ -1,9 +1,9 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { NaturalLanguageProcessor } from '../../natural-language-processor.js';
+import { NaturalLanguageProcessor } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../obsidian-links.js';
-import { ResponseTruncator } from '../../response-truncator.js';
+import { ResponseTruncator } from '../../modules/search/index.js';
 import { LIFEOS_CONFIG } from '../../config.js';
-import { VaultUtils } from '../../vault-utils.js';
+import { VaultUtils } from '../../modules/files/index.js';
 import type {
   SmartCreateNoteOptions,
   UniversalListOptions,

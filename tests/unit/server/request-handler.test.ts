@@ -22,8 +22,8 @@ import type {
 import type { MaxResultsValidation } from '../../../dev/contracts/MCP-38-contracts.js';
 import type { AnalyticsCollector } from '../../../src/analytics/analytics-collector.js';
 import { ObsidianLinks } from '../../../src/obsidian-links.js';
-import { VaultUtils } from '../../../src/vault-utils.js';
-import { NaturalLanguageProcessor } from '../../../src/natural-language-processor.js';
+import { VaultUtils } from '../../../src/modules/files/index.js';
+import { NaturalLanguageProcessor } from '../../../src/modules/search/index.js';
 
 // ============================================================================
 // TEST SUITE: isToolAllowed Validation

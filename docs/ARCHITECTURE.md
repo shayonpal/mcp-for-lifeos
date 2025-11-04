@@ -519,6 +519,51 @@ Templates discovered → cached for 24 hours → Templater syntax processed → 
 
 **Performance:** Sub-second template processing with caching
 
+### Module Import Policy
+
+Enforced import conventions to maintain modular boundaries and prevent circular dependencies.
+
+**Import Rules:**
+
+1. **Within Same Module:**
+   - Use relative imports (e.g., `./file-io`, `../shared/utils`)
+   - Direct imports within same directory
+
+2. **Cross-Module Imports:**
+   - Import via barrel exports (module's `index.ts`)
+   - Example: `import { templateEngine } from '../modules/templates'`
+   - Never import directly from module internals
+
+3. **Circular Dependencies:**
+   - Zero tolerance - detected via `npm run check:circular`
+   - Pre-existing violations to be resolved during modularization
+   - CI/manual validation enforced on all PRs
+
+**Validation:**
+
+- Automated via madge: `npm run check:circular`
+- Runs as part of test suite validation
+- Pre-existing circular dependencies documented and tracked for resolution
+
+**Directory Structure (Post-Modularization):**
+
+```
+src/
+├── app/              # Application layer (future)
+├── modules/          # Feature-focused modules
+│   ├── templates/    # Template system
+│   ├── yaml/         # YAML processing
+│   ├── search/       # Search engine & NLP
+│   ├── files/        # Vault file operations
+│   ├── links/        # Link management
+│   ├── transactions/ # Transaction management
+│   └── analytics/    # Analytics collection
+├── shared/           # Shared utilities
+└── server/           # MCP server infrastructure
+```
+
+**Status:** Import policy established (MCP-134), enforcement begins at MCP-135
+
 ### Error Resilience
 
 Graceful handling of malformed YAML, missing templates, iCloud sync delays with automatic retry logic.
