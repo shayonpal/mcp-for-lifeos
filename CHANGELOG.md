@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-04 03:54 - feat: extract config & instruction scaffolding from vault-utils (MCP-90)
+
+- **Config Module & Custom Instructions Scaffolding** (MCP-90, 2025-11-04): Created infrastructure for custom instruction handling with pass-through processor and hot-reload support
+  - **Configuration Extension**: Extended `LifeOSConfig` interface with optional `customInstructions` field supporting both inline and file-based configurations
+  - **New Module**: Created `src/modules/config/` with `instruction-processor.ts` (5 methods: getInstructions, applyInstructions, initializeWatcher, clearCache, cleanup) and barrel export
+  - **CustomInstructionsConfig Interface**: Supports inline instruction definitions (noteCreationRules, editingRules, templateRules) and file-based references with hot-reload capability
+  - **Hot-Reload Infrastructure**: File watching via `fs.watch()` with lazy initialization, graceful degradation, and test isolation via `DISABLE_CONFIG_WATCH` environment variable
+  - **Phase 1 Behavior**: Pure pass-through mode - `applyInstructions()` returns context unchanged (no branching logic yet), `getInstructions()` returns inline config or warns for file paths
+  - **Test Coverage**: 23 new unit tests (all passing) with mock-based file watcher tests, brings total to 805/808 tests passing (48 test suites, 3 skipped)
+  - **Documentation**: Updated ARCHITECTURE.md with config module section, created CUSTOM-INSTRUCTIONS.md guide (examples, API reference, troubleshooting)
+  - **TypeScript Contracts**: Created `dev/contracts/MCP-90-contracts.ts` defining interfaces, error contracts, and behavioral requirements (MUST/MUST NOT)
+  - **Zero Breaking Changes**: Optional config field, backward compatible, all existing tools behave identically, server boots without errors
+  - **Future Phases**: File-based instruction reading (Phase 2), instruction branching logic (Phase 3), tool integration (Phase 4)
+
 - 2025-11-03 21:00 - refactor: complete Phase 5 modularization (MCP-145, MCP-146, MCP-147)
 
 - **Phase 5 Modularization Complete** (MCP-145, MCP-146, MCP-147, 2025-11-03): Completed final modularization phase organizing codebase into focused domain modules with zero circular dependencies

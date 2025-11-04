@@ -22,6 +22,7 @@ src/
 │   ├── search/           # Full-text search engine (3 modules)
 │   ├── links/            # Link scanning and updates (3 modules)
 │   ├── transactions/     # Atomic operations with WAL (2 modules)
+│   ├── config/           # Custom instructions processing (2 modules)
 │   └── analytics/        # Usage tracking and metrics (2 modules)
 ├── shared/               # Shared utilities and core types
 │   ├── types.ts          # Core type definitions
@@ -513,6 +514,49 @@ Zero-maintenance telemetry system tracking tool usage, performance metrics, and 
 - <1ms overhead per operation
 
 **Default:** Enabled (opt-out via `DISABLE_USAGE_ANALYTICS=true`)
+
+### Config Module (`src/modules/config/`)
+
+Custom instruction processing and hot-reload infrastructure. Provides scaffolding for configurable instruction handling with file-based or inline configuration support.
+
+**Components:**
+
+- `instruction-processor.ts` - Instruction application hooks and file watching
+- `index.ts` - Barrel exports for module interface
+
+**Current Status:** Phase 1 scaffolding (MCP-90) - pass-through mode with no branching logic
+
+**Features:**
+
+- Inline instruction configuration (`CustomInstructionsConfig.inline`)
+- File-based instruction references (`CustomInstructionsConfig.filePath`)
+- Hot-reload via `fs.watch()` with lazy initialization
+- Test isolation via `DISABLE_CONFIG_WATCH` environment variable
+- Graceful degradation on watcher errors
+
+**InstructionProcessor Methods:**
+
+- `getInstructions()` - Retrieve current instructions (inline or file-based)
+- `applyInstructions()` - Apply instructions to context (currently pass-through)
+- `initializeWatcher()` - Setup file watcher for hot-reload
+- `clearCache()` - Cache invalidation for instruction reload
+- `cleanup()` - Watcher cleanup for test isolation
+
+**Phase 1 Behavior:**
+
+- Returns inline config if configured
+- Warns when file path provided (file reading not yet implemented)
+- `applyInstructions()` returns context unchanged (pure pass-through)
+- No branching logic (scaffolding only)
+
+**Future Phases:**
+
+- File-based instruction reading implementation
+- Instruction branching logic by operation type
+- Context modification based on instruction rules
+- Integration with note creation/editing tools
+
+**Test Coverage:** 23 unit tests with mock-based file watcher tests
 
 ---
 
