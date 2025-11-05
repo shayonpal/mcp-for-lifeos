@@ -5,7 +5,7 @@ description: Comprehensive release preparation with validation, documentation, a
 author: Shayon Pal
 tags: [workflow, release, git, linear, documentation]
 requires: [git, npm, linear-expert, git-expert]
-argument_hint: [version|auto]
+argument_hint: [version] | [auto]
 ---
 
 # 09-Release - Comprehensive Release Preparation & Publishing
