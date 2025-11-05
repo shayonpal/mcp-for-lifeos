@@ -344,7 +344,7 @@ Retrieve your custom YAML frontmatter rules document for reference when creating
 
 - No parameters required
 - Returns the content of your configured YAML rules document
-- Requires `yamlRulesPath` to be set in configuration
+- **Note:** Requires `yamlRulesPath` to be set in configuration to use this tool. The `yamlRulesPath` setting is optional for the server but required for this specific tool to function.
 
 ---
 
