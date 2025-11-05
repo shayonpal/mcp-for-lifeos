@@ -1,7 +1,7 @@
 # Architecture Overview
 
-**Last Updated:** 2025-11-03  
-**Version:** 2.1.0
+**Last Updated:** 2025-11-03
+**Version:** 2.0.1
 
 This document provides a high-level overview of the LifeOS MCP Server architecture, core components, and key design patterns.
 
@@ -222,7 +222,7 @@ Consolidates multiple legacy tools into unified interfaces with intelligent auto
 **Unified Tools:**
 
 - `search` - Universal search with auto-routing (replaces 6 legacy search tools)
-- `create_note_smart` - Smart note creation with template auto-detection
+- `create_note` - Smart note creation with template auto-detection (legacy alias: `create_note_smart`)
 - `list` - Universal listing (folders, daily notes, templates, YAML properties)
 
 **Design:** Maintains backward compatibility while simplifying AI interactions
@@ -571,7 +571,7 @@ Custom instruction processing and hot-reload infrastructure. Provides scaffoldin
 
 ### Unified Tool Architecture
 
-Consolidated tools (`search`, `create_note_smart`, `list`) use intelligent routing to maintain backward compatibility while simplifying AI interactions.
+Consolidated tools (`search`, `create_note`, `list`) use intelligent routing to maintain backward compatibility while simplifying AI interactions.
 
 **Benefits:**
 

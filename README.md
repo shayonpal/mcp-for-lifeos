@@ -1,6 +1,6 @@
 # LifeOS MCP Server
 
-**Last updated: 2025-10-30**
+**Last updated: 2025-11-05**
 
 A Model Context Protocol (MCP) server for managing the LifeOS Obsidian vault. Provides AI assistants with structured access to create, read, and search notes while maintaining YAML compliance and organizational standards.
 
@@ -64,17 +64,6 @@ npm run build
 
 **📖 For detailed deployment instructions, see [Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)**
 
-## Platform Support
-
-**Supported Platforms:**
-- ✅ **macOS** (primary development platform)
-- ✅ **Linux** (tested on Ubuntu 18.04+)
-- ⚠️ **Windows**: Use WSL2 (Windows Subsystem for Linux)
-
-**Note**: Native Windows (cmd.exe/PowerShell) is not supported. Windows users should use [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) for full compatibility.
-
-See [ADR-007](docs/adr/007-unix-only-platform-support.md) for platform support decision rationale.
-
 ## Configuration
 
 1. Copy `src/config.example.ts` to `src/config.ts`
@@ -95,7 +84,7 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 
 Control which MCP tools are registered using the `TOOL_MODE` environment variable:
 
-- **`consolidated-only`** (default): Only modern consolidated tools (12 tools) - clean, focused tool list
+- **`consolidated-only`** (default): Only modern consolidated tools (13 tools) - clean, focused tool list
 - **`consolidated-with-aliases`**: Both consolidated and legacy tools (34 tools) - maximum compatibility
 - **`legacy-only`**: Only legacy tools (20 tools) - for legacy integrations
 
