@@ -115,10 +115,10 @@ describe('Tool Registry', () => {
       expect(tools).toHaveLength(21); // 10 always + 11 legacy
     });
 
-    it('should return 35 tools for consolidated-with-aliases mode', () => {
+    it('should return 24 tools for consolidated-with-aliases mode', () => {
       const config = { ...baseConfig, mode: 'consolidated-with-aliases' as const };
       const tools = getToolsForMode(config);
-      expect(tools).toHaveLength(35); // 10 always + 3 consolidated + 11 legacy + 11 aliases
+      expect(tools).toHaveLength(24); // 10 always + 3 consolidated + 11 legacy aliases
     });
 
     it('should throw error for invalid mode', () => {

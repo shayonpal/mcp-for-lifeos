@@ -85,14 +85,18 @@ interface ToolDocumentation {
 
 /**
  * Categorize tools based on their functionality
+ *
+ * IMPORTANT: The order of these checks is intentional to avoid overlapping categories.
+ * Some tool names (e.g., 'search') could match multiple categories (e.g., 'Consolidated Tools' and 'Search Tools').
+ * The most specific categories must be checked first to ensure correct categorization.
  */
 function categorizeTool(toolName: string): string {
-  // Consolidated tools
+  // Consolidated tools: These are special tools that would otherwise match other categories (e.g., 'search' would match 'Search Tools')
   if (['search', 'create_note', 'list'].includes(toolName)) {
     return 'Consolidated Tools';
   }
 
-  // Search tools
+  // Search tools: This will match any tool with 'search' or 'find' in its name, except those already matched above
   if (toolName.includes('search') || toolName.includes('find')) {
     return 'Search Tools';
   }
