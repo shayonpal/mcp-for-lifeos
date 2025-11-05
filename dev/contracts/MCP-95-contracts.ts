@@ -72,7 +72,7 @@ export type EmptyHandlerRegistry = ReadonlyMap<string, never>;
  * IMPLEMENTATION REQUIREMENTS:
  * - Must check against consolidated tools (3 tools)
  * - Must check against legacy tools (11 tools)
- * - Must check against always-available tools (9 tools)
+ * - Must check against always-available tools (10 tools)
  * - Must respect tool mode (legacy-only, consolidated-only, consolidated-with-aliases)
  * - Returns structured result (not boolean) for detailed error messages
  *

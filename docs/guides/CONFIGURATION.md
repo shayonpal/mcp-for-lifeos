@@ -122,15 +122,15 @@ Controls which MCP tools are registered and visible to AI clients. This allows y
    - Cleaner MCP client interface, recommended for most users
    - Hides 11 legacy tool aliases
 
-2. **`legacy-only`** (20 tools)
+2. **`legacy-only`** (21 tools)
    - All original legacy tools without consolidated versions
    - Useful for backward compatibility testing
    - Hides 3 consolidated tools
 
-3. **`consolidated-with-aliases`** (34 tools)
+3. **`consolidated-with-aliases`** (24 tools)
    - Both consolidated tools AND legacy aliases
    - Maximum compatibility mode
-   - Shows all tools (13 consolidated-only + 21 legacy)
+   - Shows all tools (13 consolidated-only + 11 legacy aliases)
 
 **Configuration Examples:**
 
@@ -139,10 +139,10 @@ Controls which MCP tools are registered and visible to AI clients. This allows y
 # Shows 13 tools - recommended for most users
 # (no TOOL_MODE set defaults to consolidated-only)
 
-# Legacy-only mode (20 tools)
+# Legacy-only mode (21 tools)
 TOOL_MODE=legacy-only
 
-# Maximum compatibility mode (34 tools)
+# Maximum compatibility mode (24 tools)
 TOOL_MODE=consolidated-with-aliases
 ```
 
@@ -162,9 +162,9 @@ The deprecated `CONSOLIDATED_TOOLS_ENABLED` flag is still supported for backward
 
 **Default Mode Change:**
 
-- Previous default: `consolidated-with-aliases` (34 tools)
+- Previous default: `consolidated-with-aliases` (24 tools)
 - New default: `consolidated-only` (13 tools)
-- **Upgrade impact**: Users upgrading will see 13 tools instead of 34
+- **Upgrade impact**: Users upgrading will see 13 tools instead of 24
 - **Restoration**: Set `TOOL_MODE=consolidated-with-aliases` to restore previous behavior
 
 **Validation:**

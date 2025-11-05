@@ -329,9 +329,9 @@ export type LegacyToolName =
  * Tool count validation per mode
  */
 export interface ToolCountByMode {
-  'consolidated-only': 12; // 3 consolidated + 9 always-available
-  'legacy-only': 20; // 11 legacy + 9 always-available
-  'consolidated-with-aliases': 34; // 3 consolidated + 11 legacy + 11 aliases + 9 always-available
+  'consolidated-only': 13; // 3 consolidated + 10 always-available
+  'legacy-only': 21; // 11 legacy + 10 always-available
+  'consolidated-with-aliases': 24; // 3 consolidated + 11 aliases + 10 always-available
 }
 
 /**

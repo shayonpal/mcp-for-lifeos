@@ -28,17 +28,17 @@ The LifeOS MCP server supports three tool visibility modes controlled by the `TO
 - Recommended for most users
 - Cleaner interface, easier navigation
 
-**`legacy-only` (20 tools)**
+**`legacy-only` (21 tools)**
 
 - All original legacy tools without consolidated versions
 - Useful for backward compatibility testing
 - Legacy search tools, creation tools, and listing tools
 
-**`consolidated-with-aliases` (34 tools)**
+**`consolidated-with-aliases` (24 tools)**
 
-- Both consolidated AND legacy tools visible
+- Both consolidated tools AND legacy tool aliases visible
 - Maximum compatibility mode
-- Shows all 13 consolidated-only tools + 21 additional legacy tools
+- Shows all 13 consolidated-only tools + 11 legacy tool aliases
 
 ### Configuration
 
@@ -426,7 +426,13 @@ Comprehensive search with full-text search, metadata filters, and natural langua
 
 ## YAML Property Management
 
+⚠️ **Two Different Tools:** Don't confuse these:
+- **`list_yaml_properties`** (⚠️ Legacy): Lists all YAML property **names** used in your vault
+- **`list_yaml_property_values`** (✅ Always-available): Lists all unique **values** for a specific property
+
 ### `list_yaml_properties`
+
+**Status:** ⚠️ Legacy tool (available in `legacy-only` and `consolidated-with-aliases` modes). Use `list` with `type="yaml_properties"` instead.
 
 Discover and analyze YAML frontmatter properties across your entire vault
 
@@ -447,6 +453,8 @@ list_yaml_properties excludeStandard: true
 ```
 
 ### `list_yaml_property_values`
+
+**Status:** ✅ Always-available tool (works in all tool modes).
 
 Analyze all unique values used for a specific YAML property across the vault
 

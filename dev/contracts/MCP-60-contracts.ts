@@ -107,7 +107,7 @@ export interface IsValidToolModeContract {
  *           list_folders, list_daily_notes, list_templates, list_yaml_properties (11 tools)
  * - Always Available: get_server_version, get_yaml_rules, read_note, edit_note,
  *                     get_daily_note, diagnose_vault, move_items, insert_content,
- *                     list_yaml_property_values (9 tools)
+ *                     rename_note, list_yaml_property_values (10 tools)
  */
 export interface ToolRegistrationContract {
   /** Whether to register consolidated tools (search, create_note, list) */
@@ -163,9 +163,9 @@ export interface ResponseMetadataContract {
  * Runtime tool count validation
  *
  * Expected Tool Counts:
- * - consolidated-only: 12 tools (3 consolidated + 9 always-available)
- * - legacy-only: 20 tools (11 legacy + 9 always-available)
- * - consolidated-with-aliases: 34 tools (3 consolidated + 11 legacy + 11 aliases + 9 always-available)
+ * - consolidated-only: 13 tools (3 consolidated + 10 always-available)
+ * - legacy-only: 21 tools (11 legacy + 10 always-available)
+ * - consolidated-with-aliases: 24 tools (3 consolidated + 11 aliases + 10 always-available)
  *
  * Validation Behavior:
  * - Runs at server startup after tool registration
@@ -175,9 +175,9 @@ export interface ResponseMetadataContract {
  */
 export interface RuntimeValidationContract {
   expectedToolCounts: {
-    'consolidated-only': 12;
-    'legacy-only': 20;
-    'consolidated-with-aliases': 34;
+    'consolidated-only': 13;
+    'legacy-only': 21;
+    'consolidated-with-aliases': 24;
   };
   validateToolCount(mode: ToolMode, actualCount: number): boolean;
 }
@@ -273,22 +273,22 @@ export interface InvalidToolModeError {
  *
  * Test 1: Default mode (no configuration)
  * - Setup: Unset TOOL_MODE, unset CONSOLIDATED_TOOLS_ENABLED
- * - Expected: mode='consolidated-only', 12 tools registered
+ * - Expected: mode='consolidated-only', 13 tools registered
  * - Verification: tools/list shows only consolidated + always-available tools
  *
  * Test 2: Consolidated-only mode (hides legacy)
  * - Setup: TOOL_MODE='consolidated-only'
- * - Expected: mode='consolidated-only', 12 tools registered
+ * - Expected: mode='consolidated-only', 13 tools registered
  * - Verification: tools/list shows no [LEGACY ALIAS] tools
  *
  * Test 3: Legacy-only mode
  * - Setup: TOOL_MODE='legacy-only'
- * - Expected: mode='legacy-only', 20 tools registered
+ * - Expected: mode='legacy-only', 21 tools registered
  * - Verification: Consolidated tools hidden, legacy tools visible
  *
  * Test 4: Consolidated-with-aliases mode
  * - Setup: TOOL_MODE='consolidated-with-aliases'
- * - Expected: mode='consolidated-with-aliases', 34 tools registered
+ * - Expected: mode='consolidated-with-aliases', 24 tools registered
  * - Verification: All consolidated, legacy, and legacy alias tools visible
  *
  * Test 5: Backward compatibility fallback
@@ -383,16 +383,17 @@ export interface InvalidToolModeError {
  *    - Impact: Simplified API, reduced tool count by 1
  *
  * 3. TOOL COUNTS ADJUSTED:
- *    - consolidated-only: 13 → 12 tools (removed basic create_note)
- *    - legacy-only: 21 → 20 tools (removed basic create_note)
- *    - consolidated-with-aliases: 35 → 34 tools (removed basic create_note)
+ *    - consolidated-only: 13 → 12 → 13 tools (removed basic create_note, later added rename_note)
+ *    - legacy-only: 21 → 20 → 21 tools (removed basic create_note, later added rename_note)
+ *    - consolidated-with-aliases: 24 → 23 → 24 tools (removed basic create_note, later added rename_note)
  *
  * 4. ALWAYS-AVAILABLE TOOLS:
  *    - Original: 10 tools (included basic create_note)
- *    - Final: 9 tools (removed basic create_note)
+ *    - Interim: 9 tools (removed basic create_note)
+ *    - Final: 10 tools (added rename_note)
  *    - Tools: get_server_version, get_yaml_rules, read_note, edit_note,
  *             get_daily_note, diagnose_vault, move_items, insert_content,
- *             list_yaml_property_values
+ *             rename_note, list_yaml_property_values
  *
  * 5. TOOL ORGANIZATION FIXES:
  *    - Fixed: 4 always-available tools were incorrectly in legacy conditional

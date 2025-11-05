@@ -522,7 +522,7 @@ Before making changes, scan README.md for these common inconsistencies:
 
 2. **Feature Lists:**
    - Features mentioned match actual tool capabilities
-   - Tool counts are accurate (e.g., "13 tools", "34 tools")
+   - Tool counts are accurate (e.g., "13 tools", "24 tools")
    - Deprecated features are marked or removed
 
 3. **Documentation Links:**

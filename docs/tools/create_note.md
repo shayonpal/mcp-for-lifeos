@@ -1,102 +1,190 @@
 # create_note Tool Documentation
 
+**Last updated: 2025-11-05**
+
 ## Tool Overview
 
 - **Name**: `create_note`
-- **Purpose**: Create a new note in the LifeOS vault with proper YAML frontmatter and manual control
-- **Status**: ✅ Active (Basic note creation without auto-template detection)
+- **Purpose**: Smart note creation with automatic template detection and intelligent routing
+- **Status**: ✅ Active (renamed from `create_note_smart` in MCP-60)
+
+---
+
+## ℹ️ Tool History
+
+**This tool was renamed from `create_note_smart` to `create_note`** in MCP-60 (2025-10-24).
+
+- **Current name**: `create_note` (smart functionality is the default behavior)
+- **Legacy alias**: `create_note_smart` (available in `consolidated-with-aliases` tool mode only)
+- **No functionality changes**: All features remain identical
+
+**Availability by tool mode:**
+
+- `consolidated-only` (default): `create_note` is available
+- `legacy-only`: Legacy tools without consolidated versions
+- `consolidated-with-aliases`: Both `create_note` and `create_note_smart` alias available
+
+For tool mode configuration, see [Configuration Guide](../guides/CONFIGURATION.md#tool-mode-configuration).
+
+---
 
 ## TL;DR
 
-Manual note creation with full control over frontmatter and content. Use this when you need explicit control or when `create_note_smart`'s auto-detection doesn't fit your needs. Supports templates via the `template` parameter and offers a discovery mode to list available templates. Perfect for cases where you want to specify exact metadata or create notes without template processing.
+Smart note creation tool that intelligently creates notes with automatic template detection based on title keywords. Just provide a title and it figures out if you need a restaurant review, person contact, article, etc. Set `auto_template=false` to disable auto-detection. Consolidates legacy `create_note` and `create_note_from_template` tools.
 
 ## Key Features
 
-- **Manual YAML Frontmatter Control**: Complete control over all frontmatter fields
-- **Optional Template Support**: Use templates when needed via `template` parameter
-- **Template Discovery Mode**: List available templates with `useTemplate=true`
-- **Custom Folder Placement**: Specify exact target folder with `targetFolder`
-- **YAML Rules Compliance**: Automatically follows LifeOS YAML validation rules
-- **Support for All LifeOS Metadata Fields**: Full access to content type, category, tags, people, source, etc.
-- **Template Variable Injection**: Pass custom data to templates through `customData`
-- **Obsidian Compatibility**: Automatic filename sanitization and link generation
+- **Automatic Template Detection**: Analyzes note titles to determine appropriate templates
+- **Tool Consolidation**: Combines `create_note` and `create_note_from_template` functionality
+- **Smart Routing**: Automatically routes to template-based or manual creation
+- **Custom Data Injection**: Supports template variables through `customData` parameter
+- **YAML Frontmatter Compliance**: Enforces LifeOS YAML rules and structure
+- **Intelligent Folder Placement**: Places notes in appropriate folders based on templates
+- **Backward Compatibility**: Maintains compatibility with existing workflows
 
 ## Parameters
 
 ### Required Parameters
 
-- **`title`** (string): Note title
+- **`title`** (string): The note title
   - Used for filename generation and frontmatter
-  - Automatically sanitized for Obsidian compatibility (removes `[]`, `:`, `;`)
-  - Cannot be empty
+  - Automatically sanitized for Obsidian compatibility
+  - Triggers template auto-detection when `auto_template=true`
 
 ### Optional Parameters
 
 - **`content`** (string): Note body content in Markdown format
-- **`template`** (string): Template name to use (e.g., `tpl-person`, `tpl-article`, `restaurant`)
-- **`useTemplate`** (boolean): If `true`, returns available templates instead of creating note
-- **`contentType`** (string): Content type (Article, Daily Note, Recipe, etc.)
-- **`category`** (string): Category for PARA method organization
-- **`subCategory`** (string): Sub-category classification
+- **`auto_template`** (boolean, default: `true`): Enable automatic template detection
+- **`template`** (string): Explicit template override (overrides auto-detection)
+- **`contentType`** (string): Content type for frontmatter
+- **`category`** (string): Category classification for frontmatter
+- **`subCategory`** (string): Sub-category classification for frontmatter
 - **`tags`** (string[]): Array of tags for frontmatter
-- **`targetFolder`** (string): Target folder path (defaults to `01-Inbox`)
+- **`targetFolder`** (string): Override target folder path
 - **`source`** (string): Source URL for articles and references
 - **`people`** (string[]): Array of people mentioned in the note
 - **`customData`** (Record<string, any>): Custom data for template variable processing
 
-## Usage Modes
+## Template Detection Logic
 
-### Basic Creation
+The tool analyzes the note title for keywords to automatically determine the appropriate template:
 
-Simple note with title and optional content - no template processing.
+### Supported Template Detection
 
-### With Metadata
+| Template | Trigger Keywords | Example Titles |
+|----------|-----------------|----------------|
+| **restaurant** | "restaurant", "cafe", "food" | "Joe's Pizza", "Downtown Cafe Review" |
+| **person** | "person", "contact", "people" | "John Smith Contact", "Meeting with Sarah" |
+| **article** | "article", "blog", "post" | "AI Development Article", "Tech Blog Post" |
+| **books** | "book", "reading" | "Clean Code Book Notes", "Reading List" |
+| **placetovisit** | "place", "visit", "travel" | "Paris Travel Guide", "Places to Visit" |
+| **medicine** | "medicine", "medication", "drug" | "Aspirin Information", "Medication Notes" |
+| **application** | "app", "application", "software", "tool" | "VS Code Setup", "New Application Review" |
+| **daily** | "daily", "journal" | "Daily Journal", "Today's Notes" |
 
-Note creation with explicit frontmatter fields specified manually.
+### Templates Not Auto-Detected
 
-### Template Mode
+These templates are too general for reliable auto-detection and require explicit specification:
 
-Using a specific template with optional custom data injection.
+- **fleeting** - Quick temporary notes
+- **moc** - Map of Content pages  
+- **reference** - Reference documentation
 
-### Discovery Mode
+## Available Templates
 
-Set `useTemplate=true` to list all available templates in the vault.
+The tool discovers templates dynamically from the vault's templates folder. Common templates include:
 
-### Custom Folder
-
-Specify `targetFolder` to override default folder placement.
+| Template Key | Description | Use Case |
+|-------------|-------------|----------|
+| `restaurant` | Restaurant reviews and recommendations | Food establishments, dining experiences |
+| `person` | Contact information and relationships | People, contacts, networking |
+| `article` | Web articles and blog posts | Online content, research articles |
+| `books` | Book notes and reviews | Reading notes, book recommendations |
+| `placetovisit` | Travel destinations and locations | Travel planning, location notes |
+| `medicine` | Medication tracking and information | Health, medication management |
+| `application` | Software and tool documentation | App reviews, tool comparisons |
+| `daily` | Daily journal entries | Daily notes, journaling |
+| `fleeting` | Quick temporary notes | Temporary thoughts, quick captures |
+| `moc` | Map of Content pages | Content organization, navigation |
+| `reference` | Reference documentation | Knowledge base, documentation |
 
 ## Usage Examples
 
-### Simple Note Creation
+### Simple Note with Auto-Detection
 
 ```json
 {
-  "title": "Project Meeting Notes",
-  "content": "# Meeting Agenda\n\n- Discuss Q1 goals\n- Review budget\n- Plan next steps"
+  "title": "Joe's Pizza Review",
+  "content": "Amazing pepperoni pizza with great service.",
+  "auto_template": true
 }
 ```
 
-**Result**: Creates basic note in default inbox folder with minimal frontmatter.
+**Result**: Automatically detects "restaurant" template based on title keywords.
 
-### Note with Full Metadata
+### Note with Explicit Template
+
+```json
+{
+  "title": "John Smith",
+  "template": "person",
+  "customData": {
+    "email": "john@example.com",
+    "phone": "555-0123",
+    "company": "Tech Corp"
+  }
+}
+```
+
+**Result**: Uses person template with custom contact information.
+
+### Article with Source URL
 
 ```json
 {
   "title": "AI Development Best Practices",
-  "content": "# Key Principles\n\n1. Data quality\n2. Model validation\n3. Ethical considerations",
-  "contentType": "Technical Article",
-  "category": "Resources",
-  "subCategory": "Development",
-  "tags": ["ai", "development", "best-practices"],
+  "template": "article",
   "source": "https://example.com/ai-best-practices",
-  "people": ["John Doe", "Jane Smith"]
+  "contentType": "Technical Article",
+  "tags": ["ai", "development", "best-practices"]
 }
 ```
 
-**Result**: Creates note with complete metadata structure in appropriate folder.
+**Result**: Creates article note with source URL and metadata.
 
-### Using a Template
+### Disable Auto-Detection
+
+```json
+{
+  "title": "Project Meeting Notes",
+  "content": "# Meeting Agenda\n\n- Item 1\n- Item 2",
+  "auto_template": false,
+  "category": "Work",
+  "tags": ["meeting", "project"]
+}
+```
+
+**Result**: Creates basic note without template processing.
+
+### Book Notes with Custom Data
+
+```json
+{
+  "title": "Clean Code - Robert Martin",
+  "template": "books",
+  "customData": {
+    "author": "Robert C. Martin",
+    "isbn": "978-0132350884",
+    "rating": 5,
+    "status": "reading"
+  },
+  "tags": ["programming", "software-development"]
+}
+```
+
+**Result**: Creates book note with structured metadata.
+
+### Restaurant with Custom Fields
 
 ```json
 {
@@ -113,234 +201,100 @@ Specify `targetFolder` to override default folder placement.
 }
 ```
 
-**Result**: Creates restaurant note using template with custom data injected.
+**Result**: Creates restaurant review with structured data.
 
-### Discovering Available Templates
+## Migration from Legacy Tools
 
-```json
-{
-  "title": "dummy",
-  "useTemplate": true
-}
-```
+### From `create_note_from_template`
 
-**Result**: Returns list of all available templates instead of creating a note:
-
-```
-Available templates:
-
-- restaurant
-- person
-- article
-- books
-- placetovisit
-- medicine
-- application
-- daily
-- fleeting
-- moc
-- reference
-
-To use a template, run create_note again with:
-template: "template-name"
-```
-
-### Article with Source URL
+**Old way:**
 
 ```json
 {
-  "title": "The Future of AI in Healthcare",
-  "content": "Summary of key findings from recent research...",
-  "template": "article",
-  "source": "https://healthtech.example.com/ai-future",
-  "contentType": "Research Article",
-  "category": "Health",
-  "tags": ["ai", "healthcare", "research"]
+  "title": "Joe's Pizza",
+  "template": "restaurant",
+  "customData": { "rating": 5 }
 }
 ```
 
-**Result**: Creates article note with template processing and source attribution.
-
-### Note with Custom Folder Placement
+**New way (same parameters):**
 
 ```json
 {
-  "title": "Personal Development Goals",
-  "content": "# 2025 Goals\n\n- Learn TypeScript\n- Improve fitness\n- Travel more",
-  "targetFolder": "20 - Areas/21 - Myself/Goals",
-  "contentType": "Personal Goal",
-  "category": "Personal",
-  "tags": ["goals", "personal-development", "2025"]
+  "title": "Joe's Pizza",
+  "template": "restaurant",
+  "customData": { "rating": 5 }
 }
 ```
 
-**Result**: Creates note in specified folder with custom metadata.
+### From `create_note`
 
-## YAML Frontmatter Structure
-
-The tool automatically generates YAML frontmatter with the following structure:
-
-### Core Fields
-
-- **`title`**: Note title (required)
-- **`created`**: Auto-generated creation timestamp
-- **`modified`**: Auto-generated modification timestamp
-
-### Content Classification
-
-- **`content type`**: Type of content (string or array)
-- **`category`**: PARA method category
-- **`sub-category`**: Sub-category classification
-
-### Metadata Fields
-
-- **`tags`**: Array of tags for organization
-- **`people`**: Array of people mentioned
-- **`source`**: Source URL for references
-- **Custom fields**: Any additional fields from templates or manual specification
-
-### Example Generated Frontmatter
-
-```yaml
----
-title: "Milano Italian Restaurant"
-content type: ["Restaurant"]
-category: "Areas"
-sub-category: "Food & Dining"
-tags: ["restaurant", "italian", "downtown"]
-people: []
-source: null
-cuisine: "Italian"
-location: "Downtown Toronto"
-rating: 4
-price_range: "$$"
-visited_date: "2025-01-15"
-created: "2025-08-29T10:30:00.000Z"
-modified: "2025-08-29T10:30:00.000Z"
----
-```
-
-## Template Support
-
-### How to Discover Templates
-
-Use the discovery mode to list all available templates:
+**Old way:**
 
 ```json
 {
-  "title": "dummy",
-  "useTemplate": true
+  "title": "Meeting Notes",
+  "content": "Today's meeting...",
+  "frontmatter": { "category": "Work" }
 }
 ```
 
-### How to Use Templates
-
-Specify the template name in the `template` parameter:
+**New way:**
 
 ```json
 {
-  "title": "Note Title",
-  "template": "template-name",
-  "customData": { /* template-specific data */ }
+  "title": "Meeting Notes",
+  "content": "Today's meeting...",
+  "category": "Work",
+  "auto_template": false
 }
 ```
 
-### Template Variable Injection
+## Routing Behavior
 
-Templates support variable injection through the `customData` parameter. Template variables are processed using Templater syntax (`<% tp.user.variable %>`).
+The tool uses intelligent routing to determine the creation method:
 
-### Available Templates
+### With Template (Auto-detected or Explicit)
 
-Common templates in the system include:
+- **Route**: Template Engine (`DynamicTemplateEngine`)
+- **Confidence**: 0.8 (auto-detected) / 1.0 (explicit)
+- **Process**: Template processing with variable substitution
+- **Output**: Structured note with template-specific frontmatter
 
-| Template | Description | Use Case |
-|----------|-------------|----------|
-| `restaurant` | Restaurant reviews and recommendations | Food establishments, dining experiences |
-| `person` | Contact information and relationships | People, contacts, networking |
-| `article` | Web articles and blog posts | Online content, research articles |
-| `books` | Book notes and reviews | Reading notes, book recommendations |
-| `placetovisit` | Travel destinations and locations | Travel planning, location notes |
-| `medicine` | Medication tracking and information | Health, medication management |
-| `application` | Software and tool documentation | App reviews, tool comparisons |
-| `daily` | Daily journal entries | Daily notes, journaling |
-| `fleeting` | Quick temporary notes | Temporary thoughts, quick captures |
-| `moc` | Map of Content pages | Content organization, navigation |
-| `reference` | Reference documentation | Knowledge base, documentation |
+### Without Template
 
-## Folder Organization
+- **Route**: Basic Note Creation
+- **Confidence**: 1.0
+- **Process**: Manual frontmatter construction
+- **Output**: Simple note with user-provided metadata
 
-### Default Behavior
+### Decision Factors
 
-- **Default Folder**: `01-Inbox` (if no `targetFolder` specified)
-- **Template Override**: Templates can specify their own target folders
-- **Custom Override**: `targetFolder` parameter takes precedence over template defaults
-
-### PARA Method Structure
-
-The tool respects the PARA method folder organization:
-
-- **Projects**: `10 - Projects/`
-- **Areas**: `20 - Areas/`
-- **Resources**: `30 - Resources/`
-- **Archive**: `40 - Archive/`
-- **Inbox**: `01-Inbox/`
-
-### Auto-creation of Folders
-
-Folders are automatically created if they don't exist when using `targetFolder`.
-
-## Comparison with create_note_smart
-
-| Aspect | create_note | create_note_smart |
-|--------|-------------|-------------------|
-| **Control** | Manual control, explicit parameters | Auto-detection, intelligent routing |
-| **Template Detection** | Manual template specification | Automatic based on title keywords |
-| **Best For** | Explicit control, custom workflows | Quick creation, standard workflows |
-| **Complexity** | More parameters, explicit setup | Simpler interface, smart defaults |
-| **Flexibility** | Maximum flexibility | Optimized for common patterns |
-
-### When to Use Each Tool
-
-**Use `create_note` when:**
-
-- You need explicit control over all parameters
-- The note doesn't fit standard template patterns
-- You want to bypass auto-detection logic
-- You're creating highly custom notes with specific metadata
-- You need to specify exact folder placement
-
-**Use `create_note_smart` when:**
-
-- You want automatic template detection
-- You're creating standard note types (restaurants, people, articles)
-- You prefer intelligent defaults and routing
-- You want the system to handle template selection
+1. **Explicit Template**: Always takes precedence
+2. **Auto-detection**: Based on title keyword analysis
+3. **Template Availability**: Only uses templates that exist in vault
+4. **Fallback**: Falls back to basic creation if template processing fails
 
 ## Implementation Details
 
-### Handler Location
+### Handler Functions
 
-- **Primary Handler**: Direct implementation in `src/index.ts` (case 'create_note')
-- **File Creation**: `createNote()` from files module
+- **Primary**: `ToolRouter.routeCreateNote()` - Main routing logic
+- **Execution**: `ToolRouter.executeCreateNote()` - Internal execution
 - **Template Processing**: `DynamicTemplateEngine.createNoteFromTemplate()`
 
-### Template Engine Integration
+### Template Engine
 
-- **Discovery**: `TemplateManager.getTemplateNames()` for template listing
-- **Processing**: `DynamicTemplateEngine` with Templater syntax support
-- **Caching**: Templates cached for 30 seconds to improve performance
-
-### YAML Compliance
-
-- **Validation**: `YamlRulesManager` ensures compliance with LifeOS rules
-- **Sanitization**: Automatic frontmatter sanitization and structure validation
-- **Auto-managed Fields**: Never modifies auto-managed timestamps and IDs
+- **Discovery**: Automatic from vault templates folder
+- **Caching**: 30-second cache for template metadata
+- **Processing**: Templater syntax support with variable substitution
+- **Validation**: YAML frontmatter compliance checking
 
 ### File Operations
 
-- **Creation**: `createNote()` from files module handles file system operations
+- **Creation**: `createNote()` from files module - Core file creation
 - **Sanitization**: Automatic filename sanitization for Obsidian compatibility
-- **Link Generation**: `ObsidianLinks.createClickableLink()` for vault integration
+- **Folder Placement**: Based on template configuration or user override
 
 ## Response Format
 
@@ -348,180 +302,81 @@ Folders are automatically created if they don't exist when using `targetFolder`.
 
 ```json
 {
-  "content": [{
-    "type": "text",
-    "text": "✅ Created note: **Note Title**\n\nobsidian://open?vault=VaultName&file=path%2Fto%2Fnote.md\n\n📁 Location: `relative/path/to/note.md`"
-  }],
-  "metadata": {
-    "version": "1.7.0",
-    "timestamp": "2025-08-29T10:30:00.000Z"
+  "note": {
+    "path": "/path/to/note.md",
+    "frontmatter": { ... },
+    "content": "...",
+    "title": "Note Title"
+  },
+  "obsidianLink": "obsidian://open?vault=VaultName&file=NotePath",
+  "templateUsed": "restaurant",
+  "routingDecision": {
+    "targetTool": "create_note_from_template",
+    "strategy": "template-based", 
+    "confidence": 0.8
   }
 }
 ```
 
-### Template Discovery Response
+### Error Response
+
+> **Note**: Error messages enhanced in MCP-39 (2025-10-23) to provide actionable guidance for recovery.
 
 ```json
 {
-  "content": [{
-    "type": "text", 
-    "text": "Available templates:\n\n- restaurant\n- person\n- article\n- books\n- placetovisit\n- medicine\n- application\n- daily\n- fleeting\n- moc\n- reference\n\nTo use a template, run create_note again with:\ntemplate: \"template-name\""
-  }]
-}
-```
-
-### Error Cases
-
-**Missing Title:**
-
-```json
-{
-  "error": "Title is required"
-}
-```
-
-**Invalid Template:**
-
-```json
-{
-  "content": [{
-    "type": "text",
-    "text": "Error listing templates: Template not found: invalid_template"
-  }]
-}
-```
-
-**File Already Exists:**
-
-```json
-{
-  "error": "Note already exists: /path/to/existing/note.md"
-}
-```
-
-**Invalid Target Folder:**
-
-```json
-{
-  "error": "Target folder does not exist: /invalid/folder/path"
+  "error": "Template not found: invalid_template. Available templates: restaurant, person, article, books, placetovisit. Run list(type='templates') to see all options.",
+  "availableTemplates": ["restaurant", "person", "article", ...],
+  "suggestion": "Use list tool with type='templates' to see all available templates"
 }
 ```
 
 ## Best Practices
 
-### Use Explicit Control When Needed
+### Let Auto-Detection Work
 
-- Leverage `create_note` when you need precise control over frontmatter
-- Specify exact metadata that doesn't fit standard templates
-- Use custom folder placement for specialized organization
+- Use descriptive titles that contain relevant keywords
+- Trust the auto-detection for common note types
+- Leverage the intelligence built into the system
 
-### Discover Templates First
+### Use Explicit Templates for Edge Cases
 
-- Use `useTemplate=true` to explore available templates
-- Understand template capabilities before manual specification
-- Keep template names consistent with vault structure
+- When auto-detection might be ambiguous
+- For specialized templates not covered by auto-detection
+- When you need guaranteed template selection
 
-### Validate YAML Rules
+### Provide Custom Data for Template Variables
 
-- Use `get_yaml_rules` tool to understand current YAML compliance requirements
-- Follow LifeOS YAML structure for consistency
-- Avoid modifying auto-managed fields
+- Use `customData` to populate template placeholders
+- Include structured information for better organization
+- Follow template-specific data patterns
 
-### Optimize Folder Structure  
+### Check Available Templates
 
-- Use PARA method folder organization for consistency
-- Specify `targetFolder` when default placement isn't appropriate
-- Ensure target folders exist or can be auto-created
+- Use `list` tool with `type="templates"` to see all available templates
+- Understand which templates are available before explicit specification
+- Keep template names consistent with your vault structure
 
-### Provide Meaningful Metadata
+### Optimize for Your Workflow
 
-- Include relevant tags for discoverability
-- Add people references for relationship tracking
-- Include source URLs for articles and references
-- Use structured custom data for template variables
-
-## Performance Considerations
-
-- **Template Caching**: Templates are cached for 30 seconds to reduce filesystem operations
-- **YAML Validation**: Frontmatter is validated and sanitized for compliance
-- **File System**: Uses retry logic for iCloud sync resilience on macOS
-- **Memory Usage**: Minimal memory footprint with on-demand template loading
-
-## Related Tools
-
-### Primary Alternatives
-
-- **`create_note_smart`**: Intelligent note creation with auto-detection
-- **`create_note_from_template`**: Legacy template-based creation (deprecated)
-
-### Supporting Tools
-
-- **`get_yaml_rules`**: Understand YAML frontmatter compliance rules
-- **`list`** with `type='templates'`: List all available templates with details
-- **`search`**: Find existing notes to avoid duplicates
-
-### Integration Tools
-
-- **`read_note`**: Read created notes for verification
-- **`update_note`**: Modify notes after creation
-- **`move_items`**: Reorganize notes and folders
+- Customize template detection keywords if needed
+- Use consistent naming patterns for better auto-detection
+- Structure custom data to match your vault's organization
 
 ## Analytics and Monitoring
 
 The tool automatically tracks:
 
-- Note creation success/failure rates
-- Template usage patterns when templates are used
-- Folder placement decisions
-- Performance metrics for file operations
-- Error patterns and frequency
+- Template detection accuracy
+- Routing decisions and confidence levels
+- Creation success/failure rates
+- Performance metrics
+- Template usage patterns
 
-View analytics with the dashboard at `http://localhost:19832` (when `ENABLE_WEB_INTERFACE=true`).
+View analytics with the dashboard at `http://localhost:19832` (when enabled).
 
-## Troubleshooting
+## Related Documentation
 
-### Common Issues
-
-**"Title is required" Error**
-
-- Ensure `title` parameter is provided and not empty
-- Check that title string is valid
-
-**"Note already exists" Error**  
-
-- Use `search` tool to check for existing notes with same title
-- Consider using different title or updating existing note
-
-**"Target folder does not exist" Error**
-
-- Verify `targetFolder` path is correct and exists in vault
-- Use `list` tool with `type='folders'` to see available folders
-
-**Template Not Found**
-
-- Use `useTemplate=true` to list available templates
-- Ensure template name is spelled correctly
-- Check that template files exist in templates folder
-
-**YAML Validation Errors**
-
-- Use `get_yaml_rules` to understand compliance requirements
-- Ensure frontmatter structure follows LifeOS standards
-- Avoid conflicting or invalid YAML syntax
-
-### Debug Tips
-
-1. **Test Template Discovery**: Always test `useTemplate=true` first to see available options
-2. **Verify Folder Structure**: Use `list` tool to explore vault organization  
-3. **Check YAML Rules**: Review current YAML compliance with `get_yaml_rules`
-4. **Start Simple**: Begin with basic notes and add complexity incrementally
-5. **Monitor Analytics**: Use analytics dashboard to identify patterns in failures
-
-## Version History
-
-- **v1.7.0**: Current version with full template integration and discovery mode
-- **v1.6.0**: Enhanced YAML property handling and validation
-- **v1.5.0**: Natural language processing integration
-- **v1.4.0**: Added comprehensive frontmatter field support
-- **v1.3.0**: YAML rules integration and compliance checking
-- **v1.0.0**: Initial implementation with basic note creation
+- [Template System Documentation](../architecture/template-system.md)
+- [Tool Router Implementation](../../src/tool-router.ts)
+- [YAML Rules Manager](../architecture/yaml-compliance.md)
+- [Analytics Dashboard](../guides/analytics-dashboard.md)

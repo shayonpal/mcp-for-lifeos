@@ -11,7 +11,7 @@ Following the implementation of MCP-60, which introduced the `TOOL_MODE` configu
 
 **Key Issues**:
 
-- Default tool list showed 34 tools (13 consolidated + 21 legacy aliases) which was overwhelming in MCP clients
+- Default tool list showed 24 tools (13 consolidated + 11 legacy aliases) which was overwhelming in MCP clients
 - Legacy aliases marked with `[LEGACY ALIAS]` created confusion in tool lists
 - Users needed to add environment variable configuration for the recommended setup
 - The cleaner 13-tool experience required explicit opt-in rather than being the default
@@ -103,13 +103,13 @@ return {
 - search_recent, find_notes_by_pattern, create_note_from_template
 - list_folders, list_daily_notes, list_templates, list_yaml_properties
 
-**Legacy-Only Mode (20 tools)**:
+**Legacy-Only Mode (21 tools)**:
 
 - All original legacy tools without consolidated versions
 
-**Opt-In to Legacy (via TOOL_MODE=consolidated-with-aliases: 34 tools)**:
+**Opt-In to Legacy (via TOOL_MODE=consolidated-with-aliases: 24 tools)**:
 
-- Shows all tools (13 consolidated + 21 legacy aliases and tools)
+- Shows all tools (13 consolidated + 11 legacy aliases)
 
 ## Consequences
 
@@ -202,7 +202,7 @@ Fixed tool registration bugs discovered during implementation:
       "args": ["/path/to/build/index.js"],
       "env": {
         "VAULT_PATH": "/path/to/vault",
-        "TOOL_MODE": "consolidated-with-aliases"  // Restores all 34 tools
+        "TOOL_MODE": "consolidated-with-aliases"  // Restores all 24 tools
       }
     }
   }

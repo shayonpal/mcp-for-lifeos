@@ -3,9 +3,9 @@
  * Linear Issue: MCP-10
  *
  * Tests tool availability and mode enforcement across:
- * - legacy-only mode (20 tools)
- * - consolidated-only mode (12 tools)
- * - consolidated-with-aliases mode (34 tools)
+ * - legacy-only mode (21 tools)
+ * - consolidated-only mode (13 tools)
+ * - consolidated-with-aliases mode (24 tools)
  *
  * @see dev/contracts/MCP-10-contracts.ts - Test contracts and acceptance criteria
  * Note: ToolMode type originates from MCP-6-contracts.ts (server factory contracts)
@@ -39,11 +39,12 @@ describe('Tool Mode Enforcement - Integration', () => {
       'diagnose_vault',
       'move_items',
       'insert_content',
+      'rename_note',
       'list_yaml_property_values'
     ];
 
     it.each<ToolMode>(['legacy-only', 'consolidated-only', 'consolidated-with-aliases'])(
-      'should allow all 9 always-available tools in %s mode',
+      'should allow all 10 always-available tools in %s mode',
       (mode) => {
         alwaysAvailableTools.forEach(tool => {
           const result = isToolAllowed(tool, mode);

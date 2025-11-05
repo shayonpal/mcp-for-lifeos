@@ -88,7 +88,7 @@ Pure function module that centralizes tool registration, configuration, and mode
 
 - Tool configuration management (3 consolidated + 11 legacy + 11 aliases)
 - Mode-based tool assembly (legacy-only, consolidated-only, consolidated-with-aliases)
-- Tool count validation per mode (12/20/34 tools)
+- Tool count validation per mode (13/21/24 tools)
 - Version metadata injection into server responses
 - Backward compatibility alias management
 - Pure functions with explicit dependency injection
@@ -132,7 +132,7 @@ Factory module for MCP request handling with registry-based tool dispatch.
 4. **Utility Handlers**: get_server_version, get_daily_note, diagnose_vault, move_items
 5. **Metadata Handlers**: get_yaml_rules, list_yaml_property_values
 
-**Status:** Complete with 29 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 9 always-available + 6 remaining in hybrid dispatch)
+**Status:** Complete with 24 handlers registered across 5 modules (3 consolidated + 11 legacy aliases + 10 always-available)
 
 **Switch Statement Removal:** Completed 2025-10-30 - All inline tool logic removed from index.ts, achieving pure factory pattern with 100% registry-based routing
 
