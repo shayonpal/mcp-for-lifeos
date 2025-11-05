@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2025-11-05T01:50:16.476Z",
+    "generatedAt": "2025-11-05T02:02:35.220Z",
     "version": "2.0.1",
     "source": "src/server/tool-registry.ts",
     "totalTools": 24
@@ -53,8 +53,8 @@
       ]
     },
     "consolidated-with-aliases": {
-      "description": "Maximum compatibility mode with all tools - 35 tools",
-      "toolCount": 35,
+      "description": "Maximum compatibility mode with all tools - 24 tools (consolidated + backward-compatible aliases)",
+      "toolCount": 24,
       "tools": [
         "get_server_version",
         "get_yaml_rules",
@@ -69,17 +69,6 @@
         "search",
         "create_note",
         "list",
-        "search_notes",
-        "create_note_from_template",
-        "list_folders",
-        "find_notes_by_pattern",
-        "list_daily_notes",
-        "advanced_search",
-        "quick_search",
-        "search_by_content_type",
-        "search_recent",
-        "list_templates",
-        "list_yaml_properties",
         "search_notes",
         "create_note_from_template",
         "list_folders",

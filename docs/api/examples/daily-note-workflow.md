@@ -92,10 +92,20 @@ Access yesterday's note for context:
 ```
 
 **Alternative date formats:**
-- `"today"`, `"yesterday"`, `"tomorrow"`
-- `"+1"`, `"-3"` (relative days)
-- `"2025-11-04"` (explicit date)
-- `"last Monday"` (natural language)
+- `"today"`, `"yesterday"`, `"tomorrow"` - Relative keywords
+- `"2025-11-04"` - Explicit date (YYYY-MM-DD format)
+- `"last Monday"`, `"next Friday"` - Natural language dates
+
+**Example with explicit date:**
+```json
+{
+  "tool": "get_daily_note",
+  "arguments": {
+    "date": "2025-11-03",
+    "createIfMissing": false
+  }
+}
+```
 
 ### Step 5: Read Complete Daily Note
 
@@ -173,15 +183,15 @@ Add tags or metadata to daily note:
 }
 ```
 
-## Advanced: Batch Daily Note Creation
+## Advanced: Planning for Future Days
 
-Create multiple daily notes for planning ahead:
+Create daily notes for planning ahead using explicit dates or "tomorrow":
 
 ```json
 {
   "tool": "get_daily_note",
   "arguments": {
-    "date": "+1",
+    "date": "tomorrow",
     "createIfMissing": true
   }
 }
@@ -199,6 +209,17 @@ Then use `insert_content` to pre-populate tomorrow's tasks:
       "heading": "Day's Notes"
     },
     "position": "before"
+  }
+}
+```
+
+**Alternative**: Use explicit date for specific future dates:
+```json
+{
+  "tool": "get_daily_note",
+  "arguments": {
+    "date": "2025-12-01",
+    "createIfMissing": true
   }
 }
 ```

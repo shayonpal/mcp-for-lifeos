@@ -45,7 +45,7 @@ interface ToolSchema {
   name: string;
   description: string;
   category: string;
-  inputSchema: any;
+  inputSchema: Record<string, unknown>;
   annotations?: {
     readOnlyHint?: boolean;
     idempotentHint?: boolean;
@@ -187,12 +187,16 @@ function generateToolDocumentation(): ToolDocumentation {
   // Get all unique tools across all modes
   const allTools = new Map<string, Tool>();
 
+  // Read package.json for version (used throughout)
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
   // Collect from all modes
   for (const mode of ['consolidated-only', 'legacy-only', 'consolidated-with-aliases'] as ToolMode[]) {
     const tools = getToolsForMode({
       mode,
       serverName: 'lifeos-mcp',
-      serverVersion: '2.0.1'
+      serverVersion: packageJson.version
     });
 
     for (const tool of tools) {
@@ -231,10 +235,6 @@ function generateToolDocumentation(): ToolDocumentation {
     categories[schema.category].tools.push(schema.name);
   }
 
-  // Read package.json for version
-  const packageJsonPath = path.join(__dirname, '..', 'package.json');
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-
   // Build documentation
   const doc: ToolDocumentation = {
     metadata: {
@@ -271,7 +271,7 @@ function generateToolDocumentation(): ToolDocumentation {
         }).map(t => t.name)
       },
       'consolidated-with-aliases': {
-        description: 'Maximum compatibility mode with all tools - 35 tools',
+        description: 'Maximum compatibility mode with all tools - 24 tools (consolidated + backward-compatible aliases)',
         toolCount: getToolsForMode({
           mode: 'consolidated-with-aliases',
           serverName: 'lifeos-mcp',

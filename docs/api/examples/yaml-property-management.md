@@ -274,15 +274,31 @@ Find notes missing essential properties:
 Rename property across entire vault:
 
 **Step 1: Find all notes with old property**
+
+To find all notes that have a specific YAML property (regardless of its value), search by the property name without specifying a value, or combine with `includeNullValues: false` to exclude notes where the property is null/missing:
+
 ```json
 {
   "tool": "search",
   "arguments": {
     "mode": "advanced",
-    "yamlProperties": {
-      "dueDate": "*"
-    },
+    "folder": "10 - Projects",
     "format": "concise",
+    "maxResults": 500
+  }
+}
+```
+
+Then filter the results by checking for the `dueDate` property in the returned metadata.
+
+**Alternative**: Use advanced search with specific property values if you know them:
+```json
+{
+  "tool": "search",
+  "arguments": {
+    "mode": "advanced",
+    "folder": "10 - Projects",
+    "format": "detailed",
     "maxResults": 500
   }
 }
@@ -411,20 +427,24 @@ Standardize property values across notes:
 Understand how properties are used together:
 
 **Step 1: Find notes with specific property combination**
+
+Search for restaurants and examine which have cuisine specified:
+
 ```json
 {
   "tool": "search",
   "arguments": {
     "mode": "advanced",
     "yamlProperties": {
-      "contentType": "Restaurant",
-      "cuisine": "*"
+      "contentType": "Restaurant"
     },
     "format": "detailed",
     "maxResults": 50
   }
 }
 ```
+
+The results will show all restaurants, and you can examine which ones have the `cuisine` property populated.
 
 **Step 2: Analyze results to understand patterns**
 - Which properties are commonly used together?
