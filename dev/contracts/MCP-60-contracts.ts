@@ -385,7 +385,7 @@ export interface InvalidToolModeError {
  * 3. TOOL COUNTS ADJUSTED:
  *    - consolidated-only: 13 → 12 → 13 tools (removed basic create_note, later added rename_note)
  *    - legacy-only: 21 → 20 → 21 tools (removed basic create_note, later added rename_note)
- *    - consolidated-with-aliases: 25 → 24 tools (removed basic create_note, later added rename_note)
+ *    - consolidated-with-aliases: 24 → 23 → 24 tools (removed basic create_note, later added rename_note)
  *
  * 4. ALWAYS-AVAILABLE TOOLS:
  *    - Original: 10 tools (included basic create_note)
