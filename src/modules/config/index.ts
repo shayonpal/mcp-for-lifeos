@@ -9,6 +9,7 @@
 export {
   InstructionProcessor,
   type InstructionContext,
+  type ModifiedInstructionContext,
   type InstructionRetrievalResult,
   type InstructionApplicationResult,
   type WatcherInitializationResult

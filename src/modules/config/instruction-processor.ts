@@ -15,6 +15,46 @@ import { logger } from '../../shared/logger.js';
 import { readFileWithRetry } from '../files/file-io.js';
 
 /**
+ * Mapping of template keys to config file keys
+ * Used for normalizing note type identifiers between different contexts
+ */
+const NOTE_TYPE_NORMALIZATION_MAP: Record<string, string> = {
+  'daily': 'dailyNotes',
+  'placetovisit': 'placeToVisit',
+  'books': 'book',
+  'application': 'application',
+  'article': 'article',
+  'person': 'person',
+  'restaurant': 'restaurant',
+  'medicine': 'medical',
+  'newsletter': 'newsletter',
+  'game': 'game'
+} as const;
+
+/**
+ * Mapping of config format tokens to date-fns format tokens
+ * Supports comprehensive date/time formatting patterns
+ * Reference: https://date-fns.org/v2.30.0/docs/format
+ */
+const DATE_FORMAT_TOKEN_MAP: Record<string, string> = {
+  'YYYY': 'yyyy',  // 4-digit year (2025)
+  'YY': 'yy',      // 2-digit year (25)
+  'MMMM': 'MMMM',  // Full month name (January)
+  'MMM': 'MMM',    // Short month name (Jan)
+  'MM': 'MM',      // 2-digit month (01)
+  'M': 'M',        // 1-digit month (1)
+  'DD': 'dd',      // 2-digit day (01)
+  'D': 'd',        // 1-digit day (1)
+  'dddd': 'EEEE',  // Full day name (Monday)
+  'ddd': 'EEE',    // Short day name (Mon)
+  'HH': 'HH',      // 24-hour (00-23)
+  'hh': 'hh',      // 12-hour (01-12)
+  'mm': 'mm',      // Minutes (00-59)
+  'ss': 'ss',      // Seconds (00-59)
+  'A': 'a'         // AM/PM
+} as const;
+
+/**
  * Context for instruction application
  * Describes the operation being performed and relevant metadata
  */
@@ -399,22 +439,8 @@ export class InstructionProcessor {
       return undefined;
     }
 
-    // Mapping of template keys to config keys
-    const keyMap: Record<string, string> = {
-      'daily': 'dailyNotes',
-      'placetovisit': 'placeToVisit',
-      'books': 'book',
-      'application': 'application',
-      'article': 'article',
-      'person': 'person',
-      'restaurant': 'restaurant',
-      'medicine': 'medical',
-      'newsletter': 'newsletter',
-      'game': 'game'
-    };
-
     // Return mapped key or original key (for exact matches)
-    return keyMap[templateKey.toLowerCase()] || templateKey;
+    return NOTE_TYPE_NORMALIZATION_MAP[templateKey.toLowerCase()] || templateKey;
   }
 
   /**
@@ -562,10 +588,11 @@ export class InstructionProcessor {
     // Apply filename format
     if (rules.filenameFormat && typeof rules.filenameFormat === 'string') {
       try {
-        // Convert config format (e.g., "YYYY-MM-DD") to date-fns format (e.g., "yyyy-MM-dd")
-        const dateFnsFormat = rules.filenameFormat
-          .replace(/YYYY/g, 'yyyy')
-          .replace(/DD/g, 'dd');
+        // Convert all supported tokens from config format to date-fns format
+        const dateFnsFormat = rules.filenameFormat.replace(
+          /YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|HH|hh|mm|ss|A/g,
+          (match) => DATE_FORMAT_TOKEN_MAP[match] ?? match
+        );
 
         // Format current date using the pattern
         const formattedDate = format(new Date(), dateFnsFormat);
@@ -573,7 +600,8 @@ export class InstructionProcessor {
 
         appliedRules.push('naming:format');
         logger.debug('Applied filename format rule', {
-          format: rules.filenameFormat,
+          configFormat: rules.filenameFormat,
+          dateFnsFormat,
           modifiedTitle: formattedDate
         });
       } catch (error) {

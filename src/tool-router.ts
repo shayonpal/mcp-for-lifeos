@@ -13,7 +13,7 @@ import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './shared/index.js';
 import { AnalyticsCollector } from './modules/analytics/index.js';
 import { ObsidianLinks } from './modules/links/index.js';
-import { InstructionProcessor, InstructionContext } from './modules/config/index.js';
+import { InstructionProcessor, InstructionContext, ModifiedInstructionContext } from './modules/config/index.js';
 
 /**
  * Universal Search Tool - Consolidates 6 search tools into 1
@@ -114,6 +114,18 @@ export interface RoutingDecision {
   strategy: string;
   confidence: number;
   reasoning: string;
+}
+
+/**
+ * Type guard to check if context has modified properties
+ * Provides type-safe access to ModifiedInstructionContext properties
+ */
+function hasModifiedProperties(
+  context: InstructionContext
+): context is ModifiedInstructionContext {
+  return 'modifiedFrontmatter' in context ||
+         'modifiedContent' in context ||
+         'modifiedTitle' in context;
 }
 
 export class ToolRouter {
@@ -560,19 +572,25 @@ export class ToolRouter {
         if (options.source) frontmatter.source = options.source;
         if (options.people) frontmatter.people = options.people;
 
-        // Apply instruction-modified frontmatter (MCP-150)
-        if (instructionResult.modified && (instructionResult.context as any).modifiedFrontmatter) {
-          const modifiedFrontmatter = (instructionResult.context as any).modifiedFrontmatter;
-          frontmatter = {
-            ...frontmatter,
-            ...modifiedFrontmatter
-          };
-        }
+        // Apply instruction-modified frontmatter and content (MCP-150)
+        let content = options.content || '';
 
-        // Use instruction-modified content if available (MCP-150)
-        const content = (instructionResult.context as any).modifiedContent
-          || options.content
-          || '';
+        if (instructionResult.modified && hasModifiedProperties(instructionResult.context)) {
+          const { modifiedFrontmatter, modifiedContent } = instructionResult.context;
+
+          // Merge modified frontmatter if provided
+          if (modifiedFrontmatter) {
+            frontmatter = {
+              ...frontmatter,
+              ...modifiedFrontmatter
+            };
+          }
+
+          // Use modified content if provided
+          if (modifiedContent) {
+            content = modifiedContent;
+          }
+        }
 
         return {
           frontmatter,

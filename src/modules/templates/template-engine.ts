@@ -163,19 +163,29 @@ export class TemplateEngine {
     let finalContent = processedContent;
 
     if (customData._instructionResult) {
-      const instructionContext = customData._instructionResult.context as any;
+      const instructionContext = customData._instructionResult.context;
 
       // Merge modified frontmatter from custom instructions
-      if (instructionContext.modifiedFrontmatter) {
+      if ('modifiedFrontmatter' in instructionContext && instructionContext.modifiedFrontmatter) {
         finalFrontmatter = {
           ...processedFrontmatter,
           ...instructionContext.modifiedFrontmatter
         };
       }
 
-      // Use modified content if provided (prepend to template content)
-      if (instructionContext.modifiedContent) {
-        finalContent = instructionContext.modifiedContent + '\n' + processedContent;
+      // Concatenate modified content with template content (MCP-150)
+      if ('modifiedContent' in instructionContext && instructionContext.modifiedContent) {
+        const modified = instructionContext.modifiedContent.trim();
+        const template = processedContent.trim();
+
+        // Only concatenate if both have content
+        if (modified && template) {
+          finalContent = `${modified}\n\n${template}`;  // Double newline for section separation
+        } else if (modified) {
+          finalContent = modified;
+        } else {
+          finalContent = template;
+        }
       }
     }
 
