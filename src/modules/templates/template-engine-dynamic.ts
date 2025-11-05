@@ -506,35 +506,24 @@ export class DynamicTemplateEngine {
     try {
       const result = this.processTemplate(templateKey, noteTitle, customData);
 
-      // Explicitly construct return object to ensure guidance is included
-      if (guidance) {
-        return {
-          frontmatter: result.frontmatter,
-          content: result.content,
-          targetFolder: result.targetFolder,
-          guidance
-        };
-      }
-
-      return result;
+      // Use spread operator for robust guidance passthrough
+      return {
+        ...result,
+        ...(guidance && { guidance })
+      };
     } catch (error) {
       // Silent error handling for MCP compatibility
       // Fallback to basic note structure, but preserve guidance metadata if available
-      const fallback = {
+      return {
         frontmatter: {
           title: noteTitle,
           'content type': 'Reference',
           tags: ['template-fallback']
         },
         content: `# ${noteTitle}\n\n`,
-        targetFolder: '05 - Fleeting Notes'
-      } as { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: NoteGuidanceMetadata };
-
-      if (guidance) {
-        fallback.guidance = guidance;
-      }
-
-      return fallback;
+        targetFolder: '05 - Fleeting Notes',
+        ...(guidance && { guidance })
+      };
     }
   }
 }

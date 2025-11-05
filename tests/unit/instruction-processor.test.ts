@@ -828,4 +828,154 @@ describe('InstructionProcessor', () => {
       });
     });
   });
+
+  describe('MCP-121: Guidance Metadata Extraction', () => {
+    it('should extract YAML fields from parsedRules.yaml correctly', () => {
+      // Arrange
+      const rulesJson = JSON.stringify({
+        restaurant: {
+          yaml: {
+            'content type': ['Restaurant'],
+            category: ['Food & Dining'],
+            tags: ['restaurant'],
+            location: ['Toronto'],
+            cuisine: ['Various']
+          },
+          contentStructure: {
+            requiredHeadings: ['Remarks', 'Visit History', 'Menu Highlights']
+          }
+        }
+      });
+
+      LIFEOS_CONFIG.customInstructions = {
+        inline: { noteCreationRules: rulesJson }
+      };
+
+      const context: InstructionContext = {
+        operation: 'create',
+        noteType: 'restaurant',
+        title: 'Test Restaurant'
+      };
+
+      // Act
+      const result = InstructionProcessor.applyInstructions(context);
+
+      // Assert: Guidance should have requiredYAML extracted from yaml object keys
+      expect(result.guidance).toBeDefined();
+      expect(result.guidance?.requiredYAML).toEqual(
+        expect.arrayContaining(['content type', 'category', 'tags', 'location', 'cuisine'])
+      );
+      expect(result.guidance?.requiredYAML?.length).toBeLessThanOrEqual(5); // Token cap
+    });
+
+    it('should extract headings from parsedRules.contentStructure.requiredHeadings', () => {
+      // Arrange
+      const rulesJson = JSON.stringify({
+        article: {
+          yaml: {
+            'content type': ['Article']
+          },
+          contentStructure: {
+            requiredHeadings: ['Summary', 'Key Points', 'References', 'Extra']
+          }
+        }
+      });
+
+      LIFEOS_CONFIG.customInstructions = {
+        inline: { noteCreationRules: rulesJson }
+      };
+
+      const context: InstructionContext = {
+        operation: 'create',
+        noteType: 'article'
+      };
+
+      // Act
+      const result = InstructionProcessor.applyInstructions(context);
+
+      // Assert: Guidance should have headings extracted and capped at 3
+      expect(result.guidance).toBeDefined();
+      expect(result.guidance?.headings).toEqual(['Summary', 'Key Points', 'References']);
+      expect(result.guidance?.headings?.length).toBeLessThanOrEqual(3); // Token cap
+    });
+
+    it('should extract timezone information', () => {
+      // Arrange
+      const rulesJson = JSON.stringify({
+        dailyNotes: {
+          yaml: { tags: ['dailyNote'] }
+        }
+      });
+
+      LIFEOS_CONFIG.customInstructions = {
+        inline: { noteCreationRules: rulesJson }
+      };
+
+      const context: InstructionContext = {
+        operation: 'create',
+        noteType: 'daily'
+      };
+
+      // Act
+      const result = InstructionProcessor.applyInstructions(context);
+
+      // Assert: Guidance should include timezone
+      expect(result.guidance).toBeDefined();
+      expect(result.guidance?.timezone).toBeDefined();
+      expect(result.guidance?.timezone).toMatch(/^[\w/]+/); // Format: Region/City (Abbr)
+    });
+
+    it('should return undefined guidance when no meaningful data available', () => {
+      // Arrange: Empty rules
+      const rulesJson = JSON.stringify({
+        generic: {}
+      });
+
+      LIFEOS_CONFIG.customInstructions = {
+        inline: { noteCreationRules: rulesJson }
+      };
+
+      const context: InstructionContext = {
+        operation: 'create',
+        noteType: 'generic'
+      };
+
+      // Act
+      const result = InstructionProcessor.applyInstructions(context);
+
+      // Assert: No guidance when rules are empty
+      expect(result.guidance).toBeUndefined();
+    });
+
+    it('should include appliedRules in guidance metadata', () => {
+      // Arrange
+      const rulesJson = JSON.stringify({
+        dailyNotes: {
+          yaml: { tags: ['dailyNote'] },
+          contentStructure: { requiredHeadings: ["Day's Notes"] },
+          filenameFormat: 'YYYY-MM-DD'
+        }
+      });
+
+      LIFEOS_CONFIG.customInstructions = {
+        inline: { noteCreationRules: rulesJson }
+      };
+
+      const context: InstructionContext = {
+        operation: 'create',
+        noteType: 'daily'
+      };
+
+      // Act
+      const result = InstructionProcessor.applyInstructions(context);
+
+      // Assert: Guidance should include applied rules
+      expect(result.guidance).toBeDefined();
+      expect(result.guidance?.appliedRules).toBeDefined();
+      expect(result.guidance?.appliedRules).toEqual(
+        expect.arrayContaining(['yaml:defaults', 'content:structure', 'naming:format'])
+      );
+      expect(result.guidance?.appliedRules?.length).toBeLessThanOrEqual(10); // Token cap
+    });
+  });
 });

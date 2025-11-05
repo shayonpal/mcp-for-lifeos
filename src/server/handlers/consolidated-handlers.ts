@@ -20,10 +20,15 @@ import {
 import { CONSOLIDATED_TOOL_NAMES } from '../../../dev/contracts/MCP-96-contracts.js';
 
 /**
- * Format guidance metadata as readable text for LLM consumption
- * _meta is NOT visible to LLM - guidance must be in content text
+ * Format guidance metadata into LLM-readable Markdown text
+ *
+ * CRITICAL: _meta field is NOT visible to LLM - guidance must be in content text
+ * Exported for testing purposes - tests can import and validate formatting logic
+ *
+ * @param guidance - Guidance metadata from InstructionProcessor
+ * @returns Formatted Markdown string for appending to tool responses
  */
-function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
+export function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
   const lines: string[] = ['\n---', '\n📋 **Note Formatting Guidance**'];
 
   if (guidance.noteType) {

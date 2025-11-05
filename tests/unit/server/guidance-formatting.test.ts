@@ -4,36 +4,7 @@
  */
 
 import type { NoteGuidanceMetadata } from '../../../src/shared/types.js';
-
-/**
- * Mock the formatGuidanceText function since it's not exported
- * This implementation matches the actual function in consolidated-handlers.ts
- */
-function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
-  const lines: string[] = ['\n---', '\n📋 **Note Formatting Guidance**'];
-
-  if (guidance.noteType) {
-    lines.push(`• **Note Type**: ${guidance.noteType}`);
-  }
-
-  if (guidance.requiredYAML && guidance.requiredYAML.length > 0) {
-    lines.push(`• **Required YAML Fields**: ${guidance.requiredYAML.join(', ')}`);
-  }
-
-  if (guidance.headings && guidance.headings.length > 0) {
-    lines.push(`• **Expected Headings**: ${guidance.headings.join(', ')}`);
-  }
-
-  if (guidance.temporalHints) {
-    lines.push(`• **Date Format**: ${guidance.temporalHints}`);
-  }
-
-  if (guidance.timezone) {
-    lines.push(`• **Timezone**: ${guidance.timezone}`);
-  }
-
-  return lines.join('\n');
-}
+import { formatGuidanceText } from '../../../src/server/handlers/consolidated-handlers.js';
 
 describe('formatGuidanceText()', () => {
   describe('Priority 1: Complete guidance rendering', () => {

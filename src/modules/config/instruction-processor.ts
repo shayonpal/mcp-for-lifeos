@@ -488,9 +488,16 @@ export class InstructionProcessor {
         guidance.headings = parsedRules.contentStructure.requiredHeadings.slice(0, 3);
       }
 
-      // Extract temporal hints for daily notes
-      if (context.noteType === 'daily' || context.noteType === 'dailyNotes') {
-        guidance.temporalHints = 'Use YYYY-MM-DD format for daily note filenames';
+      // Extract temporal hints from filename format rules
+      if (parsedRules.filenameFormat) {
+        const format = parsedRules.filenameFormat;
+        // Convert format specification to human-readable hint
+        if (format === 'YYYY-MM-DD') {
+          guidance.temporalHints = 'Use YYYY-MM-DD format for filenames';
+        } else if (format.includes('YYYY')) {
+          // Generic hint for any year-based format
+          guidance.temporalHints = `Use ${format} format for filenames`;
+        }
       }
 
       // Add applied rules (cap at 10)
