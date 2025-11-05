@@ -13,7 +13,7 @@ import { DynamicTemplateEngine } from './modules/templates/index.js';
 import { LIFEOS_CONFIG } from './shared/index.js';
 import { AnalyticsCollector } from './modules/analytics/index.js';
 import { ObsidianLinks } from './modules/links/index.js';
-import { InstructionProcessor, InstructionContext } from './modules/config/index.js';
+import { InstructionProcessor, InstructionContext, ModifiedInstructionContext } from './modules/config/index.js';
 
 /**
  * Universal Search Tool - Consolidates 6 search tools into 1
@@ -114,6 +114,18 @@ export interface RoutingDecision {
   strategy: string;
   confidence: number;
   reasoning: string;
+}
+
+/**
+ * Type guard to check if context has modified properties
+ * Provides type-safe access to ModifiedInstructionContext properties
+ */
+function hasModifiedProperties(
+  context: InstructionContext
+): context is ModifiedInstructionContext {
+  return 'modifiedFrontmatter' in context ||
+         'modifiedContent' in context ||
+         'modifiedTitle' in context;
 }
 
 export class ToolRouter {
@@ -473,28 +485,7 @@ export class ToolRouter {
     try {
       const { title, auto_template = true, template } = options;
 
-      // Apply custom instructions if configured
-      const instructionContext: InstructionContext = {
-        operation: 'create',
-        noteType: template || 'generic',
-        targetPath: title
-      };
-      const instructionResult = InstructionProcessor.applyInstructions(instructionContext);
-
-      // Log instruction application for observability
-      if (instructionResult.modified) {
-        this.analytics.recordUsage({
-          toolName: 'instruction_application',
-          executionTime: 0, // Instruction application already complete
-          success: true,
-          resultCount: instructionResult.appliedRules.length,
-          clientName: this.clientInfo.name,
-          clientVersion: this.clientInfo.version,
-          sessionId: this.sessionId
-        });
-      }
-
-      // Template detection logic
+      // Template detection logic (must happen BEFORE instruction application)
       let finalTemplate = template;
       
       if (auto_template && !finalTemplate) {
@@ -525,12 +516,33 @@ export class ToolRouter {
         // Note: fleeting, moc, and reference templates are too general for auto-detection
       }
 
+      // Apply custom instructions AFTER template detection (MCP-150)
+      const instructionContext: InstructionContext = {
+        operation: 'create',
+        noteType: finalTemplate || 'generic',
+        targetPath: title
+      };
+      const instructionResult = InstructionProcessor.applyInstructions(instructionContext);
+
+      // Log instruction application for observability
+      if (instructionResult.modified) {
+        this.analytics.recordUsage({
+          toolName: 'instruction_application',
+          executionTime: 0, // Instruction application already complete
+          success: true,
+          resultCount: instructionResult.appliedRules.length,
+          clientName: this.clientInfo.name,
+          clientVersion: this.clientInfo.version,
+          sessionId: this.sessionId
+        });
+      }
+
       const decision: RoutingDecision = {
         targetTool: finalTemplate ? 'create_note_from_template' : 'create_note',
         strategy: finalTemplate ? 'template-based' : 'manual',
         confidence: finalTemplate ? 0.8 : 1.0,
-        reasoning: finalTemplate ? 
-          `Auto-detected template: ${finalTemplate}` : 
+        reasoning: finalTemplate ?
+          `Auto-detected template: ${finalTemplate}` :
           'Manual note creation without template'
       };
 
@@ -538,15 +550,21 @@ export class ToolRouter {
 
       if (finalTemplate) {
         // Use template-based creation
+        // Pass instruction result to template engine for customization
+        const templateData = {
+          ...(options.customData || {}),
+          _instructionResult: instructionResult
+        };
         return DynamicTemplateEngine.createNoteFromTemplate(
           finalTemplate,
           title,
-          options.customData || {}
+          templateData
         );
       } else {
         // Use manual creation - prepare frontmatter
         let frontmatter: any = { title };
-        
+
+        // Apply user-provided options
         if (options.contentType) frontmatter['content type'] = options.contentType;
         if (options.category) frontmatter.category = options.category;
         if (options.subCategory) frontmatter['sub-category'] = options.subCategory;
@@ -554,9 +572,29 @@ export class ToolRouter {
         if (options.source) frontmatter.source = options.source;
         if (options.people) frontmatter.people = options.people;
 
+        // Apply instruction-modified frontmatter and content (MCP-150)
+        let content = options.content || '';
+
+        if (instructionResult.modified && hasModifiedProperties(instructionResult.context)) {
+          const { modifiedFrontmatter, modifiedContent } = instructionResult.context;
+
+          // Merge modified frontmatter if provided
+          if (modifiedFrontmatter) {
+            frontmatter = {
+              ...frontmatter,
+              ...modifiedFrontmatter
+            };
+          }
+
+          // Use modified content if provided
+          if (modifiedContent) {
+            content = modifiedContent;
+          }
+        }
+
         return {
           frontmatter,
-          content: options.content || '',
+          content,
           targetFolder: options.targetFolder
         };
       }

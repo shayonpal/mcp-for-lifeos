@@ -8,10 +8,51 @@
  */
 
 import { watch, FSWatcher } from 'fs';
+import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../shared/config.js';
 import { CustomInstructionsConfig } from '../../shared/types.js';
 import { logger } from '../../shared/logger.js';
 import { readFileWithRetry } from '../files/file-io.js';
+
+/**
+ * Mapping of template keys to config file keys
+ * Used for normalizing note type identifiers between different contexts
+ */
+const NOTE_TYPE_NORMALIZATION_MAP: Record<string, string> = {
+  'daily': 'dailyNotes',
+  'placetovisit': 'placeToVisit',
+  'books': 'book',
+  'application': 'application',
+  'article': 'article',
+  'person': 'person',
+  'restaurant': 'restaurant',
+  'medicine': 'medical',
+  'newsletter': 'newsletter',
+  'game': 'game'
+} as const;
+
+/**
+ * Mapping of config format tokens to date-fns format tokens
+ * Supports comprehensive date/time formatting patterns
+ * Reference: https://date-fns.org/v2.30.0/docs/format
+ */
+const DATE_FORMAT_TOKEN_MAP: Record<string, string> = {
+  'YYYY': 'yyyy',  // 4-digit year (2025)
+  'YY': 'yy',      // 2-digit year (25)
+  'MMMM': 'MMMM',  // Full month name (January)
+  'MMM': 'MMM',    // Short month name (Jan)
+  'MM': 'MM',      // 2-digit month (01)
+  'M': 'M',        // 1-digit month (1)
+  'DD': 'dd',      // 2-digit day (01)
+  'D': 'd',        // 1-digit day (1)
+  'dddd': 'EEEE',  // Full day name (Monday)
+  'ddd': 'EEE',    // Short day name (Mon)
+  'HH': 'HH',      // 24-hour (00-23)
+  'hh': 'hh',      // 12-hour (01-12)
+  'mm': 'mm',      // Minutes (00-59)
+  'ss': 'ss',      // Seconds (00-59)
+  'A': 'a'         // AM/PM
+} as const;
 
 /**
  * Context for instruction application
@@ -29,6 +70,24 @@ export interface InstructionContext {
 
   /** Target path for file operations */
   targetPath?: string;
+}
+
+/**
+ * Modified instruction context
+ * Extends InstructionContext with modification fields
+ */
+export interface ModifiedInstructionContext extends InstructionContext {
+  /** Modified title (if naming convention applied) */
+  modifiedTitle?: string;
+
+  /** Modified frontmatter (if default fields applied) */
+  modifiedFrontmatter?: Record<string, any>;
+
+  /** Modified content (if boilerplate/formatting applied) */
+  modifiedContent?: string;
+
+  /** Modified template selection (if override applied) */
+  modifiedTemplate?: string;
 }
 
 /**
@@ -261,15 +320,11 @@ export class InstructionProcessor {
   /**
    * Apply instructions to context
    *
-   * Phase 2 Behavior:
+   * MCP-150 Implementation:
    * - Branches on context.operation to select relevant rules
-   * - Logs when rules are available for the operation
-   * - Tracks rule availability in appliedRules array
-   * - Returns modified=true when rules found (even if not yet applied)
-   *
-   * Future enhancements:
-   * - Actual rule parsing and application
-   * - Context modification based on parsed rules
+   * - Parses rule strings into structured objects
+   * - Applies rules to modify context (modifiedTitle, modifiedFrontmatter, modifiedContent)
+   * - Tracks applied rules in result
    */
   static applyInstructions(context: InstructionContext): InstructionApplicationResult {
     logger.debug('InstructionProcessor.applyInstructions called', {
@@ -292,7 +347,6 @@ export class InstructionProcessor {
 
     const instructions = result.instructions;
     const appliedRules: string[] = [];
-    let modified = false;
 
     // Branch on operation type to select relevant rules
     let relevantRules: string | undefined;
@@ -334,32 +388,289 @@ export class InstructionProcessor {
       };
     }
 
-    // Phase 2 MVP: Log that rules would be applied, but don't modify context yet
-    // Full rule parsing and application will be implemented in future iterations
-    logger.info('Instruction rules available for operation', {
+    // Parse rules for the specific operation and note type
+    const parsedRules = this.parseRulesForOperation(relevantRules, context.noteType);
+
+    if (!parsedRules) {
+      logger.debug('No parsed rules for note type', {
+        operation: context.operation,
+        noteType: context.noteType
+      });
+      return {
+        context,
+        modified: false,
+        appliedRules: []
+      };
+    }
+
+    // Apply parsed rules to modify context
+    const modifiedContext = this.applyRulesToContext(
+      context,
+      parsedRules,
+      context.operation,
+      appliedRules
+    );
+
+    const modified = appliedRules.length > 0;
+
+    logger.info('Applied instruction rules', {
       operation: context.operation,
-      ruleType,
-      rulesLength: relevantRules.length,
       noteType: context.noteType,
+      rulesApplied: appliedRules.length,
       source: result.source
     });
 
-    appliedRules.push(
-      `${ruleType} available (${relevantRules.length} chars, source: ${result.source})`
-    );
-
-    // Phase 2: Mark as modified to indicate rules were detected
-    // NOTE: Context is NOT actually modified yet - this flag tracks rule detection
-    // Future phases will implement actual context modification
-    modified = true;
-
-    // TODO (MCP-150): Implement actual rule parsing and application
-    // For now, return context with tracking that rules were found
     return {
-      context,
+      context: modifiedContext,
       modified,
       appliedRules
     };
+  }
+
+  /**
+   * Normalize template key to config key
+   * Maps template keys to their corresponding config file keys
+   *
+   * @param templateKey - Template key from tool-router (e.g., 'daily', 'placetovisit')
+   * @returns Normalized config key (e.g., 'dailyNotes', 'placeToVisit')
+   */
+  private static normalizeNoteType(templateKey: string | undefined): string | undefined {
+    if (!templateKey) {
+      return undefined;
+    }
+
+    // Return mapped key or original key (for exact matches)
+    return NOTE_TYPE_NORMALIZATION_MAP[templateKey.toLowerCase()] || templateKey;
+  }
+
+  /**
+   * Parse rules for a specific operation and note type
+   * Handles both stringified JSON and legacy string rules
+   * Merges general rules with note-type-specific rules
+   *
+   * @param rulesString - Stringified JSON rules or legacy string
+   * @param noteType - The note type to extract rules for
+   * @returns Parsed rules object or null if not found
+   */
+  private static parseRulesForOperation(
+    rulesString: string | undefined,
+    noteType: string | undefined
+  ): Record<string, any> | null {
+    if (!rulesString) {
+      return null;
+    }
+
+    try {
+      // Attempt to parse as JSON
+      const parsed = JSON.parse(rulesString);
+
+      // If noteType is provided, try to extract note-type-specific rules
+      if (noteType && typeof parsed === 'object' && parsed !== null) {
+        // Normalize the note type key
+        const normalizedNoteType = this.normalizeNoteType(noteType);
+
+        // Extract general rules (if present)
+        const generalRules = parsed.general || {};
+
+        // Extract note-type-specific rules
+        let noteSpecificRules: Record<string, any> = {};
+
+        if (normalizedNoteType && parsed[normalizedNoteType]) {
+          noteSpecificRules = parsed[normalizedNoteType];
+          logger.debug('Extracted note-type-specific rules', {
+            noteType,
+            normalizedNoteType,
+            hasRules: true
+          });
+        }
+
+        // Merge general rules with note-specific rules (note-specific takes precedence)
+        if (Object.keys(generalRules).length > 0 || Object.keys(noteSpecificRules).length > 0) {
+          const mergedRules = {
+            ...generalRules,
+            ...noteSpecificRules
+          };
+
+          logger.debug('Merged general and note-specific rules', {
+            generalRulesCount: Object.keys(generalRules).length,
+            noteSpecificRulesCount: Object.keys(noteSpecificRules).length,
+            totalRulesCount: Object.keys(mergedRules).length
+          });
+
+          return mergedRules;
+        }
+
+        // If no general or note-specific rules, return the entire parsed object as fallback
+        logger.debug('Using parsed rules as-is (no general or note-specific rules found)', {
+          noteType
+        });
+        return parsed;
+      }
+
+      // Return parsed rules as-is if no noteType filtering needed
+      return parsed;
+    } catch (error) {
+      // Legacy string rule (backward compatibility)
+      logger.debug('Treating rules as legacy string format', {
+        rulesLength: rulesString.length
+      });
+      return {
+        legacy: true,
+        content: rulesString
+      };
+    }
+  }
+
+  /**
+   * Apply parsed rules to modify context
+   * Handles naming conventions, YAML defaults, and content boilerplate
+   *
+   * @param context - Original context
+   * @param rules - Parsed rules object
+   * @param operation - Operation type
+   * @param appliedRules - Array to track applied rules
+   * @returns Modified context
+   */
+  private static applyRulesToContext(
+    context: InstructionContext,
+    rules: Record<string, any>,
+    operation: string,
+    appliedRules: string[]
+  ): InstructionContext {
+    const modifiedContext = { ...context };
+
+    // Apply rules based on operation type
+    switch (operation) {
+      case 'create':
+        this.applyNoteCreationRules(modifiedContext, rules, appliedRules);
+        break;
+      case 'edit':
+      case 'insert':
+        this.applyEditingRules(modifiedContext, rules, appliedRules);
+        break;
+      case 'template':
+        this.applyTemplateRules(modifiedContext, rules, appliedRules);
+        break;
+    }
+
+    return modifiedContext;
+  }
+
+  /**
+   * Apply note creation rules
+   * Handles naming conventions, YAML defaults, and content structure
+   */
+  private static applyNoteCreationRules(
+    context: InstructionContext & Partial<ModifiedInstructionContext>,
+    rules: Record<string, any>,
+    appliedRules: string[]
+  ): void {
+    // Apply YAML defaults
+    if (rules.yaml && typeof rules.yaml === 'object') {
+      context.modifiedFrontmatter = { ...rules.yaml };
+      appliedRules.push('yaml:defaults');
+      logger.debug('Applied YAML defaults', {
+        fields: Object.keys(rules.yaml)
+      });
+    }
+
+    // Apply content structure (boilerplate)
+    if (rules.contentStructure?.requiredHeadings) {
+      const headings = rules.contentStructure.requiredHeadings as string[];
+      const boilerplate = headings.map((h) => `## ${h}\n\n`).join('');
+      context.modifiedContent = boilerplate;
+      appliedRules.push('content:structure');
+      logger.debug('Applied content structure', {
+        headingsCount: headings.length
+      });
+    }
+
+    // Apply filename format
+    if (rules.filenameFormat && typeof rules.filenameFormat === 'string') {
+      try {
+        // Convert all supported tokens from config format to date-fns format
+        const dateFnsFormat = rules.filenameFormat.replace(
+          /YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|HH|hh|mm|ss|A/g,
+          (match) => DATE_FORMAT_TOKEN_MAP[match] ?? match
+        );
+
+        // Format current date using the pattern
+        const formattedDate = format(new Date(), dateFnsFormat);
+        context.modifiedTitle = formattedDate;
+
+        appliedRules.push('naming:format');
+        logger.debug('Applied filename format rule', {
+          configFormat: rules.filenameFormat,
+          dateFnsFormat,
+          modifiedTitle: formattedDate
+        });
+      } catch (error) {
+        // Log error but don't crash - graceful degradation
+        logger.warn('Failed to apply filename format rule', {
+          format: rules.filenameFormat,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+  }
+
+  /**
+   * Apply editing rules
+   * Handles content formatting and frontmatter validation
+   */
+  private static applyEditingRules(
+    context: InstructionContext & Partial<ModifiedInstructionContext>,
+    rules: Record<string, any>,
+    appliedRules: string[]
+  ): void {
+    // Handle legacy string rules (backward compatibility)
+    if (rules.legacy && rules.content) {
+      appliedRules.push('editing:legacy');
+      logger.debug('Detected legacy editing rules', {
+        contentLength: rules.content.length
+      });
+      return;
+    }
+
+    // Apply preserve fields rule
+    if (rules.preserveFields && Array.isArray(rules.preserveFields)) {
+      appliedRules.push('editing:preserveFields');
+      logger.debug('Will preserve fields', {
+        fields: rules.preserveFields
+      });
+    }
+
+    // Future: implement content formatting, field removal, etc.
+    if (rules.removeValues) {
+      appliedRules.push('editing:removeValues');
+    }
+  }
+
+  /**
+   * Apply template rules
+   * Handles template selection and data overrides
+   */
+  private static applyTemplateRules(
+    context: InstructionContext & Partial<ModifiedInstructionContext>,
+    rules: Record<string, any>,
+    appliedRules: string[]
+  ): void {
+    // Apply template selection
+    if (rules.template && typeof rules.template === 'string') {
+      context.modifiedTemplate = rules.template;
+      appliedRules.push('template:selection');
+      logger.debug('Applied template selection', {
+        template: rules.template
+      });
+    }
+
+    // Apply required YAML for templates
+    if (rules.requiredYaml && Array.isArray(rules.requiredYaml)) {
+      appliedRules.push('template:requiredYaml');
+      logger.debug('Detected required YAML fields', {
+        fieldsCount: rules.requiredYaml.length
+      });
+    }
   }
 
   /**

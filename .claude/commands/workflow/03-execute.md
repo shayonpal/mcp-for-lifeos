@@ -88,27 +88,18 @@ Task: Create feature branch for implementation
 - Checkout new branch
 - Push to origin for remote tracking
 
-**Update Linear with branch creation (GENERIC language):**
+**Update Linear with branch creation:**
 
 Use `linear-expert` to add comment:
 
 ```
-## ✅ Feature Branch Created
-
-**Branch**: `{branch-name}`
-**Base**: master
-**Status**: Implementation in progress
+Branch: `{branch-name}` (from master)
 ```
 
 ## Update Linear Status
 
-**Mark issue as In Progress:**  
-Use `linear-expert` agent to update issue status:
-
-```
-Update Linear issue $ISSUE_ID to "In Progress" status with comment:
-"🚀 Starting contract-driven implementation - building against TypeScript contracts from staging phase"
-```
+**Mark issue as In Progress:**
+Use `linear-expert` agent to update issue status to "In Progress" (no comment needed).
 
 ## Strategic Context Review
 
@@ -400,37 +391,18 @@ Use Serena symbol analysis during implementation to understand code structure, b
 
 **ONLY proceed with Linear updates if user has confirmed manual verification with "yes"**
 
-**Update Linear with comprehensive implementation details:**  
+**Update Linear with implementation details:**
 Use `linear-expert` agent to:
 
 ```
 Update Linear issue $ISSUE_ID with comment:
-"✅ Implementation completed via TDD methodology with Serena MCP integration
+"Implementation complete
 
-## Files Modified
-[List from git status]
+Files: [list from git status]
+Tests: passing, no regressions
+Manual verification: confirmed
 
-## Serena Analysis Used
-- Symbols analyzed and modified: [list key symbols]
-- Patterns followed: [reference established patterns]
-- Architecture compliance verified
-
-## Test Coverage
-- All new tests passing
-- No regressions in existing functionality
-- TypeScript validation clean
-
-## Implementation Quality
-- Follows established code patterns (verified via Serena)
-- Integration points properly handled
-- Performance considerations addressed
-
-## Manual Verification
-- ✅ User confirmed manual testing successful
-- ✅ Implementation verified to work correctly
-
-## Next Steps
-Ready for code-review phase - implementation matches validated test design and follows established patterns"
+Ready for code review"
 
 Change status to "In Review"
 ```

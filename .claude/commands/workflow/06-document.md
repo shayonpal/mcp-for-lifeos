@@ -407,74 +407,34 @@ Review updated documentation for:
 
 ### Step 11: Documentation Summary
 
-Present comprehensive summary:
+Present summary and update Linear:
 
-## 📚 Documentation Update Summary
+Use `linear-expert` to add comment:
 
-**Documentation Session**: [CURRENT_TIMESTAMP]
+```
+Documentation updated
 
-### ✅ Required Updates Completed
+CHANGELOG: [entry added]
+[IF TOOLS:] Tools: [list updated/created/archived]
+[IF READMES:] READMEs: [list updated]
+[IF ADR/SPECS/GUIDES:] Docs: [list created]
 
-**CHANGELOG.md**
+Ready for commit/push
+```
 
-- [Details of changelog entry with timestamp: CURRENT_TIMESTAMP]
+**Output Format:**
 
-**Tool Documentation** (if applicable)  
+```
+Documentation complete
 
-- [List of tool docs created/updated/archived]
+Updated:
+- [list files]
 
-### ✅ README Updates Applied
+Created:
+- [list new files]
 
-**Main README.md**
+Skipped:
+- [list with reasons]
 
-- [Changes made, if any]
-
-**Technical READMEs**
-
-- [src/README.md, src/tools/README.md, docs/README.md updates]
-
-### ✅ Technical Documentation
-
-**Architecture Decisions** (if applicable)
-
-- [ADRs created]
-
-**Specifications** (if applicable)  
-
-- [Technical specs created]
-
-**User Guides** (if applicable)
-
-- [Guides created/updated]
-
-### 🧠 Memory Updates
-
-- [Architectural insights stored]
-- [Documentation patterns updated]
-- [Complex solutions documented]
-
-### 📋 Documentation Decision Log
-
-**Updated**: [List of docs updated and why]
-**Skipped**: [List of docs considered but not updated, with reasoning]
-**Created**: [New documentation files created]
-
-### 🔗 Cross-References
-
-- Linear Issue: [ISSUE_ID]
-- Related Documentation: [Links to updated docs]
-- Architecture Impact: [Summary of architectural changes]
-
-## Next Steps
-
-- Documentation is current with implementation
-- All meaningful changes have been documented
-- Memory updated with new patterns and decisions
-- Ready for next workflow phase
-
-**Important Notes:**
-
-- Only meaningful changes warrant documentation updates
-- Tool changes ALWAYS require documentation updates
-- CHANGELOG updates are always required
-- Focus on value-added documentation, not documentation for its own sake
+Ready for next phase
+```

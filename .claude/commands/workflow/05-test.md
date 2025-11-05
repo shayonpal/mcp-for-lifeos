@@ -311,44 +311,22 @@ Store discovered testing patterns and insights:
 3. **Create Test Report**:
 
    ```
-   ## 🧪 Testing Phase Complete - Issue $LINEAR_ISSUE_ID
-   
-   ### Automated Tests
-   - ✅/❌ TypeScript validation: [PASSED/FAILED] (Exit code: $TYPECHECK_EXIT_CODE)
-   - ✅/❌ Unit tests: X/Y tests passing (Exit code: $TEST_EXIT_CODE)
-   - ✅/❌ MCP accuracy tests: [PASSED/FAILED] (Exit code: $ACCURACY_EXIT_CODE)
-   - ✅/❌ Tool parity validation: [PASSED/FAILED] (Exit code: $PARITY_EXIT_CODE)
-   
-   ### Failed Tests (if any)
-   **[Test File Path/Name]**
-   - **Error**: [Brief error description]
-   - **Details**: [Error message/stack trace summary]
-   - **Suggested Fix**: [Investigation path or potential solution]
-   
-   ### Skipped Tests (if any)
-   **[Test File Path/Name]**
-   - **Reason**: [Skip reason - pending, environment, etc.]
-   - **Impact**: [Risk assessment of skipped functionality]
-   - **Timeline**: [When this should be addressed]
-   
-   ### Manual Verification
-   - ✅ Server startup: SUCCESS
-   - ✅ Tool registration: COMPLETE
-   - ✅ Core functionality: VERIFIED
-   - ✅ Template system: VALIDATED
-   
-   ### Integration Testing
-   - ✅ End-to-end workflows: PASSING
-   - ✅ Error handling: ROBUST
-   - ✅ Performance: ACCEPTABLE
-   
-   ### Acceptance Criteria
-   - [List each criterion with ✅/❌ status]
-   
-   ### Action Items
-   - [List any follow-up tasks for addressing failures]
-   
-   **Next Phase**: [Ready for documentation (07-document) OR Fix blocking issues]
+   Testing complete
+
+   TypeScript: [PASS/FAIL]
+   Unit: X/Y passing
+   MCP accuracy: [PASS/FAIL]
+   Tool parity: [PASS/FAIL]
+
+   [IF FAILURES:]
+   Failed: [test-name]
+   Error: [brief error]
+   Fix: [action needed]
+
+   [IF SKIPPED:]
+   Skipped: [test-name] - [reason]
+
+   [Ready for documentation / Needs fixes]
    ```
 
 ## Output Format
@@ -415,26 +393,11 @@ Store discovered testing patterns and insights:
 **Use `linear-expert` to document testing skip:**
 
 ```markdown
-## ⏭️ Testing Phase Skipped
+Testing skipped - {reason}
+Type: {doc-only/config/trivial}
+Risk: low
 
-### Rationale
-{Reason why testing was skipped - based on assessment}
-
-### Implementation Type
-{Documentation-only / Simple config / Trivial fix}
-
-### Risk Assessment
-**Risk Level**: Low
-**Justification**: {Why skipping tests is acceptable for this change}
-
-### Validation Performed
-- ✅ Code review completed successfully
-- ✅ TypeScript compilation clean
-- ✅ Manual verification performed (if applicable)
-- ✅ No complex logic requiring automated validation
-
-### Next Phase
-✅ Ready for Documentation Phase
+Ready for documentation
 ```
 
 **Update Linear issue status:**
