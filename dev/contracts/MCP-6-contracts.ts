@@ -17,9 +17,9 @@ import type { AnalyticsCollector } from '../../src/modules/analytics/index.js';
 
 /**
  * Valid tool mode configurations
- * - legacy-only: 20 legacy tools (deprecated mode)
- * - consolidated-only: 12 consolidated tools (default)
- * - consolidated-with-aliases: 34 tools (consolidated + legacy aliases)
+ * - legacy-only: 21 legacy tools (deprecated mode)
+ * - consolidated-only: 13 consolidated tools (default)
+ * - consolidated-with-aliases: 24 tools (consolidated + legacy aliases)
  */
 export type ToolMode = 'legacy-only' | 'consolidated-only' | 'consolidated-with-aliases';
 

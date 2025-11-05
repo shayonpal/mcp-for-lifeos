@@ -85,13 +85,13 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 Control which MCP tools are registered using the `TOOL_MODE` environment variable:
 
 - **`consolidated-only`** (default): Only modern consolidated tools (13 tools) - clean, focused tool list
-- **`consolidated-with-aliases`**: Both consolidated and legacy tools (34 tools) - maximum compatibility
-- **`legacy-only`**: Only legacy tools (20 tools) - for legacy integrations
+- **`consolidated-with-aliases`**: Both consolidated and legacy tools (24 tools) - maximum compatibility
+- **`legacy-only`**: Only legacy tools (21 tools) - for legacy integrations
 
 **Default behavior** (no configuration needed):
 
 - ✅ Modern consolidated tools (`search`, `create_note`, `list`)
-- ✅ Core utilities (9 always-available tools)
+- ✅ Core utilities (10 always-available tools)
 - ❌ Legacy tool aliases hidden
 
 **Tool Name Change (MCP-60):**

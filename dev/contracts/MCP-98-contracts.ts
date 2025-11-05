@@ -17,10 +17,10 @@ import type { EditNoteInput, InsertContentInput, MoveItemsInput } from '../../sr
 // ============================================================================
 
 /**
- * Handler modules organize 9 tools into logical groups.
+ * Handler modules organize 10 tools into logical groups.
  *
  * Three modules provide clear separation of concerns:
- * - note-handlers: CRUD operations on notes (read, edit, insert)
+ * - note-handlers: CRUD operations on notes (read, edit, insert, rename)
  * - metadata-handlers: YAML and metadata operations
  * - utility-handlers: Server utilities and diagnostics
  */

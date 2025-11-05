@@ -28,17 +28,17 @@ The LifeOS MCP server supports three tool visibility modes controlled by the `TO
 - Recommended for most users
 - Cleaner interface, easier navigation
 
-**`legacy-only` (20 tools)**
+**`legacy-only` (21 tools)**
 
 - All original legacy tools without consolidated versions
 - Useful for backward compatibility testing
 - Legacy search tools, creation tools, and listing tools
 
-**`consolidated-with-aliases` (34 tools)**
+**`consolidated-with-aliases` (24 tools)**
 
-- Both consolidated AND legacy tools visible
+- Both consolidated tools AND legacy tool aliases visible
 - Maximum compatibility mode
-- Shows all 13 consolidated-only tools + 21 additional legacy tools
+- Shows all 13 consolidated-only tools + 11 legacy tool aliases
 
 ### Configuration
 

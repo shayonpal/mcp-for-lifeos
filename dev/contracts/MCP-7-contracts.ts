@@ -89,7 +89,7 @@ export type LegacyTools = readonly Tool[];
 export type LegacyAliases = readonly Tool[];
 
 /**
- * Always-available tools (9 tools)
+ * Always-available tools (10 tools)
  * Core tools available in all modes
  * - get_server_version
  * - get_yaml_rules
@@ -99,6 +99,7 @@ export type LegacyAliases = readonly Tool[];
  * - diagnose_vault
  * - move_items
  * - insert_content
+ * - rename_note
  * - list_yaml_property_values
  */
 export type AlwaysAvailableTools = readonly Tool[];
@@ -144,9 +145,9 @@ export type GetAlwaysAvailableToolsFunction = () => AlwaysAvailableTools;
  * Composes tool array based on mode configuration
  *
  * Mode mappings:
- * - legacy-only: 20 tools (9 always + 11 legacy)
- * - consolidated-only: 12 tools (9 always + 3 consolidated)
- * - consolidated-with-aliases: 34 tools (9 always + 3 consolidated + 11 legacy + 11 aliases)
+ * - legacy-only: 21 tools (10 always + 11 legacy)
+ * - consolidated-only: 13 tools (10 always + 3 consolidated)
+ * - consolidated-with-aliases: 24 tools (10 always + 3 consolidated + 11 aliases)
  *
  * @param config - Tool registry configuration
  * @returns Composed tool array for mode
@@ -173,9 +174,9 @@ export type AddVersionMetadataFunction = (
  * Internal validation helper ensuring correct tool assembly
  *
  * Expected counts:
- * - legacy-only: 20 tools
- * - consolidated-only: 12 tools
- * - consolidated-with-aliases: 34 tools
+ * - legacy-only: 21 tools
+ * - consolidated-only: 13 tools
+ * - consolidated-with-aliases: 24 tools
  *
  * @param tools - Tool array to validate
  * @param mode - Expected tool mode
@@ -201,7 +202,7 @@ export interface ToolRegistryModule {
   /** Get legacy aliases (11 tools) */
   getLegacyAliases: GetLegacyAliasesFunction;
 
-  /** Get always-available tools (9 tools) */
+  /** Get always-available tools (10 tools) */
   getAlwaysAvailableTools: GetAlwaysAvailableToolsFunction;
 
   /** Assemble tools for mode with validation */
@@ -323,7 +324,7 @@ export interface ToolRegistryIntegration {
  * ✓ Constant `tools: Tool[]` array definition
  * ✓ Consolidated tools section (3 tools)
  * ✓ Legacy aliases section (11 tools)
- * ✓ Always-available tools section (9 tools)
+ * ✓ Always-available tools section (10 tools)
  * ✓ Tool mode conditional logic
  * ✓ addVersionMetadata helper function
  *

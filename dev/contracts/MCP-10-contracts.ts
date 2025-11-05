@@ -116,7 +116,7 @@ export interface McpProtocolTests {
   stdioTransport: {
     testFile: 'tests/integration/stdio-transport.test.ts';
     coverage: [
-      'all 29 tools callable via stdio',
+      'all tools callable via stdio (varies by mode: 13/21/24)',
       'tool discovery (list_tools)',
       'capability discovery',
       'error responses MCP-compliant',
@@ -136,9 +136,9 @@ export interface McpProtocolTests {
   toolModeEnforcement: {
     testFile: 'tests/integration/tool-mode-enforcement.test.ts';
     coverage: [
-      'legacy-only: 12 tools (9 always + 3 legacy)',
-      'consolidated-only: 12 tools (9 always + 3 consolidated)',
-      'consolidated-with-aliases: 34 tools (9 + 3 + 11 + 11)',
+      'legacy-only: 21 tools (10 always + 11 legacy)',
+      'consolidated-only: 13 tools (10 always + 3 consolidated)',
+      'consolidated-with-aliases: 24 tools (10 + 3 + 11)',
       'unknown tool error handling',
       'alias resolution'
     ];
@@ -225,17 +225,17 @@ export interface DualTransportConsistencyTest {
 export interface ToolModeEnforcementTest {
   modes: {
     'legacy-only': {
-      expectedToolCount: 20; // 9 always + 11 legacy
+      expectedToolCount: 21; // 10 always + 11 legacy
       mustInclude: ['search_notes', 'list_folders'];
       mustExclude: ['search', 'list'];
     };
     'consolidated-only': {
-      expectedToolCount: 12; // 9 always + 3 consolidated
+      expectedToolCount: 13; // 10 always + 3 consolidated
       mustInclude: ['search', 'create_note', 'list'];
       mustExclude: ['search_notes', 'list_folders'];
     };
     'consolidated-with-aliases': {
-      expectedToolCount: 34; // 9 + 3 + 11 + 11
+      expectedToolCount: 24; // 10 + 3 + 11
       mustInclude: ['search', 'search_notes']; // Both present
     };
   };
@@ -434,7 +434,7 @@ export interface ManualSmokeTest {
   scenarios: [
     {
       action: 'list_tools';
-      expectation: '29 tools returned (consolidated-with-aliases mode)';
+      expectation: '24 tools returned (consolidated-with-aliases mode)';
     },
     {
       action: 'search with query="test"';

@@ -116,7 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Test Coverage**: Created 54 new integration tests across 6 test files validating factory patterns, lazy initialization, registry dispatch, transport independence, and tool mode enforcement
   - **Shared Test Utility**: Extracted `tests/helpers/vault-setup.ts` reducing duplication across integration tests with standard temporary vault setup pattern
   - **Module Boundary Tests (32 tests)**: Factory instantiation (8 tests), handler initialization (8 tests), hybrid dispatch (16 tests) validating server lifecycle, analytics singleton, session ID generation (UUID v4), context propagation, fallback handling
-  - **Protocol Compliance Tests (22 tests)**: Stdio transport (10 tests), tool mode enforcement (12 tests) validating MCP spec conformance, tool availability across modes (legacy-only: 20 tools, consolidated-only: 12 tools, consolidated-with-aliases: 34 tools)
+  - **Protocol Compliance Tests (22 tests)**: Stdio transport (10 tests), tool mode enforcement (12 tests) validating MCP spec conformance, tool availability across modes (legacy-only: 21 tools, consolidated-only: 13 tools, consolidated-with-aliases: 24 tools)
   - **Documentation Updates**:
     - ADR-004 (project roadmap): Marked decomposition complete with final metrics (2224→503 lines, 77% reduction, validated via MCP-10)
     - ADR-002 (strategic pivot): Updated line counts and completion status, success metrics reflect 99.5% test pass rate
@@ -412,7 +412,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created src/server/tool-registry.ts (856 lines) with 6 exported pure functions (public API: getConsolidatedTools, getLegacyTools, getLegacyAliases, getAlwaysAvailableTools, getToolsForMode, addVersionMetadata) plus internal helpers (validateToolCount)
   - Reduced src/index.ts from 2,588 to 1,797 lines (-791 lines, -30.5%)
   - Eliminated 400 lines of code duplication through shared constants
-  - Tool registry provides mode-based assembly (legacy-only: 20 tools, consolidated-only: 12 tools, consolidated-with-aliases: 34 tools)
+  - Tool registry provides mode-based assembly (legacy-only: 21 tools, consolidated-only: 13 tools, consolidated-with-aliases: 24 tools)
   - Contract-driven development with explicit TypeScript interfaces and dependency injection
   - Created comprehensive test suite: 17 unit tests achieving 100% coverage
   - No breaking changes: All existing functionality preserved

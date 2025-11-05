@@ -817,7 +817,7 @@ export const getLegacyTools: GetLegacyToolsFunction = () => {
  * @example
  * ```typescript
  * const tools = getToolsForMode({ mode: 'legacy-only', serverName: 'lifeos-mcp', serverVersion: '2.0.1' });
- * validateToolCount(tools, 'legacy-only'); // Expects 20 tools
+ * validateToolCount(tools, 'legacy-only'); // Expects 21 tools
  * ```
  */
 function validateToolCount(tools: Tool[], mode: ToolMode): void {
@@ -862,12 +862,12 @@ export const getToolsForMode: GetToolsForModeFunction = (config) => {
 
   switch (config.mode) {
     case 'legacy-only':
-      // 9 always + 11 legacy = 20 tools
+      // 10 always + 11 legacy = 21 tools
       tools = [...always, ...legacy];
       break;
 
     case 'consolidated-only':
-      // 9 always + 3 consolidated = 12 tools
+      // 10 always + 3 consolidated = 13 tools
       tools = [...always, ...consolidated];
       break;
 
