@@ -1,6 +1,6 @@
 # Custom Instructions Guide
 
-**Status:** Phase 1 Scaffolding (MCP-90) - Infrastructure in place, awaiting implementation  
+**Status:** Phase 1 Scaffolding - Infrastructure in place, awaiting implementation  
 **Last Updated:** 2025-11-04
 
 This guide explains how to configure and use custom instructions with the LifeOS MCP Server. Custom instructions allow you to define rules and behaviors for note creation, editing, and template processing.
@@ -16,7 +16,7 @@ Custom instructions provide a way to configure rules that influence how the MCP 
 
 ## Current Status
 
-**Phase 1 (MCP-90):** Infrastructure scaffolding complete
+**Phase 1:** Infrastructure scaffolding complete
 
 - Configuration interfaces defined (`CustomInstructionsConfig`)
 - Instruction processor module created (`src/modules/config/`)
@@ -450,6 +450,138 @@ describe('YourTest', () => {
 
 ---
 
+## Guidance Metadata
+
+**Status:** ✅ Implemented (2025-11-04)
+**Feature:** LLM-visible instruction guidance in tool responses
+
+### Overview
+
+The system now surfaces custom instruction requirements directly to LLM clients through formatted guidance metadata included in tool response content. This allows AI assistants to see and follow note formatting requirements without requiring separate configuration files.
+
+### How It Works
+
+When you create notes with custom instructions configured, the server automatically:
+
+1. Extracts guidance from parsed custom instruction rules
+2. Formats it as LLM-readable Markdown
+3. Includes it in the tool response content (NOT in `_meta`)
+
+**Critical:** Guidance must be in response `content` text to be visible to LLM. The `_meta` field is only visible to client applications (e.g., Claude Desktop UI), not to the AI model itself.
+
+### Guidance Format
+
+```markdown
+---
+📋 **Note Formatting Guidance**
+• **Note Type**: restaurant
+• **Required YAML Fields**: content type, category, tags
+• **Expected Headings**: Remarks
+• **Timezone**: America/Toronto (EST)
+```
+
+### NoteGuidanceMetadata Interface
+
+```typescript
+interface NoteGuidanceMetadata {
+  // Note type identifier (e.g., 'daily', 'recipe', 'article')
+  noteType?: string;
+
+  // Required YAML frontmatter fields (capped at 5 most important)
+  requiredYAML?: string[];
+
+  // Expected content structure headings (capped at 3 most important)
+  headings?: string[];
+
+  // Temporal formatting hints (e.g., date format requirements)
+  temporalHints?: string;
+
+  // Applied instruction rules (capped at 10 most relevant)
+  appliedRules?: string[];
+
+  // Server timezone for temporal context
+  timezone?: string;
+
+  // Optional style guide identifier
+  styleGuideId?: string;
+}
+```
+
+### Token Efficiency
+
+Guidance is formatted concisely to respect token budgets:
+
+- **YAML fields**: Maximum 5 most important fields
+- **Headings**: Maximum 3 most important headings
+- **Applied rules**: Maximum 10 most relevant rules
+- **Minimal output**: Empty guidance objects produce only header
+
+### Example: Restaurant Note Creation
+
+**Request:**
+
+```typescript
+await createNote({
+  title: "Pizza Place",
+  auto_template: true,
+  content: "Great pizza spot downtown"
+});
+```
+
+**Response Content (LLM sees this):**
+
+```
+✅ Created note: **Pizza Place**
+
+📁 Location: `30 - Resources/Restaurants/Pizza Place.md`
+🔧 Smart Creation: Template "restaurant" auto-detected
+
+---
+📋 **Note Formatting Guidance**
+• **Note Type**: restaurant
+• **Required YAML Fields**: content type, category, tags
+• **Expected Headings**: Remarks
+• **Timezone**: America/Toronto (EST)
+```
+
+### Integration Points
+
+Currently integrated with:
+
+- ✅ `create_note` handler (consolidated-handlers.ts)
+- ⏱️ Future: `edit_note`, `insert_content`, `get_daily_note`
+
+### Hot-Reload Support
+
+Guidance automatically updates when custom instruction files change:
+
+1. Modify `config/custom-instructions.json`
+2. File watcher detects change
+3. InstructionProcessor clears cache
+4. Next tool call generates updated guidance
+5. No server restart required
+
+### Graceful Fallback
+
+When instructions are absent or malformed:
+
+- Guidance extraction returns `undefined`
+- Tool execution continues normally
+- Response may include minimal guidance (e.g., timezone only)
+- Never blocks note creation or editing
+
+### Testing
+
+Comprehensive test coverage in `tests/unit/server/guidance-formatting.test.ts`:
+
+- Complete guidance rendering (all fields populated)
+- Partial guidance handling (optional field combinations)
+- Edge cases (empty objects, undefined vs empty arrays)
+- Token efficiency validation (field caps respected)
+- MCP protocol compliance (content text, not _meta)
+
+---
+
 ## Related Documentation
 
 - **[Architecture](../ARCHITECTURE.md)** - Config module architecture
@@ -458,6 +590,10 @@ describe('YourTest', () => {
 
 ---
 
-**Last Updated:** 2025-11-04  
-**Status:** Phase 1 Scaffolding Complete  
-**Next:** Phase 2 (File Reading Implementation) - TBD
+**Last Updated:** 2025-11-04 21:40
+**Status:** Phase 3 - Guidance Metadata Complete
+**Implemented Features:**
+- ✅ Custom instruction scaffolding
+- ✅ Hot-reload mechanism
+- ✅ Rule parsing and application
+- ✅ LLM-visible guidance metadata
