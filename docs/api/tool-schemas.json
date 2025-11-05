@@ -1,0 +1,1351 @@
+{
+  "metadata": {
+    "generatedAt": "2025-11-05T01:50:16.476Z",
+    "version": "2.0.1",
+    "source": "src/server/tool-registry.ts",
+    "totalTools": 24
+  },
+  "modes": {
+    "consolidated-only": {
+      "description": "Modern consolidated tools (recommended) - cleaner interface with 13 tools",
+      "toolCount": 13,
+      "tools": [
+        "get_server_version",
+        "get_yaml_rules",
+        "edit_note",
+        "read_note",
+        "get_daily_note",
+        "diagnose_vault",
+        "move_items",
+        "insert_content",
+        "rename_note",
+        "list_yaml_property_values",
+        "search",
+        "create_note",
+        "list"
+      ]
+    },
+    "legacy-only": {
+      "description": "Original legacy tools for backward compatibility - 21 tools",
+      "toolCount": 21,
+      "tools": [
+        "get_server_version",
+        "get_yaml_rules",
+        "edit_note",
+        "read_note",
+        "get_daily_note",
+        "diagnose_vault",
+        "move_items",
+        "insert_content",
+        "rename_note",
+        "list_yaml_property_values",
+        "search_notes",
+        "create_note_from_template",
+        "list_folders",
+        "find_notes_by_pattern",
+        "list_daily_notes",
+        "advanced_search",
+        "quick_search",
+        "search_by_content_type",
+        "search_recent",
+        "list_templates",
+        "list_yaml_properties"
+      ]
+    },
+    "consolidated-with-aliases": {
+      "description": "Maximum compatibility mode with all tools - 35 tools",
+      "toolCount": 35,
+      "tools": [
+        "get_server_version",
+        "get_yaml_rules",
+        "edit_note",
+        "read_note",
+        "get_daily_note",
+        "diagnose_vault",
+        "move_items",
+        "insert_content",
+        "rename_note",
+        "list_yaml_property_values",
+        "search",
+        "create_note",
+        "list",
+        "search_notes",
+        "create_note_from_template",
+        "list_folders",
+        "find_notes_by_pattern",
+        "list_daily_notes",
+        "advanced_search",
+        "quick_search",
+        "search_by_content_type",
+        "search_recent",
+        "list_templates",
+        "list_yaml_properties",
+        "search_notes",
+        "create_note_from_template",
+        "list_folders",
+        "find_notes_by_pattern",
+        "list_daily_notes",
+        "advanced_search",
+        "quick_search",
+        "search_by_content_type",
+        "search_recent",
+        "list_templates",
+        "list_yaml_properties"
+      ]
+    }
+  },
+  "categories": {
+    "Search Tools": {
+      "description": "Legacy search tools for finding notes by various criteria",
+      "tools": [
+        "advanced_search",
+        "find_notes_by_pattern",
+        "quick_search",
+        "search_by_content_type",
+        "search_notes",
+        "search_recent"
+      ]
+    },
+    "Consolidated Tools": {
+      "description": "Modern unified tools with intelligent auto-routing (recommended)",
+      "tools": [
+        "create_note",
+        "list",
+        "search"
+      ]
+    },
+    "Note Creation": {
+      "description": "Tools for creating new notes with templates",
+      "tools": [
+        "create_note_from_template"
+      ]
+    },
+    "Utilities": {
+      "description": "Utility tools for vault diagnostics and configuration",
+      "tools": [
+        "diagnose_vault",
+        "get_server_version",
+        "move_items"
+      ]
+    },
+    "Note Editing": {
+      "description": "Tools for reading, editing, and managing existing notes",
+      "tools": [
+        "edit_note",
+        "insert_content",
+        "read_note",
+        "rename_note"
+      ]
+    },
+    "Daily Notes": {
+      "description": "Tools for managing daily journal entries",
+      "tools": [
+        "get_daily_note"
+      ]
+    },
+    "YAML Management": {
+      "description": "Tools for managing YAML frontmatter properties",
+      "tools": [
+        "get_yaml_rules"
+      ]
+    },
+    "Listing & Discovery": {
+      "description": "Tools for browsing and discovering vault contents",
+      "tools": [
+        "list_daily_notes",
+        "list_folders",
+        "list_templates",
+        "list_yaml_properties",
+        "list_yaml_property_values"
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "advanced_search",
+      "description": "Advanced search with full-text search, metadata filters, and relevance scoring",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "General search query (searches title, content, and frontmatter)"
+          },
+          "contentQuery": {
+            "type": "string",
+            "description": "Search only in note content"
+          },
+          "titleQuery": {
+            "type": "string",
+            "description": "Search only in note titles"
+          },
+          "naturalLanguage": {
+            "type": "string",
+            "description": "Natural language query that will be processed to extract YAML properties and filters (e.g., \"Quebec barbecue restaurants\")"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Filter by content type"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by category"
+          },
+          "subCategory": {
+            "type": "string",
+            "description": "Filter by sub-category"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by tags (any match)"
+          },
+          "author": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by author"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by people mentioned"
+          },
+          "yamlProperties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Filter by arbitrary YAML property key-value pairs"
+          },
+          "matchMode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "any"
+            ],
+            "description": "Whether notes must match ALL yamlProperties or ANY (default: all)"
+          },
+          "arrayMode": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "contains",
+              "any"
+            ],
+            "description": "How to match array values: exact match, contains value, or any overlap (default: contains)"
+          },
+          "includeNullValues": {
+            "type": "boolean",
+            "description": "Include notes where YAML properties don't exist or are null (default: false)"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Filter by folder path"
+          },
+          "excludeFolders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Exclude folders"
+          },
+          "createdAfter": {
+            "type": "string",
+            "description": "Filter notes created after date (YYYY-MM-DD)"
+          },
+          "createdBefore": {
+            "type": "string",
+            "description": "Filter notes created before date (YYYY-MM-DD)"
+          },
+          "modifiedAfter": {
+            "type": "string",
+            "description": "Filter notes modified after date (YYYY-MM-DD)"
+          },
+          "modifiedBefore": {
+            "type": "string",
+            "description": "Filter notes modified before date (YYYY-MM-DD)"
+          },
+          "caseSensitive": {
+            "type": "boolean",
+            "description": "Case sensitive search (default: false)"
+          },
+          "useRegex": {
+            "type": "boolean",
+            "description": "Use regex for search queries (default: false)"
+          },
+          "includeContent": {
+            "type": "boolean",
+            "description": "Include content in search (default: true)"
+          },
+          "maxResults": {
+            "type": "number",
+            "description": "Maximum number of results (default: 20)"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "created",
+              "modified",
+              "title"
+            ],
+            "description": "Sort results by (default: relevance)"
+          },
+          "sortOrder": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort order (default: desc for relevance, asc for others)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "create_note",
+      "description": "Create a new note in the LifeOS vault with automatic template detection and proper YAML frontmatter.\n\nWHEN TO USE:\n- Restaurant/person/article auto-detection: auto_template=true, title includes keywords\n- Explicit template selection: template=\"tpl-restaurant\", customData provided\n- Manual note creation without templates: auto_template=false, content provided\n\nRETURNS: Success message with created note path and applied template name",
+      "category": "Consolidated Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Note title"
+          },
+          "content": {
+            "type": "string",
+            "description": "Note content (markdown)"
+          },
+          "auto_template": {
+            "type": "boolean",
+            "description": "Automatically detect and apply templates (default: true)"
+          },
+          "template": {
+            "type": "string",
+            "description": "Explicit template override (restaurant, article, person, etc.)"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Content type"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category"
+          },
+          "subCategory": {
+            "type": "string",
+            "description": "Sub-category"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags array"
+          },
+          "targetFolder": {
+            "type": "string",
+            "description": "Target folder path (optional)"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source URL for articles"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "People mentioned"
+          },
+          "customData": {
+            "type": "object",
+            "description": "Custom data for template processing"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "create_note_from_template",
+      "description": "Create a note using a specific LifeOS template with auto-filled metadata. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.",
+      "category": "Note Creation",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Note title"
+          },
+          "template": {
+            "type": "string",
+            "description": "Template key (restaurant, article, person, daily, etc.)"
+          },
+          "customData": {
+            "type": "object",
+            "description": "Template-specific data (e.g., cuisine, location for restaurants)",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "title",
+          "template"
+        ]
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "diagnose_vault",
+      "description": "Diagnose vault issues and check for problematic files",
+      "category": "Utilities",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "checkYaml": {
+            "type": "boolean",
+            "description": "Check for YAML parsing errors (default: true)"
+          },
+          "maxFiles": {
+            "type": "number",
+            "description": "Maximum files to check (default: 100)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "edit_note",
+      "description": "Edit an existing note in the LifeOS vault. If YAML rules are configured, consult get_yaml_rules before modifying frontmatter.\n\nWHEN TO USE:\n- Update frontmatter fields: frontmatter={tags: [...]}, mode=\"merge\"\n- Replace entire note content: content provided, mode optional\n- Selective field editing: frontmatter updates specific fields only\n\nRETURNS: Success message with summary of updated frontmatter fields and content changes\n\nTITLE EXTRACTION: Note titles in responses are determined by priority:\n1. YAML frontmatter 'title' field (if present and non-empty)\n2. Formatted date for daily notes (e.g., \"August 30, 2025\" for 2025-08-30.md)\n3. Title-cased filename for regular notes (e.g., \"My Project Note\" for my-project-note.md)",
+      "category": "Note Editing",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the note file (absolute or relative to vault)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Note title (alternative to path)"
+          },
+          "content": {
+            "type": "string",
+            "description": "New content (optional - preserves existing if not provided)"
+          },
+          "frontmatter": {
+            "type": "object",
+            "description": "Frontmatter fields to update (merged with existing)",
+            "properties": {
+              "contentType": {
+                "type": "string",
+                "description": "Content type"
+              },
+              "category": {
+                "type": "string",
+                "description": "Category"
+              },
+              "subCategory": {
+                "type": "string",
+                "description": "Sub-category"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tags array"
+              },
+              "source": {
+                "type": "string",
+                "description": "Source URL"
+              },
+              "people": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "People mentioned"
+              }
+            }
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "merge",
+              "replace"
+            ],
+            "description": "Update mode: merge (default) or replace frontmatter"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "find_notes_by_pattern",
+      "description": "Find notes matching a glob pattern",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Glob pattern (e.g., \"**/*recipe*.md\")"
+          }
+        },
+        "required": [
+          "pattern"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "get_daily_note",
+      "description": "Get or create a daily note for a specific date.\n\nWHEN TO USE:\n- Today's daily note: date omitted or date=\"today\"\n- Relative date references: date=\"yesterday\" or date=\"tomorrow\"\n- Natural language dates: date=\"last Monday\" or date=\"2025-10-15\"\n\nRETURNS: Daily note path, creation status (created/existed), and applied template name",
+      "category": "Daily Notes",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "Date in YYYY-MM-DD format, relative date (today, yesterday, tomorrow), or natural language (optional, defaults to today)"
+          },
+          "createIfMissing": {
+            "type": "boolean",
+            "description": "Create the daily note if it doesn't exist (default: true)"
+          },
+          "confirmCreation": {
+            "type": "boolean",
+            "description": "Ask for confirmation before creating a new daily note (default: false)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "get_server_version",
+      "description": "Get the current server version and capabilities information",
+      "category": "Utilities",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "includeTools": {
+            "type": "boolean",
+            "description": "Include full list of available tools in the response"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "get_yaml_rules",
+      "description": "Get the user's YAML frontmatter rules document for reference when creating or editing note YAML",
+      "category": "YAML Management",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "insert_content",
+      "description": "Insert content at specific locations within a note based on headings, block references, or text patterns. Preserves existing content and formatting. IMPORTANT: For daily notes, use heading \"Day's Notes\" (with apostrophe) to target the main content section.\n\nWHEN TO USE:\n- Append to daily notes: target={heading: \"Day's Notes\"}, position=\"end-of-section\"\n- Insert after specific heading: target={heading: \"## Tasks\"}, position=\"after\"\n- Target by text pattern: target={pattern: \"TODO\"}, position=\"before\"\n\nRETURNS: Success message with insertion location (heading/line) and content preview\n\nTITLE EXTRACTION: Note titles in responses are determined by priority:\n1. YAML frontmatter 'title' field (if present and non-empty)\n2. Formatted date for daily notes (e.g., \"August 30, 2025\" for 2025-08-30.md)\n3. Title-cased filename for regular notes (e.g., \"My Project Note\" for my-project-note.md)",
+      "category": "Note Editing",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path to the note file (absolute or relative to vault)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Note title (alternative to path)"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to insert"
+          },
+          "target": {
+            "type": "object",
+            "description": "Target location for insertion",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "description": "Heading text to target (e.g., \"## Today's Tasks\")"
+              },
+              "blockRef": {
+                "type": "string",
+                "description": "Block reference ID to target (e.g., \"^block-id\")"
+              },
+              "pattern": {
+                "type": "string",
+                "description": "Text pattern to search for"
+              },
+              "lineNumber": {
+                "type": "number",
+                "description": "Specific line number (1-based)"
+              }
+            }
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "before",
+              "after",
+              "append",
+              "prepend",
+              "end-of-section"
+            ],
+            "description": "Where to insert content relative to target (default: after). Use \"end-of-section\" to insert at the end of a heading section."
+          },
+          "ensureNewline": {
+            "type": "boolean",
+            "description": "Ensure proper line breaks around inserted content (default: true)"
+          }
+        },
+        "required": [
+          "content",
+          "target"
+        ]
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "list",
+      "description": "Universal listing tool that consolidates folders, daily notes, templates, and YAML properties listing with auto-detection.\n\nWHEN TO USE:\n- Browse vault folder structure: type=\"folders\", path=\"Projects\"\n- Discover available templates: type=\"templates\"\n- List daily notes: type=\"daily_notes\", limit=10\n\nRETURNS: Type-specific arrays: folder paths, template list, daily note paths, or YAML property names",
+      "category": "Consolidated Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "folders",
+              "daily_notes",
+              "templates",
+              "yaml_properties",
+              "auto"
+            ],
+            "description": "Type of items to list - auto detects based on parameters"
+          },
+          "path": {
+            "type": "string",
+            "description": "Folder path to list (for folders)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Limit number of results (for daily_notes)"
+          },
+          "includeCount": {
+            "type": "boolean",
+            "description": "Include usage count (for yaml_properties)"
+          },
+          "sortBy": {
+            "type": "string",
+            "description": "Sort method (for yaml_properties)"
+          },
+          "excludeStandard": {
+            "type": "boolean",
+            "description": "Exclude standard properties (for yaml_properties)"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "concise",
+              "detailed"
+            ],
+            "description": "Response format: concise (minimal fields) or detailed (full metadata, default: detailed)"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "list_daily_notes",
+      "description": "List all daily notes with their full paths for debugging",
+      "category": "Listing & Discovery",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Limit number of results (optional, default 10)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "list_folders",
+      "description": "List all folders in the vault following PARA structure",
+      "category": "Listing & Discovery",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Folder path to list (optional, defaults to root)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "list_templates",
+      "description": "List all available note templates in the LifeOS vault",
+      "category": "Listing & Discovery",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "list_yaml_properties",
+      "description": "List all YAML frontmatter properties used across all notes in the vault",
+      "category": "Listing & Discovery",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "includeCount": {
+            "type": "boolean",
+            "description": "Include usage count for each property (default: false)"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "alphabetical",
+              "usage"
+            ],
+            "description": "Sort properties by name or usage count (default: alphabetical)"
+          },
+          "excludeStandard": {
+            "type": "boolean",
+            "description": "Exclude standard LifeOS properties (title, contentType, etc.) (default: false)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "list_yaml_property_values",
+      "description": "List all unique values used for a specific YAML property, showing which are single values vs arrays",
+      "category": "Listing & Discovery",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "string",
+            "description": "The YAML property name to analyze"
+          },
+          "includeCount": {
+            "type": "boolean",
+            "description": "Include usage count for each value (default: false)"
+          },
+          "includeExamples": {
+            "type": "boolean",
+            "description": "Include example note titles that use each value (default: false)"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": [
+              "alphabetical",
+              "usage",
+              "type"
+            ],
+            "description": "Sort values by name, usage count, or type (default: alphabetical)"
+          },
+          "maxExamples": {
+            "type": "number",
+            "description": "Maximum number of example notes per value (default: 3)"
+          }
+        },
+        "required": [
+          "property"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "move_items",
+      "description": "Move notes and/or folders to a different location in the vault. Use either \"item\" for single moves or \"items\" for batch operations.",
+      "category": "Utilities",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path to note or folder"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "note",
+                    "folder"
+                  ],
+                  "description": "Item type (auto-detected if not specified)"
+                }
+              },
+              "required": [
+                "path"
+              ]
+            },
+            "description": "Array of items to move (use this OR item, not both)"
+          },
+          "item": {
+            "type": "string",
+            "description": "Single item path to move (use this OR items, not both)"
+          },
+          "destination": {
+            "type": "string",
+            "description": "Target folder path (relative to vault root)"
+          },
+          "createDestination": {
+            "type": "boolean",
+            "description": "Create destination folder if it doesn't exist (default: false)"
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Overwrite existing files in destination (default: false)"
+          },
+          "mergeFolders": {
+            "type": "boolean",
+            "description": "When moving folders, merge with existing folder of same name (default: false)"
+          }
+        },
+        "required": [
+          "destination"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "quick_search",
+      "description": "Quick text search across all notes with relevance ranking",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "maxResults": {
+            "type": "number",
+            "description": "Maximum results (default: 10)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "read_note",
+      "description": "Read a note from the vault.\n\nWHEN TO USE:\n- Before editing: Read to understand current state\n- Content export: Extract for external processing\n- Metadata verification: Check frontmatter fields and tags\n\nRETURNS: Formatted text with complete YAML frontmatter, Obsidian link, and full note content\n\nTITLE EXTRACTION: Note titles are determined by priority:\n1. YAML frontmatter 'title' field (if present and non-empty)\n2. Formatted date for daily notes (e.g., \"August 30, 2025\" for 2025-08-30.md)\n3. Title-cased filename for regular notes (e.g., \"My Project Note\" for my-project-note.md)",
+      "category": "Note Editing",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Full path to the note"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "rename_note",
+      "description": "Rename a note file with atomic transaction safety and automatic link updates.\n\nWHEN TO USE:\n- Rename a note to a different filename with vault-wide link updates\n- Move and rename notes atomically with rollback protection\n- Ensure vault consistency during rename operations\n\nPHASE 4 FEATURES:\n- ✅ Atomic transactions with 5-phase protocol (plan, prepare, validate, commit, cleanup)\n- ✅ Automatic rollback on any failure (prevents partial states)\n- ✅ Vault-wide wikilink updates (preserves note connections)\n- ✅ SHA-256 staleness detection (prevents overwriting concurrent changes)\n- ✅ Write-Ahead Log (WAL) for crash recovery\n- ✅ Transaction correlation tracking via UUID\n- ✅ Performance metrics (phase timings, total time)\n\nBREAKING CHANGES:\n- Warnings array removed from success responses\n- Failures return transaction error codes with detailed metadata\n- Operations are all-or-nothing (no partial success)\n\nRETURNS: Success with transaction correlation ID and metrics, OR structured error with transaction metadata\n\nERROR CODES:\n- TRANSACTION_PLAN_FAILED: Planning phase failed (invalid paths, file not found)\n- TRANSACTION_PREPARE_FAILED: Staging phase failed (filesystem issues)\n- TRANSACTION_VALIDATE_FAILED: Validation phase failed (concurrent modifications)\n- TRANSACTION_COMMIT_FAILED: Commit phase failed (atomic rename failed)\n- TRANSACTION_ROLLBACK_FAILED: Rollback failed (manual recovery needed)\n- TRANSACTION_STALE_CONTENT: File modified during transaction\n- TRANSACTION_FAILED: General transaction failure",
+      "category": "Note Editing",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "oldPath": {
+            "type": "string",
+            "description": "Current path to the note (absolute or relative to vault)"
+          },
+          "newPath": {
+            "type": "string",
+            "description": "New path for the note (absolute or relative to vault)"
+          },
+          "updateLinks": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to update vault-wide wikilinks after rename (default: true, uses two-phase commit)"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "description": "Dry-run mode: preview changes without executing (not yet implemented)"
+          }
+        },
+        "required": [
+          "oldPath",
+          "newPath"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": true
+      }
+    },
+    {
+      "name": "search",
+      "description": "Universal search tool with intelligent auto-mode routing. Consolidates all search functionality: basic search, advanced search, quick search, content type search, recent search, and pattern matching.\n\nWHEN TO USE:\n- Find notes by content/metadata: mode=\"advanced\", query=\"meeting notes\"\n- Recent activity discovery: mode=\"recent\", days=7\n- File pattern matching: mode=\"pattern\", pattern=\"**/*recipe*.md\"\n\nRETURNS: Array of SearchResult objects with path, title, excerpt, relevance score, and frontmatter metadata\n\nTITLE EXTRACTION: Search result titles are determined by priority:\n1. YAML frontmatter 'title' field (if present and non-empty)\n2. Formatted date for daily notes (e.g., \"August 30, 2025\" for 2025-08-30.md)\n3. Title-cased filename for regular notes (e.g., \"My Project Note\" for my-project-note.md)",
+      "category": "Consolidated Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "advanced",
+              "quick",
+              "content_type",
+              "recent",
+              "pattern"
+            ],
+            "description": "Search mode - auto intelligently detects optimal strategy (default: auto)"
+          },
+          "contentQuery": {
+            "type": "string",
+            "description": "Search only in note content"
+          },
+          "titleQuery": {
+            "type": "string",
+            "description": "Search only in note titles"
+          },
+          "naturalLanguage": {
+            "type": "string",
+            "description": "Natural language query (e.g., \"Quebec barbecue restaurants\")"
+          },
+          "contentType": {
+            "type": "string",
+            "description": "Filter by content type"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by category"
+          },
+          "subCategory": {
+            "type": "string",
+            "description": "Filter by sub-category"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by tags"
+          },
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by people mentioned"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Filter by folder path"
+          },
+          "maxResults": {
+            "type": "number",
+            "description": "Maximum number of results (1-100, default: 25)",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 25
+          },
+          "dateStart": {
+            "type": "string",
+            "description": "Start date (YYYY-MM-DD) - legacy compatibility"
+          },
+          "dateEnd": {
+            "type": "string",
+            "description": "End date (YYYY-MM-DD) - legacy compatibility"
+          },
+          "pattern": {
+            "type": "string",
+            "description": "Glob pattern for pattern mode (e.g., \"**/*recipe*.md\")"
+          },
+          "days": {
+            "type": "number",
+            "description": "Days back for recent search (default: 7)"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "concise",
+              "detailed"
+            ],
+            "description": "Response format: concise (paths only, ~50-100 tokens/result) or detailed (full metadata, ~200-500 tokens/result, default: detailed)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "consolidated-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "search_by_content_type",
+      "description": "Find all notes of a specific content type",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "Content type to search for"
+          },
+          "maxResults": {
+            "type": "number",
+            "description": "Maximum results (optional)"
+          }
+        },
+        "required": [
+          "contentType"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "search_notes",
+      "description": "Search notes by content type, tags, category, or date range",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "Filter by content type"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by category"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter by tags"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Filter by folder path"
+          },
+          "dateStart": {
+            "type": "string",
+            "description": "Start date (YYYY-MM-DD)"
+          },
+          "dateEnd": {
+            "type": "string",
+            "description": "End date (YYYY-MM-DD)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    },
+    {
+      "name": "search_recent",
+      "description": "Find recently modified notes",
+      "category": "Search Tools",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "description": "Number of days back to search (default: 7)"
+          },
+          "maxResults": {
+            "type": "number",
+            "description": "Maximum results (default: 20)"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "availability": {
+        "modes": [
+          "legacy-only",
+          "consolidated-with-aliases"
+        ],
+        "alwaysAvailable": false
+      }
+    }
+  ]
+}
