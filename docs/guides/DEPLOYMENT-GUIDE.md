@@ -96,6 +96,8 @@ cp src/config.example.ts src/config.ts
 nano src/config.ts  # or your preferred editor
 ```
 
+> **📝 Note:** All paths shown below are **templates**. Replace `YOUR_USERNAME` and adjust paths to match your actual vault location and system configuration.
+
 **Required Configuration Updates:**
 
 ```typescript

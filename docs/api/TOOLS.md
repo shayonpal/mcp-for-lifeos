@@ -38,7 +38,7 @@ The LifeOS MCP server supports three tool visibility modes controlled by the `TO
 
 - Both consolidated AND legacy tools visible
 - Maximum compatibility mode
-- Shows all 12 consolidated-only tools + 22 additional legacy tools
+- Shows all 13 consolidated-only tools + 21 additional legacy tools
 
 ### Configuration
 
@@ -84,11 +84,11 @@ Universal search tool with intelligent auto-routing for all search operations
 
 The `search` tool automatically detects the optimal search strategy based on your query and consolidates 6 legacy search tools into one intelligent interface. Results are automatically truncated to fit within ~25K token budget with helpful suggestions when limits are reached.
 
-### `create_note_smart`
+### `create_note` (legacy alias: `create_note_smart`)
 
 Smart note creation with automatic template detection and YAML compliance
 
-**Note:** This tool has been renamed to `create_note`. The smart functionality is now the default behavior. This alias is available in `consolidated-with-aliases` mode only.
+**Note:** The legacy name `create_note_smart` is available as an alias in `consolidated-with-aliases` mode only. The tool name is now `create_note` with smart functionality as the default behavior.
 
 **Parameters:**
 
@@ -344,7 +344,7 @@ Retrieve your custom YAML frontmatter rules document for reference when creating
 
 - No parameters required
 - Returns the content of your configured YAML rules document
-- Requires `yamlRulesPath` to be set in configuration
+- **Note:** Requires `yamlRulesPath` to be set in configuration to use this tool. The `yamlRulesPath` setting is optional for the server but required for this specific tool to function.
 
 ---
 

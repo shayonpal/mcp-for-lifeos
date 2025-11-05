@@ -73,7 +73,7 @@ This directory contains comprehensive documentation for the LifeOS MCP Server, o
 **Technical Debt Score**: 7.8/10 → Target: 3.0/10  
 **Test Suite Health**: 67% passing → Target: 100%
 **Tool Count**: 37 tools → Target: ~11 tools
-**File Status**: index.ts (✅ 307 lines, decomposition complete), modules/files/ (✅ 7 modules, decomposition complete via MCP-91) → Target: <500 lines each
+**File Status**: index.ts (⚙️ 495 lines, partial decomposition - historically was 1,797 → 724 → 307, evolved to 495), modules/files/ (✅ 7 modules, decomposition complete via MCP-91) → Target: <500 lines each
 
 **Active Linear Projects**:
 

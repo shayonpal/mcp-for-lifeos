@@ -116,9 +116,9 @@ Controls which MCP tools are registered and visible to AI clients. This allows y
 
 **Available Modes:**
 
-1. **`consolidated-only`** (default, 12 tools)
+1. **`consolidated-only`** (default, 13 tools)
    - Only modern consolidated tools (search, create_note, list)
-   - Always-available tools (get_server_version, get_yaml_rules, read_note, edit_note, get_daily_note, diagnose_vault, move_items, insert_content, list_yaml_property_values)
+   - Always-available tools (get_server_version, get_yaml_rules, read_note, edit_note, get_daily_note, diagnose_vault, move_items, rename_note, insert_content, list_yaml_property_values)
    - Cleaner MCP client interface, recommended for most users
    - Hides 11 legacy tool aliases
 
@@ -130,13 +130,13 @@ Controls which MCP tools are registered and visible to AI clients. This allows y
 3. **`consolidated-with-aliases`** (34 tools)
    - Both consolidated tools AND legacy aliases
    - Maximum compatibility mode
-   - Shows all tools (12 consolidated-only + 22 legacy)
+   - Shows all tools (13 consolidated-only + 21 legacy)
 
 **Configuration Examples:**
 
 ```bash
 # Default mode (no configuration needed)
-# Shows 12 tools - recommended for most users
+# Shows 13 tools - recommended for most users
 # (no TOOL_MODE set defaults to consolidated-only)
 
 # Legacy-only mode (20 tools)
@@ -163,8 +163,8 @@ The deprecated `CONSOLIDATED_TOOLS_ENABLED` flag is still supported for backward
 **Default Mode Change:**
 
 - Previous default: `consolidated-with-aliases` (34 tools)
-- New default: `consolidated-only` (12 tools)
-- **Upgrade impact**: Users upgrading will see 12 tools instead of 34
+- New default: `consolidated-only` (13 tools)
+- **Upgrade impact**: Users upgrading will see 13 tools instead of 34
 - **Restoration**: Set `TOOL_MODE=consolidated-with-aliases` to restore previous behavior
 
 **Validation:**
