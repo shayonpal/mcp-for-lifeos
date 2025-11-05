@@ -42,20 +42,21 @@ export type ToolArray = Tool[];
 /**
  * Response with version metadata
  * Generic response structure with injected version information
+ * Uses _meta (MCP protocol field) instead of metadata for LLM visibility
  */
 export interface VersionedResponse {
   /** Original response content (preserves existing structure) */
   [key: string]: any;
 
-  /** Injected metadata (added if not present) */
-  metadata?: {
+  /** Injected _meta (MCP protocol metadata field visible to LLM) */
+  _meta?: {
     /** Server version */
     version: string;
     /** Server name */
     serverName: string;
     /** Tool mode configuration */
     toolMode: ToolMode;
-    /** Any additional metadata from original response */
+    /** Any additional _meta from original response */
     [key: string]: any;
   };
 }

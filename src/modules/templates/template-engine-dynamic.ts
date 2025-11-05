@@ -500,11 +500,11 @@ export class DynamicTemplateEngine {
     noteTitle: string,
     customData: Record<string, any> = {}
   ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: NoteGuidanceMetadata } {
+    const instructionResult = customData._instructionResult;
+    const guidance = instructionResult?.guidance;
+
     try {
       const result = this.processTemplate(templateKey, noteTitle, customData);
-      // Extract guidance from instruction result if present
-      const instructionResult = customData._instructionResult;
-      const guidance = instructionResult?.guidance;
 
       // Explicitly construct return object to ensure guidance is included
       if (guidance) {
@@ -512,14 +512,15 @@ export class DynamicTemplateEngine {
           frontmatter: result.frontmatter,
           content: result.content,
           targetFolder: result.targetFolder,
-          guidance: guidance
+          guidance
         };
       }
+
       return result;
     } catch (error) {
       // Silent error handling for MCP compatibility
-      // Fallback to basic note structure
-      return {
+      // Fallback to basic note structure, but preserve guidance metadata if available
+      const fallback = {
         frontmatter: {
           title: noteTitle,
           'content type': 'Reference',
@@ -527,7 +528,13 @@ export class DynamicTemplateEngine {
         },
         content: `# ${noteTitle}\n\n`,
         targetFolder: '05 - Fleeting Notes'
-      };
+      } as { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: NoteGuidanceMetadata };
+
+      if (guidance) {
+        fallback.guidance = guidance;
+      }
+
+      return fallback;
     }
   }
 }

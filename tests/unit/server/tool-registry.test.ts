@@ -147,32 +147,32 @@ describe('Tool Registry', () => {
       mode: 'consolidated-only'
     };
 
-    it('should add metadata to response', () => {
+    it('should add _meta to response', () => {
       const response = { content: 'test' };
       const versioned = addVersionMetadata(response, config);
 
-      expect(versioned).toHaveProperty('metadata');
-      expect(versioned.metadata).toHaveProperty('version', '2.0.1');
-      expect(versioned.metadata).toHaveProperty('serverName', 'lifeos-mcp');
-      expect(versioned.metadata).toHaveProperty('toolMode', 'consolidated-only');
+      expect(versioned).toHaveProperty('_meta');
+      expect(versioned._meta).toHaveProperty('version', '2.0.1');
+      expect(versioned._meta).toHaveProperty('serverName', 'lifeos-mcp');
+      expect(versioned._meta).toHaveProperty('toolMode', 'consolidated-only');
     });
 
-    it('should preserve existing metadata', () => {
+    it('should preserve existing _meta', () => {
       const response = {
         content: 'test',
-        metadata: { customField: 'value' }
+        _meta: { customField: 'value' }
       };
       const versioned = addVersionMetadata(response, config);
 
-      expect(versioned.metadata.customField).toBe('value');
-      expect(versioned.metadata.version).toBe('2.0.1');
+      expect(versioned._meta.customField).toBe('value');
+      expect(versioned._meta.version).toBe('2.0.1');
     });
 
     it('should not mutate original response', () => {
       const response = { content: 'test' };
       const versioned = addVersionMetadata(response, config);
 
-      expect(response).not.toHaveProperty('metadata');
+      expect(response).not.toHaveProperty('_meta');
       expect(versioned).not.toBe(response);
     });
   });

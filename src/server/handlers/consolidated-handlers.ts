@@ -162,9 +162,9 @@ function ensureHandlersInitialized(): void {
           templateResult.frontmatter.tags?.includes?.('restaurant'))) ? 'restaurant' : null;
 
     // Extract guidance metadata if present
-    const metadata: { guidance?: NoteGuidanceMetadata } = {};
+    const _meta: { guidance?: NoteGuidanceMetadata } = {};
     if (templateResult.guidance) {
-      metadata.guidance = templateResult.guidance;
+      _meta.guidance = templateResult.guidance;
     }
 
     return addVersionMetadata({
@@ -172,7 +172,7 @@ function ensureHandlersInitialized(): void {
         type: 'text',
         text: `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`
       }],
-      ...(Object.keys(metadata).length > 0 ? { metadata } : {})
+      ...(Object.keys(_meta).length > 0 ? { _meta } : {})
     }, context.registryConfig) as CallToolResult;
   };
 
