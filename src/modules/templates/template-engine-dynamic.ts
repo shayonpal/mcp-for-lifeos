@@ -415,9 +415,30 @@ export class DynamicTemplateEngine {
     const processedFrontmatter = this.processTemplaterVariables(frontmatter, noteTitle, customData);
     const processedContent = this.processTemplaterVariables(content, noteTitle, customData);
 
+    // Apply custom instruction modifications (MCP-150)
+    let finalFrontmatter = processedFrontmatter;
+    let finalContent = processedContent;
+
+    if (customData._instructionResult) {
+      const instructionContext = customData._instructionResult.context as any;
+
+      // Merge modified frontmatter from custom instructions
+      if (instructionContext.modifiedFrontmatter) {
+        finalFrontmatter = {
+          ...processedFrontmatter,
+          ...instructionContext.modifiedFrontmatter
+        };
+      }
+
+      // Use modified content if provided (prepend to template content)
+      if (instructionContext.modifiedContent) {
+        finalContent = instructionContext.modifiedContent + '\n' + processedContent;
+      }
+    }
+
     return {
-      frontmatter: processedFrontmatter,
-      content: processedContent,
+      frontmatter: finalFrontmatter,
+      content: finalContent,
       targetFolder: template.targetFolder
     };
   }

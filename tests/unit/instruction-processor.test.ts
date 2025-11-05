@@ -515,4 +515,317 @@ describe('InstructionProcessor', () => {
       expect(result.appliedRules.length).toBeGreaterThan(0);
     });
   });
+
+  // MCP-150 - Rule Parsing and Application Tests
+  describe('MCP-150: Rule Parsing and Application', () => {
+    describe('Note-type normalization', () => {
+      it('normalizes daily to dailyNotes', () => {
+        // Arrange: Configure with dailyNotes rules
+        const rulesJson = JSON.stringify({
+          general: { urlFieldName: 'source' },
+          dailyNotes: {
+            yaml: { tags: ['dailyNote'] },
+            filenameFormat: 'YYYY-MM-DD'
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'daily' // Template key, not config key
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert: Should find dailyNotes rules via normalization
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedFrontmatter).toEqual({ tags: ['dailyNote'] });
+        expect((result.context as any).modifiedTitle).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+
+      it('normalizes placetovisit to placeToVisit', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          placeToVisit: {
+            yaml: { category: 'Travel' }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'placetovisit'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedFrontmatter).toEqual({ category: 'Travel' });
+      });
+
+      it('normalizes books to book', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          book: {
+            yaml: { contentType: 'Reference' }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'books'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedFrontmatter).toEqual({ contentType: 'Reference' });
+      });
+    });
+
+    describe('General rule merging', () => {
+      it('merges general rules with note-specific rules', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          general: {
+            urlFieldName: 'source',
+            forbiddenValues: ['Documentation']
+          },
+          restaurant: {
+            yaml: { tags: ['food', 'toronto'], category: 'Restaurant' }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'restaurant'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert: Should have both general and restaurant-specific rules
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedFrontmatter).toEqual({
+          tags: ['food', 'toronto'],
+          category: 'Restaurant'
+        });
+        // Note: general rules are merged at parse time, validated in context
+      });
+
+      it('note-specific rules override general rules', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          general: {
+            yaml: { tags: ['general'] }
+          },
+          restaurant: {
+            yaml: { tags: ['food', 'toronto'] } // Should override general
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'restaurant'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert: Restaurant-specific tags should override general
+        expect((result.context as any).modifiedFrontmatter).toEqual({
+          tags: ['food', 'toronto']
+        });
+      });
+    });
+
+    describe('Filename format application', () => {
+      it('applies YYYY-MM-DD format for daily notes', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          dailyNotes: {
+            filenameFormat: 'YYYY-MM-DD'
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'daily'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedTitle).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(result.appliedRules).toContain('naming:format');
+      });
+
+      it('handles invalid format gracefully', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          dailyNotes: {
+            filenameFormat: 'INVALID_FORMAT_XYZ'
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'daily'
+        };
+
+        // Act & Assert: Should not crash (graceful degradation)
+        expect(() => {
+          const result = InstructionProcessor.applyInstructions(context);
+          // Invalid format produces a date anyway (date-fns is permissive)
+          // OR modifiedTitle is undefined (depending on format validity)
+          expect(result.modified).toBeDefined();
+        }).not.toThrow();
+      });
+    });
+
+    describe('YAML defaults application', () => {
+      it('applies YAML defaults from rules', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          restaurant: {
+            yaml: {
+              tags: ['food', 'toronto'],
+              category: 'Restaurant',
+              'content type': ['Reference']
+            }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'restaurant'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedFrontmatter).toEqual({
+          tags: ['food', 'toronto'],
+          category: 'Restaurant',
+          'content type': ['Reference']
+        });
+        expect(result.appliedRules).toContain('yaml:defaults');
+      });
+    });
+
+    describe('Content structure application', () => {
+      it('applies requiredHeadings boilerplate', () => {
+        // Arrange
+        const rulesJson = JSON.stringify({
+          dailyNotes: {
+            contentStructure: {
+              requiredHeadings: ["Day's Notes", "Linked Notes", "Notes Created On This Day"]
+            }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'daily'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedContent).toContain("## Day's Notes");
+        expect((result.context as any).modifiedContent).toContain("## Linked Notes");
+        expect((result.context as any).modifiedContent).toContain("## Notes Created On This Day");
+        expect(result.appliedRules).toContain('content:structure');
+      });
+    });
+
+    describe('Complete integration scenarios', () => {
+      it('applies all rule types together (YAML + content + filename)', () => {
+        // Arrange: Full daily note configuration
+        const rulesJson = JSON.stringify({
+          general: { urlFieldName: 'source' },
+          dailyNotes: {
+            filenameFormat: 'YYYY-MM-DD',
+            yaml: {
+              tags: ['dailyNote'],
+              'content type': ['Daily Note']
+            },
+            contentStructure: {
+              requiredHeadings: ["Day's Notes", "Linked Notes"]
+            }
+          }
+        });
+
+        LIFEOS_CONFIG.customInstructions = {
+          inline: { noteCreationRules: rulesJson }
+        };
+
+        const context: InstructionContext = {
+          operation: 'create',
+          noteType: 'daily'
+        };
+
+        // Act
+        const result = InstructionProcessor.applyInstructions(context);
+
+        // Assert: All modifications applied
+        expect(result.modified).toBe(true);
+        expect((result.context as any).modifiedTitle).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect((result.context as any).modifiedFrontmatter).toEqual({
+          tags: ['dailyNote'],
+          'content type': ['Daily Note']
+        });
+        expect((result.context as any).modifiedContent).toContain("## Day's Notes");
+        expect((result.context as any).modifiedContent).toContain("## Linked Notes");
+        expect(result.appliedRules).toEqual(
+          expect.arrayContaining(['yaml:defaults', 'content:structure', 'naming:format'])
+        );
+      });
+    });
+  });
 });
