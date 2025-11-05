@@ -42,7 +42,7 @@ Use factual, neutral language throughout all outputs and Linear updates. Avoid s
 
 ## Phase 1: Release Context & Version Determination
 
-### Step 1.1: Validate Arguments and Parse Version
+### Step 1: Validate Arguments and Parse Version
 
 ```bash
 VERSION_ARG="${ARGUMENTS:-auto}"
@@ -68,7 +68,7 @@ fi
 echo ""
 ```
 
-### Step 1.2: Get Last Release Tag
+### Step 2: Get Last Release Tag
 
 ```bash
 echo "🏷️  Analyzing git history..."
@@ -92,7 +92,7 @@ if [ "$COMMIT_COUNT" = "0" ]; then
 fi
 ```
 
-### Step 1.3: Analyze Changes Since Last Release
+### Step 3: Analyze Changes Since Last Release
 
 Use **git-expert** agent to analyze commit history:
 
@@ -114,7 +114,7 @@ Please:
 5. Provide structured summary for version bump recommendation
 ```
 
-### Step 1.4: Determine Version Bump
+### Step 4: Determine Version Bump
 
 ```bash
 # If auto mode, determine version based on commit analysis
@@ -170,7 +170,7 @@ Rationale: [Based on semantic versioning rules]
 
 ## Phase 2: Change Analysis & Impact Assessment
 
-### Step 2.1: Detailed Commit Categorization
+### Step 5: Detailed Commit Categorization
 
 Use **git-expert** agent for detailed analysis:
 
@@ -190,7 +190,7 @@ Please:
 6. Format as structured markdown for CHANGELOG
 ```
 
-### Step 2.2: Linear Issue Analysis
+### Step 6: Linear Issue Analysis
 
 Use **linear-expert** agent to enrich issue context:
 
@@ -213,7 +213,7 @@ Please:
 4. Provide structured table for user review
 ```
 
-### Step 2.3: Strategic Context Assessment
+### Step 7: Strategic Context Assessment
 
 ```bash
 echo "🎯 Strategic Context Review"
@@ -234,7 +234,7 @@ else
 fi
 ```
 
-### Step 2.4: Impact Summary
+### Step 8: Impact Summary
 
 Display comprehensive impact assessment:
 
@@ -276,7 +276,7 @@ Prompt user for approval before proceeding:
 
 ## Phase 3: Pre-Release Quality Validation
 
-### Step 3.1: TypeScript Validation
+### Step 9: TypeScript Validation
 
 ```bash
 echo "🔍 Phase 3: Quality Validation"
@@ -299,7 +299,7 @@ echo "✅ TypeScript validation passed"
 echo ""
 ```
 
-### Step 3.2: Build Verification
+### Step 10: Build Verification
 
 ```bash
 echo "🔨 Building project..."
@@ -319,7 +319,7 @@ echo "✅ Build successful"
 echo ""
 ```
 
-### Step 3.3: Test Suite Validation
+### Step 11: Test Suite Validation
 
 ```bash
 echo "🧪 Running full test suite..."
@@ -344,7 +344,7 @@ echo "✅ All tests passed"
 echo ""
 ```
 
-### Step 3.4: Quality Summary
+### Step 12: Quality Summary
 
 ```
 ╔════════════════════════════════════════════╗
@@ -366,7 +366,7 @@ All quality gates must pass to proceed. No user confirmation needed - automatic 
 
 ## Phase 4: Documentation Updates
 
-### Step 4.1: Simplify Unreleased CHANGELOG Entries
+### Step 13: Simplify Unreleased CHANGELOG Entries
 
 Read and condense the detailed unreleased section to match the style of previous releases:
 
@@ -400,17 +400,49 @@ After (concise):
 - Enhanced LinkScanner to scan and update wikilinks in YAML frontmatter during rename operations (MCP-110).
 ```
 
+**Simplification Algorithm:**
+
+For each unreleased entry, apply these transformations:
+
+1. **Extract Core Elements:**
+   - What changed (the feature/fix/change itself)
+   - Why it matters (user/developer impact in 5-10 words)
+   - Linear issue ID (MCP-XXX format)
+   - Category (Added/Changed/Fixed/Removed)
+
+2. **Remove These Elements:**
+   - Timestamps and dates
+   - File paths and code locations
+   - Implementation details (method names, class names)
+   - Test statistics and pass rates
+   - Sub-bullets and detailed breakdowns
+   - Performance metrics and numbers
+   - Code snippets and examples
+
+3. **Condense to 1-2 Sentences:**
+   - Start with action verb (Added, Fixed, Enhanced, etc.)
+   - State what changed at feature level
+   - Add brief impact if not obvious
+   - End with Linear issue ID in parentheses
+   - Use period after issue ID
+
+4. **Quality Checks:**
+   - Does it answer "What changed?"
+   - Is impact clear to users/developers?
+   - Is it 1-2 sentences maximum?
+   - Does it match style of v2.0.1, v2.0.0 releases?
+   - No technical jargon unless necessary?
+
 **Process:**
 
-1. Read current unreleased section using Read tool
-2. For each verbose entry, condense to 1-2 sentences maintaining:
-   - What changed (high-level)
-   - Linear issue ID in parentheses
-   - Category (Added/Changed/Fixed/Removed)
-3. Edit CHANGELOG.md to replace verbose entries with simplified versions
-4. Preserve category structure (Added, Changed, Documentation, Removed)
+1. Read current CHANGELOG.md unreleased section
+2. Read 2-3 previous release sections (v2.0.1, v2.0.0) for style reference
+3. For each verbose entry, apply simplification algorithm above
+4. Edit CHANGELOG.md to replace verbose entries with simplified versions
+5. Preserve category structure (Added, Changed, Documentation, Fixed, Removed)
+6. Verify each entry follows pattern: `- {Action verb} {what} {brief why} ({MCP-XXX}).`
 
-### Step 4.2: Update CHANGELOG.md Version
+### Step 14: Update CHANGELOG.md Version
 
 Update CHANGELOG directly using Read and Edit tools:
 
@@ -419,7 +451,7 @@ Update CHANGELOG directly using Read and Edit tools:
 # - Current version: $LAST_TAG
 # - New version: $RELEASE_VERSION
 # - Release date: $(date +%Y-%m-%d)
-# - Changes: [now simplified in Step 4.1]
+# - Changes: [now simplified in Step 13]
 # - Linear issues: [from linear-expert analysis in Phase 2]
 
 # Read current CHANGELOG.md (with simplified unreleased section)
@@ -439,7 +471,7 @@ Update CHANGELOG directly using Read and Edit tools:
 # Then Edit tool to make the updates
 ```
 
-### Step 4.3: Update package.json Version
+### Step 15: Update package.json Version
 
 ```bash
 echo "📦 Updating package.json version..."
@@ -464,7 +496,144 @@ echo "✅ package.json updated"
 echo ""
 ```
 
-### Step 4.4: Review Documentation Changes
+### Step 16: Check and Update README.md
+
+Analyze release changes to determine if README.md needs updates, and fix any inconsistencies.
+
+**Change Analysis for README Update:**
+
+Review the simplified CHANGELOG entries from Step 13 to identify changes that warrant README updates:
+
+1. **New Features** → Update "Features" section
+2. **New Tools** → Update "Available Tools" section
+3. **Breaking Changes** → Update relevant sections with migration notes
+4. **Platform Support Changes** → Update "Platform Support" section
+5. **Configuration Changes** → Update "Configuration" section
+6. **Template Changes** → Update "Template System" section
+
+**Inconsistency Checks:**
+
+Before making changes, scan README.md for these common inconsistencies:
+
+1. **Version References:**
+   - "Last updated" date should match release date
+   - Version numbers in examples should be current
+   - Links to specific version tags should be updated
+
+2. **Feature Lists:**
+   - Features mentioned match actual tool capabilities
+   - Tool counts are accurate (e.g., "13 tools", "34 tools")
+   - Deprecated features are marked or removed
+
+3. **Documentation Links:**
+   - All internal links point to existing files
+   - Guide references match actual guide titles
+   - No broken markdown links
+
+4. **Configuration Examples:**
+   - JSON examples use correct syntax
+   - Environment variables match actual implementation
+   - Path examples are realistic
+
+5. **Tool Names:**
+   - Tool names match current API (e.g., `create_note` not `create_note_smart`)
+   - Legacy aliases properly noted if mentioned
+   - Tool descriptions accurate
+
+**Update Decision Logic:**
+
+```bash
+# Determine if README needs updating
+README_NEEDS_UPDATE=false
+
+# Check for feature additions
+if grep -q "^### Added" CHANGELOG.md | head -1; then
+  README_NEEDS_UPDATE=true
+fi
+
+# Check for breaking changes
+if grep -q "BREAKING" CHANGELOG.md; then
+  README_NEEDS_UPDATE=true
+fi
+
+# Check for tool changes
+if grep -qE "(tool|create_note|search|list)" CHANGELOG.md; then
+  README_NEEDS_UPDATE=true
+fi
+
+if [ "$README_NEEDS_UPDATE" = "true" ]; then
+  echo "📝 README.md update required based on release changes"
+else
+  echo "ℹ️  README.md update not required (no user-facing changes)"
+  echo "   Performing consistency checks only..."
+fi
+```
+
+**Update Process:**
+
+1. **Read current README.md** to understand structure
+2. **Read simplified CHANGELOG** from Step 13 for changes
+3. **Identify sections needing updates:**
+   - Map CHANGELOG entries to README sections
+   - Note any breaking changes requiring callouts
+   - Identify feature additions/removals
+
+4. **Fix inconsistencies found during scan:**
+   - Update "Last updated" date to release date
+   - Correct tool counts if changed
+   - Fix any broken or outdated links
+   - Update configuration examples if API changed
+   - Correct tool names to match current API
+
+5. **Apply updates matching existing style:**
+   - Preserve markdown formatting (headings, lists, code blocks)
+   - Maintain section order and structure
+   - Keep existing writing tone and style
+   - Use emojis consistently with existing pattern
+   - Follow existing link format (inline vs reference)
+
+6. **Quality verification:**
+   - All sections still readable and accurate
+   - No duplicate information
+   - Links are valid
+   - Code examples are correct
+   - Version references updated
+
+**Example Update Scenarios:**
+
+**Scenario 1: New Tool Added**
+
+```markdown
+CHANGELOG: "- Added universal search tool with auto-routing (MCP-123)."
+
+README Update:
+- Add to "Available Tools" → "Recommended: Consolidated Tools"
+- Update tool count in configuration section
+- Add example usage if significant
+```
+
+**Scenario 2: Breaking Change**
+
+```markdown
+CHANGELOG: "- Renamed create_note_smart to create_note (MCP-60)."
+
+README Update:
+- Update all tool name references
+- Add note about legacy alias in Tool Mode Configuration
+- Update code examples with new name
+```
+
+**Scenario 3: Inconsistency Found**
+
+```markdown
+Issue: README shows "Last updated: 2025-11-03" but release is 2025-11-05
+
+Fix: Update to "Last updated: 2025-11-05"
+```
+
+If no changes warranted and no inconsistencies found, skip editing README.md.
+
+### Step 17: Review Documentation Changes
 
 ```bash
 echo "📄 Documentation changes:"
@@ -478,6 +647,14 @@ git diff CHANGELOG.md | head -50
 echo ""
 echo "package.json version:"
 git diff package.json | grep '"version"'
+
+echo ""
+echo "README.md changes (if any):"
+if git diff --quiet README.md; then
+  echo "No changes to README.md"
+else
+  git diff README.md | head -50
+fi
 
 echo ""
 ```
@@ -497,7 +674,7 @@ Prompt user to review and confirm documentation changes:
 
 ## Phase 5: Linear Issue Resolution (Review-First)
 
-### Step 5.1: Display Detected Linear Issues
+### Step 18: Display Detected Linear Issues
 
 Use **linear-expert** agent to show issue table:
 
@@ -536,7 +713,7 @@ These issues will be marked as "Released in $RELEASE_VERSION"
    • Type specific issue IDs (comma-separated) to update only those
 ```
 
-### Step 5.2: Update Linear Issues
+### Step 19: Update Linear Issues
 
 Use **linear-expert** agent to update confirmed issues:
 
@@ -566,7 +743,7 @@ For each issue, please:
 
 ## Phase 6: Git Tag & GitHub Release
 
-### Step 6.1: Create Annotated Git Tag
+### Step 20: Create Annotated Git Tag
 
 Use **git-expert** agent to create and push tag:
 
@@ -584,7 +761,7 @@ Please:
 7. Report tag SHA and push status
 ```
 
-### Step 6.2: Create GitHub Release
+### Step 21: Create GitHub Release
 
 ```bash
 echo "📦 Creating GitHub Release..."
@@ -612,7 +789,7 @@ else
 fi
 ```
 
-### Step 6.3: Update Linear Issues with Release URL
+### Step 22: Update Linear Issues with Release URL
 
 Use **linear-expert** agent to add release URL to Linear comments:
 
@@ -623,7 +800,7 @@ Task: Update Linear issue comments with GitHub release URL
 Issues: [from Phase 5]
 Release URL: $RELEASE_URL
 
-For each issue updated in Phase 5:
+For each issue updated in Step 19:
 1. Edit the release comment to include GitHub release link
 2. Format: "Release: $RELEASE_URL"
 ```
@@ -636,7 +813,7 @@ No user confirmation needed - automatic progression if successful.
 
 ## Phase 7: Release Summary & Next Steps
 
-### Step 7.1: Comprehensive Release Summary
+### Step 23: Comprehensive Release Summary
 
 ```bash
 echo ""
@@ -713,7 +890,7 @@ Changes by Type:
 CURRENT-FOCUS Impact: [needs update / aligned / N/A]
 ```
 
-### Step 7.2: Archive Release Information
+### Step 24: Archive Release Information
 
 ```bash
 # Create release archive directory if needed
