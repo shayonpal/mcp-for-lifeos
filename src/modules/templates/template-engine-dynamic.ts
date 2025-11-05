@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join, basename } from 'path';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
-import { YAMLFrontmatter } from '../../shared/index.js';
+import { YAMLFrontmatter, NoteGuidanceMetadata } from '../../shared/index.js';
 import matter from 'gray-matter';
 import { format } from 'date-fns';
 
@@ -499,9 +499,23 @@ export class DynamicTemplateEngine {
     templateKey: string,
     noteTitle: string,
     customData: Record<string, any> = {}
-  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string } {
+  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: NoteGuidanceMetadata } {
     try {
-      return this.processTemplate(templateKey, noteTitle, customData);
+      const result = this.processTemplate(templateKey, noteTitle, customData);
+      // Extract guidance from instruction result if present
+      const instructionResult = customData._instructionResult;
+      const guidance = instructionResult?.guidance;
+
+      // Explicitly construct return object to ensure guidance is included
+      if (guidance) {
+        return {
+          frontmatter: result.frontmatter,
+          content: result.content,
+          targetFolder: result.targetFolder,
+          guidance: guidance
+        };
+      }
+      return result;
     } catch (error) {
       // Silent error handling for MCP compatibility
       // Fallback to basic note structure

@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { NaturalLanguageProcessor } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
 import { ResponseTruncator } from '../../modules/search/index.js';
-import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { LIFEOS_CONFIG, NoteGuidanceMetadata } from '../../shared/index.js';
 import { createNote } from '../../modules/files/index.js';
 import type {
   SmartCreateNoteOptions,
@@ -161,11 +161,18 @@ function ensureHandlersInitialized(): void {
         (templateResult.frontmatter.category?.includes?.('Restaurant') ||
           templateResult.frontmatter.tags?.includes?.('restaurant'))) ? 'restaurant' : null;
 
+    // Extract guidance metadata if present
+    const metadata: { guidance?: NoteGuidanceMetadata } = {};
+    if (templateResult.guidance) {
+      metadata.guidance = templateResult.guidance;
+    }
+
     return addVersionMetadata({
       content: [{
         type: 'text',
         text: `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`
-      }]
+      }],
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {})
     }, context.registryConfig) as CallToolResult;
   };
 

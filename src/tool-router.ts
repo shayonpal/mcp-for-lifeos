@@ -595,7 +595,8 @@ export class ToolRouter {
         return {
           frontmatter,
           content,
-          targetFolder: options.targetFolder
+          targetFolder: options.targetFolder,
+          guidance: instructionResult.guidance
         };
       }
 

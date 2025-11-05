@@ -87,6 +87,66 @@ export interface NoteTemplate {
   targetFolder?: string;
 }
 
+/**
+ * Concise guidance metadata derived from parsed instruction rules
+ * Designed for LLM client consumption with token efficiency
+ *
+ * Token Budget: ~50-150 tokens per response
+ * Fields capped to prevent token bloat:
+ * - requiredYAML: max 5 fields
+ * - headings: max 3 headings
+ * - appliedRules: max 10 rules
+ */
+export interface NoteGuidanceMetadata {
+  /**
+   * Note type identifier (e.g., 'daily', 'recipe', 'article', 'person')
+   * Derived from InstructionContext.noteType or template detection
+   */
+  noteType?: string;
+
+  /**
+   * Required YAML frontmatter fields for this note type
+   * Capped at 5 most important fields to control token usage
+   * Example: ['tags', 'date created', 'content type']
+   */
+  requiredYAML?: string[];
+
+  /**
+   * Expected content structure headings
+   * Capped at 3 most important headings to control token usage
+   * Example: ["Day's Notes", "Tasks", "Reflections"]
+   */
+  headings?: string[];
+
+  /**
+   * Temporal formatting hints (e.g., date format requirements)
+   * Concise string guidance for date/time handling
+   * Example: "Use YYYY-MM-DD format for daily notes"
+   */
+  temporalHints?: string;
+
+  /**
+   * Applied instruction rules (for debugging/transparency)
+   * Capped at 10 most relevant rules to control token usage
+   * Example: ['yaml:defaults', 'content:structure', 'naming:format']
+   */
+  appliedRules?: string[];
+
+  /**
+   * Server timezone information for temporal context
+   * Format: "Region/City (Abbreviation)"
+   * Example: "America/Toronto (EST)"
+   */
+  timezone?: string;
+
+  /**
+   * Optional style guide identifier reference
+   * Used for consistent guidance across note types
+   * Example: "daily-notes-v1", "recipe-format-v2"
+   */
+  styleGuideId?: string;
+}
+
 // TODO (MCP-151): Plan eventual split to types/tool-inputs.ts if file becomes unwieldy
 
 // ============================================================================

@@ -293,12 +293,18 @@ export class TemplateEngine {
     templateKey: string,
     noteTitle: string,
     customData: Record<string, any> = {}
-  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string } {
+  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: any } {
     try {
-      return this.processTemplate(templateKey, noteTitle, customData);
+      const result = this.processTemplate(templateKey, noteTitle, customData);
+      // Extract guidance from instruction result if present
+      const instructionResult = customData._instructionResult;
+      return {
+        ...result,
+        guidance: instructionResult?.guidance
+      };
     } catch (error) {
       console.error(`Failed to create note from template ${templateKey}:`, error);
-      
+
       // Fallback to basic note structure
       return {
         frontmatter: {
