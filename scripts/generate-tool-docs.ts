@@ -156,7 +156,7 @@ function getToolAvailability(toolName: string): { modes: ToolMode[]; alwaysAvail
   }
 
   if (isLegacy) {
-    modes.push('legacy-only', 'consolidated-with-aliases');
+    modes.push('legacy-only');
   }
 
   if (isAlias && !isLegacy) {

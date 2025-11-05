@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2025-11-05T02:02:35.220Z",
+    "generatedAt": "2025-11-05T02:48:45.954Z",
     "version": "2.0.1",
     "source": "src/server/tool-registry.ts",
     "totalTools": 24
@@ -302,8 +302,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -410,8 +409,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -549,8 +547,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -794,8 +791,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -820,8 +816,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -841,8 +836,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -879,8 +873,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -1033,8 +1026,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -1251,8 +1243,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -1300,8 +1291,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }
@@ -1330,8 +1320,7 @@
       },
       "availability": {
         "modes": [
-          "legacy-only",
-          "consolidated-with-aliases"
+          "legacy-only"
         ],
         "alwaysAvailable": false
       }

@@ -97,7 +97,7 @@ The project initially explored building a custom Progressive Web App (PWA) inter
 - **Original**: 37 tools (all separate)
 - **Consolidated-only**: 13 tools (modern, default)
 - **Legacy-only**: 21 tools (backward compatibility)
-- **Consolidated-with-aliases**: 35 tools (maximum compatibility)
+- **Consolidated-with-aliases**: 24 tools (maximum compatibility)
 
 #### Why Consolidated
 - **Complexity Reduction**: Fewer tools for AI agents to choose from
