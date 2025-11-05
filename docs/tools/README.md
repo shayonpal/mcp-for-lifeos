@@ -20,13 +20,14 @@ This document provides a comprehensive overview of all MCP tools available in th
 
 ### Note Creation Tools
 
-**Recommended: Use `create_note_smart` for intelligent template detection**
+**Recommended: Use `create_note` for intelligent template detection**
 
 | Tool | Status | Description |
 |------|--------|-------------|
-| **create_note_smart** | ✅ Active | Smart creation with automatic template detection |
-| create_note | ✅ Active | Basic note creation with YAML frontmatter |
-| create_note_from_template | ⚠️ Legacy | Template-based creation → use `create_note_smart` |
+| **create_note** | ✅ Active | Smart creation with automatic template detection |
+| create_note_from_template | ⚠️ Legacy | Template-based creation → use `create_note` |
+
+**Note:** `create_note_smart` was renamed to `create_note` (MCP-60). The old name is available as an alias in `consolidated-with-aliases` mode only.
 
 ### Listing Tools
 
@@ -38,7 +39,9 @@ This document provides a comprehensive overview of all MCP tools available in th
 | list_folders | ⚠️ Legacy | List vault folders → use `list` with type="folders" |
 | list_daily_notes | ⚠️ Legacy | List daily notes → use `list` with type="daily_notes" |
 | list_templates | ⚠️ Legacy | List templates → use `list` with type="templates" |
-| list_yaml_properties | ⚠️ Legacy | List YAML properties → use `list` with type="yaml_properties" |
+| list_yaml_properties | ⚠️ Legacy | List all YAML property names → use `list` with type="yaml_properties" |
+
+**Note:** Don't confuse `list_yaml_properties` (legacy, lists property names) with `list_yaml_property_values` (always-available, lists values for a specific property).
 
 ### Core Tools (No Duplicates)
 
@@ -51,7 +54,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 | **get_daily_note** | Get or create daily note for specific date |
 | **diagnose_vault** | Diagnose vault issues and check for problematic files |
 | **move_items** | Move notes/folders to different locations |
-| **rename_note** | Rename note files (Phase 1: basic rename without link updates) |
+| **rename_note** | Rename note files with atomic transaction safety and automatic link updates |
 | **insert_content** | Insert content at specific locations within notes |
 | **list_yaml_property_values** | List unique values for a specific YAML property |
 
@@ -59,7 +62,7 @@ This document provides a comprehensive overview of all MCP tools available in th
 
 The MCP server implements a consolidation strategy to simplify AI interactions while maintaining backward compatibility:
 
-1. **Consolidated Tools** (`search`, `create_note_smart`, `list`):
+1. **Consolidated Tools** (`search`, `create_note`, `list`):
    - Use intelligent routing to determine the best handler
    - Accept flexible parameters that auto-detect intent
    - Reduce cognitive load on AI tool callers
@@ -79,7 +82,7 @@ The MCP server implements a consolidation strategy to simplify AI interactions w
 
 - **Always prefer consolidated tools** when available
 - Use `search` instead of any legacy search variant
-- Use `create_note_smart` for note creation with templates
+- Use `create_note` for note creation with templates
 - Use `list` for any listing operation
 
 ### For Developers

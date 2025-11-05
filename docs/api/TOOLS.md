@@ -426,7 +426,13 @@ Comprehensive search with full-text search, metadata filters, and natural langua
 
 ## YAML Property Management
 
+⚠️ **Two Different Tools:** Don't confuse these:
+- **`list_yaml_properties`** (⚠️ Legacy): Lists all YAML property **names** used in your vault
+- **`list_yaml_property_values`** (✅ Always-available): Lists all unique **values** for a specific property
+
 ### `list_yaml_properties`
+
+**Status:** ⚠️ Legacy tool (available in `legacy-only` and `consolidated-with-aliases` modes). Use `list` with `type="yaml_properties"` instead.
 
 Discover and analyze YAML frontmatter properties across your entire vault
 
@@ -447,6 +453,8 @@ list_yaml_properties excludeStandard: true
 ```
 
 ### `list_yaml_property_values`
+
+**Status:** ✅ Always-available tool (works in all tool modes).
 
 Analyze all unique values used for a specific YAML property across the vault
 
