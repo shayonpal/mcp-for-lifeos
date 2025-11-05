@@ -84,7 +84,7 @@ export const LIFEOS_CONFIG: LifeOSConfig = {
 
 Control which MCP tools are registered using the `TOOL_MODE` environment variable:
 
-- **`consolidated-only`** (default): Only modern consolidated tools (13 tools) - clean, focused tool list
+- **`consolidated-only`** (default): Only modern consolidated tools (12 tools) - clean, focused tool list
 - **`consolidated-with-aliases`**: Both consolidated and legacy tools (34 tools) - maximum compatibility
 - **`legacy-only`**: Only legacy tools (20 tools) - for legacy integrations
 
@@ -147,7 +147,7 @@ Control which MCP tools are registered using the `TOOL_MODE` environment variabl
 - `edit_note` - Edit notes with frontmatter merging
 - `get_daily_note` - Get or create daily notes
 - `move_items` - Move notes and folders
-- `rename_note` - Rename note files (Phase 1: basic rename)
+- `rename_note` - Atomic note renaming with vault-wide link updates, dry-run preview, and crash recovery
 - `insert_content` - Insert content at specific locations
 
 **Utilities:**

@@ -5,6 +5,7 @@ description: Comprehensive MCP feature planning with Linear analysis, Serena ins
 author: Shayon Pal
 tags: [workflow, planning, mcp, linear, serena]
 argument_hint: <linear-issue-id>
+model: opus
 ---
 
 # Plan - MCP Feature Planning & Architecture Validation
