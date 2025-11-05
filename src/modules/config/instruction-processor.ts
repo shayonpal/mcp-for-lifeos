@@ -515,11 +515,12 @@ export class InstructionProcessor {
       }
 
       // Only return guidance if we have meaningful data
-      const hasData = guidance.noteType || 
+      const hasData = guidance.noteType ||
                      (guidance.requiredYAML && guidance.requiredYAML.length > 0) ||
                      (guidance.headings && guidance.headings.length > 0) ||
                      guidance.temporalHints ||
-                     (guidance.appliedRules && guidance.appliedRules.length > 0);
+                     (guidance.appliedRules && guidance.appliedRules.length > 0) ||
+                     guidance.timezone;
 
       return hasData ? guidance : undefined;
     } catch (error) {
