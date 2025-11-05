@@ -20,6 +20,36 @@ import {
 import { CONSOLIDATED_TOOL_NAMES } from '../../../dev/contracts/MCP-96-contracts.js';
 
 /**
+ * Format guidance metadata as readable text for LLM consumption
+ * _meta is NOT visible to LLM - guidance must be in content text
+ */
+function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
+  const lines: string[] = ['\n---', '\n📋 **Note Formatting Guidance**'];
+
+  if (guidance.noteType) {
+    lines.push(`• **Note Type**: ${guidance.noteType}`);
+  }
+
+  if (guidance.requiredYAML && guidance.requiredYAML.length > 0) {
+    lines.push(`• **Required YAML Fields**: ${guidance.requiredYAML.join(', ')}`);
+  }
+
+  if (guidance.headings && guidance.headings.length > 0) {
+    lines.push(`• **Expected Headings**: ${guidance.headings.join(', ')}`);
+  }
+
+  if (guidance.temporalHints) {
+    lines.push(`• **Date Format**: ${guidance.temporalHints}`);
+  }
+
+  if (guidance.timezone) {
+    lines.push(`• **Timezone**: ${guidance.timezone}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Internal map of consolidated tool handlers. Each handler consumes the shared
  * ToolHandlerContext provided by the request handler module.
  */
@@ -161,18 +191,19 @@ function ensureHandlersInitialized(): void {
         (templateResult.frontmatter.category?.includes?.('Restaurant') ||
           templateResult.frontmatter.tags?.includes?.('restaurant'))) ? 'restaurant' : null;
 
-    // Extract guidance metadata if present
-    const _meta: { guidance?: NoteGuidanceMetadata } = {};
+    // Build response text with guidance (if present)
+    let responseText = `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`;
+
+    // Append guidance to content text (NOT _meta - LLM cannot see _meta)
     if (templateResult.guidance) {
-      _meta.guidance = templateResult.guidance;
+      responseText += formatGuidanceText(templateResult.guidance);
     }
 
     return addVersionMetadata({
       content: [{
         type: 'text',
-        text: `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`
-      }],
-      ...(Object.keys(_meta).length > 0 ? { _meta } : {})
+        text: responseText
+      }]
     }, context.registryConfig) as CallToolResult;
   };
 
