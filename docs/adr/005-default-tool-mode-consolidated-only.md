@@ -11,10 +11,10 @@ Following the implementation of MCP-60, which introduced the `TOOL_MODE` configu
 
 **Key Issues**:
 
-- Default tool list showed 34 tools (12 consolidated + 22 legacy aliases) which was overwhelming in MCP clients
+- Default tool list showed 34 tools (13 consolidated + 21 legacy aliases) which was overwhelming in MCP clients
 - Legacy aliases marked with `[LEGACY ALIAS]` created confusion in tool lists
 - Users needed to add environment variable configuration for the recommended setup
-- The cleaner 12-tool experience required explicit opt-in rather than being the default
+- The cleaner 13-tool experience required explicit opt-in rather than being the default
 
 **User Feedback**:
 
@@ -92,10 +92,10 @@ return {
 
 ### Tool Registration Impact
 
-**Default Behavior (consolidated-only: 12 tools total)**:
+**Default Behavior (consolidated-only: 13 tools total)**:
 
 - **Consolidated Tools (3)**: search, create_note, list
-- **Always Available (9)**: get_server_version, get_yaml_rules, read_note, edit_note, get_daily_note, diagnose_vault, move_items, insert_content, list_yaml_property_values
+- **Always Available (10)**: get_server_version, get_yaml_rules, read_note, edit_note, get_daily_note, diagnose_vault, move_items, rename_note, insert_content, list_yaml_property_values
 
 **Legacy Aliases Hidden by Default (11)**:
 
@@ -109,13 +109,13 @@ return {
 
 **Opt-In to Legacy (via TOOL_MODE=consolidated-with-aliases: 34 tools)**:
 
-- Shows all tools (12 consolidated + 22 legacy aliases and tools)
+- Shows all tools (13 consolidated + 21 legacy aliases and tools)
 
 ## Consequences
 
 ### Positive
 
-- **Better Default UX**: Clean 12-tool list in MCP clients (no [LEGACY ALIAS] markers)
+- **Better Default UX**: Clean 13-tool list in MCP clients (no [LEGACY ALIAS] markers)
 - **Zero Configuration**: Recommended setup works out of the box
 - **Focused Tool List**: AI agents see only modern consolidated tools
 - **Simpler Documentation**: No need to explain TOOL_MODE in basic setup
@@ -142,7 +142,7 @@ During implementation, `create_note_smart` was renamed to `create_note` to simpl
 
 - **Rationale**: The smart creation tool with template auto-detection provides all functionality of the basic `create_note`, making the basic version redundant
 - **Behavior**: When no template matches, `create_note` falls back to manual note creation
-- **Impact**: Consolidated-only mode reduced from 13 to 12 tools (one less always-available tool)
+- **Impact**: Consolidated-only mode initially reduced from 13 to 12 tools (one less always-available tool), but was later increased back to 13 tools when `rename_note` was added as an always-available tool
 
 **Tool Consolidation:**
 
@@ -159,10 +159,10 @@ Fixed tool registration bugs discovered during implementation:
 2. **Legacy tools** properly categorized:
    - `create_note_from_template` moved from always-available to legacy section
 
-**Final Always-Available Tools (9 total):**
+**Final Always-Available Tools (10 total):**
 
 - `get_server_version`, `get_yaml_rules`, `read_note`, `edit_note`
-- `get_daily_note`, `diagnose_vault`, `move_items`, `insert_content`
+- `get_daily_note`, `diagnose_vault`, `move_items`, `rename_note`, `insert_content`
 - `list_yaml_property_values`
 
 ## Migration Guide
