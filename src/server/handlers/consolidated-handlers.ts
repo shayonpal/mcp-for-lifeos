@@ -29,7 +29,7 @@ import { CONSOLIDATED_TOOL_NAMES } from '../../../dev/contracts/MCP-96-contracts
  * @returns Formatted Markdown string for appending to tool responses
  */
 export function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
-  const lines: string[] = ['\n---', '\n📋 **Note Formatting Guidance**'];
+  const lines: string[] = ['---', '📋 **Note Formatting Guidance**'];
 
   if (guidance.noteType) {
     lines.push(`• **Note Type**: ${guidance.noteType}`);
@@ -51,7 +51,7 @@ export function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
     lines.push(`• **Timezone**: ${guidance.timezone}`);
   }
 
-  return lines.join('\n');
+  return '\n' + lines.join('\n');
 }
 
 /**
@@ -201,6 +201,8 @@ function ensureHandlersInitialized(): void {
 
     // Append guidance to content text (NOT _meta - LLM cannot see _meta)
     if (templateResult.guidance) {
+      // Normalize spacing before appending guidance for consistent formatting
+      responseText = responseText.trimEnd() + '\n';
       responseText += formatGuidanceText(templateResult.guidance);
     }
 

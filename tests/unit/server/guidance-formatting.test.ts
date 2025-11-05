@@ -120,7 +120,7 @@ describe('formatGuidanceText()', () => {
       const result = formatGuidanceText(guidance);
 
       // Empty guidance should still include header with proper formatting
-      expect(result).toBe('\n---\n\n📋 **Note Formatting Guidance**');
+      expect(result).toBe('\n---\n📋 **Note Formatting Guidance**');
     });
 
     it('should skip empty requiredYAML array', () => {
@@ -215,8 +215,8 @@ describe('formatGuidanceText()', () => {
       const result = formatGuidanceText(guidance);
       const lineCount = result.split('\n').length;
 
-      // Actual format: empty line + separator + empty line + title + field = 5 lines
-      expect(lineCount).toBe(5);
+      // Actual format: empty line + separator + title + field = 4 lines
+      expect(lineCount).toBe(4);
 
       // Verify it's still concise
       expect(result.length).toBeLessThan(100);
