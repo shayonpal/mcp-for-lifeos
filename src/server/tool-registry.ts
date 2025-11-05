@@ -806,9 +806,9 @@ export const getLegacyTools: GetLegacyToolsFunction = () => {
  * Internal validation helper ensuring correct tool assembly
  *
  * Expected counts:
- * - legacy-only: 20 tools (9 always + 11 legacy)
- * - consolidated-only: 12 tools (9 always + 3 consolidated)
- * - consolidated-with-aliases: 34 tools (9 always + 3 consolidated + 11 legacy + 11 aliases)
+ * - legacy-only: 21 tools (10 always + 11 legacy)
+ * - consolidated-only: 13 tools (10 always + 3 consolidated)
+ * - consolidated-with-aliases: 24 tools (10 always + 3 consolidated + 11 aliases)
  *
  * @param tools - Tool array to validate
  * @param mode - Expected tool mode
@@ -824,7 +824,7 @@ function validateToolCount(tools: Tool[], mode: ToolMode): void {
   const expectedCounts: Record<ToolMode, number> = {
     'legacy-only': 21,
     'consolidated-only': 13,
-    'consolidated-with-aliases': 35
+    'consolidated-with-aliases': 24
   };
 
   const expected = expectedCounts[mode];
@@ -846,7 +846,7 @@ function validateToolCount(tools: Tool[], mode: ToolMode): void {
  * Mode mappings:
  * - legacy-only: 21 tools (10 always + 11 legacy)
  * - consolidated-only: 13 tools (10 always + 3 consolidated)
- * - consolidated-with-aliases: 35 tools (10 always + 3 consolidated + 11 legacy + 11 aliases)
+ * - consolidated-with-aliases: 24 tools (10 always + 3 consolidated + 11 aliases)
  *
  * @param config - Tool registry configuration
  * @returns Composed tool array for mode
@@ -872,8 +872,10 @@ export const getToolsForMode: GetToolsForModeFunction = (config) => {
       break;
 
     case 'consolidated-with-aliases':
-      // 9 always + 3 consolidated + 11 legacy + 11 aliases = 34 tools
-      tools = [...always, ...consolidated, ...legacy, ...aliases];
+      // 10 always + 3 consolidated + 11 aliases = 24 tools
+      // Note: aliases provide backward-compatible names that route to consolidated tools
+      // We include aliases instead of legacy tools to provide compatibility while encouraging modern tool usage
+      tools = [...always, ...consolidated, ...aliases];
       break;
 
     default:

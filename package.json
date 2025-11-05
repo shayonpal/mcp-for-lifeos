@@ -20,7 +20,9 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "check:circular": "madge --circular --extensions ts src/",
-    "smoke:stdio": "node scripts/smoke-stdio.mjs"
+    "smoke:stdio": "node scripts/smoke-stdio.mjs",
+    "docs:generate": "tsx scripts/generate-tool-docs.ts",
+    "docs:watch": "tsx watch scripts/generate-tool-docs.ts"
   },
   "keywords": [
     "mcp",
