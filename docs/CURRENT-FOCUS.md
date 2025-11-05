@@ -1,18 +1,18 @@
 # Current Development Focus
 
-**Last Updated:** 2025-11-04 21:53 EST  
+**Last Updated:** 2025-11-05 00:36 EST  
 **Cycle:** Modular Transition (Cycle #9, 2025-10-28 to 2025-11-05)  
-**Progress:** 90.4% (47/52 issues) | **Ends:** Tomorrow
+**Progress:** 92.3% (48/52 issues) | **Ends:** Today
 
 ## 📋 Planned (This Cycle)
 
-- MCP-150: Implement custom instruction rule parsing (High)
 - MCP-121: Expose parsed instruction guidance to LLM clients (Medium)
 
 ## ✅ Recent Completions (Last 3 Days)
 
-**Custom Instructions (3):**
+**Custom Instructions (4):**
 
+- MCP-150: Rule parsing & application (YAML defaults, content boilerplate, template integration) ✅
 - MCP-92: Hot-reload with fs.watch() ✅
 - MCP-91: Vault-utils decomposition (1500+ → modular) ✅
 - MCP-90: Config scaffolding ✅
@@ -42,15 +42,15 @@
 
 ## ✅ Test Status
 
-**Latest (2025-11-04):** 805 passing / 808 total (3 skipped), 48 suites, 28.8s  
-**Fixes:** EPIPE race, isolation, zero modularization regressions
+**Latest (2025-11-05):** 815 passing / 818 total (3 skipped), 48 suites, 28.9s  
+**Fixes:** MCP-150 implementation + Copilot review fixes (type safety, token mapping, content concat)
 
 ## 📊 Project Health
 
-**Coverage:** 805+ tests | Transaction 100% | Search NLP validated  
+**Coverage:** 815+ tests | Transaction 100% | Search NLP validated  
 **Architecture:** Modular (15-issue refactor) | Circular deps enforced  
 **Quality:** TypeScript strict | Files <1000 lines | Zero errors  
 **Performance:** JSONL 1000+ writes/sec | Search <50ms  
 **Docs:** ARCHITECTURE.md updated | ADR-007 Unix policy
 
-**Active:** MCP-150 custom instruction parsing
+**Active:** MCP-121 instruction guidance exposure | Cycle ends today

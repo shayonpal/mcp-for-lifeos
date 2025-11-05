@@ -122,7 +122,7 @@ describe('Request Handler - Consolidated Registry Integration (MCP-96)', () => {
         query: 'integration test',
         maxResults: expect.any(Number)
       }));
-      expect(response.metadata?.version).toBe('2.0.1');
+      expect(response._meta?.version).toBe('2.0.1');
       expect(response.content?.[0]?.text).toContain('• Result');
     });
 

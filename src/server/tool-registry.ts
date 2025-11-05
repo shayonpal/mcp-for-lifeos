@@ -904,18 +904,18 @@ export const addVersionMetadata: AddVersionMetadataFunction = (response, config)
   // Create new object to avoid mutation
   const versioned = { ...response };
 
-  // Create or merge metadata
-  if (!versioned.metadata) {
-    versioned.metadata = {};
+  // Create or merge _meta (MCP protocol field for metadata visible to LLM)
+  if (!versioned._meta) {
+    versioned._meta = {};
   } else {
-    // Preserve existing metadata
-    versioned.metadata = { ...versioned.metadata };
+    // Preserve existing _meta
+    versioned._meta = { ...versioned._meta };
   }
 
   // Add version information from config
-  versioned.metadata.version = config.serverVersion;
-  versioned.metadata.serverName = config.serverName;
-  versioned.metadata.toolMode = config.mode;
+  versioned._meta.version = config.serverVersion;
+  versioned._meta.serverName = config.serverName;
+  versioned._meta.toolMode = config.mode;
 
   return versioned;
 };

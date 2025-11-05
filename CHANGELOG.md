@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2025-11-04 21:40 - feat: expose parsed instruction guidance to LLM clients (MCP-121)
+
+- **Instruction Guidance Metadata** (MCP-121, 2025-11-04): Implemented guidance formatting and injection to surface custom instruction requirements to LLM clients via tool response content
+  - **Guidance Formatting**: Created `formatGuidanceText()` function that formats `NoteGuidanceMetadata` as LLM-readable Markdown with note type, required YAML fields (max 5), expected headings (max 3), temporal hints, and timezone information
+  - **MCP Protocol Compliance**: Critical discovery - `_meta` field is NOT visible to LLM (only to client application), guidance must be included in response `content` text to be visible during tool calls
+  - **Tool Integration**: Integrated guidance into `create_note` handler in `consolidated-handlers.ts`, guidance appended to response content with visual separator and emoji indicator for clarity
+  - **Type System**: Added `NoteGuidanceMetadata` interface to `src/shared/types.ts` with optional fields for note type, required YAML (capped at 5 fields), headings (capped at 3), temporal hints, applied rules (capped at 10), timezone, and style guide ID
+  - **InstructionProcessor Integration**: Enhanced `buildGuidance()` method to extract guidance from parsed custom instruction rules, integrated with hot-reload mechanism for real-time updates
+  - **Test Coverage**: Added 20 comprehensive unit tests in `tests/unit/server/guidance-formatting.test.ts` covering complete rendering (3 tests), partial handling (4 tests), edge cases (5 tests), token efficiency (2 tests), real-world scenarios (4 tests), MCP protocol compliance (2 tests), test count increased from 818→838 (835/838 passing)
+  - **Manual Verification**: Tested via live LifeOS MCP server, confirmed guidance appears in `create_note` responses with proper Markdown formatting, restaurant template auto-detection triggers guidance correctly
+  - **Token Efficiency**: Guidance formatted concisely to respect token budgets (5 YAML fields max, 3 headings max), minimal output for empty guidance objects
+  - **Acceptance Criteria Met (5/5)**: Guidance from InstructionProcessor outputs ✅, tool responses include guidance in content ✅, token efficiency maintained ✅, graceful fallback for missing instructions ✅, comprehensive test coverage ✅
+
 - 2025-11-04 22:47 - feat: implement custom instruction rule parsing and application (MCP-150)
 
 - **Custom Instruction Rule Parsing & Application** (MCP-150, 2025-11-04): Implemented complete rule parsing and application logic for custom instructions, enabling automatic YAML defaults, content boilerplate injection, and template-specific customizations

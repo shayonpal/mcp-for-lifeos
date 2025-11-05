@@ -10,7 +10,7 @@
 import { watch, FSWatcher } from 'fs';
 import { format } from 'date-fns';
 import { LIFEOS_CONFIG } from '../../shared/config.js';
-import { CustomInstructionsConfig } from '../../shared/types.js';
+import { CustomInstructionsConfig, NoteGuidanceMetadata } from '../../shared/types.js';
 import { logger } from '../../shared/logger.js';
 import { readFileWithRetry } from '../files/file-io.js';
 
@@ -120,6 +120,23 @@ export interface InstructionApplicationResult {
 
   /** Applied instruction rules (for debugging) - always present, empty array if no rules */
   appliedRules: string[];
+
+  /**
+   * Optional guidance metadata for LLM clients
+   *
+   * Population Strategy:
+   * - Only populated when modified=true (rules were applied)
+   * - Returns undefined when:
+   *   - No instructions configured
+   *   - Instructions don't apply to this operation
+   *   - Guidance extraction fails (logged, not thrown)
+   *
+   * Error Handling:
+   * - buildGuidance() wrapped in try/catch inside InstructionProcessor
+   * - Failures log error and return undefined
+   * - Never blocks tool execution
+   */
+  guidance?: NoteGuidanceMetadata;
 }
 
 /**
@@ -413,18 +430,114 @@ export class InstructionProcessor {
 
     const modified = appliedRules.length > 0;
 
+    // Build guidance metadata if rules were applied
+    const guidance = modified
+      ? this.buildGuidance(modifiedContext, parsedRules, appliedRules)
+      : undefined;
+
     logger.info('Applied instruction rules', {
       operation: context.operation,
       noteType: context.noteType,
       rulesApplied: appliedRules.length,
-      source: result.source
+      source: result.source,
+      guidanceGenerated: guidance !== undefined
     });
 
     return {
       context: modifiedContext,
       modified,
-      appliedRules
+      appliedRules,
+      guidance
     };
+  }
+
+  /**
+   * Build guidance metadata from instruction context and parsed rules
+   *
+   * Transforms parsed instruction rules into concise guidance for LLM clients
+   * with token-efficient field capping.
+   *
+   * @param context Instruction context with operation details
+   * @param parsedRules Parsed rules for the note type
+   * @param appliedRules Array of applied rule identifiers
+   * @returns NoteGuidanceMetadata or undefined on failure
+   *
+   * @private
+   */
+  private static buildGuidance(
+    context: InstructionContext,
+    parsedRules: Record<string, any>,
+    appliedRules: string[]
+  ): NoteGuidanceMetadata | undefined {
+    try {
+      const guidance: NoteGuidanceMetadata = {};
+
+      // Extract note type
+      if (context.noteType) {
+        guidance.noteType = context.noteType;
+      }
+
+      // Extract required YAML fields (cap at 5)
+      if (parsedRules.yaml && typeof parsedRules.yaml === 'object') {
+        const yamlFields = Object.keys(parsedRules.yaml);
+        guidance.requiredYAML = yamlFields.slice(0, 5);
+      }
+
+      // Extract heading structure (cap at 3)
+      if (parsedRules.contentStructure?.requiredHeadings && Array.isArray(parsedRules.contentStructure.requiredHeadings)) {
+        guidance.headings = parsedRules.contentStructure.requiredHeadings.slice(0, 3);
+      }
+
+      // Extract temporal hints from filename format rules
+      if (parsedRules.filenameFormat) {
+        const format = parsedRules.filenameFormat;
+        // Convert format specification to human-readable hint
+        if (format === 'YYYY-MM-DD') {
+          guidance.temporalHints = 'Use YYYY-MM-DD format for filenames';
+        } else if (format.includes('YYYY')) {
+          // Generic hint for any year-based format
+          guidance.temporalHints = `Use ${format} format for filenames`;
+        }
+      }
+
+      // Add applied rules (cap at 10)
+      if (appliedRules.length > 0) {
+        guidance.appliedRules = appliedRules.slice(0, 10);
+      }
+
+      // Add timezone information
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          timeZoneName: 'short'
+        });
+        const parts = formatter.formatToParts(now);
+        const tzAbbr = parts.find(p => p.type === 'timeZoneName')?.value || '';
+        guidance.timezone = `${timezone}${tzAbbr ? ` (${tzAbbr})` : ''}`;
+      } catch (error) {
+        // Timezone extraction is optional, don't fail if unavailable
+        logger.debug('Could not extract timezone for guidance', { error });
+      }
+
+      // Only return guidance if we have meaningful data
+      const hasData = guidance.noteType ||
+                     (guidance.requiredYAML && guidance.requiredYAML.length > 0) ||
+                     (guidance.headings && guidance.headings.length > 0) ||
+                     guidance.temporalHints ||
+                     (guidance.appliedRules && guidance.appliedRules.length > 0) ||
+                     guidance.timezone;
+
+      return hasData ? guidance : undefined;
+    } catch (error) {
+      logger.error('Failed to build guidance metadata', {
+        error: error instanceof Error ? error.message : String(error),
+        noteType: context.noteType,
+        operation: context.operation
+      });
+      return undefined;
+    }
   }
 
   /**

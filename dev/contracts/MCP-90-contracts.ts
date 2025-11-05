@@ -107,7 +107,7 @@ export interface InstructionRetrievalResult {
 
 /**
  * Result of instruction application
- * Currently pass-through, future phases will modify context
+ * Extended in MCP-121 to include guidance metadata
  */
 export interface InstructionApplicationResult {
   /** The context after instruction application (currently unchanged) */
@@ -118,6 +118,9 @@ export interface InstructionApplicationResult {
 
   /** Applied instruction rules (for debugging) */
   appliedRules?: string[];
+
+  /** Optional guidance metadata for LLM clients (added in MCP-121) */
+  guidance?: any; // NoteGuidanceMetadata from shared/types.ts
 }
 
 /**

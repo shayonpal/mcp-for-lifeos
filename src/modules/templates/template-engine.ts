@@ -293,13 +293,22 @@ export class TemplateEngine {
     templateKey: string,
     noteTitle: string,
     customData: Record<string, any> = {}
-  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string } {
+  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: any } {
+    const instructionResult = customData._instructionResult;
+    const guidance = instructionResult?.guidance;
+
     try {
-      return this.processTemplate(templateKey, noteTitle, customData);
+      const result = this.processTemplate(templateKey, noteTitle, customData);
+
+      // Use consistent spread operator pattern for robust guidance passthrough
+      return {
+        ...result,
+        ...(guidance && { guidance })
+      };
     } catch (error) {
       console.error(`Failed to create note from template ${templateKey}:`, error);
-      
-      // Fallback to basic note structure
+
+      // Fallback to basic note structure, preserve guidance if available
       return {
         frontmatter: {
           title: noteTitle,
@@ -307,7 +316,8 @@ export class TemplateEngine {
           tags: ['template-fallback']
         },
         content: `# ${noteTitle}\n\n`,
-        targetFolder: '05 - Fleeting Notes'
+        targetFolder: '05 - Fleeting Notes',
+        ...(guidance && { guidance })
       };
     }
   }

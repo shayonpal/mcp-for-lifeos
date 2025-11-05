@@ -1,7 +1,7 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join, basename } from 'path';
 import { LIFEOS_CONFIG } from '../../shared/index.js';
-import { YAMLFrontmatter } from '../../shared/index.js';
+import { YAMLFrontmatter, NoteGuidanceMetadata } from '../../shared/index.js';
 import matter from 'gray-matter';
 import { format } from 'date-fns';
 
@@ -499,12 +499,21 @@ export class DynamicTemplateEngine {
     templateKey: string,
     noteTitle: string,
     customData: Record<string, any> = {}
-  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string } {
+  ): { frontmatter: YAMLFrontmatter; content: string; targetFolder?: string; guidance?: NoteGuidanceMetadata } {
+    const instructionResult = customData._instructionResult;
+    const guidance = instructionResult?.guidance;
+
     try {
-      return this.processTemplate(templateKey, noteTitle, customData);
+      const result = this.processTemplate(templateKey, noteTitle, customData);
+
+      // Use spread operator for robust guidance passthrough
+      return {
+        ...result,
+        ...(guidance && { guidance })
+      };
     } catch (error) {
       // Silent error handling for MCP compatibility
-      // Fallback to basic note structure
+      // Fallback to basic note structure, but preserve guidance metadata if available
       return {
         frontmatter: {
           title: noteTitle,
@@ -512,7 +521,8 @@ export class DynamicTemplateEngine {
           tags: ['template-fallback']
         },
         content: `# ${noteTitle}\n\n`,
-        targetFolder: '05 - Fleeting Notes'
+        targetFolder: '05 - Fleeting Notes',
+        ...(guidance && { guidance })
       };
     }
   }

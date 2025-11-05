@@ -2,7 +2,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { NaturalLanguageProcessor } from '../../modules/search/index.js';
 import { ObsidianLinks } from '../../modules/links/index.js';
 import { ResponseTruncator } from '../../modules/search/index.js';
-import { LIFEOS_CONFIG } from '../../shared/index.js';
+import { LIFEOS_CONFIG, NoteGuidanceMetadata } from '../../shared/index.js';
 import { createNote } from '../../modules/files/index.js';
 import type {
   SmartCreateNoteOptions,
@@ -18,6 +18,41 @@ import {
   validateMaxResults
 } from '../../../dev/contracts/MCP-38-contracts.js';
 import { CONSOLIDATED_TOOL_NAMES } from '../../../dev/contracts/MCP-96-contracts.js';
+
+/**
+ * Format guidance metadata into LLM-readable Markdown text
+ *
+ * CRITICAL: _meta field is NOT visible to LLM - guidance must be in content text
+ * Exported for testing purposes - tests can import and validate formatting logic
+ *
+ * @param guidance - Guidance metadata from InstructionProcessor
+ * @returns Formatted Markdown string for appending to tool responses
+ */
+export function formatGuidanceText(guidance: NoteGuidanceMetadata): string {
+  const lines: string[] = ['---', '📋 **Note Formatting Guidance**'];
+
+  if (guidance.noteType) {
+    lines.push(`• **Note Type**: ${guidance.noteType}`);
+  }
+
+  if (guidance.requiredYAML && guidance.requiredYAML.length > 0) {
+    lines.push(`• **Required YAML Fields**: ${guidance.requiredYAML.join(', ')}`);
+  }
+
+  if (guidance.headings && guidance.headings.length > 0) {
+    lines.push(`• **Expected Headings**: ${guidance.headings.join(', ')}`);
+  }
+
+  if (guidance.temporalHints) {
+    lines.push(`• **Date Format**: ${guidance.temporalHints}`);
+  }
+
+  if (guidance.timezone) {
+    lines.push(`• **Timezone**: ${guidance.timezone}`);
+  }
+
+  return '\n' + lines.join('\n');
+}
 
 /**
  * Internal map of consolidated tool handlers. Each handler consumes the shared
@@ -161,10 +196,20 @@ function ensureHandlersInitialized(): void {
         (templateResult.frontmatter.category?.includes?.('Restaurant') ||
           templateResult.frontmatter.tags?.includes?.('restaurant'))) ? 'restaurant' : null;
 
+    // Build response text with guidance (if present)
+    let responseText = `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`;
+
+    // Append guidance to content text (NOT _meta - LLM cannot see _meta)
+    if (templateResult.guidance) {
+      // Normalize spacing before appending guidance for consistent formatting
+      responseText = responseText.trimEnd() + '\n';
+      responseText += formatGuidanceText(templateResult.guidance);
+    }
+
     return addVersionMetadata({
       content: [{
         type: 'text',
-        text: `✅ Created note: **${createOptions.title}**\n\n${obsidianLink}\n\n📁 Location: \`${note.path.replace(`${LIFEOS_CONFIG.vaultPath}/`, '')}\`\n🔧 Smart Creation: ${usedTemplate ? `Template "${usedTemplate}" auto-detected` : 'Manual creation'}`
+        text: responseText
       }]
     }, context.registryConfig) as CallToolResult;
   };
